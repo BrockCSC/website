@@ -1,4 +1,4 @@
-import type { EventRecord, WithKey } from "@/lib/firebase/types";
+import type { EventRecord, WithKey } from "@/lib/api/types";
 
 import { getEventStartTimestamp, getEventTiming } from "./schedule";
 
@@ -12,7 +12,7 @@ export type EventTimingGroups = {
 
 export const classifyEventsByTiming = (
   events: EventItem[],
-  nowTimestamp: number
+  nowTimestamp: number,
 ): EventTimingGroups => {
   const ongoing: EventItem[] = [];
   const upcoming: EventItem[] = [];

@@ -16,7 +16,6 @@ export function Navbar() {
     { name: "Team", href: "/team" },
     { name: "Events", href: "/events" },
     { name: "CS Guide", href: "/cs-guide" },
-    { name: "Merch", href: "/merch" },
   ];
 
   return (
@@ -24,7 +23,7 @@ export function Navbar() {
       <div className="mx-auto flex h-full w-full max-w-[1060px] items-center justify-between px-5">
         <Link href="/" className="flex cursor-pointer items-center gap-3">
           <Logo />
-          <span className="text-[22px] font-bold tracking-wide text-[#9A4C46]">
+          <span className="text-[22px] font-bold tracking-wide text-[#9A4440]">
             BROCK CSC
           </span>
         </Link>
@@ -42,8 +41,8 @@ export function Navbar() {
                 key={link.name}
                 href={link.href}
                 className={cn(
-                  "border-b-2 border-transparent pb-1 transition-colors hover:text-[#9A4C46]",
-                  isActive && "border-[#9A4C46] text-[#9A4C46]",
+                  "border-b-2 border-transparent pb-1 transition-colors hover:text-[#9A4440]",
+                  isActive && "border-[#9A4440] text-[#9A4440]",
                 )}
               >
                 {link.name}
@@ -110,7 +109,7 @@ export function Navbar() {
                 className={cn(
                   "rounded-[10px] border-2 border-transparent px-3 py-2 text-base font-semibold text-[#1a1a1a] transition-colors",
                   isActive
-                    ? "border-[#9A4C46] bg-[#fff1f0] text-[#9A4C46]"
+                    ? "border-[#9A4440] bg-[#fff1f0] text-[#9A4440]"
                     : "hover:bg-muted",
                 )}
               >

@@ -1,0 +1,28 @@
+{
+  "columns": [
+    { "key": "duration", "label": "Duration" },
+    { "key": "begins", "label": "Begins" },
+    { "key": "ends", "label": "Ends" },
+    { "key": "semesters", "label": "Semesters" }
+  ],
+  "rows": [
+    {
+      "duration": "D1 Fall/Winter",
+      "begins": "September",
+      "ends": "April",
+      "semesters": "Two semesters"
+    },
+    {
+      "duration": "D2 Fall",
+      "begins": "September",
+      "ends": "December",
+      "semesters": "One semester"
+    },
+    {
+      "duration": "D3 Winter",
+      "begins": "January",
+      "ends": "April",
+      "semesters": "One semester"
+    }
+  ]
+}

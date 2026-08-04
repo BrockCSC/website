@@ -14,7 +14,8 @@ export default function Footer() {
       <div className="flex flex-col gap-1">
         <h1 className="text-primary text-xl font-extrabold">BROCK CSC</h1>
         <p className="text-gray-500 text-sm">
-          © {new Date().getFullYear()} Brock Computer Science - All Rights Reserved
+          © {new Date().getFullYear()} Brock Computer Science - All Rights
+          Reserved
         </p>
       </div>
       <div className="flex gap-4">

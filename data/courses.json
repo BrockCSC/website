@@ -1,0 +1,116 @@
+{
+  "columns": [
+    { "key": "code", "label": "Course Code" },
+    { "key": "name", "label": "Course Name" },
+    { "key": "fall", "label": "Fall" },
+    { "key": "winter", "label": "Winter" },
+    { "key": "spring", "label": "Spring/Summer" },
+    { "key": "prereq", "label": "Prerequisite(s)" }
+  ],
+  "rows": [
+    {
+      "code": "COSC 1P02",
+      "name": "Introduction to Computer Science",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "Yes", "variant": "green" },
+      "prereq": "-"
+    },
+    {
+      "code": "COSC 1P03",
+      "name": "Introduction to Data Structures",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "Yes", "variant": "green" },
+      "prereq": "COSC 1P02 (minimum 60%)"
+    },
+    {
+      "code": "COSC 1P50",
+      "name": "Integrity and Literacy in the Information Age",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "Yes", "variant": "green" },
+      "prereq": "-"
+    },
+    {
+      "code": "COSC 1P71",
+      "name": "Essentials of Artificial Intelligence",
+      "fall": { "type": "badge", "label": "No", "variant": "destructive" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "-"
+    },
+    {
+      "code": "COSC 2P03",
+      "name": "Advanced Data Structures",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "No", "variant": "destructive" },
+      "spring": { "type": "badge", "label": "Yes", "variant": "green" },
+      "prereq": "COSC 1P03 (60%), MATH 1P66 & 1P67"
+    },
+    {
+      "code": "COSC 2P05",
+      "name": "Programming Languages",
+      "fall": { "type": "badge", "label": "No", "variant": "destructive" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 2P03 (60%)"
+    },
+    {
+      "code": "COSC 2P12",
+      "name": "Intro to Computer Architecture",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "No", "variant": "destructive" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 2P03 (60%)"
+    },
+    {
+      "code": "COSC 2P13",
+      "name": "Intro to Operating Systems",
+      "fall": { "type": "badge", "label": "No", "variant": "destructive" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "Yes", "variant": "green" },
+      "prereq": "COSC 2P03 (60%)"
+    },
+    {
+      "code": "COSC 3P03",
+      "name": "Algorithms",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "No", "variant": "destructive" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 2P03 (60%)"
+    },
+    {
+      "code": "COSC 3P32",
+      "name": "Database Systems",
+      "fall": { "type": "badge", "label": "No", "variant": "destructive" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 2P03 (60%)"
+    },
+    {
+      "code": "COSC 3P71",
+      "name": "Artificial Intelligence",
+      "fall": { "type": "badge", "label": "No", "variant": "destructive" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 2P03 (60%)"
+    },
+    {
+      "code": "COSC 4P01",
+      "name": "Software Engineering 1",
+      "fall": { "type": "badge", "label": "Yes", "variant": "green" },
+      "winter": { "type": "badge", "label": "No", "variant": "destructive" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 2P03 & 3P32 (60%)"
+    },
+    {
+      "code": "COSC 4P02",
+      "name": "Software Engineering 2",
+      "fall": { "type": "badge", "label": "No", "variant": "destructive" },
+      "winter": { "type": "badge", "label": "Yes", "variant": "green" },
+      "spring": { "type": "badge", "label": "No", "variant": "destructive" },
+      "prereq": "COSC 4P01 (60%)"
+    }
+  ]
+}

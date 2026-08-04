@@ -1,10 +1,10 @@
 "use client";
 
-import { getFirebaseClient } from "@/lib/firebase";
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
-import { useEffect, useState, useRef } from "react";
+import { fetchCurrentUser, logout } from "@/lib/api";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import { LoginForm } from "@/components/admin/login-form";
 
 const adminTabs = [
   { name: "Dashboard", href: "/admin" },
@@ -12,49 +12,52 @@ const adminTabs = [
   { name: "Executives Management", href: "/admin/execs" },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { auth } = getFirebaseClient();
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const router = useRouter();
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
-  const isLoggingOut = useRef(false);
+  const [authenticated, setAuthenticated] = useState(false);
 
-  // Authentication logic: Redirect to login if not authenticated, otherwise show admin layout
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        if (isLoggingOut.current) return;
-        
-        try {
-          const provider = new GoogleAuthProvider();
-          await signInWithPopup(auth, provider);
-        } catch (error) {
-          console.error("Login failed:", error);
-          router.push("/");
-        }
-      } else {
-        setLoading(false);
-      }
+    let cancelled = false;
+
+    fetchCurrentUser().then((user) => {
+      if (cancelled) return;
+      setAuthenticated(!!user);
+      setLoading(false);
     });
-    return () => unsubscribe();
-  }, [auth, router]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleLogout = async () => {
     try {
-      isLoggingOut.current = true;
-      await signOut(auth);
+      await logout();
+      setAuthenticated(false);
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
-      isLoggingOut.current = false;
     }
   };
 
   if (loading) {
-    return <div className="py-32 text-center text-lg font-bold">Authenticating...</div>;
+    return (
+      <div className="py-32 text-center text-lg font-bold">
+        Authenticating...
+      </div>
+    );
   }
 
-  // Admin layout with navigation tabs and content area
+  if (!authenticated) {
+    return <LoginForm onSuccess={() => setAuthenticated(true)} />;
+  }
+
   return (
     <div className="pt-8">
       <div className="mx-auto w-full max-w-[1060px] px-5">
@@ -70,7 +73,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   key={tab.name}
                   href={tab.href}
                   className={`px-4 py-2 rounded-[12px] font-semibold border-2 border-transparent transition-colors ${
-                    isActive ? "border-[#9A4440] text-[#9A4440] bg-[#fff1f0]" : "text-black hover:bg-neutral-100"
+                    isActive
+                      ? "border-[#9A4440] text-[#9A4440] bg-[#fff1f0]"
+                      : "text-black hover:bg-neutral-100"
                   }`}
                 >
                   {tab.name}
@@ -87,9 +92,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </button>
           </div>
         </div>
-        <div className="p-8">
-          {children}
-        </div>
+        <div className="p-8">{children}</div>
       </div>
     </div>
   );

@@ -5,7 +5,7 @@ import Image from "next/image";
 import { ChevronDown, UserRound } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import type { ExecRecord, WithKey } from "@/lib/firebase";
+import type { ExecRecord, WithKey } from "@/lib/api";
 
 type TeamMemberCardProps = {
   member: WithKey<ExecRecord>;
@@ -79,7 +79,9 @@ function DescriptionToggle({
       >
         <div ref={contentRef}>
           {description && (
-            <p className="text-sm leading-relaxed text-muted-foreground">{description}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              {description}
+            </p>
           )}
         </div>
       </div>
@@ -124,10 +126,14 @@ const getExecSocialLinks = (member: WithKey<ExecRecord>): SocialLink[] => {
   }, []);
 };
 
-export function TeamMemberCard({ member, isAlumni = false }: TeamMemberCardProps) {
+export function TeamMemberCard({
+  member,
+  isAlumni = false,
+}: TeamMemberCardProps) {
   const imageUrl = member.image?.url;
   const name = member.name?.trim() || "Team Member";
-  const title = member.title?.trim() || (isAlumni ? "Club Alumni" : "Executive Member");
+  const title =
+    member.title?.trim() || (isAlumni ? "Club Alumni" : "Executive Member");
   const explicitDescription = member.description?.trim();
   const socialLinks = getExecSocialLinks(member);
   const titleLabel = isAlumni ? (
@@ -192,7 +198,15 @@ export function TeamMemberCard({ member, isAlumni = false }: TeamMemberCardProps
 
       <div className={isAlumni ? "space-y-1 p-3" : "space-y-3 p-4"}>
         <div className="space-y-1">
-          <h3 className={isAlumni ? "text-lg font-semibold leading-tight text-foreground/85" : "text-xl font-semibold leading-tight text-foreground"}>{name}</h3>
+          <h3
+            className={
+              isAlumni
+                ? "text-lg font-semibold leading-tight text-foreground/85"
+                : "text-xl font-semibold leading-tight text-foreground"
+            }
+          >
+            {name}
+          </h3>
           {explicitDescription ? (
             <DescriptionToggle
               description={explicitDescription}

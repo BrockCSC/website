@@ -1,0 +1,8 @@
+node_modules
+apps/web/.next
+apps/api/dist
+apps/api/drizzle/meta
+apps/web/package-lock.json
+apps/api/package-lock.json
+apps/web/public
+.github/scripts/package-lock.json

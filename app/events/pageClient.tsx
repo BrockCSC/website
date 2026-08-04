@@ -1,16 +1,12 @@
-'use client';
+"use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  fetchAllEvents,
-  type EventRecord,
-  type WithKey,
-} from "@/lib/firebase";
+import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
 import { classifyEventsByTiming } from "@/lib/events/classify";
 import { getEventStartTimestamp } from "@/lib/events/schedule";
 
-import { EventCard } from "./components/event-card";
+import { EventTimelineCard } from "./components/event-timeline-card";
 
 type EventItem = WithKey<EventRecord>;
 
@@ -109,7 +105,7 @@ export default function EventsPageClient() {
 
   const { ongoing, upcoming, past } = useMemo(
     () => classifyEventsByTiming(events, nowTimestamp),
-    [events, nowTimestamp]
+    [events, nowTimestamp],
   );
 
   const pastGroups = useMemo(() => {
@@ -154,7 +150,11 @@ export default function EventsPageClient() {
 
           <div className="grid grid-cols-1 gap-2.5">
             {ongoing.map((event) => (
-              <EventCard event={event} key={event.$key} variant="ongoing" />
+              <EventTimelineCard
+                event={event}
+                key={event.$key}
+                variant="ongoing"
+              />
             ))}
           </div>
         </section>
@@ -171,7 +171,7 @@ export default function EventsPageClient() {
 
           <div className="grid grid-cols-1 gap-3">
             {upcoming.map((event) => (
-              <EventCard
+              <EventTimelineCard
                 event={event}
                 key={event.$key}
                 nowTimestamp={nowTimestamp}
@@ -191,7 +191,9 @@ export default function EventsPageClient() {
         </p>
 
         {error && <p className="mb-4 text-muted-foreground">{error}</p>}
-        {loading && <p className="mb-4 text-muted-foreground">Loading past events...</p>}
+        {loading && (
+          <p className="mb-4 text-muted-foreground">Loading past events...</p>
+        )}
         {!loading && !error && pastGroups.length === 0 && (
           <p className="mb-4 text-muted-foreground">No past events found.</p>
         )}
@@ -204,13 +206,16 @@ export default function EventsPageClient() {
               </h3>
               <div className="grid grid-cols-3 gap-3 max-[980px]:grid-cols-2 max-[700px]:grid-cols-1">
                 {group.events.map((event) => (
-                  <EventCard event={event} key={event.$key} variant="past" />
+                  <EventTimelineCard
+                    event={event}
+                    key={event.$key}
+                    variant="past"
+                  />
                 ))}
               </div>
             </section>
           ))}
         </div>
-
       </section>
     </main>
   );

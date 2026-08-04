@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
-import { fetchEventTitleByIdServer } from "@/lib/firebase";
+import { findById } from "@/lib/db/repository";
+import { eventsTable } from "@/lib/db/schema";
+import type { EventRecord } from "@/lib/api/types";
 
 import EventDetailPageClient from "./pageClient";
 
@@ -12,10 +14,17 @@ export async function generateMetadata({
   params,
 }: EventDetailPageProps): Promise<Metadata> {
   const { eventId } = await params;
-  const eventTitle = await fetchEventTitleByIdServer(eventId);
+  if (!eventId) {
+    return { title: "Event" };
+  }
+
+  const event = await findById<EventRecord>(eventsTable, eventId).catch(
+    () => null,
+  );
+  const title = event?.title?.trim();
 
   return {
-    title: eventTitle ?? "Event",
+    title: title || "Event",
   };
 }
 

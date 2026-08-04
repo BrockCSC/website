@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "Links",
-  description: "Quick access to BrockCSC's Discord, ExperienceBU, Instagram, and GitHub.",
+  description:
+    "Quick access to BrockCSC's Discord, ExperienceBU, Instagram, and GitHub.",
 };
 
 type QuickLink =
@@ -61,11 +62,7 @@ const quickLinks: QuickLink[] = [
   },
 ];
 
-function LinkIcon({
-  link,
-}: {
-  link: QuickLink;
-}): ReactElement {
+function LinkIcon({ link }: { link: QuickLink }): ReactElement {
   if ("kind" in link) {
     return <School className="size-7 text-primary" aria-hidden="true" />;
   }
@@ -103,7 +100,7 @@ export default function LinksPage(): ReactElement {
             className={cn(
               "h-auto w-full justify-start rounded-[20px] bg-white px-0 py-0 text-left shadow-[4px_4px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-[#fff7f6] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
               link.featured &&
-                "bg-[#fff3f2] shadow-[4px_4px_0_0_#9A4440] hover:bg-[#ffefed] hover:shadow-[2px_2px_0_0_#9A4440]"
+                "bg-[#fff3f2] shadow-[4px_4px_0_0_#9A4440] hover:bg-[#ffefed] hover:shadow-[2px_2px_0_0_#9A4440]",
             )}
           >
             <a href={link.href} target="_blank" rel="noopener noreferrer">

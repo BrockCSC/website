@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run format:check
+
+  context:
+    needs: checks
+    runs-on: ubuntu-latest
+    outputs:
+      env_name: ${{ steps.ctx.outputs.env_name }}
+      url: ${{ steps.ctx.outputs.url }}
+    steps:
+      - id: ctx
+        run: |
+          VPS_HOST="129-153-49-190.sslip.io"
+          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "env_name=production" >> "$GITHUB_OUTPUT"
+            echo "url=https://brockcsc.$VPS_HOST" >> "$GITHUB_OUTPUT"
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "env_name=uat" >> "$GITHUB_OUTPUT"
+            echo "url=https://uat.$VPS_HOST" >> "$GITHUB_OUTPUT"
+          else
+            SLUG=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-40)
+            echo "env_name=dev" >> "$GITHUB_OUTPUT"
+            echo "url=https://$SLUG.$VPS_HOST" >> "$GITHUB_OUTPUT"
+          fi
+
+  deploy:
+    needs: context
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.context.outputs.env_name }}
+      url: ${{ needs.context.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Sync GitHub secrets to Komodo Variables
+        env:
+          KOMODO_HOST: ${{ vars.KOMODO_HOST }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
+          VAL_BROCKCSC_DB_PASSWORD: ${{ secrets.BROCKCSC_DB_PASSWORD }}
+          VAL_BROCKCSC_KEYCLOAK_ISSUER: ${{ vars.BROCKCSC_KEYCLOAK_ISSUER }}
+          VAL_BROCKCSC_KEYCLOAK_CLIENT_ID: ${{ vars.BROCKCSC_KEYCLOAK_CLIENT_ID }}
+          VAL_BROCKCSC_KEYCLOAK_CLIENT_SECRET: ${{ secrets.BROCKCSC_KEYCLOAK_CLIENT_SECRET }}
+          VAL_BROCKCSC_SESSION_JWT_SECRET: ${{ secrets.BROCKCSC_SESSION_JWT_SECRET }}
+        run: |
+          source .github/scripts/komodo.sh
+
+          # Creating an already-existing Variable 4xxs on every run after the
+          # first - expected, so this only warns rather than failing the step.
+          sync_var() {
+            komodo /write "$(jq -n --arg name "$1" --arg value "$2" --argjson is_secret "$3" \
+              '{type:"CreateVariable", params:{name:$name, value:$value, is_secret:$is_secret}}')" \
+              || echo "::warning::CreateVariable $1 failed (likely already exists, see error above) - continuing"
+          }
+
+          sync_var BROCKCSC_DB_PASSWORD "$VAL_BROCKCSC_DB_PASSWORD" true
+          sync_var BROCKCSC_KEYCLOAK_ISSUER "$VAL_BROCKCSC_KEYCLOAK_ISSUER" false
+          sync_var BROCKCSC_KEYCLOAK_CLIENT_ID "$VAL_BROCKCSC_KEYCLOAK_CLIENT_ID" false
+          sync_var BROCKCSC_KEYCLOAK_CLIENT_SECRET "$VAL_BROCKCSC_KEYCLOAK_CLIENT_SECRET" true
+          sync_var BROCKCSC_SESSION_JWT_SECRET "$VAL_BROCKCSC_SESSION_JWT_SECRET" true
+
+      - id: deploy-context
+        run: node komodo/deploy-context.mjs
+        env:
+          REF: ${{ github.ref }}
+
+      - uses: BrockCSC/komodo-deploy/deploy@v1
+        with:
+          komodo-host: ${{ vars.KOMODO_HOST }}
+          komodo-api-key: ${{ secrets.KOMODO_API_KEY }}
+          komodo-api-secret: ${{ secrets.KOMODO_API_SECRET }}
+          build-name: brockcsc
+          server: wayfarerbx-vps
+          repo: BrockCSC/website
+          build-path: .
+          dockerfile-path: Dockerfile
+          image-name: brockcsc-ca
+          branch: ${{ steps.deploy-context.outputs.branch }}
+          stack-name: ${{ steps.deploy-context.outputs.stack-name }}
+          compose-file-paths: deploy/docker-compose.yml
+          environment: ${{ steps.deploy-context.outputs.environment }}
+          commit-sha: ${{ github.sha }}
+
+      - uses: BrockCSC/komodo-deploy/ensure-action@v1
+        with:
+          komodo-host: ${{ vars.KOMODO_HOST }}
+          komodo-api-key: ${{ secrets.KOMODO_API_KEY }}
+          komodo-api-secret: ${{ secrets.KOMODO_API_SECRET }}
+          action-name: brockcsc-preview-sweep
+          script-path: komodo/actions/preview-sweep.ts
+          schedule: "at 09:00 am"
+          schedule-enabled: true

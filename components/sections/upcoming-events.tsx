@@ -1,11 +1,15 @@
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Clock3, MapPin } from "lucide-react";
 
-import { fetchFutureEvents, type EventRecord, type WithKey } from "@/lib/firebase";
-import { formatEventDayBadge, formatEventTimeLabel, getEventStartTimestamp } from "@/lib/events/schedule";
+import { fetchFutureEvents, type EventRecord, type WithKey } from "@/lib/api";
+import {
+  formatEventDayBadge,
+  formatEventTimeLabel,
+  getEventStartTimestamp,
+} from "@/lib/events/schedule";
 import { EventCard } from "@/components/ui/event-card";
 
 type EventItem = WithKey<EventRecord>;
@@ -20,10 +24,12 @@ export function UpcomingEventsSection() {
       try {
         const futureEvents = await fetchFutureEvents();
         if (!active) return;
-        
+
         // Sorted ascending by start time and takes the first two for now( could change this to display more but I think 2 is enough)
         const sorted = futureEvents.sort((a, b) => {
-          return (getEventStartTimestamp(a) || 0) - (getEventStartTimestamp(b) || 0);
+          return (
+            (getEventStartTimestamp(a) || 0) - (getEventStartTimestamp(b) || 0)
+          );
         });
         setEvents(sorted.slice(0, 2));
       } catch (e) {
@@ -32,31 +38,36 @@ export function UpcomingEventsSection() {
         if (active) setLoadingEvents(false);
       }
     };
-    
+
     void loadEvents();
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
     <section className="w-full border-b-2 border-black bg-neutral-50/50">
       <div className="max-w-7xl mx-auto px-8 py-20">
-        
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="size-5 rounded-full border-2 border-[#9A4440] bg-transparent" />
-              <h2 className="text-4xl text-black font-bold tracking-tight m-0">Upcoming Events</h2>
+              <h2 className="text-4xl text-black font-bold tracking-tight m-0">
+                Upcoming Events
+              </h2>
             </div>
             <p className="text-neutral-500 font-medium max-w-lg">
-              From game nights to workshops. High contrast events for high impact learning.
+              From game nights to workshops. High contrast events for high
+              impact learning.
             </p>
           </div>
-          
-          <Link 
-            href="/events" 
+
+          <Link
+            href="/events"
             className="text-[#9A4440] font-bold flex items-center gap-2 hover:underline group shrink-0"
           >
-            View Calendar <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+            View Calendar{" "}
+            <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
           </Link>
         </div>
 
@@ -73,22 +84,29 @@ export function UpcomingEventsSection() {
 
               const tags = [
                 { label: dayLabel, icon: <CalendarDays strokeWidth={2.5} /> },
-                { label: timeLabel, icon: <Clock3 strokeWidth={2.5} /> }
+                { label: timeLabel, icon: <Clock3 strokeWidth={2.5} /> },
               ];
-              
+
               if (event.location) {
-                tags.push({ label: event.location, icon: <MapPin strokeWidth={2.5} /> });
+                tags.push({
+                  label: event.location,
+                  icon: <MapPin strokeWidth={2.5} />,
+                });
               }
 
               return (
-                <Link key={event.$key} href={`/events/${event.$key}`} className="block h-full cursor-pointer">
-                  <EventCard 
+                <Link
+                  key={event.$key}
+                  href={`/events/${event.$key}`}
+                  className="block h-full cursor-pointer"
+                >
+                  <EventCard
                     title={event.title ?? "Untitled Event"}
-                    description={event.description ?? "More details coming soon..."}
+                    description={
+                      event.description ?? "More details coming soon..."
+                    }
                     tags={tags}
-                    bgColor="bg-neutral-800"
-                   
-                    imageUrl={(event as any).image?.url ?? null} 
+                    imageUrl={event.image?.url ?? null}
                   />
                 </Link>
               );
@@ -99,7 +117,6 @@ export function UpcomingEventsSection() {
             </div>
           )}
         </div>
-
       </div>
     </section>
   );

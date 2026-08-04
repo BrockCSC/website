@@ -1,0 +1,18 @@
+{
+  "columns": [
+    { "key": "category", "label": "Courses Numbered" },
+    { "key": "level1", "label": "1x99 or less" },
+    { "key": "level2", "label": "2x00 to 2x89" },
+    { "key": "level3", "label": "2x90 to 3x89" },
+    { "key": "level4", "label": "3x90 or above" }
+  ],
+  "rows": [
+    {
+      "category": "Credits Achieved",
+      "level1": "No more than 8 credits allowed",
+      "level2": "Must have at least 6 credits above",
+      "level3": "Must have at least 3 credits or above",
+      "level4": "Must have at least 3 credits or above"
+    }
+  ]
+}

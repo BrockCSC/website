@@ -1,10 +1,43 @@
-import * as React from "react"
+import * as React from "react";
+import type { VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
+import { Badge, badgeVariants } from "@/components/ui/badge";
+
+export type TableColumn = {
+  key: string;
+  label: string;
+};
+
+export type BadgeCell = {
+  type: "badge";
+  label: string;
+  variant?: VariantProps<typeof badgeVariants>["variant"];
+};
+
+export type TableCellValue = string | number | BadgeCell;
+
+export type TableData = {
+  columns: TableColumn[];
+  rows: Record<string, TableCellValue>[];
+};
 
 type TableProps = React.HTMLAttributes<HTMLTableElement> & {
-  containerClassName?: string
-  containerStyle?: React.CSSProperties
+  containerClassName?: string;
+  containerStyle?: React.CSSProperties;
+
+  // Optional JSON mode: render from data instead of children.
+  data?: TableData;
+
+  // "stack" renders cards on mobile instead of a scrolling table.
+  mobileVariant?: "scroll" | "stack";
+};
+
+function renderCell(value: TableCellValue): React.ReactNode {
+  if (typeof value === "object") {
+    return <Badge variant={value.variant || "default"}>{value.label}</Badge>;
+  }
+  return value;
 }
 
 const tableDefaults = {
@@ -18,32 +51,97 @@ const tableDefaults = {
   "--table-head-text": "#111111",
   "--table-caption": "#111111",
   "--table-bg": "#ffffff",
-} as React.CSSProperties
-
-// Customize the table by passing CSS variables via containerStyle or a wrapper class.
-// Example: <Table containerStyle={{ "--table-border": "#111", "--table-head-bg": "#f7f7f7" }} />
+} as React.CSSProperties;
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
-  ({ className, containerClassName, containerStyle, ...props }, ref) => (
-    <div
-      className={cn(
-        "relative w-full overflow-auto rounded-[var(--table-radius)] border-2 border-[color:var(--table-border)] bg-[color:var(--table-bg)] shadow-[var(--table-shadow)]",
-        containerClassName
-      )}
-      style={{ ...tableDefaults, ...containerStyle }}
-    >
-      <table
-        ref={ref}
+  (
+    {
+      className,
+      containerClassName,
+      containerStyle,
+      data,
+      mobileVariant = "scroll",
+      children,
+      ...props
+    },
+    ref,
+  ) => {
+    const isStack = mobileVariant === "stack" && data;
+
+    return (
+      <div
         className={cn(
-          "w-full caption-bottom text-base text-[color:var(--table-text)]",
-          className
+          "relative w-full rounded-[var(--table-radius)] border-2 border-[color:var(--table-border)] bg-[color:var(--table-bg)] shadow-[var(--table-shadow)] overflow-hidden",
+          mobileVariant === "scroll" && "overflow-x-auto",
+          containerClassName,
         )}
-        {...props}
-      />
-    </div>
-  )
-)
-Table.displayName = "Table"
+        style={{ ...tableDefaults, ...containerStyle }}
+      >
+        {isStack ? (
+          <div className="md:hidden flex flex-col gap-4 p-4">
+            {data.rows.map((row, i) => (
+              <div
+                key={i}
+                className="border-2 border-[color:var(--table-border)] rounded-xl p-4 shadow-[2px_2px_0_#000]"
+              >
+                {data.columns.map((col) => (
+                  <div key={col.key} className="flex justify-between py-1">
+                    <span className="font-semibold">{col.label}</span>
+                    <span>{renderCell(row[col.key])}</span>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        ) : null}
+
+        <table
+          ref={ref}
+          className={cn(
+            "w-full caption-bottom text-base text-[color:var(--table-text)]",
+            isStack ? "hidden md:table" : "",
+            className,
+          )}
+          {...props}
+        >
+          {data ? (
+            <>
+              <thead className="bg-[color:var(--table-head-bg)]">
+                <tr className="border-b-2 border-[color:var(--table-border)]">
+                  {data.columns.map((col) => (
+                    <th
+                      key={col.key}
+                      className="h-12 px-6 text-left font-semibold"
+                    >
+                      {col.label}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows.map((row, i) => (
+                  <tr
+                    key={i}
+                    className="border-b border-[color:var(--table-divider)] hover:bg-[color:var(--table-hover)]"
+                  >
+                    {data.columns.map((col) => (
+                      <td key={col.key} className="p-4">
+                        {renderCell(row[col.key])}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </>
+          ) : (
+            children
+          )}
+        </table>
+      </div>
+    );
+  },
+);
+Table.displayName = "Table";
 
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
@@ -53,12 +151,12 @@ const TableHeader = React.forwardRef<
     ref={ref}
     className={cn(
       "bg-[color:var(--table-head-bg)] [&_tr]:border-b-2 [&_tr]:border-[color:var(--table-border)]",
-      className
+      className,
     )}
     {...props}
   />
-))
-TableHeader.displayName = "TableHeader"
+));
+TableHeader.displayName = "TableHeader";
 
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
@@ -69,8 +167,8 @@ const TableBody = React.forwardRef<
     className={cn("[&_tr:last-child]:border-0", className)}
     {...props}
   />
-))
-TableBody.displayName = "TableBody"
+));
+TableBody.displayName = "TableBody";
 
 const TableFooter = React.forwardRef<
   HTMLTableSectionElement,
@@ -80,12 +178,12 @@ const TableFooter = React.forwardRef<
     ref={ref}
     className={cn(
       "border-t-2 border-[color:var(--table-border)] bg-[color:var(--table-head-bg)] font-semibold [&>tr]:last:border-b-0",
-      className
+      className,
     )}
     {...props}
   />
-))
-TableFooter.displayName = "TableFooter"
+));
+TableFooter.displayName = "TableFooter";
 
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
@@ -95,12 +193,12 @@ const TableRow = React.forwardRef<
     ref={ref}
     className={cn(
       "border-b border-[color:var(--table-divider)] transition-colors hover:bg-[color:var(--table-hover)]",
-      className
+      className,
     )}
     {...props}
   />
-))
-TableRow.displayName = "TableRow"
+));
+TableRow.displayName = "TableRow";
 
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
@@ -110,12 +208,12 @@ const TableHead = React.forwardRef<
     ref={ref}
     className={cn(
       "h-12 px-6 text-left align-middle font-semibold text-[color:var(--table-head-text)] [&:has([role=checkbox])]:pr-0",
-      className
+      className,
     )}
     {...props}
   />
-))
-TableHead.displayName = "TableHead"
+));
+TableHead.displayName = "TableHead";
 
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
@@ -125,12 +223,12 @@ const TableCell = React.forwardRef<
     ref={ref}
     className={cn(
       "p-4 align-middle text-[color:var(--table-text)] [&:has([role=checkbox])]:pr-0",
-      className
+      className,
     )}
     {...props}
   />
-))
-TableCell.displayName = "TableCell"
+));
+TableCell.displayName = "TableCell";
 
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,
@@ -140,12 +238,12 @@ const TableCaption = React.forwardRef<
     ref={ref}
     className={cn(
       "mt-4 text-sm text-[color:var(--table-caption)] opacity-70",
-      className
+      className,
     )}
     {...props}
   />
-))
-TableCaption.displayName = "TableCaption"
+));
+TableCaption.displayName = "TableCaption";
 
 export {
   Table,
@@ -156,4 +254,4 @@ export {
   TableRow,
   TableCell,
   TableCaption,
-}
+};

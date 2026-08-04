@@ -1,4 +1,4 @@
-import type { EventRecord } from "@/lib/firebase/types";
+import type { EventRecord } from "@/lib/api/types";
 
 type RecurrenceUnit = "day" | "week" | "month";
 
@@ -13,8 +13,29 @@ type ScheduleShape = NonNullable<EventRecord["schedule"]>;
 const TORONTO_TIMEZONE = "America/Toronto";
 const DAY_MS = 24 * 60 * 60 * 1000;
 const WEEK_MS = 7 * DAY_MS;
-const MONTH_NAMES_SHORT = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-const WEEKDAY_NAMES_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTH_NAMES_SHORT = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+const WEEKDAY_NAMES_LONG = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
 const WEEKDAY_SHORT_TO_INDEX: Record<string, number> = {
   Sun: 0,
   Mon: 1,
@@ -28,7 +49,9 @@ const WEEKDAY_SHORT_TO_INDEX: Record<string, number> = {
 const clampWeekday = (value: number): number | null =>
   Number.isInteger(value) && value >= 0 && value <= 6 ? value : null;
 
-const parseTime = (timeText: string): { hour: number; minute: number } | null => {
+const parseTime = (
+  timeText: string,
+): { hour: number; minute: number } | null => {
   const match = /^([01]\d|2[0-3]):([0-5]\d)$/.exec(timeText);
   if (!match) {
     return null;
@@ -40,7 +63,9 @@ const parseTime = (timeText: string): { hour: number; minute: number } | null =>
   };
 };
 
-const parseDate = (dateText: string): { year: number; month: number; day: number } | null => {
+const parseDate = (
+  dateText: string,
+): { year: number; month: number; day: number } | null => {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateText);
   if (!match) {
     return null;
@@ -61,7 +86,9 @@ const parseDate = (dateText: string): { year: number; month: number; day: number
   return { year, month, day };
 };
 
-const getTimeZoneParts = (timestamp: number): {
+const getTimeZoneParts = (
+  timestamp: number,
+): {
   year: number;
   month: number;
   day: number;
@@ -95,15 +122,22 @@ const toTorontoTimestamp = (
   month: number,
   day: number,
   hour: number,
-  minute: number
+  minute: number,
 ): number => {
   let guess = Date.UTC(year, month - 1, day, hour, minute, 0, 0);
 
   for (let index = 0; index < 5; index += 1) {
     const actual = getTimeZoneParts(guess);
-    const desiredAsUtcMinutes = Date.UTC(year, month - 1, day, hour, minute) / 60000;
+    const desiredAsUtcMinutes =
+      Date.UTC(year, month - 1, day, hour, minute) / 60000;
     const actualAsUtcMinutes =
-      Date.UTC(actual.year, actual.month - 1, actual.day, actual.hour, actual.minute) / 60000;
+      Date.UTC(
+        actual.year,
+        actual.month - 1,
+        actual.day,
+        actual.hour,
+        actual.minute,
+      ) / 60000;
     const diffMinutes = desiredAsUtcMinutes - actualAsUtcMinutes;
     if (diffMinutes === 0) {
       return guess;
@@ -114,7 +148,9 @@ const toTorontoTimestamp = (
   return guess;
 };
 
-const getNormalizedRecurrence = (schedule: ScheduleShape): NormalizedRecurrence | null => {
+const getNormalizedRecurrence = (
+  schedule: ScheduleShape,
+): NormalizedRecurrence | null => {
   const recurrence = schedule.recurrence;
   if (!recurrence) {
     return null;
@@ -162,7 +198,7 @@ const getBaseStartTimestamp = (schedule: ScheduleShape): number | null => {
     parsedDate.month,
     parsedDate.day,
     parsedTime.hour,
-    parsedTime.minute
+    parsedTime.minute,
   );
 };
 
@@ -188,7 +224,15 @@ const getSessionDurationMs = (schedule: ScheduleShape): number | null => {
 
 const addMonths = (timestamp: number, months: number): number => {
   const current = getTimeZoneParts(timestamp);
-  const target = new Date(Date.UTC(current.year, current.month - 1, current.day, current.hour, current.minute));
+  const target = new Date(
+    Date.UTC(
+      current.year,
+      current.month - 1,
+      current.day,
+      current.hour,
+      current.minute,
+    ),
+  );
   target.setUTCMonth(target.getUTCMonth() + months);
 
   return toTorontoTimestamp(
@@ -196,12 +240,15 @@ const addMonths = (timestamp: number, months: number): number => {
     target.getUTCMonth() + 1,
     target.getUTCDate(),
     current.hour,
-    current.minute
+    current.minute,
   );
 };
 
-const getEndOfDayTimestamp = (year: number, month: number, day: number): number =>
-  toTorontoTimestamp(year, month, day, 23, 59) + 59_999;
+const getEndOfDayTimestamp = (
+  year: number,
+  month: number,
+  day: number,
+): number => toTorontoTimestamp(year, month, day, 23, 59) + 59_999;
 
 const getTorontoWeekdayFromTimestamp = (timestamp: number): number => {
   const weekdayShort = new Intl.DateTimeFormat("en-US", {
@@ -215,7 +262,7 @@ const getTorontoWeekdayFromTimestamp = (timestamp: number): number => {
 const getNextWeeklyStart = (
   baseStart: number,
   recurrence: NormalizedRecurrence,
-  nowTimestamp: number
+  nowTimestamp: number,
 ): number => {
   const stepWeeks = recurrence.interval;
   const stepMs = stepWeeks * WEEK_MS;
@@ -230,7 +277,10 @@ const getNextWeeklyStart = (
   }
 
   const baseWeekday = getTorontoWeekdayFromTimestamp(baseStart);
-  const cyclesStart = nowTimestamp <= baseStart ? 0 : Math.floor((nowTimestamp - baseStart) / stepMs);
+  const cyclesStart =
+    nowTimestamp <= baseStart
+      ? 0
+      : Math.floor((nowTimestamp - baseStart) / stepMs);
   const startCycle = Math.max(0, cyclesStart - 1);
 
   let candidate: number | null = null;
@@ -255,7 +305,10 @@ const getNextWeeklyStart = (
   return candidate ?? baseStart;
 };
 
-const isBeforeSeriesStart = (event: EventRecord, timestamp: number): boolean => {
+const isBeforeSeriesStart = (
+  event: EventRecord,
+  timestamp: number,
+): boolean => {
   const schedule = event.schedule;
   if (!schedule?.startDate) {
     return false;
@@ -264,7 +317,9 @@ const isBeforeSeriesStart = (event: EventRecord, timestamp: number): boolean => 
   if (!parsed) {
     return false;
   }
-  return timestamp < toTorontoTimestamp(parsed.year, parsed.month, parsed.day, 0, 0);
+  return (
+    timestamp < toTorontoTimestamp(parsed.year, parsed.month, parsed.day, 0, 0)
+  );
 };
 
 const isAfterSeriesEnd = (event: EventRecord, timestamp: number): boolean => {
@@ -276,7 +331,9 @@ const isAfterSeriesEnd = (event: EventRecord, timestamp: number): boolean => {
   if (!parsed) {
     return false;
   }
-  return timestamp > getEndOfDayTimestamp(parsed.year, parsed.month, parsed.day);
+  return (
+    timestamp > getEndOfDayTimestamp(parsed.year, parsed.month, parsed.day)
+  );
 };
 
 export const isRecurringEvent = (event: EventRecord): boolean => {
@@ -362,7 +419,7 @@ export const getRecurringScheduleText = (event: EventRecord): string | null => {
 
 export const getEventTiming = (
   event: EventRecord,
-  nowTimestamp: number
+  nowTimestamp: number,
 ): {
   isRecurring: boolean;
   isOngoing: boolean;
@@ -391,20 +448,31 @@ export const getEventTiming = (
   const startsInFuture = nowTimestamp <= baseStart;
 
   if (!recurrence) {
-    if (isBeforeSeriesStart(event, nowTimestamp) || isAfterSeriesEnd(event, nowTimestamp)) {
+    if (
+      isBeforeSeriesStart(event, nowTimestamp) ||
+      isAfterSeriesEnd(event, nowTimestamp)
+    ) {
       return {
         isRecurring: false,
         isOngoing: false,
-        nextStartTimestamp: isAfterSeriesEnd(event, nowTimestamp) ? null : baseStart,
+        nextStartTimestamp: isAfterSeriesEnd(event, nowTimestamp)
+          ? null
+          : baseStart,
       };
     }
     const isOngoing =
-      durationMs !== null && baseStart <= nowTimestamp && nowTimestamp < baseStart + durationMs;
+      durationMs !== null &&
+      baseStart <= nowTimestamp &&
+      nowTimestamp < baseStart + durationMs;
 
     return {
       isRecurring: false,
       isOngoing,
-      nextStartTimestamp: startsInFuture ? baseStart : isOngoing ? baseStart : null,
+      nextStartTimestamp: startsInFuture
+        ? baseStart
+        : isOngoing
+          ? baseStart
+          : null,
     };
   }
 
@@ -442,7 +510,10 @@ export const getEventTiming = (
     nextStart !== null
       ? recurrence.unit === "month"
         ? addMonths(nextStart, -recurrence.interval)
-        : nextStart - (recurrence.unit === "day" ? recurrence.interval * DAY_MS : recurrence.interval * WEEK_MS)
+        : nextStart -
+          (recurrence.unit === "day"
+            ? recurrence.interval * DAY_MS
+            : recurrence.interval * WEEK_MS)
       : null;
 
   const isOngoing =
@@ -456,11 +527,14 @@ export const getEventTiming = (
   return {
     isRecurring: true,
     isOngoing,
-    nextStartTimestamp: isOngoing ? nextStart : nextStart,
+    nextStartTimestamp: nextStart,
   };
 };
 
-export const formatEventDateLabel = (event: EventRecord, occurrenceStartTimestamp: number | null): string => {
+export const formatEventDateLabel = (
+  event: EventRecord,
+  occurrenceStartTimestamp: number | null,
+): string => {
   const recurringText = getRecurringScheduleText(event);
   if (recurringText) {
     return recurringText;
@@ -471,20 +545,26 @@ export const formatEventDateLabel = (event: EventRecord, occurrenceStartTimestam
   }
 
   const parts = getTimeZoneParts(occurrenceStartTimestamp);
-  const weekday = WEEKDAY_NAMES_LONG[getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)];
+  const weekday =
+    WEEKDAY_NAMES_LONG[
+      getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)
+    ];
   return `${weekday}, ${MONTH_NAMES_SHORT[parts.month - 1]} ${parts.day}, ${parts.year}`;
 };
 
 export const formatEventDayBadge = (
   event: EventRecord,
-  occurrenceStartTimestamp: number | null
+  occurrenceStartTimestamp: number | null,
 ): string => {
   if (typeof occurrenceStartTimestamp !== "number") {
     return "Date TBD";
   }
 
   const parts = getTimeZoneParts(occurrenceStartTimestamp);
-  const weekday = WEEKDAY_NAMES_LONG[getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)];
+  const weekday =
+    WEEKDAY_NAMES_LONG[
+      getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)
+    ];
   if (isRecurringEvent(event)) {
     return weekday;
   }
@@ -493,7 +573,7 @@ export const formatEventDayBadge = (
 
 export const formatEventTimeLabel = (
   event: EventRecord,
-  occurrenceStartTimestamp: number | null
+  occurrenceStartTimestamp: number | null,
 ): string => {
   const schedule = event.schedule;
   if (!schedule || typeof occurrenceStartTimestamp !== "number") {
@@ -523,14 +603,17 @@ export const formatEventTimeLabel = (
 };
 
 export const formatNextOccurrenceDate = (
-  occurrenceStartTimestamp: number | null
+  occurrenceStartTimestamp: number | null,
 ): string => {
   if (typeof occurrenceStartTimestamp !== "number") {
     return "TBD";
   }
 
   const parts = getTimeZoneParts(occurrenceStartTimestamp);
-  const weekday = WEEKDAY_NAMES_LONG[getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)];
-  
+  const weekday =
+    WEEKDAY_NAMES_LONG[
+      getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)
+    ];
+
   return `${weekday}, ${MONTH_NAMES_SHORT[parts.month - 1]} ${parts.day}`;
 };

@@ -1,12 +1,16 @@
 import { Button } from "./button";
 
-export default function Modal({ open, onClose, title, children }: {
+export default function Modal({
+  open,
+  onClose,
+  title,
+  children,
+}: {
   open: boolean;
   onClose: () => void;
   title?: string;
   children: React.ReactNode;
 }) {
-
   if (!open) return null;
 
   return (
@@ -26,7 +30,13 @@ export default function Modal({ open, onClose, title, children }: {
   );
 }
 
-export function ConfirmationModal({ open, onClose, title, message, onConfirm }: {
+export function ConfirmationModal({
+  open,
+  onClose,
+  title,
+  message,
+  onConfirm,
+}: {
   open: boolean;
   onClose: () => void;
   title?: string;
@@ -37,10 +47,7 @@ export function ConfirmationModal({ open, onClose, title, message, onConfirm }: 
     <Modal open={open} onClose={onClose} title={title}>
       <p className="mb-6 mt-[-15px]">{message}</p>
       <div className="flex justify-end gap-4">
-        <Button
-          onClick={() => onClose()}
-          variant={"secondary"}
-        >
+        <Button onClick={() => onClose()} variant={"secondary"}>
           Cancel
         </Button>
         <Button

@@ -1,7 +1,7 @@
-import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
   "inline-flex items-center gap-2 whitespace-nowrap rounded-full border px-3 py-1 text-sm font-semibold uppercase tracking-wide transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background [&_[data-slot=badge-icon]]:inline-flex [&_[data-slot=badge-icon]]:items-center [&_[data-slot=badge-icon]]:justify-center [&_[data-slot=badge-icon]_svg]:size-4 [&_[data-slot=badge-icon]_svg]:shrink-0",
@@ -27,14 +27,14 @@ const badgeVariants = cva(
       variant: "default",
       size: "default",
     },
-  }
-)
+  },
+);
 
 type BadgeProps = React.HTMLAttributes<HTMLDivElement> &
   VariantProps<typeof badgeVariants> & {
-    icon?: React.ReactNode
-    iconPosition?: "start" | "end"
-  }
+    icon?: React.ReactNode;
+    iconPosition?: "start" | "end";
+  };
 
 function Badge({
   className,
@@ -45,7 +45,7 @@ function Badge({
   children,
   ...props
 }: BadgeProps) {
-  const iconNode = icon ? <span data-slot="badge-icon">{icon}</span> : null
+  const iconNode = icon ? <span data-slot="badge-icon">{icon}</span> : null;
   const content =
     iconNode && iconPosition === "end" ? (
       <>
@@ -57,7 +57,7 @@ function Badge({
         {iconNode}
         {children}
       </>
-    )
+    );
 
   return (
     <div
@@ -69,7 +69,7 @@ function Badge({
     >
       {content}
     </div>
-  )
+  );
 }
 
-export { Badge, badgeVariants }
+export { Badge, badgeVariants };

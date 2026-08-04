@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300" role="img" aria-label="Brock Computer Science Club — Code. Connect. Create.">
+  <title>Brock Computer Science Club — Code. Connect. Create.</title>
+
+  <!-- hard offset shadow block (static, no blur) -->
+  <rect x="26" y="26" width="820" height="244" rx="26" fill="#9A4440" />
+
+  <!-- main card -->
+  <rect x="16" y="16" width="820" height="244" rx="26" fill="#ffffff" stroke="#000000" stroke-width="3" />
+
+  <!-- top-left "welcome" pill -->
+  <rect x="51" y="43" width="250" height="34" rx="17" fill="#9A4440" />
+  <rect x="48" y="40" width="250" height="34" rx="17" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text x="173" y="62" text-anchor="middle" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="2" fill="#9A4440">WELCOME TO THE CLUB</text>
+
+  <!-- floating member badge (mirrors the site's hover:-translate-y micro-interaction) -->
+  <g>
+    <animateTransform attributeName="transform" type="translate" values="0 0; 0 -6; 0 0" keyTimes="0;0.5;1" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" />
+    <rect x="566" y="44" width="250" height="48" rx="24" fill="#000000" />
+    <rect x="560" y="38" width="250" height="48" rx="24" fill="#9A4440" stroke="#000000" stroke-width="3" />
+    <text x="586" y="69" font-family="'Courier New', ui-monospace, monospace" font-size="22" font-weight="700" fill="#ffffff">&lt;&gt;</text>
+    <text x="626" y="68" font-family="'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="0.5" fill="#ffffff">900+ MEMBERS</text>
+  </g>
+
+  <!-- wordmark -->
+  <text x="48" y="150" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="66" font-weight="900" letter-spacing="-1" fill="#111111">BROCK</text>
+  <text x="300" y="150" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="66" font-weight="900" letter-spacing="-1" fill="#9A4440">CSC</text>
+  <!-- brand underline decoration under the red word -->
+  <rect x="300" y="159" width="134" height="9" rx="1" fill="#9A4440" />
+
+  <!-- tagline: typewriter reveal via animated clip + moving caret -->
+  <clipPath id="tw">
+    <rect x="44" y="178" width="0" height="42">
+      <animate attributeName="width" from="0" to="380" dur="2s" begin="0.4s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.4 0 0.2 1" />
+    </rect>
+  </clipPath>
+  <g clip-path="url(#tw)">
+    <text x="48" y="206" font-family="'Courier New', ui-monospace, monospace" font-size="28" font-weight="700" fill="#333333">Code. Connect. Create.</text>
+  </g>
+  <rect x="48" y="180" width="4" height="34" fill="#9A4440">
+    <animate attributeName="x" from="48" to="424" dur="2s" begin="0.4s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines="0.4 0 0.2 1" />
+    <animate attributeName="opacity" values="1;1;0;1" keyTimes="0;0.55;0.75;1" dur="1s" begin="2.4s" repeatCount="indefinite" />
+  </rect>
+
+  <!-- pulsing "live" dot for the live event schedule callout -->
+  <circle cx="56" cy="236" r="6" fill="#16a34a" stroke="#000000" stroke-width="1.5">
+    <animate attributeName="r" values="5;8;5" dur="1.5s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.5;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" />
+    <animate attributeName="opacity" values="1;0.55;1" dur="1.5s" repeatCount="indefinite" />
+  </circle>
+  <text x="74" y="241" font-family="'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="700" letter-spacing="2" fill="#555555">LIVE EVENT SCHEDULE · TORONTO TIME</text>
+</svg>
