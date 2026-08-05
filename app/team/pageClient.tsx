@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   fetchCurrentExecs,
@@ -13,6 +13,34 @@ import { sortCurrentExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
 import { TeamMemberCard } from "./components/team-member-card";
 
 type TeamMember = WithKey<ExecRecord>;
+
+const UNDATED_TERM = "Previous Executives";
+
+const groupPreviousExecsByTerm = (
+  execs: TeamMember[],
+): { term: string; members: TeamMember[] }[] => {
+  const groups = new Map<string, TeamMember[]>();
+
+  for (const member of execs) {
+    const term = member.term?.trim() || UNDATED_TERM;
+    const existing = groups.get(term);
+    if (existing) {
+      existing.push(member);
+    } else {
+      groups.set(term, [member]);
+    }
+  }
+
+  const dated = Array.from(groups.entries())
+    .filter(([term]) => term !== UNDATED_TERM)
+    .sort(([a], [b]) => b.localeCompare(a));
+  const undated = groups.get(UNDATED_TERM);
+
+  return [
+    ...dated.map(([term, members]) => ({ term, members })),
+    ...(undated ? [{ term: UNDATED_TERM, members: undated }] : []),
+  ];
+};
 
 export default function TeamPageClient() {
   const [currentExecs, setCurrentExecs] = useState<TeamMember[]>([]);
@@ -60,6 +88,10 @@ export default function TeamPageClient() {
 
   const hasCurrentExecs = currentExecs.length > 0;
   const hasPreviousExecs = previousExecs.length > 0;
+  const previousExecGroups = useMemo(
+    () => groupPreviousExecsByTerm(previousExecs),
+    [previousExecs],
+  );
   const errorMessage = error ? (
     <p className="mb-4 text-muted-foreground">{error}</p>
   ) : null;
@@ -120,9 +152,22 @@ export default function TeamPageClient() {
         )}
 
         {hasPreviousExecs && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-            {previousExecs.map((member) => (
-              <TeamMemberCard isAlumni key={member.$key} member={member} />
+          <div className="flex flex-col gap-4">
+            {previousExecGroups.map((group) => (
+              <section key={group.term}>
+                <h3 className="mb-2 text-base font-semibold text-foreground/80">
+                  {group.term}
+                </h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                  {group.members.map((member) => (
+                    <TeamMemberCard
+                      isAlumni
+                      key={member.$key}
+                      member={member}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}

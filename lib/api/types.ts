@@ -19,6 +19,7 @@ export type ExecRecord = {
   title?: string;
   description?: string;
   isCurrentExec?: boolean;
+  term?: string;
   socials?: ExecSocialLinks;
   image?: {
     url?: string;

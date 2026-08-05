@@ -24,6 +24,7 @@ export default function ExecModal({
   const [isPast, setIsPast] = useState(
     selectedExec ? !(selectedExec.isCurrentExec ?? true) : false,
   );
+  const [term, setTerm] = useState(selectedExec?.term ?? "");
   const [github, setGithub] = useState(selectedExec?.socials?.github ?? "");
   const [linkedin, setLinkedin] = useState(
     selectedExec?.socials?.linkedin ?? "",
@@ -46,6 +47,7 @@ export default function ExecModal({
         description,
         title,
         isCurrentExec: !isPast,
+        term: isPast ? term : "",
         image: { url: photoUrl },
         socials: { github, linkedin, instagram, x: twitter },
       };
@@ -127,6 +129,20 @@ export default function ExecModal({
             </select>
           </div>
         </div>
+        {isPast && (
+          <div className="mb-4">
+            <label className="block text-sm font-semibold mb-1">
+              Term (e.g. 2016-2017)
+            </label>
+            <input
+              type="text"
+              className="w-full rounded border px-3 py-2"
+              placeholder="2016-2017"
+              value={term}
+              onChange={(e) => setTerm(e.target.value)}
+            />
+          </div>
+        )}
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-1">Github URL</label>
           <input
