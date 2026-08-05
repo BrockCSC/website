@@ -3,16 +3,22 @@
 # exported by the calling step, and needs jq + curl on PATH.
 
 # POST $1=path $2=json body. Prints the response body on success. On HTTP
-# >= 400, prints the real status + response body via ::error:: and returns
-# non-zero, instead of curl -sf's bare, contextless exit code.
+# >= 400, prints the real status + response body and returns non-zero,
+# instead of curl -sf's bare, contextless exit code. Pass $3=quiet to
+# suppress the ::error:: annotation for calls where failure is expected
+# and handled by the caller (e.g. probing whether something exists).
 komodo() {
-  local path="$1" body="$2" resp status
+  local path="$1" body="$2" quiet="${3:-}" resp status
   resp="$(mktemp)"
   status=$(curl -s -o "$resp" -w '%{http_code}' -X POST "$KOMODO_HOST$path" \
     -H "Content-Type: application/json" -H "x-api-key: $KOMODO_API_KEY" -H "x-api-secret: $KOMODO_API_SECRET" \
     -d "$body")
   if [ "$status" -ge 400 ]; then
-    echo "::error::POST $path -> HTTP $status: $(cat "$resp")"
+    if [ "$quiet" = "quiet" ]; then
+      echo "POST $path -> HTTP $status: $(cat "$resp")"
+    else
+      echo "::error::POST $path -> HTTP $status: $(cat "$resp")"
+    fi
     rm -f "$resp"
     return 1
   fi

@@ -1,0 +1,47 @@
+name: Cleanup
+
+on:
+  delete:
+
+concurrency:
+  group: cleanup-${{ github.event.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cleanup:
+    if: github.event.ref_type == 'branch' && github.event.ref != 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - id: ctx
+        env:
+          BRANCH: ${{ github.event.ref }}
+        run: |
+          SLUG=$(echo "$BRANCH" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-40)
+          echo "stack_name=brockcsc-pr-$SLUG" >> "$GITHUB_OUTPUT"
+          echo "db_schema=preview_${SLUG//-/_}" >> "$GITHUB_OUTPUT"
+
+      - name: Delete Komodo stack
+        env:
+          KOMODO_HOST: ${{ vars.KOMODO_HOST }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
+        run: |
+          source .github/scripts/komodo.sh
+          komodo /write "$(jq -n --arg id "${{ steps.ctx.outputs.stack_name }}" '{type:"DeleteStack", params:{id:$id}}')" \
+            || echo "::warning::DeleteStack failed (stack may not exist) - continuing, the daily sweep will catch it"
+
+      - name: Drop preview schema
+        env:
+          SSH_KEY: ${{ secrets.BROCKCSC_DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ vars.BROCKCSC_DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.BROCKCSC_DEPLOY_USER }}
+          DB_SCHEMA: ${{ steps.ctx.outputs.db_schema }}
+        run: |
+          install -m 600 -D /dev/null ~/.ssh/id_deploy
+          echo "$SSH_KEY" > ~/.ssh/id_deploy
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i ~/.ssh/id_deploy "$DEPLOY_USER@$DEPLOY_HOST" \
+            "docker exec postgres psql -U brockcsc -d brockcsc -c \"DROP SCHEMA IF EXISTS $DB_SCHEMA CASCADE;\"" \
+            || echo "::warning::Schema drop failed - continuing, the daily sweep will catch it"

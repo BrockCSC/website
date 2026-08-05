@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Users, FileText, User } from "lucide-react";
 import { InfoCardButton } from "@/components/ui/info-card-button";
 import { fetchCurrentExecs, type ExecRecord, type WithKey } from "@/lib/api";
@@ -71,12 +72,14 @@ export function AboutUsSection() {
                 key={exec.$key}
                 className="relative group flex justify-center"
               >
-                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-black bg-neutral-100 flex items-center justify-center overflow-hidden shadow-[3px_3px_0_0_#9A4440] transition-transform group-hover:-translate-y-1 duration-300">
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-black bg-neutral-100 flex items-center justify-center overflow-hidden shadow-[3px_3px_0_0_#9A4440] transition-transform group-hover:-translate-y-1 duration-300">
                   {exec.image?.url ? (
-                    <img
+                    <Image
                       src={exec.image.url}
                       alt={exec.name || "Exec Member"}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      fill
+                      unoptimized
+                      className="object-cover transition-transform duration-300 group-hover:scale-110"
                     />
                   ) : (
                     <User

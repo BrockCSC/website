@@ -1,4 +1,4 @@
-name: CI
+name: Build & Deploy
 
 on:
   push:
@@ -6,15 +6,15 @@ on:
     tags: ["v*"]
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: deploy-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -52,8 +52,8 @@ jobs:
       name: ${{ needs.context.outputs.env_name }}
       url: ${{ needs.context.outputs.url }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
 
@@ -70,12 +70,15 @@ jobs:
         run: |
           source .github/scripts/komodo.sh
 
-          # Creating an already-existing Variable 4xxs on every run after the
-          # first - expected, so this only warns rather than failing the step.
           sync_var() {
-            komodo /write "$(jq -n --arg name "$1" --arg value "$2" --argjson is_secret "$3" \
-              '{type:"CreateVariable", params:{name:$name, value:$value, is_secret:$is_secret}}')" \
-              || echo "::warning::CreateVariable $1 failed (likely already exists, see error above) - continuing"
+            local name="$1" value="$2" is_secret="$3"
+            if komodo /read "$(jq -n --arg name "$name" '{type:"GetVariable", params:{name:$name}}')" quiet >/dev/null; then
+              komodo /write "$(jq -n --arg name "$name" --arg value "$value" \
+                '{type:"UpdateVariableValue", params:{name:$name, value:$value}}')" >/dev/null
+            else
+              komodo /write "$(jq -n --arg name "$name" --arg value "$value" --argjson is_secret "$is_secret" \
+                '{type:"CreateVariable", params:{name:$name, value:$value, is_secret:$is_secret}}')" >/dev/null
+            fi
           }
 
           sync_var BROCKCSC_DB_PASSWORD "$VAL_BROCKCSC_DB_PASSWORD" true

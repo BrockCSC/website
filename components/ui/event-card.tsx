@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { ArrowUpRight } from "lucide-react";
 
@@ -25,16 +26,20 @@ export function EventCard({
       >
         {imageUrl ? (
           <>
-            <img
+            <Image
               src={imageUrl}
               alt=""
               aria-hidden="true"
-              className="absolute inset-0 w-full h-full object-cover blur-xl opacity-40 scale-110 pointer-events-none transition-transform duration-500 group-hover/card:scale-125"
+              fill
+              unoptimized
+              className="object-cover blur-xl opacity-40 scale-110 pointer-events-none transition-transform duration-500 group-hover/card:scale-125"
             />
-            <img
+            <Image
               src={imageUrl}
               alt={title}
-              className="relative z-10 w-full h-full object-contain transition-transform duration-500 group-hover/card:scale-105"
+              fill
+              unoptimized
+              className="z-10 object-contain transition-transform duration-500 group-hover/card:scale-105"
             />
           </>
         ) : (
