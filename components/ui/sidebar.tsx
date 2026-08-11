@@ -2,21 +2,58 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 
+// Each id must match an element id in the guide page; the scroll-spy observer
+// resolves these directly rather than scanning for sections.
+const navItems = [
+  { name: "Introduction", id: "introduction", indent: false },
+  { name: "Course Registration", id: "registration", indent: false },
+  { name: "Course Codes", id: "course-codes", indent: true },
+  { name: "Common Course Types", id: "common-course-types", indent: true },
+  { name: "Course Durations", id: "course-duration", indent: true },
+  { name: "Sections", id: "course-sections", indent: true },
+  { name: "Context Credits", id: "context-credits", indent: true },
+  { name: "Program Requirements", id: "requirements", indent: false },
+  { name: "Bachelor of Computer Science", id: "bachelor", indent: true },
+  { name: "Minor in Applied Computing", id: "minor-computing", indent: true },
+  { name: "Double Major", id: "double-major", indent: true },
+  { name: "Courses", id: "courses", indent: true },
+  {
+    name: "Resources and Opportunities",
+    id: "resources-opportunities",
+    indent: false,
+  },
+  { name: "Resources", id: "resources", indent: true },
+  { name: "Opportunities", id: "opportunities", indent: true },
+];
+
 export default function Sidebar() {
   const [activeId, setActiveId] = useState("introduction");
 
   useEffect(() => {
-    const sections = document.querySelectorAll("section[id]");
+    const targets = navItems
+      .map((item) => document.getElementById(item.id))
+      .filter((el) => el !== null);
+
+    // Tracks every target currently crossing the viewport midline, keyed by id.
+    // The observer callback only reports entries that changed, so the full set
+    // has to be accumulated here.
+    const crossing = new Map<string, number>();
 
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = Array.from(entries)
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            crossing.set(entry.target.id, entry.boundingClientRect.top);
+          } else {
+            crossing.delete(entry.target.id);
+          }
+        }
 
-        if (visible.length > 0) {
-          const current = visible[0].target.id;
-          setActiveId((prev) => (prev !== current ? current : prev));
+        // Lowest target wins, so an id nested inside another section takes
+        // precedence over its parent.
+        const current = [...crossing.entries()].sort((a, b) => b[1] - a[1])[0];
+        if (current) {
+          setActiveId((prev) => (prev !== current[0] ? current[0] : prev));
         }
       },
       {
@@ -25,7 +62,7 @@ export default function Sidebar() {
       },
     );
 
-    sections.forEach((section) => observer.observe(section));
+    targets.forEach((el) => observer.observe(el));
 
     return () => observer.disconnect();
   }, []);
@@ -42,28 +79,6 @@ export default function Sidebar() {
     setActiveId(id);
     setIsOpen(false);
   };
-
-  const navItems = [
-    { name: "Introduction", id: "introduction", indent: false },
-    { name: "Course Registration", id: "registration", indent: false },
-    { name: "Course Codes", id: "course-codes", indent: true },
-    { name: "Common Course Types", id: "common-course-types", indent: true },
-    { name: "Course Durations", id: "course-duration", indent: true },
-    { name: "Sections", id: "course-sections", indent: true },
-    { name: "Context Credits", id: "context-credits", indent: true },
-    { name: "Program Requirements", id: "requirements", indent: false },
-    { name: "Bachelor of Computer Science", id: "bachelor", indent: true },
-    { name: "Minor in Applied Computing", id: "minor-computing", indent: true },
-    { name: "Double Major", id: "double-major", indent: true },
-    { name: "Courses", id: "courses", indent: true },
-    {
-      name: "Resources and Opportunities",
-      id: "resources-opportunities",
-      indent: false,
-    },
-    { name: "Resources", id: "resources", indent: true },
-    { name: "Opportunities", id: "opportunities", indent: true },
-  ];
 
   return (
     <>

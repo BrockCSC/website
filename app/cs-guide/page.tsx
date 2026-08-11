@@ -291,27 +291,27 @@ const Guide: React.FC = () => {
           {/* Program Requirements*/}
           <section id="requirements" className="mb-20">
             <h1 className="text-4xl font-bold mb-6">Program Requirements</h1>
-            <h2
-              id="bachelor"
-              className="text-2xl font-bold mb-8 flex items-center gap-3"
-            >
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
-              Credit Requirements for Bachelor of Science, Computer Science
-            </h2>
 
-            <Table data={requirements as TableData} mobileVariant="scroll" />
+            <section id="bachelor">
+              <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+                <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+                Credit Requirements for Bachelor of Science, Computer Science
+              </h2>
 
-            <div className="mt-6 mb-8">
-              <Callout>
-                ⚠ Note: These requirements are subject to change. If you&apos;re
-                in a specialized major then this could be different for you. Use
-                this chart in tandem with the{" "}
-                <a className={linkStyle} href="https://calendar.brocku.ca/">
-                  course calendar
-                </a>{" "}
-                to achieve your degree requirements.
-              </Callout>
-            </div>
+              <Table data={requirements as TableData} mobileVariant="scroll" />
+
+              <div className="mt-6 mb-8">
+                <Callout>
+                  ⚠ Note: These requirements are subject to change. If
+                  you&apos;re in a specialized major then this could be
+                  different for you. Use this chart in tandem with the{" "}
+                  <a className={linkStyle} href="https://calendar.brocku.ca/">
+                    course calendar
+                  </a>{" "}
+                  to achieve your degree requirements.
+                </Callout>
+              </div>
+            </section>
           </section>
 
           {/* Minor in Applied Computing*/}
