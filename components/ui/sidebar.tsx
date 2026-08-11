@@ -58,7 +58,7 @@ export default function Sidebar() {
     { name: "Courses", id: "courses", indent: true },
     {
       name: "Resources and Opportunities",
-      id: "resources-oportunities",
+      id: "resources-opportunities",
       indent: false,
     },
     { name: "Resources", id: "resources", indent: true },
@@ -69,6 +69,9 @@ export default function Sidebar() {
     <>
       <button
         onClick={toggleMenu}
+        aria-label={isOpen ? "Close guide navigation" : "Open guide navigation"}
+        aria-expanded={isOpen}
+        aria-controls="guide-nav"
         className={`lg:hidden fixed right-4 z-50 p-2 bg-white border-2 border-black shadow-[3px_3px_0_#000] rounded-xl ${
           isOpen ? "top-5" : "top-25"
         }`}
@@ -86,6 +89,7 @@ export default function Sidebar() {
       `}
       >
         <nav
+          id="guide-nav"
           className={`
           space-y-2 p-6 lg:p-0 
           flex flex-col h-full 
@@ -102,7 +106,7 @@ export default function Sidebar() {
                     ${
                       item.indent
                         ? "ml-6 w-[calc(100%-1.5rem)] text-sm px-2 py-1 my-1"
-                        : "w-full px-4 py-3 lg:py-3 py-4 text-lg lg:text-base"
+                        : "w-full px-4 py-4 lg:py-3 text-lg lg:text-base"
                     }
                     ${activeId === item.id ? activeStyle : defaultStyle}
                     `}

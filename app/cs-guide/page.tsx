@@ -3,7 +3,6 @@ import type { VariantProps } from "class-variance-authority";
 import { Table, type TableData } from "@/components/ui/table";
 import { Badge, badgeVariants } from "@/components/ui/badge";
 import Sidebar from "@/components/ui/sidebar";
-import Link from "next/link";
 import durations from "@/data/courseDurations.json";
 import requirements from "@/data/programRequirements.json";
 import courses from "@/data/courses.json";
@@ -21,49 +20,50 @@ const Guide: React.FC = () => {
           <section id="introduction" className="mb-16">
             <h1 className="text-4xl font-bold mb-6">Brock CS Student Guide</h1>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg">
-              Hello there, We are thrilled to have you here! Whether you&apos;re
-              new or returning, our mission is to empower students with the
-              skills, knowledge, and connections necessary to excel in Computer
-              Science (CS) and enhance their university experience. We achieve
-              this through workshops on trending technologies,
-              community-building activities, and opportunities to apply your
-              knowledge in real-world scenarios.<br></br>
-              <br></br>
-              This guide is designed to help you successfully navigate the CS
-              seas as a student at Brock University .<br></br>
-              <br></br>
-              Throughout the guide, we will review everything you need to know
-              about the Computer Science Program. This is an open-source guide
-              for Computer Science students at Brock University. We encourage
-              and appreciate everyone’s contributions to its continuous growth
-              and development.<br></br>
-              <br></br>
-            </div>
+            <Prose>
+              <p>
+                Hello there, We are thrilled to have you here! Whether
+                you&apos;re new or returning, our mission is to empower students
+                with the skills, knowledge, and connections necessary to excel
+                in Computer Science (CS) and enhance their university
+                experience. We achieve this through workshops on trending
+                technologies, community-building activities, and opportunities
+                to apply your knowledge in real-world scenarios.
+              </p>
+              <p>
+                This guide is designed to help you successfully navigate the CS
+                seas as a student at Brock University.
+              </p>
+              <p>
+                Throughout the guide, we will review everything you need to know
+                about the Computer Science Program. This is an open-source guide
+                for Computer Science students at Brock University. We encourage
+                and appreciate everyone’s contributions to its continuous growth
+                and development.
+              </p>
+            </Prose>
           </section>
 
           {/* COURSE REGISTRATION */}
           <section id="registration" className="mb-12">
             <h1 className="text-4xl font-bold mb-6">Course Registration</h1>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg">
-              As a first-year student, one of your first tasks is to register
-              for your courses. This section is here to guide you through that
-              process.
-              <br />
-              <br />
-              Start by checking the course requirements in the{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://calendar.brocku.ca/"
-              >
-                undergraduate calendar
-              </a>
-              . Familiarise yourself with the page, including program notes and
-              hyperlinks, to get comfortable with the layout and information.
-              <br />
-              <br />
-            </div>
+            <Prose>
+              <p>
+                As a first-year student, one of your first tasks is to register
+                for your courses. This section is here to guide you through that
+                process.
+              </p>
+              <p>
+                Start by checking the course requirements in the{" "}
+                <a className={linkStyle} href="https://calendar.brocku.ca/">
+                  undergraduate calendar
+                </a>
+                . Familiarise yourself with the page, including program notes
+                and hyperlinks, to get comfortable with the layout and
+                information.
+              </p>
+            </Prose>
           </section>
 
           {/* COURSE CODES  */}
@@ -73,15 +73,16 @@ const Guide: React.FC = () => {
               Course Codes
             </h2>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              In your course requirements, you will see a bunch of course codes
-              and it is crucial to know how these courses are structured.
-              <br />
-              <br />
-              For Example: The COSC 1P02 course code can be broken down as,
-              <br />
-              <br />
-            </div>
+            <Prose className="mb-8">
+              <p>
+                In your course requirements, you will see a bunch of course
+                codes and it is crucial to know how these courses are
+                structured.
+              </p>
+              <p>
+                For Example: The COSC 1P02 course code can be broken down as,
+              </p>
+            </Prose>
 
             <div className="space-y-4">
               <CourseRow
@@ -178,8 +179,10 @@ const Guide: React.FC = () => {
                 <p className="text-neutral-600">Only required for co-op</p>
               </div>
             </div>
-            <div className="mt-6 border border-yellow-400 bg-yellow-50 rounded-xl px-6 py-4 text-sm text-yellow-800">
-              ⚠ Note: Every Major program requires 20 credits to graduate.{" "}
+            <div className="mt-6">
+              <Callout>
+                ⚠ Note: Every Major program requires 20 credits to graduate.
+              </Callout>
             </div>
           </section>
 
@@ -189,12 +192,13 @@ const Guide: React.FC = () => {
               <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
               Course Durations
             </h2>
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              Courses are offered during various times throughout the year and
-              it is important to know which duration refers to which time
-              period. <br></br>
-              <br></br>
-            </div>
+            <Prose className="mb-8">
+              <p>
+                Courses are offered during various times throughout the year and
+                it is important to know which duration refers to which time
+                period.
+              </p>
+            </Prose>
             <Table data={durations as TableData} mobileVariant="stack" />
           </section>
 
@@ -204,14 +208,15 @@ const Guide: React.FC = () => {
               <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
               Sections
             </h2>
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              Some courses are large and divided into sections for lectures,
-              seminars, labs, or marking purposes. Sections might have different
-              instructors but cover the same material. If you want to be in the
-              same class as a friend, make sure to enrol in the same section.
-              <br></br>
-              <br></br>
-            </div>
+            <Prose className="mb-8">
+              <p>
+                Some courses are large and divided into sections for lectures,
+                seminars, labs, or marking purposes. Sections might have
+                different instructors but cover the same material. If you want
+                to be in the same class as a friend, make sure to enrol in the
+                same section.
+              </p>
+            </Prose>
           </section>
 
           {/* Context Credits*/}
@@ -220,51 +225,54 @@ const Guide: React.FC = () => {
               <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
               Context Credits
             </h2>
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              All students must include one credit (or two half-credits) from
-              the list of Humanities, Social Sciences and Sciences Context
-              Courses to fulfil their degree requirements.
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://brocku.ca/webcal/current/undergrad/areg.html#sec29"
-              >
-                Context Courses
-              </a>{" "}
-              are mandatory courses intended to provide you with a broad
-              educational background. For Computer Science students, the science
-              context credit is covered by the program requirements, so since
-              you are here you&apos;ll most likely need to focus on Humanities
-              and Social Sciences context credits.<br></br>
-              <br></br>
-              Students in four-year Honours professional programs must fulfil
-              context requirements by the end of the third year of the program.
-              All other students must have completed all three required context
-              courses within the first 10 credits. You can find the list of
-              context credits{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://brocku.ca/webcal/current/undergrad/areg.html#sec29"
-              >
-                here
-              </a>
-              . <br></br>
-              <br></br>
-              <div className="mt-6 border border-yellow-400 bg-yellow-50 rounded-xl px-6 py-4 text-sm text-yellow-800 mb-8">
+            <Prose className="mb-8">
+              <p>
+                All students must include one credit (or two half-credits) from
+                the list of Humanities, Social Sciences and Sciences Context
+                Courses to fulfil their degree requirements.{" "}
+                <a
+                  className={linkStyle}
+                  href="https://brocku.ca/webcal/current/undergrad/areg.html#sec29"
+                >
+                  Context Courses
+                </a>{" "}
+                are mandatory courses intended to provide you with a broad
+                educational background. For Computer Science students, the
+                science context credit is covered by the program requirements,
+                so since you are here you&apos;ll most likely need to focus on
+                Humanities and Social Sciences context credits.
+              </p>
+              <p>
+                Students in four-year Honours professional programs must fulfil
+                context requirements by the end of the third year of the
+                program. All other students must have completed all three
+                required context courses within the first 10 credits. You can
+                find the list of context credits{" "}
+                <a
+                  className={linkStyle}
+                  href="https://brocku.ca/webcal/current/undergrad/areg.html#sec29"
+                >
+                  here
+                </a>
+                .
+              </p>
+              <Callout>
                 ⚠ Note: This should be cross referenced with the{" "}
                 <a
-                  className="underline text-red-800 hover:decoration-2"
+                  className={linkStyle}
                   href="https://brocku.ca/guides-and-timetables/timetables/?session=fw&type=ug&level=all"
                 >
                   undergraduate timetable
                 </a>
                 , as sometimes the courses listed here are not always offered.
-              </div>
-              You can use the Course Planning Tool in your my.brocku.ca student
-              portal to check out all the courses that satisfy a particular
-              context credit and check whether there’s space available, it’s
-              waitlisted or it’s full. <br></br>
-              <br></br>
-              <div className="mt-6 border border-blue-400 bg-blue-50 rounded-xl px-6 py-4 text-sm text-blue-800 mb-8">
+              </Callout>
+              <p>
+                You can use the Course Planning Tool in your my.brocku.ca
+                student portal to check out all the courses that satisfy a
+                particular context credit and check whether there’s space
+                available, it’s waitlisted or it’s full.
+              </p>
+              <Callout tone="tip">
                 ⚠ Tip: When selecting a context credit, make sure to read the
                 course description and see that you are interested in the
                 course. We understand that sometimes you just want to learn
@@ -276,8 +284,8 @@ const Guide: React.FC = () => {
                 for the next semester or even the entire academic year. (In
                 Jay’s opinion, most of the time there’s no point in taking a
                 bird course, it’s a waste of time and money.)
-              </div>
-            </div>
+              </Callout>
+            </Prose>
           </section>
 
           {/* Program Requirements*/}
@@ -288,22 +296,21 @@ const Guide: React.FC = () => {
               className="text-2xl font-bold mb-8 flex items-center gap-3"
             >
               <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
-              Credit Requirements for Bahelors of Science, Computer Science
+              Credit Requirements for Bachelor of Science, Computer Science
             </h2>
 
             <Table data={requirements as TableData} mobileVariant="scroll" />
 
-            <div className="mt-6 border border-yellow-400 bg-yellow-50 rounded-xl px-6 py-4 text-sm text-yellow-800 mb-8">
-              ⚠ Note: These requirements are subject to change. If you&apos;re
-              in a specialized major then this could be different for you. Use
-              this chart in tandem with the{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://calendar.brocku.ca/"
-              >
-                course calendar
-              </a>{" "}
-              to achieve your degree requirements.
+            <div className="mt-6 mb-8">
+              <Callout>
+                ⚠ Note: These requirements are subject to change. If you&apos;re
+                in a specialized major then this could be different for you. Use
+                this chart in tandem with the{" "}
+                <a className={linkStyle} href="https://calendar.brocku.ca/">
+                  course calendar
+                </a>{" "}
+                to achieve your degree requirements.
+              </Callout>
             </div>
           </section>
 
@@ -313,22 +320,23 @@ const Guide: React.FC = () => {
               <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
               Minor in Applied Computing
             </h2>
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              <div className="mt-6 border border-yellow-400 bg-yellow-50 rounded-xl px-6 py-4 text-sm text-yellow-800 mb-8">
+            <Prose className="mb-8">
+              <Callout>
                 ⚠ Note: This is the only minor that the CS Department offers.
-              </div>
-              Students in other disciplines may obtain a minor in Applied
-              Computing within their degree program by completing the following
-              courses with a minimum 60 percent overall average: <br></br>
-              <br></br>
-              Four APCO and/or COSC credits. <br></br>
-              <br></br>
-              The applied computing minor is not available to Computer Science
-              students of any kind, and APCO classes are only available to COSC
-              students if they are cross listed as COSC classes, e.g. APCO 2P89
-              Internet Technologies is also COSC 2P89. <br></br>
-              <br></br>
-            </div>
+              </Callout>
+              <p>
+                Students in other disciplines may obtain a minor in Applied
+                Computing within their degree program by completing the
+                following courses with a minimum 60 percent overall average:
+              </p>
+              <p>Four APCO and/or COSC credits.</p>
+              <p>
+                The applied computing minor is not available to Computer Science
+                students of any kind, and APCO classes are only available to
+                COSC students if they are cross listed as COSC classes, e.g.
+                APCO 2P89 Internet Technologies is also COSC 2P89.
+              </p>
+            </Prose>
           </section>
 
           {/* Double Major*/}
@@ -338,30 +346,35 @@ const Guide: React.FC = () => {
               Double Major
             </h2>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              Consider a double major program as this might allow you to have
-              more direction in your non-core computer science courses, and it
-              may serve the advantage of allowing you to bypass courses such as
-              MATH1P06 and COSC4P61, and of course add more qualifications to
-              your resume. A popular pathway is the Computing and Business
-              degree, however you can pair computer science with most programs
-              in sciences, humanities, social sciences, and arts. <br></br>
-              <br></br>
-              <Link
-                className="underline text-red-800 hover:decoration-2"
-                href="https://calendar.brocku.ca/preview_program.php?catoid=23&poid=10350"
-              >
-                Double Major info
-              </Link>{" "}
-              <br></br>
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://brocku.ca/programs/undergraduate/computing-and-business/"
-              >
-                Computing and Business
-              </a>{" "}
-              <br></br>
-            </div>
+            <Prose className="mb-8">
+              <p>
+                Consider a double major program as this might allow you to have
+                more direction in your non-core computer science courses, and it
+                may serve the advantage of allowing you to bypass courses such
+                as MATH1P06 and COSC4P61, and of course add more qualifications
+                to your resume. A popular pathway is the Computing and Business
+                degree, however you can pair computer science with most programs
+                in sciences, humanities, social sciences, and arts.
+              </p>
+              <ul className="list-disc pl-5 space-y-1">
+                <li>
+                  <a
+                    className={linkStyle}
+                    href="https://calendar.brocku.ca/preview_program.php?catoid=23&poid=10350"
+                  >
+                    Double Major info
+                  </a>
+                </li>
+                <li>
+                  <a
+                    className={linkStyle}
+                    href="https://brocku.ca/programs/undergraduate/computing-and-business/"
+                  >
+                    Computing and Business
+                  </a>
+                </li>
+              </ul>
+            </Prose>
           </section>
 
           {/* Courses*/}
@@ -371,46 +384,56 @@ const Guide: React.FC = () => {
               Courses
             </h2>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              This is a list of all required COSC courses, their pre-requeisites
-              and the terms that they are generally offered in.<br></br>
-              <br></br>
-            </div>
-            <div className="mt-6 border border-yellow-400 bg-yellow-50 rounded-xl px-6 py-4 text-sm text-yellow-800 mb-8">
-              ⚠ Note: Do not rely on this alone, For the most up-to-date
-              information, consult: <br></br>
-              <br></br>
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://brocku.ca/guides-and-timetables/timetables/?session=fw&type=ug&level=all"
-              >
-                BrockU Time table
-              </a>{" "}
-              <br></br>
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://brocku.ca/webcal/current/undergrad/cosc.html"
-              >
-                Course Calendar
-              </a>{" "}
-              <br></br>
-              <br></br>
-              Not all classes are listed here, just classes that are required
-              for the completion of Bsc with a major in Computer Science, e.g. a
-              class that hasn&apos;t been offered in more than two years
-              won&apos;t be here
+            <Prose className="mb-8">
+              <p>
+                This is a list of all required COSC courses, their prerequisites
+                and the terms that they are generally offered in.
+              </p>
+            </Prose>
+            <div className="mt-6 mb-8">
+              <Callout>
+                <div className="space-y-3">
+                  <p>
+                    ⚠ Note: Do not rely on this alone, For the most up-to-date
+                    information, consult:
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1">
+                    <li>
+                      <a
+                        className={linkStyle}
+                        href="https://brocku.ca/guides-and-timetables/timetables/?session=fw&type=ug&level=all"
+                      >
+                        BrockU Time table
+                      </a>
+                    </li>
+                    <li>
+                      <a
+                        className={linkStyle}
+                        href="https://brocku.ca/webcal/current/undergrad/cosc.html"
+                      >
+                        Course Calendar
+                      </a>
+                    </li>
+                  </ul>
+                  <p>
+                    Not all classes are listed here, just classes that are
+                    required for the completion of Bsc with a major in Computer
+                    Science, e.g. a class that hasn&apos;t been offered in more
+                    than two years won&apos;t be here
+                  </p>
+                </div>
+              </Callout>
             </div>
 
             <Table data={courses as TableData} mobileVariant="stack" />
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8 mt-8">
-              Here are some other helpful links, <br></br>
-              <br></br>
-              <ul>
+            <Prose className="mb-8 mt-8">
+              <p>Here are some other helpful links,</p>
+              <ul className="list-disc pl-5 space-y-1">
                 <li>
                   <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href=""
+                    className={linkStyle}
+                    href="https://brocku.ca/webcal/current/undergrad/cosc.html"
                   >
                     List of different degrees and specializations in Computer
                     Science with their course requirements.
@@ -418,18 +441,18 @@ const Guide: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href=""
+                    className={linkStyle}
+                    href="https://brocku.ca/mathematics-science/computer-science/"
                   >
                     Computer Science Department website.
                   </a>
                 </li>
               </ul>
-            </div>
+            </Prose>
           </section>
 
           {/* ADDITIONAL RESOURCES AND OPPORTUNITIES (PARENT INTRO ONLY) */}
-          <section id="resources-oportunities" className="mb-16">
+          <section id="resources-opportunities" className="mb-16">
             <h1 className="text-4xl font-bold mb-6">
               Additional Resources and Opportunities
             </h1>
@@ -442,132 +465,140 @@ const Guide: React.FC = () => {
               Resources
             </h2>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              <strong>Computer Science Club</strong>
-              <br />
-              <br />A great place to start and get a student&apos;s perspective
-              on things and to stay up to date about the latest opportunities is
-              by keeping in touch with the Computer Science Club. Make sure to
-              follow us on{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://www.instagram.com/brockcsc/"
-              >
-                Instagram
-              </a>{" "}
-              and join our{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://discord.gg/a8nWyZAY9T"
-              >
-                Discord
-              </a>{" "}
-              to stay connected.
-              <br />
-              <br />
-              <strong>Computer Science Help Desk</strong>
-              <br />
-              <br />
-              The Computer Science Department hosts a Help Desk in MCJ 328. This
-              allows you to receive one-on-one support for any Computer Science
-              course-related questions. The Help Desk schedule can be found{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="http://brocku.ca/mathematics-science/computer-science/helpdesk_schedule/"
-              >
-                here
-              </a>
-              .
-              <br />
-              <br />
-              <strong>Learning Services</strong>
-              <br />
-              <br />
-              Learning Services increases academic success and retention of all
-              students at Brock University. Check them out{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://brocku.ca/student-life-success/learning-services/"
-              >
-                here
-              </a>
-              .
-              <br />
-              <br />
-              <strong>Professors</strong>
-              <br />
-              <br />
-              One of the most underrated resources. Don’t hesitate to reach out,
-              attend office hours, and ask questions.
-              <br />
-              <br />
-              <strong>Goodies</strong>
-              <br />
-              <br />
-              Many free trials and tools are available to you as a CS student:
-              <br />
-              <br />
-              <ul>
-                <li>
+            <Prose className="mb-8">
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">
+                  Computer Science Club
+                </h3>
+                <p>
+                  A great place to start and get a student&apos;s perspective on
+                  things and to stay up to date about the latest opportunities
+                  is by keeping in touch with the Computer Science Club. Make
+                  sure to follow us on{" "}
                   <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://brocku.ca/information-technology/office-365-log-in/"
+                    className={linkStyle}
+                    href="https://www.instagram.com/brockcsc/"
                   >
-                    Office 365
+                    Instagram
                   </a>{" "}
-                  - Free access + 5TB OneDrive
-                </li>
-                <li>
+                  and join our{" "}
+                  <a className={linkStyle} href="https://discord.gg/a8nWyZAY9T">
+                    Discord
+                  </a>{" "}
+                  to stay connected.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">
+                  Computer Science Help Desk
+                </h3>
+                <p>
+                  The Computer Science Department hosts a Help Desk in MCJ 328.
+                  This allows you to receive one-on-one support for any Computer
+                  Science course-related questions. The Help Desk schedule can
+                  be found{" "}
                   <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://education.github.com/pack"
+                    className={linkStyle}
+                    href="http://brocku.ca/mathematics-science/computer-science/helpdesk_schedule/"
                   >
-                    GitHub Student Developer Pack
+                    here
                   </a>
-                </li>
-                <li>
+                  .
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">
+                  Learning Services
+                </h3>
+                <p>
+                  Learning Services increases academic success and retention of
+                  all students at Brock University. Check them out{" "}
                   <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://www.linkedin.com/learning/"
+                    className={linkStyle}
+                    href="https://brocku.ca/student-life-success/learning-services/"
                   >
-                    LinkedIn Learning
+                    here
                   </a>
-                </li>
-                <li>
-                  <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://www.studentappcentre.com/App/1Password"
-                  >
-                    1Password Trial
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://www.amazon.ca/amazonprime?primeCampaignId=studentWlpPrimeRedir"
-                  >
-                    Amazon Prime Student
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://www.figma.com/education/"
-                  >
-                    Figma
-                  </a>
-                </li>
-                <li>
-                  <a
-                    className="underline text-red-800 hover:decoration-2"
-                    href="https://www.spotify.com/ca-en/student/"
-                  >
-                    Spotify Student
-                  </a>
-                </li>
-                <li>Local student discounts (e.g., Rogers Wireless)</li>
-              </ul>
-            </div>
+                  .
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">
+                  Professors
+                </h3>
+                <p>
+                  One of the most underrated resources. Don’t hesitate to reach
+                  out, attend office hours, and ask questions.
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">Goodies</h3>
+                <p className="mb-2">
+                  Many free trials and tools are available to you as a CS
+                  student:
+                </p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://brocku.ca/information-technology/office-365-log-in/"
+                    >
+                      Office 365
+                    </a>{" "}
+                    - Free access + 5TB OneDrive
+                  </li>
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://education.github.com/pack"
+                    >
+                      GitHub Student Developer Pack
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://www.linkedin.com/learning/"
+                    >
+                      LinkedIn Learning
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://www.studentappcentre.com/App/1Password"
+                    >
+                      1Password Trial
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://www.amazon.ca/amazonprime?primeCampaignId=studentWlpPrimeRedir"
+                    >
+                      Amazon Prime Student
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://www.figma.com/education/"
+                    >
+                      Figma
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      className={linkStyle}
+                      href="https://www.spotify.com/ca-en/student/"
+                    >
+                      Spotify Student
+                    </a>
+                  </li>
+                  <li>Local student discounts (e.g., Rogers Wireless)</li>
+                </ul>
+              </div>
+            </Prose>
           </section>
 
           {/* OPPORTUNITIES */}
@@ -577,45 +608,49 @@ const Guide: React.FC = () => {
               Opportunities
             </h2>
 
-            <div className="border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg mb-8">
-              <strong>Experience BU</strong>
-              <br />
-              <br />
-              Find events, volunteering, and workshops.{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://experiencebu.brocku.ca/"
-              >
-                Check it out here
-              </a>
-              .
-              <br />
-              <br />
-              <strong>CareerZone</strong>
-              <br />
-              <br />
-              Apply for on-campus jobs and build transferable skills.{" "}
-              <a
-                className="underline text-red-800 hover:decoration-2"
-                href="https://careerzone.brocku.ca/myAccount/dashboard.htm"
-              >
-                Visit CareerZone
-              </a>
-              .
-              <br />
-              <br />
-              <div className="mt-6 border border-blue-400 bg-blue-50 rounded-xl px-6 py-4 text-sm text-blue-800">
+            <Prose className="mb-8">
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">
+                  Experience BU
+                </h3>
+                <p>
+                  Find events, volunteering, and workshops.{" "}
+                  <a
+                    className={linkStyle}
+                    href="https://experiencebu.brocku.ca/"
+                  >
+                    Check it out here
+                  </a>
+                  .
+                </p>
+              </div>
+              <div>
+                <h3 className="font-semibold text-neutral-900 mb-2">
+                  CareerZone
+                </h3>
+                <p>
+                  Apply for on-campus jobs and build transferable skills.{" "}
+                  <a
+                    className={linkStyle}
+                    href="https://careerzone.brocku.ca/myAccount/dashboard.htm"
+                  >
+                    Visit CareerZone
+                  </a>
+                  .
+                </p>
+              </div>
+              <Callout tone="tip">
                 ⚠ Quick Tip: Most job postings for next year appear in
                 January/February. Also check{" "}
                 <a
-                  className="underline text-red-800 hover:decoration-2"
+                  className={linkStyle}
                   href="https://brocku.wd3.myworkdayjobs.com/brocku_careers"
                 >
                   Workday
                 </a>{" "}
                 for TA roles and other listings.
-              </div>
-            </div>
+              </Callout>
+            </Prose>
           </section>
         </div>
       </div>
@@ -624,6 +659,44 @@ const Guide: React.FC = () => {
 };
 
 export default Guide;
+
+/* ---------- LAYOUT HELPERS ---------- */
+
+function Prose({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg space-y-4 ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
+function Callout({
+  tone = "warning",
+  children,
+}: {
+  tone?: "warning" | "tip";
+  children: React.ReactNode;
+}) {
+  const tones = {
+    warning: "border-yellow-400 bg-yellow-50 text-yellow-800",
+    tip: "border-blue-400 bg-blue-50 text-blue-800",
+  };
+  return (
+    <div className={`border rounded-xl px-6 py-4 text-sm ${tones[tone]}`}>
+      {children}
+    </div>
+  );
+}
+
+const linkStyle = "underline text-red-800 hover:decoration-2";
 
 /* ---------- SMALL COURSE ROW COMPONENT ---------- */
 
