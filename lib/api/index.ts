@@ -13,5 +13,11 @@ export {
   editEvent,
   deleteEvent,
 } from "./records";
-export { fetchCurrentUser, login, logout } from "./auth";
-export type { EventRecord, ExecRecord, SessionUser, WithKey } from "./types";
+export { fetchCurrentUser, login, logout, signup } from "./auth";
+export type {
+  EventRecord,
+  ExecRecord,
+  SessionUser,
+  SignupInput,
+  WithKey,
+} from "./types";
