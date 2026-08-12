@@ -47,3 +47,11 @@ export const requireAdmin = (req: NextRequest): SessionUser | null => {
   if (!user || !user.roles.includes(adminRole)) return null;
   return user;
 };
+
+/** Approving sign-ups is gated separately; bundle this with co-president. */
+export const requireApprover = (req: NextRequest): SessionUser | null => {
+  const user = getSessionUser(req);
+  const approverRole = process.env.APPROVER_ROLE ?? "brockcsc-approver";
+  if (!user || !user.roles.includes(approverRole)) return null;
+  return user;
+};

@@ -28,6 +28,23 @@ export type ExecRecord = {
   };
 };
 
+export type SignupStatus = "pending" | "approved" | "rejected";
+
+export type SignupRecord = {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  keycloakUserId?: string;
+  status?: SignupStatus;
+  /** Exec record this account is linked to once approved. */
+  execKey?: string;
+  submittedAt?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+};
+
 export type EventRecord = {
   title?: string;
   presenter?: string;

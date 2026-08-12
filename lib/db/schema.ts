@@ -11,3 +11,4 @@ const jsonbTable = (name: string) =>
 
 export const eventsTable = jsonbTable("events");
 export const execsTable = jsonbTable("execs");
+export const signupsTable = jsonbTable("signups");
