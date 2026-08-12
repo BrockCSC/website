@@ -35,16 +35,20 @@ export const PATCH = async (
     );
   }
 
-  if (signup.keycloakUserId) {
-    if (action === "approve") {
-      await setUserEnabled(signup.keycloakUserId, true);
-      await assignRealmRole(
-        signup.keycloakUserId,
-        process.env.ADMIN_ROLE ?? "brockcsc-admin",
+  if (action === "approve") {
+    if (!signup.keycloakUserId) {
+      return NextResponse.json(
+        { error: "No Keycloak account is linked to this request." },
+        { status: 422 },
       );
-    } else {
-      await deleteUser(signup.keycloakUserId);
     }
+    await setUserEnabled(signup.keycloakUserId, true);
+    await assignRealmRole(
+      signup.keycloakUserId,
+      process.env.ADMIN_ROLE ?? "brockcsc-admin",
+    );
+  } else if (signup.keycloakUserId) {
+    await deleteUser(signup.keycloakUserId);
   }
 
   const reviewed = await update<SignupRecord>(signupsTable, id, {
