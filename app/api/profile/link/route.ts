@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 import { requireAdmin } from "@/lib/auth/session";
 import { create, findById, update } from "@/lib/db/repository";
-import { findSignupByUserId } from "@/lib/db/signups";
+import { findSignupByUserId, isExecKeyClaimed } from "@/lib/db/signups";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 
 export const POST = async (req: NextRequest) => {
@@ -34,6 +34,11 @@ export const POST = async (req: NextRequest) => {
     key = exec.id;
   } else if (!key || !(await findById<ExecRecord>(execsTable, key))) {
     return NextResponse.json({ error: "Unknown exec" }, { status: 404 });
+  } else if (await isExecKeyClaimed(key)) {
+    return NextResponse.json(
+      { error: "Someone has already claimed that profile." },
+      { status: 409 },
+    );
   }
 
   await update<SignupRecord>(signupsTable, signup.id, { execKey: key });

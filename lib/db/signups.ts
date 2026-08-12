@@ -7,3 +7,8 @@ export const findSignupByUserId = async (keycloakUserId: string) =>
   (await findAll<SignupRecord>(signupsTable)).find(
     (signup) => signup.keycloakUserId === keycloakUserId,
   ) ?? null;
+
+export const isExecKeyClaimed = async (execKey: string) =>
+  (await findAll<SignupRecord>(signupsTable)).some(
+    (signup) => signup.execKey === execKey,
+  );
