@@ -1,5 +1,5 @@
 import { apiFetch } from "./client";
-import type { EventRecord, ExecRecord, WithKey } from "./types";
+import type { EventRecord, ExecRecord, SignupRecord, WithKey } from "./types";
 import { getEventStartTimestamp, getEventTiming } from "@/lib/events/schedule";
 
 export const fetchAllExecs = async (): Promise<WithKey<ExecRecord>[]> =>
@@ -95,3 +95,21 @@ export const createEvent = async (event: EventRecord): Promise<void> => {
 export const deleteEvent = async (eventId: string): Promise<void> => {
   await apiFetch(`/api/events/${eventId}`, { method: "DELETE" });
 };
+
+export const fetchSignups = async (): Promise<WithKey<SignupRecord>[]> =>
+  apiFetch<WithKey<SignupRecord>[]>("/api/signups");
+
+export const reviewSignup = async (
+  key: string,
+  action: "approve" | "reject",
+): Promise<void> => {
+  await apiFetch(`/api/signups/${key}`, {
+    method: "PATCH",
+    body: JSON.stringify({ action }),
+  });
+};
+
+export const fetchInviteCode = async (): Promise<{
+  code: string;
+  expiresInMs: number;
+}> => apiFetch("/api/invite-code");

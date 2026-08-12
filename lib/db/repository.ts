@@ -12,7 +12,7 @@ const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
   ...(row.data as T),
 });
 
-const toWireRecord = <T>(entity: Entity<T>) => {
+export const toWireRecord = <T>(entity: Entity<T>) => {
   const { id, ...rest } = entity;
   return { $key: id, ...rest };
 };
