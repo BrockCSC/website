@@ -10,6 +10,7 @@ const adminTabs = [
   { name: "Dashboard", href: "/admin" },
   { name: "Events Management", href: "/admin/events" },
   { name: "Executives Management", href: "/admin/execs" },
+  { name: "My Profile", href: "/admin/profile" },
 ];
 
 export default function AdminLayout({

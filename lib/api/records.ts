@@ -29,6 +29,28 @@ export const deleteExec = async (key: string): Promise<void> => {
   await apiFetch(`/api/execs/${key}`, { method: "DELETE" });
 };
 
+export const fetchProfile = async (): Promise<WithKey<ExecRecord> | null> =>
+  apiFetch<WithKey<ExecRecord> | null>("/api/profile");
+
+export const updateProfile = async (
+  exec: Partial<ExecRecord>,
+): Promise<void> => {
+  await apiFetch("/api/profile", {
+    method: "PATCH",
+    body: JSON.stringify(exec),
+  });
+};
+
+export const linkProfile = async (body: {
+  execKey?: string;
+  createNew?: boolean;
+}): Promise<void> => {
+  await apiFetch("/api/profile/link", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+};
+
 export const fetchAllEvents = async (): Promise<WithKey<EventRecord>[]> =>
   apiFetch<WithKey<EventRecord>[]>("/api/events");
 
