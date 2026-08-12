@@ -9,7 +9,7 @@ import {
   fetchPreviousExecs,
   WithKey,
 } from "@/lib/api";
-import { sortCurrentExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
+import { sortExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
 import ExecModal from "./exec-modal";
 import { ConfirmationModal } from "@/components/ui/modal";
 import { AdminTable, ColumnDef } from "@/components/ui/admin-table";
@@ -76,7 +76,7 @@ export default function ExecutivesManagementPage() {
         return;
       }
 
-      setCurrentExecs(sortCurrentExecsByRoleThenDatabaseOrder(current));
+      setCurrentExecs(sortExecsByRoleThenDatabaseOrder(current));
       setPreviousExecs(previous);
     } catch {
       if (!isActive()) {
