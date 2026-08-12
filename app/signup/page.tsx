@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { signup } from "@/lib/api";
-import { usernameFor } from "@/lib/auth/keycloak-admin";
+import { usernameFor } from "@/lib/auth/username";
 
 const Field = ({
   id,

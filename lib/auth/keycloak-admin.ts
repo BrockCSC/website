@@ -153,6 +153,4 @@ export const assignRealmRole = async (userId: string, roleName: string) => {
   }
 };
 
-/** firstname + lastname, lowercased, non-alphanumerics stripped. */
-export const usernameFor = (firstName: string, lastName: string): string =>
-  `${firstName}${lastName}`.toLowerCase().replace(/[^a-z0-9]/g, "");
+export { usernameFor } from "./username";
