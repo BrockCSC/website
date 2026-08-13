@@ -13,7 +13,37 @@ import { AdminTable, ColumnDef } from "@/components/ui/admin-table";
 import { Button } from "@/components/ui/button";
 import Modal, { ConfirmationModal } from "@/components/ui/modal";
 
-type Signup = WithKey<SignupRecord>;
+type ExecMatch = {
+  execKey: string;
+  name: string;
+  title?: string;
+  claimed: boolean;
+};
+
+type Signup = WithKey<SignupRecord> & { matchedExec?: ExecMatch | null };
+
+const identityCell = (signup: Signup) => {
+  const match = signup.matchedExec;
+  if (!match) {
+    return <span className="text-neutral-500">New — tile will be created</span>;
+  }
+  if (match.claimed) {
+    return (
+      <span className="font-semibold text-[#d44b4b]">
+        Claims {match.name}, already held by another account
+      </span>
+    );
+  }
+  return (
+    <span>
+      Claims existing{" "}
+      <strong>
+        {match.name}
+        {match.title ? ` — ${match.title}` : ""}
+      </strong>
+    </span>
+  );
+};
 
 const humanise = (ms: number): string => {
   const units = [
@@ -95,6 +125,7 @@ export default function SignupRequestsPage() {
 
   const pendingColumns: ColumnDef<Signup>[] = [
     ...details,
+    { header: "Identity", cell: identityCell },
     {
       header: "Actions",
       headerClassName: "text-center",
@@ -147,8 +178,9 @@ export default function SignupRequestsPage() {
       <div>
         <h1 className="text-2xl font-bold mb-2">Sign-up Requests</h1>
         <p className="text-neutral-500 mb-6">
-          Review executive sign-ups. Approving enables the account; rejecting
-          deletes it.
+          Review executive sign-ups. Approving enables the account and links it
+          to the team page tile matching their name, creating one if there is no
+          match. Rejecting deletes the account.
         </p>
 
         <div className="mb-8 rounded-2xl border-2 border-black bg-[#fff1f0] shadow-[4px_4px_0px_#9A4440] p-6">

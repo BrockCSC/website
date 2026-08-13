@@ -1,12 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { SignupRecord } from "@/lib/api/types";
+import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 import {
   assignRealmRole,
   deleteUser,
   setUserEnabled,
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
-import { findById, remove, toWireRecord, update } from "@/lib/db/repository";
+import { findExecMatchingName } from "@/lib/db/execs";
+import {
+  create,
+  findById,
+  remove,
+  toWireRecord,
+  update,
+} from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 
 export const PATCH = async (
@@ -51,8 +58,24 @@ export const PATCH = async (
     await deleteUser(signup.keycloakUserId);
   }
 
+  let execKey = signup.execKey;
+  if (action === "approve" && !execKey) {
+    const match = await findExecMatchingName(signup.firstName, signup.lastName);
+    if (match && !match.claimed) {
+      execKey = match.execKey;
+    } else {
+      const created = await create<ExecRecord>(execsTable, {
+        name: [signup.firstName, signup.lastName].filter(Boolean).join(" "),
+        title: "Executive",
+        isCurrentExec: true,
+      });
+      execKey = created.id;
+    }
+  }
+
   const reviewed = await update<SignupRecord>(signupsTable, id, {
     status: action === "approve" ? "approved" : "rejected",
+    execKey,
     reviewedBy: approver.email || approver.name,
     reviewedAt: new Date().toISOString(),
   });

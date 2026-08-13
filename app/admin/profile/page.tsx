@@ -1,22 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import {
-  ExecRecord,
-  WithKey,
-  fetchAllExecs,
-  fetchProfile,
-  linkProfile,
-  updateProfile,
-} from "@/lib/api";
+import { ExecRecord, WithKey, fetchProfile, updateProfile } from "@/lib/api";
 import { useEffect, useState } from "react";
 
 type TeamMember = WithKey<ExecRecord>;
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<TeamMember | null>(null);
-  const [execs, setExecs] = useState<TeamMember[]>([]);
-  const [claimKey, setClaimKey] = useState("");
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState("");
   const [term, setTerm] = useState("");
@@ -27,7 +18,6 @@ export default function ProfilePage() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [reloads, setReloads] = useState(0);
 
   useEffect(() => {
     void (async () => {
@@ -41,30 +31,13 @@ export default function ProfilePage() {
         setInstagram(exec?.socials?.instagram ?? "");
         setTwitter(exec?.socials?.x ?? "");
         setPhotoUrl(exec?.image?.url ?? "");
-        if (!exec) setExecs(await fetchAllExecs());
       } catch {
         setStatus("Couldn't load your profile. Please try again in a moment.");
       } finally {
         setLoading(false);
       }
     })();
-  }, [reloads]);
-
-  const handleLink = async (body: {
-    execKey?: string;
-    createNew?: boolean;
-  }) => {
-    setIsSaving(true);
-    setStatus(null);
-    try {
-      await linkProfile(body);
-      setReloads((n) => n + 1);
-    } catch {
-      setStatus("Couldn't link that tile. Please try again in a moment.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -93,43 +66,10 @@ export default function ProfilePage() {
     return (
       <div>
         <h1 className="text-2xl font-bold mb-2">My Profile</h1>
-        <p className="text-neutral-500 mb-6">
-          Your account isn&apos;t linked to a team page tile yet. Claim an
-          existing one or create a new tile.
+        <p className="text-neutral-500">
+          Your account isn&apos;t linked to a team page tile. Ask a co-president
+          to sort it out — tiles are linked when an account is approved.
         </p>
-        <div className="flex flex-col gap-4 max-w-md">
-          <select
-            className="rounded border px-3 py-2"
-            value={claimKey}
-            onChange={(e) => setClaimKey(e.target.value)}
-          >
-            <option value="">Select an existing tile</option>
-            {execs.map((exec) => (
-              <option key={exec.$key} value={exec.$key}>
-                {exec.name} {exec.title ? `— ${exec.title}` : ""}
-              </option>
-            ))}
-          </select>
-          <div className="flex gap-4">
-            <Button
-              variant="primary"
-              disabled={!claimKey || isSaving}
-              onClick={() => void handleLink({ execKey: claimKey })}
-            >
-              Claim this tile
-            </Button>
-            <Button
-              variant="secondary"
-              disabled={isSaving}
-              onClick={() => void handleLink({ createNew: true })}
-            >
-              Create a new tile
-            </Button>
-          </div>
-          {status && (
-            <p className="text-sm font-semibold text-red-600">{status}</p>
-          )}
-        </div>
       </div>
     );
   }

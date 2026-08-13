@@ -11,7 +11,6 @@ export {
   deleteExec,
   fetchProfile,
   updateProfile,
-  linkProfile,
   createEvent,
   editEvent,
   deleteEvent,

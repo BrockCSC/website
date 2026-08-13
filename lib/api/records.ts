@@ -41,16 +41,6 @@ export const updateProfile = async (
   });
 };
 
-export const linkProfile = async (body: {
-  execKey?: string;
-  createNew?: boolean;
-}): Promise<void> => {
-  await apiFetch("/api/profile/link", {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-};
-
 export const fetchAllEvents = async (): Promise<WithKey<EventRecord>[]> =>
   apiFetch<WithKey<EventRecord>[]>("/api/events");
 
