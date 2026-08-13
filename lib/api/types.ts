@@ -40,6 +40,8 @@ export type SignupInput = {
   lastName: string;
   email: string;
   phone: string;
+  studentId: string;
+  isFormerExec: boolean;
   password: string;
   confirmPassword: string;
 };
@@ -52,6 +54,9 @@ export type SignupRecord = {
   username?: string;
   email?: string;
   phone?: string;
+  studentId?: string;
+  /** Alumni have no Brock email or student number any more. */
+  isFormerExec?: boolean;
   keycloakUserId?: string;
   /** Shown once at sign-up; the approver checks it out-of-band. */
   confirmationCode?: string;
