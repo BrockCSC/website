@@ -2,9 +2,9 @@ import { eq, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { db } from "./index";
-import type { eventsTable, execsTable } from "./schema";
+import type { eventsTable, execsTable, signupsTable } from "./schema";
 
-type JsonbTable = typeof eventsTable | typeof execsTable;
+type JsonbTable = typeof eventsTable | typeof execsTable | typeof signupsTable;
 type Entity<T> = T & { id: string };
 
 const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({

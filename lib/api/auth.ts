@@ -1,7 +1,7 @@
 "use client";
 
 import { apiFetch, ApiError } from "./client";
-import type { SessionUser } from "./types";
+import type { SessionUser, SignupInput } from "./types";
 
 export const fetchCurrentUser = async (): Promise<SessionUser | null> => {
   try {
@@ -23,4 +23,17 @@ export const login = async (
 
 export const logout = async (): Promise<void> => {
   await apiFetch("/api/auth/logout", { method: "POST" });
+};
+
+/** Not apiFetch: the sign-up form shows the server's rejection reason. */
+export const signup = async (input: SignupInput): Promise<void> => {
+  const res = await fetch("/api/signup", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  if (!res.ok) {
+    const body = (await res.json().catch(() => ({}))) as { error?: string };
+    throw new Error(body.error ?? "Could not submit your request right now.");
+  }
 };

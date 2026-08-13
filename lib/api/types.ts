@@ -28,6 +28,16 @@ export type ExecRecord = {
   };
 };
 
+export type SignupInput = {
+  inviteCode: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
 export type SignupStatus = "pending" | "approved" | "rejected";
 
 export type SignupRecord = {
