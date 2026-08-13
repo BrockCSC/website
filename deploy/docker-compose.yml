@@ -11,6 +11,8 @@ services:
     container_name: ${PROJECT_NAME}-app
     restart: unless-stopped
     networks: [wayfarer-net]
+    volumes:
+      - uploads:/data/uploads
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - DB_SCHEMA=${DB_SCHEMA}
@@ -24,6 +26,7 @@ services:
       - SESSION_JWT_SECRET=${SESSION_JWT_SECRET}
       - INVITE_CODE_SECRET=${INVITE_CODE_SECRET}
       - PORT=3000
+      - UPLOAD_DIR=/data/uploads
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -36,3 +39,8 @@ services:
       - "traefik.http.routers.${PROJECT_NAME}-app.entrypoints=websecure"
       - "traefik.http.routers.${PROJECT_NAME}-app.tls.certresolver=letsencrypt"
       - "traefik.http.services.${PROJECT_NAME}-app.loadbalancer.server.port=3000"
+
+volumes:
+  uploads:
+    name: brockcsc-uploads
+    external: true

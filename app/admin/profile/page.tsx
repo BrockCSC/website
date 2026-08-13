@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { ExecRecord, WithKey, fetchProfile, updateProfile } from "@/lib/api";
 import { useEffect, useState } from "react";
 
@@ -175,15 +176,10 @@ export default function ProfilePage() {
           />
         </div>
         <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1">
-            Profile Photo URL
-          </label>
-          <input
-            type="url"
-            className="w-full rounded border px-3 py-2"
-            placeholder="https://example.com/photo.png"
+          <ImageUpload
+            label="Profile photo"
+            onChange={setPhotoUrl}
             value={photoUrl}
-            onChange={(e) => setPhotoUrl(e.target.value)}
           />
         </div>
         {status && <p className="mb-4 text-sm font-semibold">{status}</p>}
