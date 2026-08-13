@@ -59,6 +59,10 @@ const adminToken = async (): Promise<string> => {
   return access_token;
 };
 
+/** Ids reach these paths from tokens and the database; never let one add a segment. */
+const userPath = (userId: string, suffix = "") =>
+  `/users/${encodeURIComponent(userId)}${suffix}`;
+
 const adminFetch = async (path: string, init: RequestInit = {}) => {
   const { adminBase } = config();
   const token = await adminToken();
@@ -127,7 +131,7 @@ export const effectiveRealmRoles = async (
   userId: string,
 ): Promise<string[]> => {
   const res = await adminFetch(
-    `/users/${userId}/role-mappings/realm/composite`,
+    userPath(userId, "/role-mappings/realm/composite"),
   );
   if (!res.ok) throw new Error(`Keycloak role lookup failed (${res.status}).`);
   const roles = (await res.json()) as { name: string }[];
@@ -150,7 +154,7 @@ export const removeRealmRole = async (userId: string, roleName: string) => {
     throw new Error(`Keycloak realm role "${roleName}" not found.`);
   }
   const role = (await roleRes.json()) as { id: string; name: string };
-  const res = await adminFetch(`/users/${userId}/role-mappings/realm`, {
+  const res = await adminFetch(userPath(userId, "/role-mappings/realm"), {
     method: "DELETE",
     body: JSON.stringify([{ id: role.id, name: role.name }]),
   });
@@ -160,7 +164,7 @@ export const removeRealmRole = async (userId: string, roleName: string) => {
 };
 
 export const setUserEnabled = async (userId: string, enabled: boolean) => {
-  const res = await adminFetch(`/users/${userId}`, {
+  const res = await adminFetch(userPath(userId), {
     method: "PUT",
     body: JSON.stringify({ enabled }),
   });
@@ -168,7 +172,7 @@ export const setUserEnabled = async (userId: string, enabled: boolean) => {
 };
 
 export const deleteUser = async (userId: string) => {
-  const res = await adminFetch(`/users/${userId}`, { method: "DELETE" });
+  const res = await adminFetch(userPath(userId), { method: "DELETE" });
   if (!res.ok && res.status !== 404) {
     throw new Error(`Keycloak user delete failed (${res.status}).`);
   }
@@ -181,7 +185,7 @@ export const assignRealmRole = async (userId: string, roleName: string) => {
   }
   const role = (await roleRes.json()) as { id: string; name: string };
 
-  const res = await adminFetch(`/users/${userId}/role-mappings/realm`, {
+  const res = await adminFetch(userPath(userId, "/role-mappings/realm"), {
     method: "POST",
     body: JSON.stringify([{ id: role.id, name: role.name }]),
   });
