@@ -56,7 +56,7 @@ export const PATCH = async (
   }
 
   let execKey = signup.execKey;
-  let execTitle: string | undefined;
+  let exec: (ExecRecord & { id?: string }) | undefined;
   if (action === "approve") {
     if (!execKey) {
       const match = await findExecMatchingName(
@@ -65,26 +65,40 @@ export const PATCH = async (
       );
       if (match && !match.claimed) {
         execKey = match.execKey;
-        execTitle = match.title;
+        exec = (await findById<ExecRecord>(execsTable, execKey)) ?? undefined;
       } else {
-        const created = await create<ExecRecord>(execsTable, {
+        exec = await create<ExecRecord>(execsTable, {
           name: [signup.firstName, signup.lastName].filter(Boolean).join(" "),
           title: "Executive",
           isCurrentExec: true,
         });
-        execKey = created.id;
-        execTitle = created.title;
+        execKey = exec.id;
       }
     } else {
-      execTitle = (await findById<ExecRecord>(execsTable, execKey))?.title;
+      exec = (await findById<ExecRecord>(execsTable, execKey)) ?? undefined;
     }
 
-    await assignRealmRole(
-      signup.keycloakUserId!,
-      process.env.ADMIN_ROLE ?? "executive",
-    );
-    if (grantsApproval(execTitle)) {
-      await assignRealmRole(signup.keycloakUserId!, "co-president");
+    // Alumni may edit their own tile and nothing else, whatever they once held.
+    const isPastExec = exec?.isCurrentExec === false;
+    const role = isPastExec
+      ? (process.env.ALUMNI_ROLE ?? "alumni")
+      : (process.env.ADMIN_ROLE ?? "executive");
+
+    try {
+      await assignRealmRole(signup.keycloakUserId!, role);
+      if (!isPastExec && grantsApproval(exec?.title)) {
+        await assignRealmRole(signup.keycloakUserId!, "co-president");
+      }
+    } catch (err) {
+      return NextResponse.json(
+        {
+          error:
+            err instanceof Error && err.message.includes("not found")
+              ? `The "${role}" realm role does not exist in Keycloak yet.`
+              : "Could not assign the Keycloak role.",
+        },
+        { status: 422 },
+      );
     }
   }
 

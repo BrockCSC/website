@@ -40,6 +40,7 @@ You need two things, and they are separate asks:
 
 | To test                      | You need                                                          |
 | ---------------------------- | ----------------------------------------------------------------- |
+| Own profile only             | `alumni`                                                          |
 | Admin panel, events, profile | `executive`                                                       |
 | Approving sign-ups           | `co-president` (composite, carries `brockcsc-approver`)           |
 | Sign-up creating accounts    | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` for `brockcsc-provisioner` |

@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type { ExecRecord } from "@/lib/api/types";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireMember } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { sanitiseSocials } from "@/lib/execs/socials";
@@ -11,7 +11,7 @@ const unauthorized = () =>
   NextResponse.json({ error: "Not authorized" }, { status: 401 });
 
 export const GET = async (req: NextRequest) => {
-  const user = await requireAdmin(req);
+  const user = await requireMember(req);
   if (!user) return unauthorized();
 
   const signup = await findSignupByUserId(user.sub);
@@ -22,7 +22,7 @@ export const GET = async (req: NextRequest) => {
 };
 
 export const PATCH = async (req: NextRequest) => {
-  const user = await requireAdmin(req);
+  const user = await requireMember(req);
   if (!user) return unauthorized();
 
   const signup = await findSignupByUserId(user.sub);
