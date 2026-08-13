@@ -41,6 +41,10 @@ const humanise = (ms: number): string => {
   return "under a minute";
 };
 
+/** Kept in step with APPROVER_TITLES in app/api/signups/[id]/route.ts. */
+const grantsApproval = (title?: string) =>
+  ["co-president", "president"].includes(title?.trim().toLowerCase() ?? "");
+
 const fullName = (signup: Signup) =>
   [signup.firstName, signup.lastName].filter(Boolean).join(" ");
 
@@ -244,6 +248,12 @@ export default function ExecutivesManagementPage() {
                   {match.name}
                   {match.title ? ` — ${match.title}` : ""}
                 </strong>
+                {grantsApproval(match.title) && (
+                  <span className="mt-1 block font-semibold text-[#d44b4b]">
+                    Approving also grants approval rights. Check the
+                    confirmation code with them first.
+                  </span>
+                )}
               </span>
             )}
           </div>
