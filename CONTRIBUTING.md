@@ -32,17 +32,17 @@ You need two things, and they are separate asks:
 
 1. **`KEYCLOAK_CLIENT_SECRET`** for the `brockcsc-web` client. Get it from a club
    admin or the Komodo stack config. Never commit it.
-2. **The `brockcsc-admin` realm role on your user.** Without it `/api/auth/login`
+2. **The `executive` realm role on your user.** Without it `/api/auth/login`
    returns 403 and you never get a session cookie at all — it is not a case of
    logging in and then being bounced. This catches people out.
 
 ### Testing admin features
 
-| To test                    | You need                                                          |
-| -------------------------- | ----------------------------------------------------------------- |
-| Admin panel, events, execs | `brockcsc-admin`                                                  |
-| Approving sign-ups         | `co-president` (composite, carries `brockcsc-approver`)           |
-| Sign-up creating accounts  | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` for `brockcsc-provisioner` |
+| To test                      | You need                                                          |
+| ---------------------------- | ----------------------------------------------------------------- |
+| Admin panel, events, profile | `executive`                                                       |
+| Approving sign-ups           | `co-president` (composite, carries `brockcsc-approver`)           |
+| Sign-up creating accounts    | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` for `brockcsc-provisioner` |
 
 The `brockcsc-provisioner` service account holds `manage-users` and `view-realm`.
 It deliberately does **not** hold `manage-realm` — it runs at request time, so a
@@ -55,6 +55,10 @@ use obviously-fake names when testing, and clean up after yourself.
 
 > Safari will not keep a local session: `sessionCookieOptions` sets `secure: true`
 > unconditionally, and Safari rejects that over `http://localhost`. Use Chrome or Firefox.
+
+Role changes take effect immediately — roles are read from Keycloak on each
+request rather than from the session cookie, with a 15-second cache. If Keycloak
+is unreachable, admin requests are denied rather than falling back to stale roles.
 
 ## Conventions
 

@@ -11,7 +11,7 @@ const unauthorized = () =>
   NextResponse.json({ error: "Not authorized" }, { status: 401 });
 
 export const GET = async (req: NextRequest) => {
-  const user = requireAdmin(req);
+  const user = await requireAdmin(req);
   if (!user) return unauthorized();
 
   const signup = await findSignupByUserId(user.sub);
@@ -22,7 +22,7 @@ export const GET = async (req: NextRequest) => {
 };
 
 export const PATCH = async (req: NextRequest) => {
-  const user = requireAdmin(req);
+  const user = await requireAdmin(req);
   if (!user) return unauthorized();
 
   const signup = await findSignupByUserId(user.sub);
