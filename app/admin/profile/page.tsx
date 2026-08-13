@@ -2,20 +2,43 @@
 
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/ui/image-upload";
+import { ImageFocus } from "@/components/ui/image-focus";
 import { ExecRecord, WithKey, fetchProfile, updateProfile } from "@/lib/api";
 import { TeamMemberCard } from "@/app/team/components/team-member-card";
-import { useEffect, useState } from "react";
+import {
+  SOCIAL_PLATFORMS,
+  handleFromUrl,
+  isValidHandle,
+  urlFromHandle,
+  type SocialKey,
+} from "@/lib/execs/socials";
+import { academicTerms } from "@/lib/execs/terms";
+import { useEffect, useMemo, useState } from "react";
 
 type TeamMember = WithKey<ExecRecord>;
 
-const SOCIALS = [
-  { key: "github", label: "GitHub", hint: "github.com/username" },
-  { key: "linkedin", label: "LinkedIn", hint: "linkedin.com/in/username" },
-  { key: "instagram", label: "Instagram", hint: "instagram.com/username" },
-  { key: "x", label: "X", hint: "x.com/username" },
-] as const;
+type Form = {
+  description: string;
+  term: string;
+  hidden: boolean;
+  photoUrl: string;
+  photoPosition: string;
+  handles: Record<SocialKey, string>;
+};
 
-type SocialKey = (typeof SOCIALS)[number]["key"];
+const formFor = (exec: TeamMember | null): Form => ({
+  description: exec?.description ?? "",
+  term: exec?.term ?? "",
+  hidden: exec?.hidden ?? false,
+  photoUrl: exec?.image?.url ?? "",
+  photoPosition: exec?.image?.position ?? "50% 50%",
+  handles: {
+    github: handleFromUrl("github", exec?.socials?.github),
+    linkedin: handleFromUrl("linkedin", exec?.socials?.linkedin),
+    instagram: handleFromUrl("instagram", exec?.socials?.instagram),
+    x: handleFromUrl("x", exec?.socials?.x),
+  },
+});
 
 const field = "w-full rounded-[10px] border-2 border-black px-3 py-2 text-sm";
 
@@ -39,56 +62,62 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<TeamMember | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState<string | null>(null);
-  const [description, setDescription] = useState("");
-  const [term, setTerm] = useState("");
-  const [hidden, setHidden] = useState(false);
-  const [photoUrl, setPhotoUrl] = useState("");
-  const [socials, setSocials] = useState<Record<SocialKey, string>>({
-    github: "",
-    linkedin: "",
-    instagram: "",
-    x: "",
-  });
+  const [error, setError] = useState<string | null>(null);
+  const [form, setForm] = useState<Form>(formFor(null));
+  const [saved, setSaved] = useState<Form>(formFor(null));
 
   useEffect(() => {
     void (async () => {
       try {
         const exec = await fetchProfile();
         setProfile(exec);
-        setDescription(exec?.description ?? "");
-        setTerm(exec?.term ?? "");
-        setHidden(exec?.hidden ?? false);
-        setPhotoUrl(exec?.image?.url ?? "");
-        setSocials({
-          github: exec?.socials?.github ?? "",
-          linkedin: exec?.socials?.linkedin ?? "",
-          instagram: exec?.socials?.instagram ?? "",
-          x: exec?.socials?.x ?? "",
-        });
+        setForm(formFor(exec));
+        setSaved(formFor(exec));
       } catch {
-        setStatus("Couldn't load your profile. Refresh to try again.");
+        setError("Couldn't load your profile. Refresh to try again.");
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
+  const set = <K extends keyof Form>(key: K, value: Form[K]) =>
+    setForm((f) => ({ ...f, [key]: value }));
+
+  const socials = useMemo(
+    () =>
+      Object.fromEntries(
+        SOCIAL_PLATFORMS.map(({ key }) => [
+          key,
+          urlFromHandle(key, form.handles[key]),
+        ]),
+      ) as Record<SocialKey, string>,
+    [form.handles],
+  );
+
+  const invalid = SOCIAL_PLATFORMS.filter(
+    ({ key }) =>
+      form.handles[key].trim() && !isValidHandle(key, form.handles[key].trim()),
+  );
+
+  const dirty = JSON.stringify(form) !== JSON.stringify(saved);
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!dirty || invalid.length) return;
     setSaving(true);
-    setStatus(null);
+    setError(null);
     try {
       await updateProfile({
-        description,
-        term,
-        hidden,
-        image: { url: photoUrl },
+        description: form.description,
+        term: form.term,
+        hidden: form.hidden,
+        image: { url: form.photoUrl, position: form.photoPosition },
         socials,
       });
-      setStatus("Saved.");
+      setSaved(form);
     } catch {
-      setStatus("Couldn't save. Try again in a moment.");
+      setError("Couldn't save. Try again in a moment.");
     } finally {
       setSaving(false);
     }
@@ -112,10 +141,10 @@ export default function ProfilePage() {
 
   const preview: TeamMember = {
     ...profile,
-    description,
-    term,
+    description: form.description,
+    term: form.term,
     socials,
-    image: { url: photoUrl },
+    image: { url: form.photoUrl, position: form.photoPosition },
   };
 
   return (
@@ -135,16 +164,16 @@ export default function ProfilePage() {
             <span className="text-xs font-bold uppercase tracking-wide">
               Live preview
             </span>
-            {hidden && (
+            {form.hidden && (
               <span className="rounded-full border-2 border-black bg-neutral-200 px-2 py-0.5 text-[10px] font-bold uppercase">
                 Hidden
               </span>
             )}
           </div>
-          <div className={hidden ? "opacity-40 grayscale" : undefined}>
+          <div className={form.hidden ? "opacity-40 grayscale" : undefined}>
             <TeamMemberCard member={preview} />
           </div>
-          {hidden && (
+          {form.hidden && (
             <p className="mt-3 text-xs text-neutral-500">
               You&apos;re hidden, so this card isn&apos;t on the team page right
               now.
@@ -166,7 +195,23 @@ export default function ProfilePage() {
           </Section>
 
           <Section title="Photo">
-            <ImageUpload label="" onChange={setPhotoUrl} value={photoUrl} />
+            <ImageUpload
+              label=""
+              onChange={(url) => {
+                set("photoUrl", url);
+                if (!url) set("photoPosition", "50% 50%");
+              }}
+              value={form.photoUrl}
+            />
+            {form.photoUrl && (
+              <div className="mt-5 border-t-2 border-neutral-200 pt-5">
+                <ImageFocus
+                  onChange={(position) => set("photoPosition", position)}
+                  position={form.photoPosition}
+                  url={form.photoUrl}
+                />
+              </div>
+            )}
           </Section>
 
           <Section title="About you">
@@ -177,12 +222,12 @@ export default function ProfilePage() {
               className={`${field} min-h-[110px]`}
               id="about"
               maxLength={400}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => set("description", e.target.value)}
               placeholder="What you work on, what you're into, what you'd help someone with."
-              value={description}
+              value={form.description}
             />
             <div className="mt-1 text-right text-xs text-neutral-400">
-              {description.length}/400
+              {form.description.length}/400
             </div>
 
             <label
@@ -191,48 +236,77 @@ export default function ProfilePage() {
             >
               Term
             </label>
-            <input
+            <select
               className={field}
               id="term"
-              onChange={(e) => setTerm(e.target.value)}
-              placeholder="2025-2026"
-              value={term}
-            />
+              onChange={(e) => set("term", e.target.value)}
+              value={form.term}
+            >
+              <option value="">Not set</option>
+              {academicTerms().map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
           </Section>
 
-          <Section
-            note="Leave blank to hide an icon on your card."
-            title="Links"
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              {SOCIALS.map(({ key, label, hint }) => (
-                <div key={key}>
-                  <label
-                    className="mb-1 block text-sm font-semibold"
-                    htmlFor={key}
-                  >
-                    {label}
-                  </label>
-                  <input
-                    className={field}
-                    id={key}
-                    onChange={(e) =>
-                      setSocials((s) => ({ ...s, [key]: e.target.value }))
-                    }
-                    placeholder={hint}
-                    value={socials[key]}
-                  />
-                </div>
-              ))}
+          <Section note="Enter your username, not the full link." title="Links">
+            <div className="grid gap-4 sm:grid-cols-2">
+              {SOCIAL_PLATFORMS.map(({ key, label, prefix, hint }) => {
+                const value = form.handles[key];
+                const bad = !!value.trim() && !isValidHandle(key, value.trim());
+                return (
+                  <div key={key}>
+                    <label
+                      className="mb-1 block text-sm font-semibold"
+                      htmlFor={key}
+                    >
+                      {label}
+                    </label>
+                    <div
+                      className={`flex items-center overflow-hidden rounded-[10px] border-2 ${
+                        bad ? "border-[#d44b4b]" : "border-black"
+                      }`}
+                    >
+                      <span className="shrink-0 bg-neutral-100 px-2 py-2 text-xs text-neutral-500">
+                        {prefix}
+                      </span>
+                      <input
+                        aria-invalid={bad}
+                        className="w-full px-2 py-2 text-sm outline-none"
+                        id={key}
+                        onChange={(e) =>
+                          set("handles", {
+                            ...form.handles,
+                            [key]: e.target.value,
+                          })
+                        }
+                        placeholder="username"
+                        value={value}
+                      />
+                    </div>
+                    <p
+                      className={`mt-1 text-xs ${
+                        bad
+                          ? "font-semibold text-[#d44b4b]"
+                          : "text-neutral-500"
+                      }`}
+                    >
+                      {bad ? `Not a valid ${label} username. ${hint}` : hint}
+                    </p>
+                  </div>
+                );
+              })}
             </div>
           </Section>
 
           <Section title="Visibility">
             <label className="flex items-start gap-3 text-sm">
               <input
-                checked={hidden}
+                checked={form.hidden}
                 className="mt-1 size-4"
-                onChange={(e) => setHidden(e.target.checked)}
+                onChange={(e) => set("hidden", e.target.checked)}
                 type="checkbox"
               />
               <span>
@@ -247,17 +321,55 @@ export default function ProfilePage() {
             </label>
           </Section>
 
-          <div className="flex items-center gap-4">
-            <Button disabled={saving} type="submit" variant="primary">
-              {saving ? "Saving..." : "Save changes"}
-            </Button>
-            {status && (
-              <span
-                className={`text-sm font-semibold ${
-                  status === "Saved." ? "text-neutral-600" : "text-[#d44b4b]"
-                }`}
-              >
-                {status}
+          <div className="flex min-h-[42px] flex-wrap items-center gap-3">
+            {dirty ? (
+              <>
+                <Button
+                  disabled={saving || invalid.length > 0}
+                  type="submit"
+                  variant="primary"
+                >
+                  {saving ? "Saving..." : "Save changes"}
+                </Button>
+                <Button
+                  disabled={saving}
+                  onClick={() => {
+                    setForm(saved);
+                    setError(null);
+                  }}
+                  type="button"
+                  variant="secondary"
+                >
+                  Discard
+                </Button>
+                {invalid.length > 0 && (
+                  <span className="text-sm font-semibold text-[#d44b4b]">
+                    Fix {invalid.map((p) => p.label).join(" and ")} first.
+                  </span>
+                )}
+              </>
+            ) : (
+              <span className="flex items-center gap-2 text-sm font-semibold text-green-700">
+                <svg
+                  aria-hidden
+                  className="size-5"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M5 13l4 4L19 7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                All changes saved
+              </span>
+            )}
+            {error && (
+              <span className="text-sm font-semibold text-[#d44b4b]">
+                {error}
               </span>
             )}
           </div>

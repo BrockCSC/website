@@ -29,6 +29,8 @@ export type ExecRecord = {
     url?: string;
     name?: string;
     path?: string;
+    /** CSS object-position, e.g. "50% 25%". Keeps heads in frame when cropped. */
+    position?: string;
   };
 };
 
