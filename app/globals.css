@@ -122,6 +122,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Tailwind v4's preflight sets buttons to cursor: default. */
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
 }
 
 @layer components {

@@ -56,7 +56,6 @@ export default function ExecutivesManagementPage() {
   const [selectedExec, setSelectedExec] = useState<TeamMember | null>(null);
   const [showPast, setShowPast] = useState(false);
   const [deleting, setDeleting] = useState<TeamMember | null>(null);
-  const [alsoDeleteAccount, setAlsoDeleteAccount] = useState(false);
   const [rejecting, setRejecting] = useState<Signup | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -111,7 +110,7 @@ export default function ExecutivesManagementPage() {
     setDeleting(null);
     setError(null);
     try {
-      if (account && alsoDeleteAccount) {
+      if (account) {
         await deleteSignup(account.$key, true);
       } else {
         await deleteExec(tile.$key);
@@ -163,7 +162,6 @@ export default function ExecutivesManagementPage() {
           className="text-red-600"
           size="sm"
           onClick={() => {
-            setAlsoDeleteAccount(false);
             setDeleting(exec);
           }}
         >
@@ -361,25 +359,11 @@ export default function ExecutivesManagementPage() {
           </p>
 
           {deletingAccount ? (
-            <label className="mb-6 flex items-start gap-2 text-sm">
-              <input
-                checked={alsoDeleteAccount}
-                className="mt-1"
-                onChange={(e) => setAlsoDeleteAccount(e.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                Also delete their login account (
-                <span className="font-mono text-xs">
-                  {deletingAccount.username}
-                </span>
-                ).
-                <span className="block text-neutral-500">
-                  Leave unchecked to keep the account — they stay able to log
-                  in, but will have no tile until a co-president links one.
-                </span>
-              </span>
-            </label>
+            <p className="mb-6 rounded-[12px] border-2 border-[#d44b4b] px-4 py-3 text-sm font-semibold text-[#d44b4b]">
+              Their login account (
+              <span className="font-mono">{deletingAccount.username}</span>)
+              will be deleted too. They will no longer be able to sign in.
+            </p>
           ) : (
             <p className="mb-6 text-sm text-neutral-500">
               No login account is attached to this tile.
