@@ -12,6 +12,8 @@ import { create } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const BROCK_EMAIL_PATTERN = /@(?:[a-z0-9-]+\.)*brocku\.ca$/i;
+const STUDENT_ID_PATTERN = /^\d{6,10}$/;
 
 const badRequest = (error: string) =>
   NextResponse.json({ error }, { status: 400 });
@@ -32,6 +34,8 @@ export const POST = async (req: NextRequest) => {
   const lastName = body.lastName?.trim() ?? "";
   const email = body.email?.trim() ?? "";
   const phone = body.phone?.trim() ?? "";
+  const studentId = body.studentId?.trim() ?? "";
+  const isFormerExec = String(body.isFormerExec) === "true";
   const password = body.password ?? "";
 
   if (!isValidInviteCode(inviteCode)) {
@@ -45,6 +49,19 @@ export const POST = async (req: NextRequest) => {
   }
   if (!EMAIL_PATTERN.test(email)) {
     return badRequest("Enter a valid email address.");
+  }
+  // Current execs verify with Brock credentials; alumni no longer have them.
+  if (!isFormerExec) {
+    if (!BROCK_EMAIL_PATTERN.test(email)) {
+      return badRequest(
+        "Use your @brocku.ca email, or tick that you are a former executive.",
+      );
+    }
+    if (!STUDENT_ID_PATTERN.test(studentId)) {
+      return badRequest("Enter your student number, digits only.");
+    }
+  } else if (studentId && !STUDENT_ID_PATTERN.test(studentId)) {
+    return badRequest("That student number does not look right.");
   }
   if (password.length < 8) {
     return badRequest("Password must be at least 8 characters.");
@@ -79,6 +96,8 @@ export const POST = async (req: NextRequest) => {
       username,
       email,
       phone: phone || undefined,
+      studentId: studentId || undefined,
+      isFormerExec,
       keycloakUserId,
       confirmationCode: confirmation,
       status: "pending",

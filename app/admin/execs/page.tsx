@@ -212,6 +212,12 @@ export default function ExecutivesManagementPage() {
 
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-600">
           {signup.email && <span className="break-all">{signup.email}</span>}
+          {signup.studentId && <span>#{signup.studentId}</span>}
+          {signup.isFormerExec && (
+            <span className="font-semibold text-neutral-500">
+              Former executive
+            </span>
+          )}
           {signup.phone && <span>{signup.phone}</span>}
           {signup.submittedAt && (
             <span>{new Date(signup.submittedAt).toLocaleDateString()}</span>
