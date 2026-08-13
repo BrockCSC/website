@@ -5,6 +5,8 @@ export type SessionUser = {
   email: string;
   name: string;
   roles: string[];
+  /** Current exec: may manage events and see the dashboard. */
+  isExecutive?: boolean;
   /** Holds the approver role, so may manage executives. */
   isApprover?: boolean;
 };

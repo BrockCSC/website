@@ -11,6 +11,7 @@ export {
   deleteExec,
   fetchProfile,
   updateProfile,
+  stepDownAsCoPresident,
   createEvent,
   editEvent,
   deleteEvent,
