@@ -6,7 +6,7 @@ import type {
   ExecRecord,
   SignupRecord,
 } from "@/lib/api/types";
-import { requireAdmin, requireApprover } from "@/lib/auth/session";
+import { requireApprover, requireMember } from "@/lib/auth/session";
 import { db } from "@/lib/db";
 import { findAll, toWireRecord } from "@/lib/db/repository";
 import {
@@ -47,7 +47,7 @@ const topPaths = async (fromMs: number) => {
 };
 
 export const GET = async (req: NextRequest) => {
-  if (!(await requireAdmin(req))) {
+  if (!(await requireMember(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
