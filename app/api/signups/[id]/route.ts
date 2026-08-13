@@ -16,6 +16,17 @@ import {
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 
+/**
+ * Titles that carry approval rights. The approval card shows the claimed title
+ * before you approve, so granting from it is visible rather than implicit.
+ */
+const APPROVER_TITLES = new Set(["co-president", "president"]);
+
+const roleForTitle = (title?: string) =>
+  APPROVER_TITLES.has(title?.trim().toLowerCase() ?? "")
+    ? "co-president"
+    : null;
+
 export const PATCH = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -50,26 +61,41 @@ export const PATCH = async (
       );
     }
     await setUserEnabled(signup.keycloakUserId, true);
-    await assignRealmRole(
-      signup.keycloakUserId,
-      process.env.ADMIN_ROLE ?? "executive",
-    );
   } else if (signup.keycloakUserId) {
     await deleteUser(signup.keycloakUserId);
   }
 
   let execKey = signup.execKey;
-  if (action === "approve" && !execKey) {
-    const match = await findExecMatchingName(signup.firstName, signup.lastName);
-    if (match && !match.claimed) {
-      execKey = match.execKey;
+  let execTitle: string | undefined;
+  if (action === "approve") {
+    if (!execKey) {
+      const match = await findExecMatchingName(
+        signup.firstName,
+        signup.lastName,
+      );
+      if (match && !match.claimed) {
+        execKey = match.execKey;
+        execTitle = match.title;
+      } else {
+        const created = await create<ExecRecord>(execsTable, {
+          name: [signup.firstName, signup.lastName].filter(Boolean).join(" "),
+          title: "Executive",
+          isCurrentExec: true,
+        });
+        execKey = created.id;
+        execTitle = created.title;
+      }
     } else {
-      const created = await create<ExecRecord>(execsTable, {
-        name: [signup.firstName, signup.lastName].filter(Boolean).join(" "),
-        title: "Executive",
-        isCurrentExec: true,
-      });
-      execKey = created.id;
+      execTitle = (await findById<ExecRecord>(execsTable, execKey))?.title;
+    }
+
+    await assignRealmRole(
+      signup.keycloakUserId!,
+      process.env.ADMIN_ROLE ?? "executive",
+    );
+    const extra = roleForTitle(execTitle);
+    if (extra) {
+      await assignRealmRole(signup.keycloakUserId!, extra);
     }
   }
 

@@ -38,6 +38,8 @@ export default function SignupPage() {
     lastName: "",
     email: "",
     phone: "",
+    studentId: "",
+    isFormerExec: false,
     password: "",
     confirmPassword: "",
   });
@@ -48,6 +50,8 @@ export default function SignupPage() {
   const set =
     (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((prev) => ({ ...prev, [key]: e.target.value }));
+
+  const former = form.isFormerExec;
 
   const username = usernameFor(form.firstName, form.lastName);
 
@@ -147,13 +151,44 @@ export default function SignupPage() {
               </p>
             )}
 
+            <label className="mb-4 flex items-start gap-2 text-sm">
+              <input
+                checked={former}
+                className="mt-1"
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    isFormerExec: e.target.checked,
+                  }))
+                }
+                type="checkbox"
+              />
+              <span>
+                I&apos;m a former executive
+                <span className="block text-neutral-500">
+                  Alumni no longer have a Brock email or student number, so
+                  those become optional.
+                </span>
+              </span>
+            </label>
+
             <Field
               id="email"
-              label="Email"
+              label={former ? "Email" : "Brock email"}
               type="email"
+              placeholder={former ? undefined : "you@brocku.ca"}
               value={form.email}
               onChange={set("email")}
               required
+            />
+            <Field
+              id="studentId"
+              label="Student number"
+              inputMode="numeric"
+              optional={former}
+              value={form.studentId}
+              onChange={set("studentId")}
+              required={!former}
             />
             <Field
               id="phone"
