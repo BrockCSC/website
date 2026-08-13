@@ -134,6 +134,31 @@ export const effectiveRealmRoles = async (
   return roles.map((role) => role.name);
 };
 
+export const usersWithRealmRole = async (
+  roleName: string,
+): Promise<{ id: string; username: string }[]> => {
+  const res = await adminFetch(
+    `/roles/${encodeURIComponent(roleName)}/users?max=200`,
+  );
+  if (!res.ok) throw new Error(`Keycloak role holders failed (${res.status}).`);
+  return (await res.json()) as { id: string; username: string }[];
+};
+
+export const removeRealmRole = async (userId: string, roleName: string) => {
+  const roleRes = await adminFetch(`/roles/${encodeURIComponent(roleName)}`);
+  if (!roleRes.ok) {
+    throw new Error(`Keycloak realm role "${roleName}" not found.`);
+  }
+  const role = (await roleRes.json()) as { id: string; name: string };
+  const res = await adminFetch(`/users/${userId}/role-mappings/realm`, {
+    method: "DELETE",
+    body: JSON.stringify([{ id: role.id, name: role.name }]),
+  });
+  if (!res.ok) {
+    throw new Error(`Keycloak role removal failed (${res.status}).`);
+  }
+};
+
 export const setUserEnabled = async (userId: string, enabled: boolean) => {
   const res = await adminFetch(`/users/${userId}`, {
     method: "PUT",

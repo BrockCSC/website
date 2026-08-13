@@ -6,7 +6,11 @@ import {
   SESSION_COOKIE,
 } from "@/lib/auth/session";
 
-const { ADMIN_ROLE = "executive", SUPERUSER_ROLE = "owner" } = process.env;
+const {
+  ADMIN_ROLE = "executive",
+  ALUMNI_ROLE = "alumni",
+  SUPERUSER_ROLE = "owner",
+} = process.env;
 
 export const POST = async (req: NextRequest) => {
   const { username, password } = (await req.json()) as {
@@ -31,6 +35,7 @@ export const POST = async (req: NextRequest) => {
 
   if (
     !identity.roles.includes(ADMIN_ROLE) &&
+    !identity.roles.includes(ALUMNI_ROLE) &&
     !identity.roles.includes(SUPERUSER_ROLE)
   ) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });

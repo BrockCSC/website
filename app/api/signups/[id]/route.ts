@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
 import { findExecMatchingName } from "@/lib/db/execs";
+import { grantsApproval } from "@/lib/execs/titles";
 import {
   create,
   findById,
@@ -15,17 +16,6 @@ import {
   update,
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
-
-/**
- * Titles that carry approval rights. The approval card shows the claimed title
- * before you approve, so granting from it is visible rather than implicit.
- */
-const APPROVER_TITLES = new Set(["co-president", "president"]);
-
-const roleForTitle = (title?: string) =>
-  APPROVER_TITLES.has(title?.trim().toLowerCase() ?? "")
-    ? "co-president"
-    : null;
 
 export const PATCH = async (
   req: NextRequest,
@@ -66,7 +56,7 @@ export const PATCH = async (
   }
 
   let execKey = signup.execKey;
-  let execTitle: string | undefined;
+  let exec: (ExecRecord & { id?: string }) | undefined;
   if (action === "approve") {
     if (!execKey) {
       const match = await findExecMatchingName(
@@ -75,27 +65,40 @@ export const PATCH = async (
       );
       if (match && !match.claimed) {
         execKey = match.execKey;
-        execTitle = match.title;
+        exec = (await findById<ExecRecord>(execsTable, execKey)) ?? undefined;
       } else {
-        const created = await create<ExecRecord>(execsTable, {
+        exec = await create<ExecRecord>(execsTable, {
           name: [signup.firstName, signup.lastName].filter(Boolean).join(" "),
           title: "Executive",
           isCurrentExec: true,
         });
-        execKey = created.id;
-        execTitle = created.title;
+        execKey = exec.id;
       }
     } else {
-      execTitle = (await findById<ExecRecord>(execsTable, execKey))?.title;
+      exec = (await findById<ExecRecord>(execsTable, execKey)) ?? undefined;
     }
 
-    await assignRealmRole(
-      signup.keycloakUserId!,
-      process.env.ADMIN_ROLE ?? "executive",
-    );
-    const extra = roleForTitle(execTitle);
-    if (extra) {
-      await assignRealmRole(signup.keycloakUserId!, extra);
+    // Alumni may edit their own tile and nothing else, whatever they once held.
+    const isPastExec = exec?.isCurrentExec === false;
+    const role = isPastExec
+      ? (process.env.ALUMNI_ROLE ?? "alumni")
+      : (process.env.ADMIN_ROLE ?? "executive");
+
+    try {
+      await assignRealmRole(signup.keycloakUserId!, role);
+      if (!isPastExec && grantsApproval(exec?.title)) {
+        await assignRealmRole(signup.keycloakUserId!, "co-president");
+      }
+    } catch (err) {
+      return NextResponse.json(
+        {
+          error:
+            err instanceof Error && err.message.includes("not found")
+              ? `The "${role}" realm role does not exist in Keycloak yet.`
+              : "Could not assign the Keycloak role.",
+        },
+        { status: 422 },
+      );
     }
   }
 

@@ -86,6 +86,16 @@ const requireRole = async (
 export const requireAdmin = (req: NextRequest) =>
   requireRole(req, process.env.ADMIN_ROLE ?? "executive");
 
+/**
+ * Anyone with a linked profile: current execs and alumni. Alumni may edit
+ * themselves and nothing else, so content routes keep using requireAdmin.
+ */
+export const requireMember = async (
+  req: NextRequest,
+): Promise<SessionUser | null> =>
+  (await requireAdmin(req)) ??
+  (await requireRole(req, process.env.ALUMNI_ROLE ?? "alumni"));
+
 /** Approving sign-ups is gated separately; bundle this with co-president. */
 export const requireApprover = (req: NextRequest) =>
   requireRole(req, process.env.APPROVER_ROLE ?? "brockcsc-approver");

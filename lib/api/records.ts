@@ -141,6 +141,10 @@ export const fetchInviteCode = async (): Promise<{
   expiresInMs: number;
 }> => apiFetch("/api/invite-code");
 
+export const stepDownAsCoPresident = async (): Promise<void> => {
+  await apiFetch("/api/profile/step-down", { method: "POST" });
+};
+
 export const fetchDashboardStats = async (): Promise<DashboardStats> =>
   apiFetch<DashboardStats>("/api/stats");
 
