@@ -63,6 +63,14 @@ export type SignupRecord = {
   reviewedAt?: string;
 };
 
+export type DashboardStats = {
+  pageViews: { last30Days: number; previous30Days: number };
+  execs: { current: number; past: number };
+  events: { upcoming: number; past: number };
+  /** Null when the admin may not approve sign-ups. */
+  pendingSignups: number | null;
+};
+
 export type EventRecord = {
   title?: string;
   presenter?: string;

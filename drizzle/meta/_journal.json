@@ -15,6 +15,13 @@
       "when": 1786577587759,
       "tag": "0001_boring_sasquatch",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1786596476243,
+      "tag": "0002_uneven_azazel",
+      "breakpoints": true
     }
   ]
 }

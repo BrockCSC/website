@@ -18,9 +18,12 @@ export {
   reviewSignup,
   deleteSignup,
   fetchInviteCode,
+  fetchDashboardStats,
+  recordPageView,
 } from "./records";
 export { fetchCurrentUser, login, logout, signup } from "./auth";
 export type {
+  DashboardStats,
   EventRecord,
   ExecRecord,
   SessionUser,
