@@ -18,6 +18,7 @@ import { sortExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
 import ExecModal from "./exec-modal";
 import Modal, { ConfirmationModal } from "@/components/ui/modal";
 import { AdminTable, ColumnDef } from "@/components/ui/admin-table";
+import { grantsApproval } from "@/lib/execs/titles";
 
 type TeamMember = WithKey<ExecRecord>;
 type ExecMatch = {
@@ -40,10 +41,6 @@ const humanise = (ms: number): string => {
   }
   return "under a minute";
 };
-
-/** Kept in step with APPROVER_TITLES in app/api/signups/[id]/route.ts. */
-const grantsApproval = (title?: string) =>
-  ["co-president", "president"].includes(title?.trim().toLowerCase() ?? "");
 
 const fullName = (signup: Signup) =>
   [signup.firstName, signup.lastName].filter(Boolean).join(" ");

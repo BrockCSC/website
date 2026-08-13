@@ -7,6 +7,7 @@ import {
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
 import { findExecMatchingName } from "@/lib/db/execs";
+import { grantsApproval } from "@/lib/execs/titles";
 import {
   create,
   findById,
@@ -15,17 +16,6 @@ import {
   update,
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
-
-/**
- * Titles that carry approval rights. The approval card shows the claimed title
- * before you approve, so granting from it is visible rather than implicit.
- */
-const APPROVER_TITLES = new Set(["co-president", "president"]);
-
-const roleForTitle = (title?: string) =>
-  APPROVER_TITLES.has(title?.trim().toLowerCase() ?? "")
-    ? "co-president"
-    : null;
 
 export const PATCH = async (
   req: NextRequest,
@@ -93,9 +83,8 @@ export const PATCH = async (
       signup.keycloakUserId!,
       process.env.ADMIN_ROLE ?? "executive",
     );
-    const extra = roleForTitle(execTitle);
-    if (extra) {
-      await assignRealmRole(signup.keycloakUserId!, extra);
+    if (grantsApproval(execTitle)) {
+      await assignRealmRole(signup.keycloakUserId!, "co-president");
     }
   }
 

@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ACTIVE_TITLES, isDeprecatedTitle } from "@/lib/execs/titles";
 import { ImageUpload } from "@/components/ui/image-upload";
 import Modal from "@/components/ui/modal";
 import { ExecRecord, WithKey, createExec, updateExec } from "@/lib/api";
@@ -122,11 +123,14 @@ export default function ExecModal({
               onChange={(e) => setTitle(e.target.value)}
             >
               <option value="Select Role">Select Role</option>
-              <option value="President">President</option>
-              <option value="Vice President">Vice President</option>
-              <option value="Co-President">Co-President</option>
-              <option value="Treasurer">Treasurer</option>
-              <option value="Executive">Executive</option>
+              {ACTIVE_TITLES.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+              {isDeprecatedTitle(title) && (
+                <option value={title}>{title} (retired)</option>
+              )}
             </select>
           </div>
         </div>

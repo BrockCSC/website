@@ -3,7 +3,14 @@
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { ImageFocus } from "@/components/ui/image-focus";
-import { ExecRecord, WithKey, fetchProfile, updateProfile } from "@/lib/api";
+import {
+  ExecRecord,
+  WithKey,
+  fetchCurrentUser,
+  fetchProfile,
+  stepDownAsCoPresident,
+  updateProfile,
+} from "@/lib/api";
 import { TeamMemberCard } from "@/app/team/components/team-member-card";
 import {
   SOCIAL_PLATFORMS,
@@ -65,12 +72,19 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(formFor(null));
   const [saved, setSaved] = useState<Form>(formFor(null));
+  const [isApprover, setIsApprover] = useState(false);
+  const [steppingDown, setSteppingDown] = useState(false);
+  const [stepDownNote, setStepDownNote] = useState<string | null>(null);
 
   useEffect(() => {
     void (async () => {
       try {
-        const exec = await fetchProfile();
+        const [exec, me] = await Promise.all([
+          fetchProfile(),
+          fetchCurrentUser().catch(() => null),
+        ]);
         setProfile(exec);
+        setIsApprover(!!me?.isApprover);
         setForm(formFor(exec));
         setSaved(formFor(exec));
       } catch {
@@ -300,6 +314,50 @@ export default function ProfilePage() {
               })}
             </div>
           </Section>
+
+          {isApprover && (
+            <Section
+              note="Approving sign-ups and managing the executive team."
+              title="Co-president"
+            >
+              <p className="mb-3 text-sm text-neutral-600">
+                Stepping down removes your approval rights immediately. There
+                must always be at least one co-president, so this is refused if
+                you are the last.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <Button
+                  disabled={steppingDown}
+                  onClick={async () => {
+                    setSteppingDown(true);
+                    setStepDownNote(null);
+                    try {
+                      await stepDownAsCoPresident();
+                      setStepDownNote("You are no longer a co-president.");
+                      setIsApprover(false);
+                    } catch (err) {
+                      setStepDownNote(
+                        err instanceof Error
+                          ? err.message
+                          : "Could not step down.",
+                      );
+                    } finally {
+                      setSteppingDown(false);
+                    }
+                  }}
+                  type="button"
+                  variant="destructive"
+                >
+                  {steppingDown ? "Stepping down..." : "Step down"}
+                </Button>
+                {stepDownNote && (
+                  <span className="text-sm font-semibold text-[#d44b4b]">
+                    {stepDownNote}
+                  </span>
+                )}
+              </div>
+            </Section>
+          )}
 
           <Section title="Visibility">
             <label className="flex items-start gap-3 text-sm">
