@@ -17,6 +17,7 @@ export {
   deleteEvent,
   fetchSignups,
   reviewSignup,
+  deleteSignup,
   fetchInviteCode,
 } from "./records";
 export { fetchCurrentUser, login, logout, signup } from "./auth";

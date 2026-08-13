@@ -5,12 +5,13 @@ import {
   fetchInviteCode,
   fetchSignups,
   reviewSignup,
+  deleteSignup,
   SignupRecord,
   WithKey,
 } from "@/lib/api";
 import { AdminTable, ColumnDef } from "@/components/ui/admin-table";
 import { Button } from "@/components/ui/button";
-import { ConfirmationModal } from "@/components/ui/modal";
+import Modal, { ConfirmationModal } from "@/components/ui/modal";
 
 type Signup = WithKey<SignupRecord>;
 
@@ -40,6 +41,8 @@ export default function SignupRequestsPage() {
     expiresInMs: number;
   } | null>(null);
   const [rejecting, setRejecting] = useState<Signup | null>(null);
+  const [deleting, setDeleting] = useState<Signup | null>(null);
+  const [alsoDeleteExec, setAlsoDeleteExec] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
@@ -66,6 +69,19 @@ export default function SignupRequestsPage() {
       await load();
     } catch {
       setError(`Could not ${action} ${fullName(signup)}. Please try again.`);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleting) return;
+    setError(null);
+    const target = deleting;
+    setDeleting(null);
+    try {
+      await deleteSignup(target.$key, alsoDeleteExec);
+      await load();
+    } catch {
+      setError(`Could not delete ${fullName(target)}. Please try again.`);
     }
   };
 
@@ -104,6 +120,23 @@ export default function SignupRequestsPage() {
     ...details,
     { header: "Status", accessorKey: "status" },
     { header: "Reviewed by", accessorKey: "reviewedBy" },
+    {
+      header: "Actions",
+      headerClassName: "text-center",
+      cellClassName: "text-center",
+      cell: (signup) => (
+        <button
+          className="font-semibold text-[#d44b4b] underline"
+          onClick={() => {
+            setAlsoDeleteExec(false);
+            setDeleting(signup);
+          }}
+          type="button"
+        >
+          Delete
+        </button>
+      ),
+    },
   ];
 
   const pending = signups.filter((signup) => signup.status === "pending");
@@ -168,6 +201,51 @@ export default function SignupRequestsPage() {
           onConfirm={() => review(rejecting, "reject")}
           onClose={() => setRejecting(null)}
         />
+      )}
+
+      {deleting && (
+        <Modal
+          open={!!deleting}
+          title="Delete account"
+          onClose={() => setDeleting(null)}
+        >
+          <p className="mb-4 mt-[-15px]">
+            Permanently deletes the Keycloak account for{" "}
+            <strong>{fullName(deleting)}</strong> and their sign-up record. They
+            will no longer be able to log in. This cannot be undone.
+          </p>
+
+          <label className="mb-6 flex items-start gap-2 text-sm">
+            <input
+              checked={alsoDeleteExec}
+              className="mt-1"
+              onChange={(e) => setAlsoDeleteExec(e.target.checked)}
+              type="checkbox"
+            />
+            <span>
+              Also delete their executive tile from the team page.
+              {deleting.execKey ? (
+                <span className="block text-neutral-500">
+                  Leave unchecked to keep the tile — it stays on the team page
+                  and can be claimed again later.
+                </span>
+              ) : (
+                <span className="block text-neutral-500">
+                  This account has no linked tile, so this has no effect.
+                </span>
+              )}
+            </span>
+          </label>
+
+          <div className="flex justify-end gap-4">
+            <Button onClick={() => setDeleting(null)} variant="secondary">
+              Cancel
+            </Button>
+            <Button onClick={confirmDelete} variant="destructive">
+              Delete
+            </Button>
+          </div>
+        </Modal>
       )}
     </>
   );

@@ -6,8 +6,8 @@ import {
   setUserEnabled,
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
-import { findById, toWireRecord, update } from "@/lib/db/repository";
-import { signupsTable } from "@/lib/db/schema";
+import { findById, remove, toWireRecord, update } from "@/lib/db/repository";
+import { execsTable, signupsTable } from "@/lib/db/schema";
 
 export const PATCH = async (
   req: NextRequest,
@@ -60,4 +60,38 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
   return NextResponse.json(toWireRecord(reviewed));
+};
+
+export const DELETE = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const approver = requireApprover(req);
+  if (!approver) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+  }
+
+  const { id } = await params;
+  const signup = await findById<SignupRecord>(signupsTable, id);
+  if (!signup) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  if (signup.keycloakUserId === approver.sub) {
+    return NextResponse.json(
+      { error: "You cannot delete your own account." },
+      { status: 409 },
+    );
+  }
+
+  const deleteExec = new URL(req.url).searchParams.get("deleteExec") === "true";
+
+  if (signup.keycloakUserId) {
+    await deleteUser(signup.keycloakUserId);
+  }
+  if (deleteExec && signup.execKey) {
+    await remove(execsTable, signup.execKey);
+  }
+  await remove(signupsTable, id);
+
+  return new NextResponse(null, { status: 204 });
 };

@@ -131,6 +131,15 @@ export const reviewSignup = async (
   });
 };
 
+export const deleteSignup = async (
+  key: string,
+  deleteExec: boolean,
+): Promise<void> => {
+  await apiFetch(`/api/signups/${key}?deleteExec=${deleteExec}`, {
+    method: "DELETE",
+  });
+};
+
 export const fetchInviteCode = async (): Promise<{
   code: string;
   expiresInMs: number;
