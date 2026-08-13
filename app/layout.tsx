@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Navbar } from "@/components/ui/navbar";
 import Footer from "@/components/ui/footer";
+import { PageViewTracker } from "@/components/page-view-tracker";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -40,6 +41,7 @@ export default function RootLayout({
           <div className="mx-auto w-full max-w-[1060px] px-5">{children}</div>
         </div>
         <Footer />
+        <PageViewTracker />
       </body>
     </html>
   );
