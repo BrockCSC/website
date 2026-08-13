@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
+import { Button } from "@/components/ui/button";
+import { useRevealedGroups } from "@/lib/use-revealed-groups";
+
 import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
 import { classifyEventsByTiming } from "@/lib/events/classify";
 import { getEventStartTimestamp } from "@/lib/events/schedule";
@@ -124,8 +127,11 @@ export default function EventsPageClient() {
     return Array.from(groups.entries()).map(([term, events]) => ({
       term,
       events,
+      items: events,
     }));
   }, [past]);
+
+  const archive = useRevealedGroups(pastGroups);
 
   return (
     <main className="min-h-screen bg-white pb-10">
@@ -157,6 +163,26 @@ export default function EventsPageClient() {
               />
             ))}
           </div>
+        </section>
+      )}
+
+      {!loading && !error && ongoing.length === 0 && upcoming.length === 0 && (
+        <section className="mt-3 rounded-[16px] border-2 border-dashed border-border bg-white px-4 py-8 text-center">
+          <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
+            Nothing on the calendar right now
+          </h2>
+          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-muted-foreground">
+            We run workshops, socials and talks through the school year. Join
+            the Discord and you&apos;ll hear about the next one first.
+          </p>
+          <a
+            className="inline-flex items-center gap-2 rounded-[16px] border-2 border-black bg-[#9A4440] px-4 py-2 text-sm font-semibold text-white shadow-[3px_3px_0_0_#000]"
+            href="https://discord.gg/dsxEASYgRd"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Join the Discord
+          </a>
         </section>
       )}
 
@@ -199,7 +225,7 @@ export default function EventsPageClient() {
         )}
 
         <div className="flex flex-col gap-4">
-          {pastGroups.map((group) => (
+          {archive.visible.map((group) => (
             <section key={group.term}>
               <h3 className="mb-2 text-base font-semibold text-foreground/80">
                 {group.term}
@@ -215,6 +241,17 @@ export default function EventsPageClient() {
               </div>
             </section>
           ))}
+
+          {archive.hasMore && (
+            <div className="mt-1 flex flex-wrap items-center gap-3">
+              <Button onClick={archive.revealMore} variant="outline">
+                Show earlier events
+              </Button>
+              <span className="text-sm text-muted-foreground">
+                {archive.hidden} more
+              </span>
+            </div>
+          )}
         </div>
       </section>
     </main>
