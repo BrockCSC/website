@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "node scripts/migrate.mjs",
+    "predev": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
@@ -12,7 +12,9 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "node scripts/migrate.mjs"
+    "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
+    "db:up": "docker compose -f deploy/docker-compose.dev.yml up -d",
+    "db:down": "docker compose -f deploy/docker-compose.dev.yml down"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
