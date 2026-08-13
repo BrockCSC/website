@@ -43,6 +43,12 @@ You need two things, and they are separate asks:
 | Admin panel, events, profile | `executive`                                                       |
 | Approving sign-ups           | `co-president` (composite, carries `brockcsc-approver`)           |
 | Sign-up creating accounts    | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` for `brockcsc-provisioner` |
+| Everything, permanently      | `owner` (see below)                                               |
+
+The `owner` realm role (`SUPERUSER_ROLE`) satisfies every role check, including
+gates added after it was introduced — the check lives in `requireRole`, so new
+gates inherit it for free. It is a realm role rather than a hardcoded username so
+it can be revoked from Keycloak like any other. Grant it sparingly.
 
 The `brockcsc-provisioner` service account holds `manage-users` and `view-realm`.
 It deliberately does **not** hold `manage-realm` — it runs at request time, so a
