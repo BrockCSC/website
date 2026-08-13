@@ -11,7 +11,7 @@ import type { ExecRecord } from "@/lib/api/types";
 export const { GET } = createCollectionHandlers<ExecRecord>(execsTable);
 
 export const POST = async (req: NextRequest) => {
-  if (!requireApprover(req)) {
+  if (!(await requireApprover(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
   const input = (await req.json()) as ExecRecord;

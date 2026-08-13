@@ -20,7 +20,7 @@ export const PATCH = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const approver = requireApprover(req);
+  const approver = await requireApprover(req);
   if (!approver) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
@@ -52,7 +52,7 @@ export const PATCH = async (
     await setUserEnabled(signup.keycloakUserId, true);
     await assignRealmRole(
       signup.keycloakUserId,
-      process.env.ADMIN_ROLE ?? "brockcsc-admin",
+      process.env.ADMIN_ROLE ?? "executive",
     );
   } else if (signup.keycloakUserId) {
     await deleteUser(signup.keycloakUserId);
@@ -89,7 +89,7 @@ export const DELETE = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const approver = requireApprover(req);
+  const approver = await requireApprover(req);
   if (!approver) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }

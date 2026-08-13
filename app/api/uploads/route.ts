@@ -10,7 +10,7 @@ import {
 } from "@/lib/uploads";
 
 export const POST = async (req: NextRequest) => {
-  if (!requireAdmin(req)) {
+  if (!(await requireAdmin(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
