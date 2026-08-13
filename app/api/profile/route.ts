@@ -3,6 +3,8 @@ import type { ExecRecord } from "@/lib/api/types";
 import { requireAdmin } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { findSignupByUserId } from "@/lib/db/signups";
+import { sanitiseSocials } from "@/lib/execs/socials";
+import { isValidTerm } from "@/lib/execs/terms";
 import { execsTable } from "@/lib/db/schema";
 
 const unauthorized = () =>
@@ -29,10 +31,13 @@ export const PATCH = async (req: NextRequest) => {
   }
 
   const body = (await req.json()) as ExecRecord;
+  if (body.term && !isValidTerm(body.term)) {
+    return NextResponse.json({ error: "Unknown term." }, { status: 400 });
+  }
   const exec = await update<ExecRecord>(execsTable, signup.execKey, {
     description: body.description,
     term: body.term,
-    socials: body.socials,
+    socials: sanitiseSocials(body.socials),
     image: body.image,
     hidden: body.hidden,
   });

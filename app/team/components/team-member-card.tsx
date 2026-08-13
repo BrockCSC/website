@@ -185,6 +185,7 @@ export function TeamMemberCard({
             fill
             sizes="(max-width: 640px) 100vw, (max-width: 1060px) 50vw, 25vw"
             src={imageUrl}
+            style={{ objectPosition: member.image?.position ?? "50% 50%" }}
             unoptimized
           />
         ) : (
