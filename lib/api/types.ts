@@ -64,11 +64,26 @@ export type SignupRecord = {
 };
 
 export type DashboardStats = {
-  pageViews: { last30Days: number; previous30Days: number };
-  execs: { current: number; past: number };
-  events: { upcoming: number; past: number };
+  pageViews: {
+    last30Days: number;
+    previous30Days: number;
+    topPaths: { path: string; views: number }[];
+  };
+  execs: {
+    current: number;
+    past: number;
+    /** Current execs with no photo or no bio — the chase list. */
+    incompleteProfiles: number;
+  };
+  events: {
+    upcoming: number;
+    past: number;
+    next: { title: string; inDays: number } | null;
+  };
   /** Null when the admin may not approve sign-ups. */
   pendingSignups: number | null;
+  /** Current execs with no login account. Null for non-approvers. */
+  unclaimedTiles: number | null;
 };
 
 export type EventRecord = {
