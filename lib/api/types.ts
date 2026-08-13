@@ -5,6 +5,8 @@ export type SessionUser = {
   email: string;
   name: string;
   roles: string[];
+  /** Holds the approver role, so may manage executives. */
+  isApprover?: boolean;
 };
 
 export type ExecSocialLinks = {
