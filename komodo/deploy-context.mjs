@@ -1,5 +1,8 @@
 import { appendFileSync } from "node:fs";
 
+// Production lives on the club domain; uat and previews stay on sslip.io so
+// they are not discoverable under brockcsc.ca (their DBs are copies of prod).
+const PROD_HOST = "brockcsc.ca";
 const VPS_HOST = "129-153-49-190.sslip.io";
 
 const slugify = (branch) =>
@@ -21,7 +24,7 @@ let branch;
 if (ref.startsWith("refs/tags/")) {
   branch = ref.slice("refs/tags/".length);
   projectName = "brockcsc-prod";
-  subdomain = `brockcsc.${VPS_HOST}`;
+  subdomain = PROD_HOST;
   dbSchema = "prod";
 } else if (ref === "refs/heads/main") {
   branch = "main";

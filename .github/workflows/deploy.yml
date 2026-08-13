@@ -35,7 +35,7 @@ jobs:
           VPS_HOST="129-153-49-190.sslip.io"
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
-            echo "url=https://brockcsc.$VPS_HOST" >> "$GITHUB_OUTPUT"
+            echo "url=https://brockcsc.ca" >> "$GITHUB_OUTPUT"
           elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             echo "env_name=uat" >> "$GITHUB_OUTPUT"
             echo "url=https://uat.$VPS_HOST" >> "$GITHUB_OUTPUT"
