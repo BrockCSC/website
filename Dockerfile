@@ -16,6 +16,9 @@ ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 
+# Owned up front so a fresh uploads volume inherits nextjs, not root.
+RUN mkdir -p /data/uploads && chown -R nextjs:nodejs /data
+
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
