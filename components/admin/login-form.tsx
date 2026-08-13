@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { login } from "@/lib/api";
@@ -69,6 +70,13 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
         <Button type="submit" className="w-full" disabled={submitting}>
           {submitting ? "Signing in..." : "Sign In"}
         </Button>
+
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          New executive?{" "}
+          <Link className="underline" href="/signup">
+            Request an account
+          </Link>
+        </p>
       </form>
     </div>
   );
