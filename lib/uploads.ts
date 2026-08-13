@@ -59,10 +59,7 @@ export const sniffImageType = (bytes: Uint8Array): string | null => {
   }
   // Encoders differ on whether "avif" is the major brand or only a compatible
   // one, so look across the whole ftyp box rather than at byte 8 alone.
-  if (
-    ascii(bytes, 4, 8) === "ftyp" &&
-    /avif|avis/.test(ascii(bytes, 8, 64))
-  ) {
+  if (ascii(bytes, 4, 8) === "ftyp" && /avif|avis/.test(ascii(bytes, 8, 64))) {
     return "image/avif";
   }
   return null;
