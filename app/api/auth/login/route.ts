@@ -6,7 +6,7 @@ import {
   SESSION_COOKIE,
 } from "@/lib/auth/session";
 
-const { ADMIN_ROLE = "brockcsc-admin" } = process.env;
+const { ADMIN_ROLE = "executive" } = process.env;
 
 export const POST = async (req: NextRequest) => {
   const { username, password } = (await req.json()) as {

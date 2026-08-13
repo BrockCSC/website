@@ -6,7 +6,7 @@ import { findAll, toWireRecord } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 
 export const GET = async (req: NextRequest) => {
-  if (!requireApprover(req)) {
+  if (!(await requireApprover(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 

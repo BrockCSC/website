@@ -122,6 +122,18 @@ export const createDisabledUser = async (
   return id;
 };
 
+/** Effective realm roles, including those inherited from groups and composites. */
+export const effectiveRealmRoles = async (
+  userId: string,
+): Promise<string[]> => {
+  const res = await adminFetch(
+    `/users/${userId}/role-mappings/realm/composite`,
+  );
+  if (!res.ok) throw new Error(`Keycloak role lookup failed (${res.status}).`);
+  const roles = (await res.json()) as { name: string }[];
+  return roles.map((role) => role.name);
+};
+
 export const setUserEnabled = async (userId: string, enabled: boolean) => {
   const res = await adminFetch(`/users/${userId}`, {
     method: "PUT",

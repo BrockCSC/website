@@ -16,7 +16,7 @@ export const PATCH = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  if (!requireApprover(req)) {
+  if (!(await requireApprover(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
   const { id } = await params;
@@ -33,7 +33,7 @@ export const DELETE = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  if (!requireApprover(req)) {
+  if (!(await requireApprover(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
