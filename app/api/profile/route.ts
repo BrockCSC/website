@@ -58,7 +58,8 @@ export const PATCH = async (req: NextRequest) => {
     description: body.description,
     term: body.term,
     socials: sanitiseSocials(body.socials),
-    image: {
+    // Left untouched when absent, so a partial patch cannot clear the photo.
+    image: body.image && {
       url,
       position: OBJECT_POSITION.test(position) ? position : "50% 50%",
     },
