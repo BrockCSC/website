@@ -7,7 +7,7 @@ import Link from "next/link";
 import { LoginForm } from "@/components/admin/login-form";
 
 const adminTabs = [
-  { name: "Dashboard", href: "/admin", executiveOnly: true },
+  { name: "Dashboard", href: "/admin" },
   { name: "Events Management", href: "/admin/events", executiveOnly: true },
   { name: "Executives Management", href: "/admin/execs", approverOnly: true },
   { name: "My Profile", href: "/admin/profile" },
@@ -40,13 +40,6 @@ export default function AdminLayout({
       cancelled = true;
     };
   }, []);
-
-  // Alumni may only edit their own tile; other admin pages would just 401.
-  useEffect(() => {
-    if (!loading && authenticated && !isExecutive && !isApprover) {
-      if (pathname !== "/admin/profile") router.replace("/admin/profile");
-    }
-  }, [loading, authenticated, isExecutive, isApprover, pathname, router]);
 
   const handleLogout = async () => {
     try {

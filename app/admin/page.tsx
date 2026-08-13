@@ -132,19 +132,22 @@ export default function AdminPage() {
       tone: stats && !stats.events.next ? "down" : "muted",
       href: "/admin/events",
     },
-    {
-      label: "Profiles to chase",
-      value: stats ? String(stats.execs.incompleteProfiles) : "—",
-      detail: stats
-        ? stats.execs.incompleteProfiles > 0
-          ? "Missing a photo or bio"
-          : "Every profile is complete"
-        : "Loading",
-      tone: (stats && stats.execs.incompleteProfiles > 0
-        ? "down"
-        : "muted") as Tone,
-      href: "/admin/execs",
-    },
+    ...(stats && stats.pendingSignups !== null
+      ? [
+          {
+            label: "Profiles to chase",
+            value: String(stats.execs.incompleteProfiles),
+            detail:
+              stats.execs.incompleteProfiles > 0
+                ? "Missing a photo or bio"
+                : "Every profile is complete",
+            tone: (stats.execs.incompleteProfiles > 0
+              ? "down"
+              : "muted") as Tone,
+            href: "/admin/execs",
+          },
+        ]
+      : []),
     ...(stats && stats.pendingSignups !== null
       ? [
           {
