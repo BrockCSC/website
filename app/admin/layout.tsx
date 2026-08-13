@@ -10,7 +10,6 @@ const adminTabs = [
   { name: "Dashboard", href: "/admin" },
   { name: "Events Management", href: "/admin/events" },
   { name: "Executives Management", href: "/admin/execs" },
-  { name: "Sign-up Requests", href: "/admin/signups" },
   { name: "My Profile", href: "/admin/profile" },
 ];
 

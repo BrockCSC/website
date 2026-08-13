@@ -48,8 +48,8 @@ export type SignupRecord = {
   phone?: string;
   keycloakUserId?: string;
   status?: SignupStatus;
-  /** Exec record this account is linked to once approved. */
-  execKey?: string;
+  /** Exec record this account is linked to once approved. Null once unlinked. */
+  execKey?: string | null;
   submittedAt?: string;
   reviewedBy?: string;
   reviewedAt?: string;
