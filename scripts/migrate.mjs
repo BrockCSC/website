@@ -4,7 +4,11 @@ import { Pool } from "pg";
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
-  throw new Error("DATABASE_URL env var is not set.");
+  console.error(
+    "DATABASE_URL env var is not set.\n" +
+      "For local dev: run `npm run db:up`, then `cp .env.local.example .env.local`.",
+  );
+  process.exit(1);
 }
 
 const schema = process.env.DB_SCHEMA ?? "public";

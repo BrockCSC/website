@@ -83,6 +83,32 @@ The whole site leans neubrutalist: flat colours, thick black outlines, and hard 
 
 <br />
 
+## Local development
+
+You need Node 22+, Docker (for the local Postgres), and the Keycloak client secret.
+
+Production Postgres lives on the VPS and isn't reachable from your machine, so local dev runs its own throwaway Postgres in Docker. Keycloak is public, so you log in against the real thing.
+
+```bash
+git clone git@github.com:BrockCSC/website.git && cd website
+npm ci
+npm run db:up                       # local Postgres 16 on :5432
+cp .env.local.example .env.local    # then fill in KEYCLOAK_CLIENT_SECRET
+npm run dev                         # migrations run first, then http://localhost:3000
+```
+
+Open `http://localhost:3000/admin` and the login form appears. Sign in with your real Keycloak username and password.
+
+**The client secret.** `KEYCLOAK_CLIENT_SECRET` is the one value you can't make up. Ask a club admin for it, or copy it out of the Komodo stack config. It never goes in a committed file — `.env.local` is gitignored, keep it that way.
+
+**You also need the admin role.** A correct password isn't enough. Your Keycloak account needs the `brockcsc-admin` realm role, or login fails with a 403 "Not authorized". If that happens, ask an admin to grant you the role in the `brockcsc` realm.
+
+The session cookie is `Secure`, which Chrome and Firefox happily set on `http://localhost`. Safari doesn't, so use Chrome or Firefox locally.
+
+`npm run db:down` stops the database. Data lives in a named Docker volume, so it survives restarts. Local dev writes to the `local` schema, entirely separate from `prod` and `uat`.
+
+<br />
+
 <div align="center">
 
 ## Come say hi

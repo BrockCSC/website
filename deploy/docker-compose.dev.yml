@@ -1,0 +1,22 @@
+# Local dev Postgres only - production Postgres lives on the VPS.
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: brockcsc-dev-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: brockcsc
+      POSTGRES_USER: brockcsc
+      POSTGRES_PASSWORD: brockcsc
+    ports:
+      - "5432:5432"
+    volumes:
+      - brockcsc-dev-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U brockcsc -d brockcsc"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  brockcsc-dev-postgres:
