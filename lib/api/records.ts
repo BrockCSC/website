@@ -1,5 +1,11 @@
 import { apiFetch } from "./client";
-import type { EventRecord, ExecRecord, SignupRecord, WithKey } from "./types";
+import type {
+  DashboardStats,
+  EventRecord,
+  ExecRecord,
+  SignupRecord,
+  WithKey,
+} from "./types";
 import { getEventStartTimestamp, getEventTiming } from "@/lib/events/schedule";
 
 export const fetchAllExecs = async (): Promise<WithKey<ExecRecord>[]> =>
@@ -134,3 +140,14 @@ export const fetchInviteCode = async (): Promise<{
   code: string;
   expiresInMs: number;
 }> => apiFetch("/api/invite-code");
+
+export const fetchDashboardStats = async (): Promise<DashboardStats> =>
+  apiFetch<DashboardStats>("/api/stats");
+
+export const recordPageView = async (path: string): Promise<void> => {
+  await apiFetch("/api/page-view", {
+    method: "POST",
+    body: JSON.stringify({ path }),
+    keepalive: true,
+  });
+};
