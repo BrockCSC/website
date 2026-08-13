@@ -12,7 +12,7 @@ export const parsePosition = (position?: string) => {
 
 /**
  * Cards crop with object-cover, which cuts heads off centred portraits.
- * Clicking picks the point that stays in frame.
+ * Click or drag to pick the point that stays in frame.
  */
 export function ImageFocus({
   url,
@@ -24,6 +24,7 @@ export function ImageFocus({
   onChange: (position: string) => void;
 }) {
   const box = useRef<HTMLButtonElement>(null);
+  const dragging = useRef(false);
   const { x, y } = parsePosition(position);
 
   const pick = (clientX: number, clientY: number) => {
@@ -43,8 +44,26 @@ export function ImageFocus({
     <div>
       <div className="flex flex-wrap items-start gap-4">
         <button
-          className="relative h-40 w-32 shrink-0 cursor-crosshair overflow-hidden rounded-[12px] border-2 border-black"
-          onClick={(e) => pick(e.clientX, e.clientY)}
+          className="relative h-40 w-32 shrink-0 touch-none cursor-crosshair overflow-hidden rounded-[12px] border-2 border-black active:cursor-grabbing"
+          onLostPointerCapture={() => {
+            dragging.current = false;
+          }}
+          onPointerCancel={() => {
+            dragging.current = false;
+          }}
+          onPointerDown={(e) => {
+            dragging.current = true;
+            // Capture so the drag keeps tracking outside the thumbnail.
+            e.currentTarget.setPointerCapture(e.pointerId);
+            pick(e.clientX, e.clientY);
+          }}
+          onPointerMove={(e) => {
+            if (dragging.current) pick(e.clientX, e.clientY);
+          }}
+          onPointerUp={(e) => {
+            dragging.current = false;
+            e.currentTarget.releasePointerCapture(e.pointerId);
+          }}
           onKeyDown={(e) => {
             const step = e.shiftKey ? 10 : 2;
             if (e.key === "ArrowUp") nudge(0, -step);
@@ -55,7 +74,7 @@ export function ImageFocus({
             e.preventDefault();
           }}
           ref={box}
-          title="Click to choose what stays in frame"
+          title="Click or drag to choose what stays in frame"
           type="button"
         >
           <Image
@@ -76,8 +95,9 @@ export function ImageFocus({
         <div className="text-sm">
           <p className="font-semibold">Framing</p>
           <p className="mt-1 max-w-[22rem] text-neutral-500">
-            Cards crop to a fixed shape. Click the photo to choose what stays in
-            frame — for a portrait, aim at the face. Arrow keys nudge it.
+            Cards crop to a fixed shape. Click or drag on the photo to choose
+            what stays in frame — for a portrait, aim at the face. Arrow keys
+            nudge it.
           </p>
           <div className="mt-2 flex items-center gap-3">
             <span className="font-mono text-xs text-neutral-500">
