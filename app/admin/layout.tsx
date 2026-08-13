@@ -9,7 +9,7 @@ import { LoginForm } from "@/components/admin/login-form";
 const adminTabs = [
   { name: "Dashboard", href: "/admin" },
   { name: "Events Management", href: "/admin/events" },
-  { name: "Executives Management", href: "/admin/execs" },
+  { name: "Executives Management", href: "/admin/execs", approverOnly: true },
   { name: "My Profile", href: "/admin/profile" },
 ];
 
@@ -22,6 +22,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
+  const [isApprover, setIsApprover] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,6 +30,7 @@ export default function AdminLayout({
     fetchCurrentUser().then((user) => {
       if (cancelled) return;
       setAuthenticated(!!user);
+      setIsApprover(!!user?.isApprover);
       setLoading(false);
     });
 
@@ -64,25 +66,27 @@ export default function AdminLayout({
       <div className="mx-auto w-full max-w-[1060px] px-5">
         <div className="flex items-center justify-between mb-8">
           <nav className="flex gap-2">
-            {adminTabs.map((tab) => {
-              const isActive =
-                tab.href === "/admin"
-                  ? pathname === "/admin"
-                  : pathname.startsWith(tab.href);
-              return (
-                <Link
-                  key={tab.name}
-                  href={tab.href}
-                  className={`px-4 py-2 rounded-[12px] font-semibold border-2 border-transparent transition-colors ${
-                    isActive
-                      ? "border-[#9A4440] text-[#9A4440] bg-[#fff1f0]"
-                      : "text-black hover:bg-neutral-100"
-                  }`}
-                >
-                  {tab.name}
-                </Link>
-              );
-            })}
+            {adminTabs
+              .filter((tab) => !tab.approverOnly || isApprover)
+              .map((tab) => {
+                const isActive =
+                  tab.href === "/admin"
+                    ? pathname === "/admin"
+                    : pathname.startsWith(tab.href);
+                return (
+                  <Link
+                    key={tab.name}
+                    href={tab.href}
+                    className={`px-4 py-2 rounded-[12px] font-semibold border-2 border-transparent transition-colors ${
+                      isActive
+                        ? "border-[#9A4440] text-[#9A4440] bg-[#fff1f0]"
+                        : "text-black hover:bg-neutral-100"
+                    }`}
+                  >
+                    {tab.name}
+                  </Link>
+                );
+              })}
           </nav>
           <div className="flex items-center gap-3">
             <button
