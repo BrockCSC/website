@@ -5,29 +5,13 @@ networks:
     external: true
 
 services:
-  # The app runs as uid 1001; a named volume is created root-owned, so uploads
-  # would fail with EACCES without this.
-  uploads-init:
-    image: busybox:1.36
-    user: root
-    command:
-      [
-        "sh",
-        "-c",
-        "mkdir -p /data/uploads && chown -R 1001:65533 /data/uploads",
-      ]
-    volumes:
-      - uploads:/data/uploads
-    restart: "no"
-
+  # Uploads volume ownership comes from the image: the Dockerfile creates
+  # /data/uploads as nextjs:nodejs, which an empty volume inherits on first mount.
   app:
     image: brockcsc-ca:${IMAGE_TAG}
     pull_policy: never
     container_name: ${PROJECT_NAME}-app
     restart: unless-stopped
-    depends_on:
-      uploads-init:
-        condition: service_completed_successfully
     networks: [wayfarer-net]
     volumes:
       - uploads:/data/uploads
