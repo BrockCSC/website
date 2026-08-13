@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -72,8 +73,12 @@ export default function TeamPageClient() {
           return;
         }
 
-        setCurrentExecs(sortExecsByRoleThenDatabaseOrder(current));
-        setPreviousExecs(previous);
+        setCurrentExecs(
+          sortExecsByRoleThenDatabaseOrder(
+            current.filter((exec) => !exec.hidden),
+          ),
+        );
+        setPreviousExecs(previous.filter((exec) => !exec.hidden));
       } catch {
         if (!active) {
           return;
@@ -179,6 +184,18 @@ export default function TeamPageClient() {
           </div>
         )}
       </section>
+
+      <p className="px-4 text-[0.85rem] text-muted-foreground">
+        Are you an exec?{" "}
+        <Link href="/signup" className="underline">
+          Request an account
+        </Link>{" "}
+        or{" "}
+        <Link href="/admin" className="underline">
+          sign in
+        </Link>
+        .
+      </p>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 node_modules
 apps/web/.next
 apps/api/dist
-apps/api/drizzle/meta
+drizzle/meta
 apps/web/package-lock.json
 apps/api/package-lock.json
 apps/web/public
