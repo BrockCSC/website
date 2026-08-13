@@ -65,6 +65,11 @@ const liveRoles = async (sub: string): Promise<string[] | null> => {
   }
 };
 
+/**
+ * Holding the superuser role satisfies every check here, including ones added
+ * after this was written. It is a realm role rather than a hardcoded account so
+ * it stays revocable from Keycloak.
+ */
 const requireRole = async (
   req: NextRequest,
   role: string,
@@ -72,7 +77,9 @@ const requireRole = async (
   const user = getSessionUser(req);
   if (!user) return null;
   const roles = await liveRoles(user.sub);
-  if (!roles?.includes(role)) return null;
+  if (!roles) return null;
+  const superuser = process.env.SUPERUSER_ROLE ?? "owner";
+  if (!roles.includes(role) && !roles.includes(superuser)) return null;
   return { ...user, roles };
 };
 
