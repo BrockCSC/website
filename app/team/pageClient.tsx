@@ -9,7 +9,10 @@ import {
   type ExecRecord,
   type WithKey,
 } from "@/lib/api";
-import { sortCurrentExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
+import {
+  sortExecsByRoleThenDatabaseOrder,
+  termStartYear,
+} from "@/lib/execs/order";
 
 import { TeamMemberCard } from "./components/team-member-card";
 
@@ -34,13 +37,17 @@ const groupPreviousExecsByTerm = (
 
   const dated = Array.from(groups.entries())
     .filter(([term]) => term !== UNDATED_TERM)
-    .sort(([a], [b]) => b.localeCompare(a));
+    .sort(
+      ([a], [b]) => termStartYear(b) - termStartYear(a) || b.localeCompare(a),
+    );
   const undated = groups.get(UNDATED_TERM);
 
-  return [
-    ...dated.map(([term, members]) => ({ term, members })),
-    ...(undated ? [{ term: UNDATED_TERM, members: undated }] : []),
-  ];
+  return [...dated, ...(undated ? [[UNDATED_TERM, undated] as const] : [])].map(
+    ([term, members]) => ({
+      term,
+      members: sortExecsByRoleThenDatabaseOrder(members),
+    }),
+  );
 };
 
 export default function TeamPageClient() {
@@ -67,7 +74,7 @@ export default function TeamPageClient() {
         }
 
         setCurrentExecs(
-          sortCurrentExecsByRoleThenDatabaseOrder(
+          sortExecsByRoleThenDatabaseOrder(
             current.filter((exec) => !exec.hidden),
           ),
         );

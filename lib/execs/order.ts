@@ -6,8 +6,8 @@ const UNKNOWN_ROLE_PRIORITY = Number.MAX_SAFE_INTEGER;
 
 const ROLE_PRIORITY: Record<string, number> = {
   president: 1,
-  "vice president": 2,
-  "co-president": 3,
+  "co-president": 2,
+  "vice president": 3,
   treasurer: 4,
   executive: 5,
 };
@@ -17,7 +17,11 @@ const getRolePriority = (title?: string): number => {
   return ROLE_PRIORITY[normalizedTitle] ?? UNKNOWN_ROLE_PRIORITY;
 };
 
-export const sortCurrentExecsByRoleThenDatabaseOrder = (
+/** Leading year of a term like "2016-2017", or -1 when there isn't one. */
+export const termStartYear = (term: string): number =>
+  Number(term.match(/\d{4}/)?.[0] ?? -1);
+
+export const sortExecsByRoleThenDatabaseOrder = (
   members: TeamMember[],
 ): TeamMember[] => {
   const orderByKey = new Map<string, number>();
