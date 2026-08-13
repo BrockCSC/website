@@ -124,9 +124,26 @@ export default function AdminPage() {
     {
       label: "Scheduled events",
       value: stats ? String(stats.events.upcoming) : "—",
-      detail: stats ? plural(stats.events.past, "past event") : "Loading",
-      tone: "muted",
+      detail: stats
+        ? stats.events.next
+          ? `Next: ${stats.events.next.title} in ${plural(stats.events.next.inDays, "day")}`
+          : "Nothing scheduled"
+        : "Loading",
+      tone: stats && !stats.events.next ? "down" : "muted",
       href: "/admin/events",
+    },
+    {
+      label: "Profiles to chase",
+      value: stats ? String(stats.execs.incompleteProfiles) : "—",
+      detail: stats
+        ? stats.execs.incompleteProfiles > 0
+          ? "Missing a photo or bio"
+          : "Every profile is complete"
+        : "Loading",
+      tone: (stats && stats.execs.incompleteProfiles > 0
+        ? "down"
+        : "muted") as Tone,
+      href: "/admin/execs",
     },
     ...(stats && stats.pendingSignups !== null
       ? [
@@ -142,6 +159,20 @@ export default function AdminPage() {
           },
         ]
       : []),
+    ...(stats && stats.unclaimedTiles !== null
+      ? [
+          {
+            label: "Tiles without a login",
+            value: String(stats.unclaimedTiles),
+            detail:
+              stats.unclaimedTiles > 0
+                ? "These execs cannot edit themselves"
+                : "Everyone can edit their own",
+            tone: (stats.unclaimedTiles > 0 ? "down" : "muted") as Tone,
+            href: "/admin/execs",
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -150,15 +181,41 @@ export default function AdminPage() {
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
         <p className="text-neutral-500 mb-6">Welcome back!</p>
 
-        <div
-          className={`grid grid-cols-1 gap-5 sm:grid-cols-2 ${
-            cards.length === 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"
-          }`}
-        >
+        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {cards.map((card) => (
             <StatCard key={card.label} {...card} />
           ))}
         </div>
+
+        {stats && stats.pageViews.topPaths.length > 0 && (
+          <section className="mt-6 rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0px_#9A4440]">
+            <h2 className="text-sm font-bold uppercase tracking-wide">
+              Most visited pages
+            </h2>
+            <p className="mt-1 text-sm text-neutral-500">Last 30 days.</p>
+            <ul className="mt-4 flex flex-col gap-2">
+              {stats.pageViews.topPaths.map((entry) => {
+                const share = Math.round(
+                  (entry.views / stats.pageViews.topPaths[0].views) * 100,
+                );
+                return (
+                  <li className="flex items-center gap-3" key={entry.path}>
+                    <span className="w-40 shrink-0 truncate font-mono text-xs">
+                      {entry.path}
+                    </span>
+                    <span
+                      className="h-3 rounded-full bg-[#9A4440]"
+                      style={{ width: `${Math.max(share, 4)}%` }}
+                    />
+                    <span className="text-xs text-neutral-500">
+                      {entry.views.toLocaleString()}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
 
         <div className="mt-6 flex flex-col gap-4 sm:flex-row">
           <Button asChild variant="primary">

@@ -1,4 +1,4 @@
-import { and, count, gte, lt } from "drizzle-orm";
+import { and, count, desc, gte, lt, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import type {
   DashboardStats,
@@ -16,6 +16,7 @@ import {
   signupsTable,
 } from "@/lib/db/schema";
 import { classifyEventsByTiming } from "@/lib/events/classify";
+import { getEventTiming } from "@/lib/events/schedule";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
@@ -32,37 +33,79 @@ const countViews = async (fromMs: number, toMs: number): Promise<number> => {
   return row?.total ?? 0;
 };
 
+/** The path column is recorded on every view; without this it is dead weight. */
+const topPaths = async (fromMs: number) => {
+  const path = sql<string>`${pageViewsTable.data}->>'path'`;
+  const rows = await db
+    .select({ path, views: count() })
+    .from(pageViewsTable)
+    .where(gte(pageViewsTable.createdAt, new Date(fromMs)))
+    .groupBy(path)
+    .orderBy(desc(count()))
+    .limit(5);
+  return rows.map((row) => ({ path: row.path ?? "/", views: row.views }));
+};
+
 export const GET = async (req: NextRequest) => {
   if (!(await requireAdmin(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
   const now = Date.now();
-  const [execs, events, last30Days, previous30Days, approver] =
+  const [execs, events, last30Days, previous30Days, paths, approver] =
     await Promise.all([
       findAll<ExecRecord>(execsTable),
       findAll<EventRecord>(eventsTable),
       countViews(now - THIRTY_DAYS_MS, now),
       countViews(now - 2 * THIRTY_DAYS_MS, now - THIRTY_DAYS_MS),
+      topPaths(now - THIRTY_DAYS_MS),
       requireApprover(req),
     ]);
 
   const timing = classifyEventsByTiming(events.map(toWireRecord), now);
+  const currentExecs = execs.filter((exec) => exec.isCurrentExec === true);
+
+  const nextStart = [...timing.upcoming, ...timing.ongoing]
+    .map((event) => ({
+      title: event.title ?? "Untitled event",
+      startsAt: getEventTiming(event, now).nextStartTimestamp,
+    }))
+    .filter(
+      (entry): entry is { title: string; startsAt: number } =>
+        typeof entry.startsAt === "number",
+    )
+    .sort((a, b) => a.startsAt - b.startsAt)[0];
+
+  const signups = approver ? await findAll<SignupRecord>(signupsTable) : [];
+  const linkedKeys = new Set(signups.map((signup) => signup.execKey));
 
   const stats: DashboardStats = {
-    pageViews: { last30Days, previous30Days },
+    pageViews: { last30Days, previous30Days, topPaths: paths },
     execs: {
-      current: execs.filter((exec) => exec.isCurrentExec === true).length,
+      current: currentExecs.length,
       past: execs.filter((exec) => exec.isCurrentExec === false).length,
+      incompleteProfiles: currentExecs.filter(
+        (exec) => !exec.image?.url || !exec.description?.trim(),
+      ).length,
     },
     events: {
       upcoming: timing.upcoming.length + timing.ongoing.length,
       past: timing.past.length,
+      next: nextStart
+        ? {
+            title: nextStart.title,
+            inDays: Math.max(
+              0,
+              Math.round((nextStart.startsAt - now) / (24 * 60 * 60 * 1000)),
+            ),
+          }
+        : null,
     },
     pendingSignups: approver
-      ? (await findAll<SignupRecord>(signupsTable)).filter(
-          (signup) => signup.status === "pending",
-        ).length
+      ? signups.filter((signup) => signup.status === "pending").length
+      : null,
+    unclaimedTiles: approver
+      ? currentExecs.filter((exec) => !linkedKeys.has(exec.id)).length
       : null,
   };
 
