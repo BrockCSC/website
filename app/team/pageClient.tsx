@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { useRevealedGroups } from "@/lib/use-revealed-groups";
 
 import {
   fetchCurrentExecs,
@@ -101,9 +103,14 @@ export default function TeamPageClient() {
   const hasCurrentExecs = currentExecs.length > 0;
   const hasPreviousExecs = previousExecs.length > 0;
   const previousExecGroups = useMemo(
-    () => groupPreviousExecsByTerm(previousExecs),
+    () =>
+      groupPreviousExecsByTerm(previousExecs).map((group) => ({
+        ...group,
+        items: group.members,
+      })),
     [previousExecs],
   );
+  const alumni = useRevealedGroups(previousExecGroups);
   const errorMessage = error ? (
     <p className="mb-4 text-muted-foreground">{error}</p>
   ) : null;
@@ -165,7 +172,7 @@ export default function TeamPageClient() {
 
         {hasPreviousExecs && (
           <div className="flex flex-col gap-4">
-            {previousExecGroups.map((group) => (
+            {alumni.visible.map((group) => (
               <section key={group.term}>
                 <h3 className="mb-2 text-base font-semibold text-foreground/80">
                   {group.term}
@@ -181,6 +188,17 @@ export default function TeamPageClient() {
                 </div>
               </section>
             ))}
+
+            {alumni.hasMore && (
+              <div className="mt-2 flex flex-wrap items-center gap-3">
+                <Button onClick={alumni.revealMore} variant="outline">
+                  Show earlier executives
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {alumni.hidden} more
+                </span>
+              </div>
+            )}
           </div>
         )}
       </section>
