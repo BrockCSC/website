@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireApprover } from "@/lib/auth/session";
+import { requireApprover, requireMember } from "@/lib/auth/session";
 import {
-  createItemHandlers,
   findAll,
+  findById,
   remove,
   toWireRecord,
   update,
@@ -10,7 +10,18 @@ import {
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 
-export const { GET } = createItemHandlers<ExecRecord>(execsTable);
+/** A hidden tile reads as absent to the public, same as the collection route. */
+export const GET = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const exec = await findById<ExecRecord>(execsTable, id);
+  if (!exec || (exec.hidden && !(await requireMember(req)))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  return NextResponse.json(toWireRecord(exec));
+};
 
 export const PATCH = async (
   req: NextRequest,

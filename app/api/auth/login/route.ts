@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCredentials } from "@/lib/auth/keycloak";
+import { rateLimit } from "@/lib/rate-limit";
 import {
   sessionCookieOptions,
   signSession,
@@ -13,6 +14,9 @@ const {
 } = process.env;
 
 export const POST = async (req: NextRequest) => {
+  const limited = rateLimit(req, "login", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
   const { username, password } = (await req.json()) as {
     username?: string;
     password?: string;

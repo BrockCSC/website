@@ -37,6 +37,37 @@ export const resolveUploadPath = (segments: string[]): string | null => {
   return resolved.startsWith(UPLOAD_ROOT + sep) ? resolved : null;
 };
 
+const ascii = (bytes: Uint8Array, start: number, end: number) =>
+  Buffer.from(bytes.subarray(start, end)).toString("latin1");
+
+const startsWith = (bytes: Uint8Array, signature: number[]) =>
+  signature.every((byte, i) => bytes[i] === byte);
+
+/**
+ * The browser's declared type is just a header, so the extension and the
+ * served content-type would otherwise both derive from something a caller
+ * controls. Reading the actual magic bytes keeps the two honest.
+ */
+export const sniffImageType = (bytes: Uint8Array): string | null => {
+  if (startsWith(bytes, [0xff, 0xd8, 0xff])) return "image/jpeg";
+  if (startsWith(bytes, [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) {
+    return "image/png";
+  }
+  if (["GIF87a", "GIF89a"].includes(ascii(bytes, 0, 6))) return "image/gif";
+  if (ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 12) === "WEBP") {
+    return "image/webp";
+  }
+  // Encoders differ on whether "avif" is the major brand or only a compatible
+  // one, so look across the whole ftyp box rather than at byte 8 alone.
+  if (
+    ascii(bytes, 4, 8) === "ftyp" &&
+    /avif|avis/.test(ascii(bytes, 8, 64))
+  ) {
+    return "image/avif";
+  }
+  return null;
+};
+
 export const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",

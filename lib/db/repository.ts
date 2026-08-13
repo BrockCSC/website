@@ -7,9 +7,10 @@ import type { eventsTable, execsTable, signupsTable } from "./schema";
 type JsonbTable = typeof eventsTable | typeof execsTable | typeof signupsTable;
 type Entity<T> = T & { id: string };
 
+/** id last: a stray `id` inside the stored JSON must not shadow the real one. */
 const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
-  id: row.id,
   ...(row.data as T),
+  id: row.id,
 });
 
 export const toWireRecord = <T>(entity: Entity<T>) => {

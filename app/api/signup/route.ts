@@ -9,11 +9,15 @@ import {
   usernameFor,
 } from "@/lib/auth/keycloak-admin";
 import { create } from "@/lib/db/repository";
+import { rateLimit } from "@/lib/rate-limit";
 import { signupsTable } from "@/lib/db/schema";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BROCK_EMAIL_PATTERN = /@(?:[a-z0-9-]+\.)*brocku\.ca$/i;
 const STUDENT_ID_PATTERN = /^\d{6,10}$/;
+const MAX_NAME = 60;
+const MAX_EMAIL = 200;
+const MAX_PHONE = 30;
 
 const badRequest = (error: string) =>
   NextResponse.json({ error }, { status: 400 });
@@ -28,6 +32,10 @@ const confirmationCode = () =>
   ).join("");
 
 export const POST = async (req: NextRequest) => {
+  // Every accepted request creates a Keycloak account, so cap the burst.
+  const flooding = rateLimit(req, "signup", 20, 60 * 60 * 1000);
+  if (flooding) return flooding;
+
   const body = (await req.json()) as Record<string, string | undefined>;
   const inviteCode = body.inviteCode?.trim() ?? "";
   const firstName = body.firstName?.trim() ?? "";
@@ -39,16 +47,26 @@ export const POST = async (req: NextRequest) => {
   const password = body.password ?? "";
 
   if (!isValidInviteCode(inviteCode)) {
-    return NextResponse.json(
-      { error: "That invite code is not valid." },
-      { status: 403 },
+    // A wrong code is the only signal a guesser gets; make guesses expensive.
+    return (
+      rateLimit(req, "invite-code", 10, 60 * 60 * 1000) ??
+      NextResponse.json(
+        { error: "That invite code is not valid." },
+        { status: 403 },
+      )
     );
   }
   if (!firstName || !lastName) {
     return badRequest("First and last name are required.");
   }
-  if (!EMAIL_PATTERN.test(email)) {
+  if (firstName.length > MAX_NAME || lastName.length > MAX_NAME) {
+    return badRequest("That name is too long.");
+  }
+  if (email.length > MAX_EMAIL || !EMAIL_PATTERN.test(email)) {
     return badRequest("Enter a valid email address.");
+  }
+  if (phone.length > MAX_PHONE) {
+    return badRequest("That phone number is too long.");
   }
   // Current execs verify with Brock credentials; alumni no longer have them.
   if (!isFormerExec) {
