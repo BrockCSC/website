@@ -9,9 +9,22 @@ export {
   createExec,
   updateExec,
   deleteExec,
+  fetchProfile,
+  updateProfile,
   createEvent,
   editEvent,
   deleteEvent,
+  fetchSignups,
+  reviewSignup,
+  deleteSignup,
+  fetchInviteCode,
 } from "./records";
-export { fetchCurrentUser, login, logout } from "./auth";
-export type { EventRecord, ExecRecord, SessionUser, WithKey } from "./types";
+export { fetchCurrentUser, login, logout, signup } from "./auth";
+export type {
+  EventRecord,
+  ExecRecord,
+  SessionUser,
+  SignupInput,
+  SignupRecord,
+  WithKey,
+} from "./types";

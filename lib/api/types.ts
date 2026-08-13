@@ -19,6 +19,8 @@ export type ExecRecord = {
   title?: string;
   description?: string;
   isCurrentExec?: boolean;
+  /** Set by the exec themselves to stay off the public team page. */
+  hidden?: boolean;
   term?: string;
   socials?: ExecSocialLinks;
   image?: {
@@ -26,6 +28,35 @@ export type ExecRecord = {
     name?: string;
     path?: string;
   };
+};
+
+export type SignupInput = {
+  inviteCode: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  confirmPassword: string;
+};
+
+export type SignupStatus = "pending" | "approved" | "rejected";
+
+export type SignupRecord = {
+  firstName?: string;
+  lastName?: string;
+  username?: string;
+  email?: string;
+  phone?: string;
+  keycloakUserId?: string;
+  /** Shown once at sign-up; the approver checks it out-of-band. */
+  confirmationCode?: string;
+  status?: SignupStatus;
+  /** Exec record this account is linked to once approved. Null once unlinked. */
+  execKey?: string | null;
+  submittedAt?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
 };
 
 export type EventRecord = {
