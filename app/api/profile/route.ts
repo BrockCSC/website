@@ -34,6 +34,7 @@ export const PATCH = async (req: NextRequest) => {
     term: body.term,
     socials: body.socials,
     image: body.image,
+    hidden: body.hidden,
   });
   if (!exec) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });

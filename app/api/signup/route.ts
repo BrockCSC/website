@@ -1,3 +1,4 @@
+import { randomInt } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SignupRecord } from "@/lib/api/types";
 import { isValidInviteCode } from "@/lib/auth/invite-code";
@@ -14,6 +15,15 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const badRequest = (error: string) =>
   NextResponse.json({ error }, { status: 400 });
+
+/** No vowels or look-alike characters, so it survives being read aloud. */
+const CONFIRMATION_ALPHABET = "23456789BCDFGHJKLMNPQRSTVWXZ";
+
+const confirmationCode = () =>
+  Array.from(
+    { length: 6 },
+    () => CONFIRMATION_ALPHABET[randomInt(CONFIRMATION_ALPHABET.length)],
+  ).join("");
 
 export const POST = async (req: NextRequest) => {
   const body = (await req.json()) as Record<string, string | undefined>;
@@ -60,6 +70,8 @@ export const POST = async (req: NextRequest) => {
     attributes: phone ? { phone: [phone] } : undefined,
   });
 
+  const confirmation = confirmationCode();
+
   try {
     await create<SignupRecord>(signupsTable, {
       firstName,
@@ -68,6 +80,7 @@ export const POST = async (req: NextRequest) => {
       email,
       phone: phone || undefined,
       keycloakUserId,
+      confirmationCode: confirmation,
       status: "pending",
       submittedAt: new Date().toISOString(),
     });
@@ -77,5 +90,5 @@ export const POST = async (req: NextRequest) => {
     throw err;
   }
 
-  return new NextResponse(null, { status: 201 });
+  return NextResponse.json({ confirmationCode: confirmation }, { status: 201 });
 };

@@ -66,8 +66,12 @@ export default function TeamPageClient() {
           return;
         }
 
-        setCurrentExecs(sortCurrentExecsByRoleThenDatabaseOrder(current));
-        setPreviousExecs(previous);
+        setCurrentExecs(
+          sortCurrentExecsByRoleThenDatabaseOrder(
+            current.filter((exec) => !exec.hidden),
+          ),
+        );
+        setPreviousExecs(previous.filter((exec) => !exec.hidden));
       } catch {
         if (!active) {
           return;

@@ -184,58 +184,80 @@ export default function ExecutivesManagementPage() {
     actionsColumn,
   ];
 
-  const pendingColumns: ColumnDef<Signup>[] = [
-    { header: "Name", cell: fullName },
-    { header: "Username", accessorKey: "username" },
-    { header: "Email", accessorKey: "email" },
-    { header: "Phone", accessorKey: "phone" },
-    {
-      header: "Identity",
-      cell: (signup) => {
-        const match = signup.matchedExec;
-        if (!match) {
-          return (
-            <span className="text-neutral-500">New — tile will be created</span>
-          );
-        }
-        if (match.claimed) {
-          return (
-            <span className="font-semibold text-[#d44b4b]">
-              Claims {match.name}, already held by another account
-            </span>
-          );
-        }
-        return (
-          <span>
-            Claims existing{" "}
-            <strong>
-              {match.name}
-              {match.title ? ` — ${match.title}` : ""}
-            </strong>
-          </span>
-        );
-      },
-    },
-    {
-      header: "Actions",
-      headerClassName: "text-center",
-      cellClassName: "flex justify-around gap-[15px]",
-      cell: (signup) => (
-        <>
-          <Button size="xs" onClick={() => review(signup, "approve")}>
-            Approve
-          </Button>
-          <Button
-            size="xs"
-            variant="destructive"
-            onClick={() => setRejecting(signup)}
-          >
-            Reject
-          </Button>
-        </>
-      ),
-    },
-  ];
+  const pendingCard = (signup: Signup) => {
+    const match = signup.matchedExec;
+    return (
+      <div
+        className="rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0px_#9A4440]"
+        key={signup.$key}
+      >
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-lg font-bold">{fullName(signup)}</div>
+            <div className="font-mono text-xs text-neutral-500">
+              {signup.username}
+            </div>
+          </div>
+          <div className="flex shrink-0 gap-3">
+            <Button size="xs" onClick={() => review(signup, "approve")}>
+              Approve
+            </Button>
+            <Button
+              size="xs"
+              variant="destructive"
+              onClick={() => setRejecting(signup)}
+            >
+              Reject
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-600">
+          {signup.email && <span className="break-all">{signup.email}</span>}
+          {signup.phone && <span>{signup.phone}</span>}
+          {signup.submittedAt && (
+            <span>{new Date(signup.submittedAt).toLocaleDateString()}</span>
+          )}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
+          <div className="rounded-[12px] bg-neutral-100 px-4 py-3 text-sm">
+            {!match && (
+              <span className="text-neutral-600">
+                No matching tile — a new one will be created on approval.
+              </span>
+            )}
+            {match && match.claimed && (
+              <span className="font-semibold text-[#d44b4b]">
+                Claims {match.name}, already held by another account. Approving
+                creates a separate tile.
+              </span>
+            )}
+            {match && !match.claimed && (
+              <span>
+                Claims existing{" "}
+                <strong>
+                  {match.name}
+                  {match.title ? ` — ${match.title}` : ""}
+                </strong>
+              </span>
+            )}
+          </div>
+
+          {signup.confirmationCode && (
+            <div className="rounded-[12px] border-2 border-black bg-[#fff1f0] px-4 py-2 text-center">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
+                Confirm code
+              </div>
+              <div className="font-mono text-lg font-bold tracking-[0.2em] text-[#9A4440]">
+                {signup.confirmationCode}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   const pending = (signups ?? []).filter((s) => s.status === "pending");
   const deletingAccount = deleting ? accountFor(deleting) : null;
@@ -274,11 +296,9 @@ export default function ExecutivesManagementPage() {
             <h2 className="text-lg font-bold mb-4">
               Pending sign-ups ({pending.length})
             </h2>
-            <AdminTable
-              columns={pendingColumns}
-              data={pending}
-              keyExtractor={(s) => s.$key}
-            />
+            <div className="flex flex-col gap-4">
+              {pending.map(pendingCard)}
+            </div>
           </div>
         )}
 

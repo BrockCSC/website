@@ -11,6 +11,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [description, setDescription] = useState("");
   const [term, setTerm] = useState("");
+  const [hidden, setHidden] = useState(false);
   const [github, setGithub] = useState("");
   const [linkedin, setLinkedin] = useState("");
   const [instagram, setInstagram] = useState("");
@@ -26,6 +27,7 @@ export default function ProfilePage() {
         setProfile(exec);
         setDescription(exec?.description ?? "");
         setTerm(exec?.term ?? "");
+        setHidden(exec?.hidden ?? false);
         setGithub(exec?.socials?.github ?? "");
         setLinkedin(exec?.socials?.linkedin ?? "");
         setInstagram(exec?.socials?.instagram ?? "");
@@ -47,6 +49,7 @@ export default function ProfilePage() {
       await updateProfile({
         description,
         term,
+        hidden,
         image: { url: photoUrl },
         socials: { github, linkedin, instagram, x: twitter },
       });
@@ -115,6 +118,22 @@ export default function ProfilePage() {
             onChange={(e) => setTerm(e.target.value)}
           />
         </div>
+
+        <label className="my-6 flex items-start gap-2 text-sm">
+          <input
+            checked={hidden}
+            className="mt-1"
+            onChange={(e) => setHidden(e.target.checked)}
+            type="checkbox"
+          />
+          <span>
+            Hide me from the public team page
+            <span className="block text-neutral-500">
+              Your tile stays in the admin panel and your login keeps working —
+              it just isn&apos;t shown on the website.
+            </span>
+          </span>
+        </label>
         <div className="mb-4">
           <label className="block text-sm font-semibold mb-1">Github URL</label>
           <input
