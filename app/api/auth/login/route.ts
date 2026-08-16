@@ -29,6 +29,17 @@ export const POST = async (req: NextRequest) => {
     );
   }
 
+  // The per-IP cap alone does nothing against one account guessed from many
+  // addresses. Set above it, so a campus NAT hits the IP cap first.
+  const guessed = rateLimit(
+    req,
+    "login-user",
+    30,
+    15 * 60 * 1000,
+    username.toLowerCase(),
+  );
+  if (guessed) return guessed;
+
   const identity = await exchangeCredentials(username, password);
   if (!identity) {
     return NextResponse.json(

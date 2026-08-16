@@ -17,13 +17,15 @@ const clientIp = (req: NextRequest): string => {
   return chain?.at(-1) ?? req.headers.get("x-real-ip") ?? "unknown";
 };
 
+/** Counts per caller IP unless `identity` names something else to count by. */
 export const rateLimit = (
   req: NextRequest,
   bucket: string,
   limit: number,
   windowMs: number,
+  identity?: string,
 ): NextResponse | null => {
-  const key = `${bucket}:${clientIp(req)}`;
+  const key = `${bucket}:${identity ?? clientIp(req)}`;
   const now = Date.now();
   const window = windows.get(key);
 
