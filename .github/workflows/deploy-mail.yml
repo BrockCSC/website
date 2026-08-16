@@ -69,7 +69,7 @@ jobs:
             git_provider: "github.com",
             file_paths: ["deploy/mail/docker-compose.yml"],
             auto_pull: true,
-            destroy_before_deploy: false,
+            destroy_before_deploy: true,
             webhook_enabled: false,
             environment: (
               "STALWART_ADMIN_USER=[[BROCKCSC_STALWART_ADMIN_USER]]\n" +

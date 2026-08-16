@@ -12,7 +12,6 @@ services:
     ports:
       - "25:25"
       - "465:465"
-      - "587:587"
       - "993:993"
     volumes:
       - stalwart-data:/var/lib/stalwart
@@ -40,10 +39,10 @@ services:
       - /opt/wayfarer/mail/skins/brockcsc:/var/www/html/skins/brockcsc:ro
     environment:
       - ROUNDCUBEMAIL_DB_TYPE=sqlite
-      - ROUNDCUBEMAIL_DEFAULT_HOST=stalwart
-      - ROUNDCUBEMAIL_DEFAULT_PORT=143
-      - ROUNDCUBEMAIL_SMTP_SERVER=stalwart
-      - ROUNDCUBEMAIL_SMTP_PORT=587
+      - ROUNDCUBEMAIL_DEFAULT_HOST=ssl://stalwart
+      - ROUNDCUBEMAIL_DEFAULT_PORT=993
+      - ROUNDCUBEMAIL_SMTP_SERVER=ssl://stalwart
+      - ROUNDCUBEMAIL_SMTP_PORT=465
       - ROUNDCUBEMAIL_PLUGINS=archive,zipdownload,managesieve
       - ROUNDCUBEMAIL_SKIN=brockcsc
       - ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE=25M

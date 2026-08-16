@@ -15,3 +15,9 @@ $config['oauth_identity_fields'] = ['email'];
 // Keeps the password form alongside the SSO button.
 $config['oauth_login_redirect'] = false;
 $config['oauth_pkce'] = 'S256';
+
+// Stalwart only serves implicit TLS (993/465) and its cert is self-signed
+// until ACME lands. This hop never leaves wayfarer-net.
+$ssl = ['ssl' => ['verify_peer' => false, 'verify_peer_name' => false, 'allow_self_signed' => true]];
+$config['imap_conn_options'] = $ssl;
+$config['smtp_conn_options'] = $ssl;
