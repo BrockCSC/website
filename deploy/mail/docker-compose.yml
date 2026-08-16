@@ -16,10 +16,10 @@ services:
       - "587:587"
       - "993:993"
     volumes:
-      - stalwart-data:/opt/stalwart
+      - stalwart-data:/var/lib/stalwart
+      - stalwart-logs:/var/log/stalwart
     environment:
-      - FALLBACK_ADMIN_USER=${STALWART_ADMIN_USER}
-      - FALLBACK_ADMIN_SECRET=${STALWART_ADMIN_SECRET}
+      - STALWART_RECOVERY_ADMIN=${STALWART_ADMIN_USER}:${STALWART_ADMIN_SECRET}
     # Only the autoconfig paths are routed. The admin UI and JMAP authenticate
     # against Stalwart's own credentials, not Keycloak, so they stay unreachable
     # from outside: `ssh -L 8080:localhost:8080 opc@129.153.49.190`.
@@ -64,5 +64,7 @@ services:
 volumes:
   stalwart-data:
     name: brockcsc-stalwart-data
+  stalwart-logs:
+    name: brockcsc-stalwart-logs
   roundcube-data:
     name: brockcsc-roundcube-data
