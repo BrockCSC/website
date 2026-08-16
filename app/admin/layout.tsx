@@ -10,6 +10,7 @@ const adminTabs = [
   { name: "Dashboard", href: "/admin" },
   { name: "Events Management", href: "/admin/events", executiveOnly: true },
   { name: "Executives Management", href: "/admin/execs", approverOnly: true },
+  { name: "Mail", href: "/admin/mail", executiveOnly: true },
   { name: "My Profile", href: "/admin/profile" },
 ];
 
