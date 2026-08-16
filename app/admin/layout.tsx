@@ -60,9 +60,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     );
   }
 
+  const wide = pathname.startsWith("/admin/mail");
+
   return (
-    <div className="pt-8">
-      <div className="mx-auto w-full max-w-[1060px] px-5">
+    <div className="pt-6">
+      <div
+        className={`mx-auto w-full px-5 ${wide ? "max-w-[1600px]" : "max-w-[1060px]"}`}
+      >
         <div className="flex items-center justify-between mb-8">
           <nav className="flex gap-2">
             {adminTabs

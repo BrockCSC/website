@@ -10,7 +10,7 @@ import {
   stepDownAsCoPresident,
   updateProfile,
 } from "@/lib/api";
-import { TeamMemberCard } from "@/app/team/components/team-member-card";
+import { TeamMemberCard } from "@/app/(public)/team/components/team-member-card";
 import {
   SOCIAL_PLATFORMS,
   handleFromUrl,

@@ -5,12 +5,14 @@ import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { MessageView } from "./message-view";
+import { Compose } from "./compose";
 
 export default function MailPage() {
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
   const [mailbox, setMailbox] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageSummary[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
+  const [composing, setComposing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -50,34 +52,67 @@ export default function MailPage() {
     );
   }
 
+  const current = mailboxes.find((box) => box.id === mailbox);
+
   return (
-    <div className="grid gap-4 md:grid-cols-[13rem_20rem_1fr]">
-      <MailboxList
-        mailboxes={mailboxes}
-        selected={mailbox}
-        onSelect={(id) => {
-          setSelected(null);
-          setMailbox(id);
-        }}
-      />
-
-      <div className="max-h-[70vh] overflow-y-auto rounded-[20px] border-2 border-black bg-white shadow-[6px_6px_0_0_#000]">
-        <MessageList
-          messages={messages}
-          selected={selected}
-          onSelect={setSelected}
+    <div className="flex h-[calc(100vh-11rem)] gap-4">
+      <aside className="flex w-52 shrink-0 flex-col gap-3">
+        <button
+          type="button"
+          onClick={() => setComposing(true)}
+          className="rounded-[10px] border-2 border-black bg-[#9A4440] px-4 py-2.5 font-bold text-white shadow-[3px_3px_0_0_#000] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-[#863a37] hover:shadow-[2px_2px_0_0_#000]"
+        >
+          Compose
+        </button>
+        <MailboxList
+          mailboxes={mailboxes}
+          selected={mailbox}
+          onSelect={(id) => {
+            setSelected(null);
+            setMailbox(id);
+          }}
         />
+      </aside>
+
+      <div className="flex min-w-0 flex-1 overflow-hidden rounded-[20px] border-2 border-black bg-white shadow-[6px_6px_0_0_#000]">
+        <div className="flex w-80 shrink-0 flex-col border-r-2 border-black">
+          <header className="border-b-2 border-black px-4 py-2.5">
+            <h2 className="text-sm font-extrabold">
+              {current?.name ?? "Mail"}
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {messages.length} message{messages.length === 1 ? "" : "s"}
+            </p>
+          </header>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <MessageList
+              messages={messages}
+              selected={selected}
+              onSelect={setSelected}
+            />
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          {selected ? (
+            <MessageView key={selected} id={selected} />
+          ) : (
+            <p className="p-6 text-sm text-muted-foreground">
+              Select a message to read it.
+            </p>
+          )}
+        </div>
       </div>
 
-      <div className="min-h-[70vh] overflow-hidden rounded-[20px] border-2 border-black bg-white shadow-[6px_6px_0_0_#000]">
-        {selected ? (
-          <MessageView key={selected} id={selected} />
-        ) : (
-          <p className="p-6 text-sm text-muted-foreground">
-            Select a message to read it.
-          </p>
-        )}
-      </div>
+      {composing && (
+        <Compose
+          onClose={() => setComposing(false)}
+          onSent={() => {
+            setComposing(false);
+            if (mailbox) setMailbox(mailbox);
+          }}
+        />
+      )}
     </div>
   );
 }

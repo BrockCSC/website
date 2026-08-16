@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { EventTimelineCard } from "../events/components/event-timeline-card";
+import { EventTimelineCard } from "@/app/(public)/events/components/event-timeline-card";
 import {
   DashboardStats,
   EventRecord,
