@@ -2,6 +2,14 @@
  * as the signed-in user via their Keycloak access token; Stalwart's OIDC
  * directory resolves it to that user's account and enforces isolation. */
 
+import {
+  htmlSignature,
+  signerFor,
+  textSignature,
+  withFooter,
+  type Signer,
+} from "./signature";
+
 const CAPABILITIES = [
   "urn:ietf:params:jmap:core",
   "urn:ietf:params:jmap:mail",
@@ -249,7 +257,15 @@ export type OutgoingMessage = {
   text: string;
 };
 
-type Identity = { id: string; email: string };
+type Identity = {
+  id: string;
+  email: string;
+  textSignature?: string;
+  htmlSignature?: string;
+};
+
+const ownName = (session: Session, accountId: string) =>
+  session.accounts?.[accountId]?.name ?? session.username;
 
 /** Identities are Stalwart's own addresses for the account, aliases included,
  * so the sender can never be someone else's. Prefer the one the session names
@@ -259,12 +275,41 @@ const senderIdentity = (
   accountId: string,
   list: Identity[],
 ): Identity => {
-  const own = session.accounts?.[accountId]?.name ?? session.username;
+  const own = ownName(session, accountId);
   const match =
     list.find((i) => i.email === own || i.email.split("@")[0] === own) ??
     list[0];
   if (!match) throw new Error("This account has no sender address.");
   return match;
+};
+
+/**
+ * Keeps the account's own Identity carrying the current signature. Stalwart
+ * materialises Identity objects lazily from the account's addresses, so there
+ * is nothing to write at provisioning time; reconciling here, as the user, also
+ * picks up a later title change. Best effort: a signature must never block a
+ * send.
+ */
+const refreshSignature = async (
+  token: string,
+  accountId: string,
+  identity: Identity,
+  signer: Signer | null,
+): Promise<void> => {
+  if (!signer) return;
+  const wanted = {
+    textSignature: textSignature(signer),
+    htmlSignature: htmlSignature(signer),
+  };
+  if (
+    identity.textSignature === wanted.textSignature &&
+    identity.htmlSignature === wanted.htmlSignature
+  ) {
+    return;
+  }
+  await jmap(token, [
+    ["Identity/set", { accountId, update: { [identity.id]: wanted } }, "d0"],
+  ]).catch(() => {});
 };
 
 /** Drafts and submits in one request; onSuccessUpdateEmail refiles into Sent
@@ -277,7 +322,11 @@ export const sendMessage = async (
   const [identities, mailboxes] = (await jmap(token, [
     [
       "Identity/get",
-      { accountId, ids: null, properties: ["id", "email"] },
+      {
+        accountId,
+        ids: null,
+        properties: ["id", "email", "textSignature", "htmlSignature"],
+      },
       "i0",
     ],
     ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
@@ -294,6 +343,9 @@ export const sendMessage = async (
   }
 
   const identity = senderIdentity(session, accountId, identities.list);
+  const signer = await signerFor(ownName(session, accountId) ?? "");
+  await refreshSignature(token, accountId, identity, signer);
+
   const [draft, submission] = (await jmap(token, [
     [
       "Email/set",
@@ -309,7 +361,7 @@ export const sendMessage = async (
               ? { cc: msg.cc.map((email) => ({ email })) }
               : {}),
             subject: msg.subject,
-            bodyValues: { body: { value: msg.text } },
+            bodyValues: { body: { value: withFooter(msg.text, signer) } },
             textBody: [{ partId: "body", type: "text/plain" }],
           },
         },
