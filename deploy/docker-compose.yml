@@ -36,6 +36,7 @@ services:
       - STALWART_ADMIN_USER=${STALWART_ADMIN_USER}
       - STALWART_ADMIN_SECRET=${STALWART_ADMIN_SECRET}
       - OCI_COMPARTMENT_OCID=${OCI_COMPARTMENT_OCID}
+      - PROTECTED_MAIL_USERS=${PROTECTED_MAIL_USERS}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s

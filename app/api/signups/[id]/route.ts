@@ -9,7 +9,11 @@ import { requireApprover } from "@/lib/auth/session";
 import { badJson, jsonObject } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
-import { makeMailboxReadOnly, provisionMailbox } from "@/lib/mail/provision";
+import {
+  isProtectedMailbox,
+  makeMailboxReadOnly,
+  provisionMailbox,
+} from "@/lib/mail/provision";
 import {
   create,
   findById,
@@ -153,6 +157,14 @@ export const DELETE = async (
   if (signup.keycloakUserId === approver.sub) {
     return NextResponse.json(
       { error: "You cannot delete your own account." },
+      { status: 409 },
+    );
+  }
+  if (signup.username && isProtectedMailbox(signup.username)) {
+    return NextResponse.json(
+      {
+        error: `"${signup.username}" is a service account and cannot be removed.`,
+      },
       { status: 409 },
     );
   }

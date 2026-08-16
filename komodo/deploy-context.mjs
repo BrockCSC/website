@@ -61,6 +61,7 @@ const environment = [
   `STALWART_ADMIN_USER=[[BROCKCSC_STALWART_ADMIN_USER]]`,
   `STALWART_ADMIN_SECRET=[[BROCKCSC_STALWART_ADMIN_SECRET]]`,
   `OCI_COMPARTMENT_OCID=[[BROCKCSC_OCI_COMPARTMENT_OCID]]`,
+  `PROTECTED_MAIL_USERS=alaqmargandhi`,
 ].join("\n");
 
 console.log(`Deploying ${projectName} from ${branch} -> https://${subdomain}`);
