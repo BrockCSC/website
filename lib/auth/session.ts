@@ -54,21 +54,32 @@ export const getSessionUser = (req: NextRequest): SessionUser | null => {
  * The short cache keeps a single page load to one lookup.
  */
 const ROLE_CACHE_MS = 15_000;
-const roleCache = new Map<string, { roles: string[]; readAt: number }>();
+const roleCache = new Map<
+  string,
+  { roles: Promise<string[] | null>; readAt: number }
+>();
 
-const liveRoles = async (sub: string): Promise<string[] | null> => {
+const liveRoles = (sub: string): Promise<string[] | null> => {
   const cached = roleCache.get(sub);
   if (cached && Date.now() - cached.readAt < ROLE_CACHE_MS) {
     return cached.roles;
   }
-  try {
-    const roles = await effectiveRealmRoles(sub);
-    roleCache.set(sub, { roles, readAt: Date.now() });
-    return roles;
-  } catch {
-    // Fail closed: a revoked role must not survive a Keycloak outage.
+  // The promise is cached, not just its result, so the several role checks a
+  // single request makes collapse into one lookup instead of racing.
+  const roles = effectiveRealmRoles(sub).catch(() => {
+    // Fail closed: a revoked role must not survive a Keycloak outage. Drop the
+    // entry so the next request retries rather than holding the failure.
+    roleCache.delete(sub);
     return null;
-  }
+  });
+  roleCache.set(sub, { roles, readAt: Date.now() });
+  return roles;
+};
+
+/** Forces the next check to re-read Keycloak. /api/auth/me calls this, so the
+ * poll that refreshes the admin UI refreshes what the server enforces too. */
+export const invalidateRoles = (sub: string) => {
+  roleCache.delete(sub);
 };
 
 /**
