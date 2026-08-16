@@ -7,6 +7,7 @@ import {
   toWireRecord,
   update,
 } from "@/lib/db/repository";
+import { asBool, cleanExec } from "@/lib/execs/patch";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 
@@ -31,8 +32,17 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
   const { id } = await params;
-  const patch = (await req.json()) as Partial<ExecRecord>;
-  const entity = await update<ExecRecord>(execsTable, id, patch);
+  const body = (await req.json()) as ExecRecord;
+  const cleaned = cleanExec(body);
+  if ("error" in cleaned) {
+    return NextResponse.json({ error: cleaned.error }, { status: 400 });
+  }
+  const entity = await update<ExecRecord>(execsTable, id, {
+    ...cleaned.patch,
+    name: body.name,
+    title: body.title,
+    isCurrentExec: asBool(body.isCurrentExec),
+  });
   if (!entity) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
