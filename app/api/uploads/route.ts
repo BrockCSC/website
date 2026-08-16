@@ -25,8 +25,10 @@ export const POST = async (req: NextRequest) => {
   if (limited) return limited;
 
   // formData() buffers the whole body, so refuse an oversized one before that.
+  // Written as a positive test: a body that declares no length at all cannot be
+  // checked, and chunking past this was the way around the old comparison.
   const declaredLength = Number(req.headers.get("content-length"));
-  if (declaredLength > MAX_UPLOAD_BYTES) return tooLarge();
+  if (!(declaredLength <= MAX_UPLOAD_BYTES)) return tooLarge();
 
   const form = await req.formData();
   const file = form.get("file");
