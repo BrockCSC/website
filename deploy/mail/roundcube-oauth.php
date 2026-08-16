@@ -1,10 +1,7 @@
 <?php
-// Keycloak OIDC. Stalwart accepts the resulting token over IMAP/SMTP via
-// OAUTHBEARER, so execs never hold a separate mail password.
 $issuer = getenv('KEYCLOAK_ISSUER');
 
-// Traefik terminates TLS, so without trusting its X-Forwarded-Proto Roundcube
-// builds an http:// redirect_uri and Keycloak rejects it.
+// Traefik terminates TLS; without this the redirect_uri is built as http://.
 $config['proxy_whitelist'] = ['172.18.0.0/16'];
 
 $config['oauth_provider'] = 'generic';
@@ -15,7 +12,6 @@ $config['oauth_issuer'] = $issuer;
 $config['oauth_config_uri'] = $issuer . '/.well-known/openid-configuration';
 $config['oauth_scope'] = 'openid email profile';
 $config['oauth_identity_fields'] = ['email'];
-// false keeps the password form alongside the SSO button, so app passwords
-// still work in webmail and a Keycloak outage does not lock everyone out.
+// Keeps the password form alongside the SSO button.
 $config['oauth_login_redirect'] = false;
 $config['oauth_pkce'] = 'S256';

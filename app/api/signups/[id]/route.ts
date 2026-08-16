@@ -105,7 +105,6 @@ export const PATCH = async (
       );
     }
 
-    // Alumni keep their login without a mailbox.
     if (!isPastExec && signup.username) {
       try {
         await provisionMailbox({

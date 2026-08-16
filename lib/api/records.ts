@@ -68,21 +68,6 @@ export const fetchFutureEvents = async (): Promise<WithKey<EventRecord>[]> => {
   });
 };
 
-export const fetchPastEvents = async (): Promise<WithKey<EventRecord>[]> => {
-  const now = Date.now();
-  const events = await fetchAllEvents();
-
-  return events.filter((event) => {
-    const timing = getEventTiming(event, now);
-    if (timing.isRecurring || timing.isOngoing) {
-      return false;
-    }
-
-    const startTimestamp = getEventStartTimestamp(event);
-    return typeof startTimestamp === "number" && startTimestamp < now;
-  });
-};
-
 export const fetchEventById = async (
   eventId: string,
 ): Promise<WithKey<EventRecord> | null> => {

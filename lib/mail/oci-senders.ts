@@ -1,9 +1,4 @@
-/**
- * OCI Email Delivery approved senders.
- *
- * Authenticates as the instance principal matched by the
- * `brockcsc-mail-provisioner` dynamic group; never config files or API keys.
- */
+/** OCI Email Delivery approved senders, via instance principal auth. */
 
 import {
   InstancePrincipalsAuthenticationDetailsProviderBuilder,
@@ -22,7 +17,7 @@ const config = () => {
 
 let cached: Promise<EmailClient> | undefined;
 
-/** Built on first use, since instance principal auth is async. */
+/** Built on first use; instance principal auth is async. */
 const client = (): Promise<EmailClient> => {
   cached ??= new InstancePrincipalsAuthenticationDetailsProviderBuilder()
     .build()

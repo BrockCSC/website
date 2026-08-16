@@ -1,10 +1,5 @@
-/**
- * Stalwart provisioning over JMAP.
- *
- * 0.16 dropped the REST /api/principal endpoint; management objects live in a
- * JMAP registry under urn:stalwart:jmap, named with an "x:" prefix. Shapes here
- * were read off a running 0.16.17, so re-check them after a major upgrade.
- */
+/** Stalwart provisioning over JMAP. Object shapes verified against 0.16.17;
+ * re-check after a major upgrade. */
 
 const CAPABILITIES = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
 
@@ -61,8 +56,7 @@ export const domainId = async (name: string): Promise<string> => {
   return match.id;
 };
 
-/** Local-parts stay claimed after an exec leaves, so a later namesake never
- * inherits their mail: retired accounts keep their name and lose credentials. */
+/** Retired accounts keep their name, so a namesake never inherits their mail. */
 export const localPartTaken = async (localPart: string): Promise<boolean> =>
   (await accounts()).some((a) => a.name === localPart);
 
@@ -108,8 +102,7 @@ export const createMailbox = async (mailbox: {
   return created.id;
 };
 
-/** Read-only: the alumnus keeps their login and archive but cannot send.
- * disabledPermissions wins over anything inherited from roles or groups. */
+/** disabledPermissions wins over anything inherited from roles or groups. */
 export const makeReadOnly = async (localPart: string): Promise<void> => {
   const account = (await accounts()).find((a) => a.name === localPart);
   if (!account) return;

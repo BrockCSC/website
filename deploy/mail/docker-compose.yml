@@ -1,5 +1,4 @@
-# Its own Komodo stack, not per-branch: mailboxes outlive any deploy of the app.
-# OCI blocks outbound 25, so Stalwart relays through Email Delivery on 587.
+# Its own Komodo stack, not per-branch: mailboxes outlive any app deploy.
 networks:
   wayfarer-net:
     external: true
@@ -21,9 +20,7 @@ services:
       - stalwart-etc:/etc/stalwart
     environment:
       - STALWART_RECOVERY_ADMIN=${STALWART_ADMIN_USER}:${STALWART_ADMIN_SECRET}
-    # Only the autoconfig paths are routed. The admin UI and JMAP authenticate
-    # against Stalwart's own credentials, not Keycloak, so they stay unreachable
-    # from outside: `ssh -L 8080:localhost:8080 opc@129.153.49.190`.
+    # Only autoconfig paths are routed; admin and JMAP stay on wayfarer-net.
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.stalwart-autoconfig.rule=(Host(`autoconfig.brockcsc.ca`) && PathPrefix(`/mail/config-v1.1.xml`)) || (Host(`autodiscover.brockcsc.ca`) && PathPrefix(`/autodiscover/`))"
@@ -31,7 +28,6 @@ services:
       - "traefik.http.routers.stalwart-autoconfig.tls.certresolver=letsencrypt"
       - "traefik.http.services.stalwart-autoconfig.loadbalancer.server.port=8080"
 
-  # IMAP over the shared network, so 143 never leaves the host.
   roundcube:
     image: roundcube/roundcubemail:${ROUNDCUBE_TAG:-latest}
     container_name: brockcsc-roundcube
@@ -41,7 +37,6 @@ services:
     volumes:
       - roundcube-data:/var/roundcube/db
       - ./roundcube-oauth.php:/var/roundcube/config/oauth.inc.php:ro
-      # Installed by BrockCSC/brand-themes, not built here.
       - /opt/wayfarer/mail/skins/brockcsc:/var/www/html/skins/brockcsc:ro
     environment:
       - ROUNDCUBEMAIL_DB_TYPE=sqlite

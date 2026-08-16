@@ -1,10 +1,8 @@
 export {
   fetchAllEvents,
-  fetchAllExecs,
   fetchCurrentExecs,
   fetchEventById,
   fetchFutureEvents,
-  fetchPastEvents,
   fetchPreviousExecs,
   createExec,
   updateExec,

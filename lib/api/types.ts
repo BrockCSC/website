@@ -102,7 +102,6 @@ export type EventRecord = {
   location?: string;
   signupUrl?: string;
   googleFormUrl?: string;
-  tentative?: boolean;
   schedule?: {
     startDate?: string;
     endDate?: string;

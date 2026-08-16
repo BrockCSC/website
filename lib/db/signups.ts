@@ -12,8 +12,3 @@ export const findSignupByExecKey = async (execKey: string) =>
   (await findAll<SignupRecord>(signupsTable)).find(
     (signup) => signup.execKey === execKey,
   ) ?? null;
-
-export const isExecKeyClaimed = async (execKey: string) =>
-  (await findAll<SignupRecord>(signupsTable)).some(
-    (signup) => signup.execKey === execKey,
-  );
