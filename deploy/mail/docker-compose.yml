@@ -27,35 +27,15 @@ services:
       - "traefik.http.routers.stalwart-autoconfig.entrypoints=websecure"
       - "traefik.http.routers.stalwart-autoconfig.tls.certresolver=letsencrypt"
       - "traefik.http.services.stalwart-autoconfig.loadbalancer.server.port=8080"
-
-  roundcube:
-    image: roundcube/roundcubemail:${ROUNDCUBE_TAG:-latest}
-    container_name: brockcsc-roundcube
-    restart: unless-stopped
-    networks: [wayfarer-net]
-    depends_on: [stalwart]
-    volumes:
-      - roundcube-data:/var/roundcube/db
-      - ./roundcube-oauth.php:/var/roundcube/config/oauth.inc.php:ro
-      - /opt/wayfarer/mail/skins/brockcsc:/var/www/html/skins/brockcsc:ro
-    environment:
-      - ROUNDCUBEMAIL_DB_TYPE=sqlite
-      - ROUNDCUBEMAIL_DEFAULT_HOST=ssl://stalwart
-      - ROUNDCUBEMAIL_DEFAULT_PORT=993
-      - ROUNDCUBEMAIL_SMTP_SERVER=ssl://stalwart
-      - ROUNDCUBEMAIL_SMTP_PORT=465
-      - ROUNDCUBEMAIL_PLUGINS=archive,zipdownload,managesieve
-      - ROUNDCUBEMAIL_SKIN=brockcsc
-      - ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE=25M
-      - KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER}
-      - ROUNDCUBE_OAUTH_CLIENT_ID=${ROUNDCUBE_OAUTH_CLIENT_ID}
-      - ROUNDCUBE_OAUTH_CLIENT_SECRET=${ROUNDCUBE_OAUTH_CLIENT_SECRET}
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.roundcube.rule=Host(`mail.brockcsc.ca`)"
-      - "traefik.http.routers.roundcube.entrypoints=websecure"
-      - "traefik.http.routers.roundcube.tls.certresolver=letsencrypt"
-      - "traefik.http.services.roundcube.loadbalancer.server.port=80"
+      # mail.brockcsc.ca stays a host for IMAP/SMTP; the webmail moved.
+      - "traefik.http.routers.mail-redirect.rule=Host(`mail.brockcsc.ca`)"
+      - "traefik.http.routers.mail-redirect.entrypoints=websecure"
+      - "traefik.http.routers.mail-redirect.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.mail-redirect.service=stalwart-autoconfig"
+      - "traefik.http.routers.mail-redirect.middlewares=mail-to-admin"
+      - "traefik.http.middlewares.mail-to-admin.redirectregex.regex=^https://mail\\.brockcsc\\.ca/.*"
+      - "traefik.http.middlewares.mail-to-admin.redirectregex.replacement=https://admin.brockcsc.ca/admin/mail"
+      - "traefik.http.middlewares.mail-to-admin.redirectregex.permanent=true"
 
 volumes:
   stalwart-data:
@@ -64,5 +44,3 @@ volumes:
     name: brockcsc-stalwart-logs
   stalwart-etc:
     name: brockcsc-stalwart-etc
-  roundcube-data:
-    name: brockcsc-roundcube-data

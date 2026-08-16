@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { logout } from "@/lib/api";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
+import { useSession } from "../session";
 import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { MessageView } from "./message-view";
@@ -18,8 +20,10 @@ export default function MailPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const { refresh } = useSession();
 
   useEffect(() => {
     fetch("/api/mail/mailboxes")
@@ -29,11 +33,9 @@ export default function MailPage() {
         setMailbox((current) => current ?? boxes[0]?.id ?? null);
       })
       .catch((status) =>
-        setError(
-          status === 401
-            ? "Your session expired. Sign in again."
-            : "Could not reach the mail server.",
-        ),
+        status === 401
+          ? setExpired(true)
+          : setError("Could not reach the mail server."),
       )
       .finally(() => setLoading(false));
 
@@ -72,6 +74,29 @@ export default function MailPage() {
 
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading mail…</p>;
+  }
+  // The dashboard cookie outlives the Keycloak session mail borrows tokens
+  // from, so mail alone can go stale while the rest of the admin still works.
+  if (expired) {
+    return (
+      <div className="rounded-[20px] border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
+        <p className="font-bold text-[#9A4440]">Your mail session expired.</p>
+        <p className="mt-2 max-w-prose text-sm text-neutral-600">
+          Mail signs in to the mail server on your behalf, and that sign-in
+          lapses after 30 minutes of inactivity. Signing in again reconnects it.
+        </p>
+        <button
+          type="button"
+          onClick={async () => {
+            await logout();
+            await refresh();
+          }}
+          className="mt-5 rounded-[10px] border-2 border-black bg-[#9A4440] px-4 py-2 font-bold text-white shadow-[3px_3px_0_0_#000] transition hover:bg-[#863a37]"
+        >
+          Sign in again
+        </button>
+      </div>
+    );
   }
   if (error) {
     return (

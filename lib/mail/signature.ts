@@ -1,8 +1,8 @@
 /**
  * Signature and disclaimer for club mail. `withFooter` only reaches mail sent
- * through this app's own JMAP client: Roundcube, Apple Mail and the Gmail app
- * submit over SMTP and bypass it. Covering those needs a Stalwart DATA-stage
- * Sieve script, which is not installed.
+ * through this app's own JMAP client: Apple Mail and the Gmail app submit over
+ * SMTP and bypass it. Covering those needs a Stalwart DATA-stage Sieve script,
+ * which is not installed.
  */
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 import { findAll, findById } from "@/lib/db/repository";
