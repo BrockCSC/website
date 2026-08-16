@@ -1,0 +1,92 @@
+name: Deploy Mail
+
+# Separate from Build & Deploy on purpose: mail is a single long-lived stack, so
+# it must never fan out per-branch, and website commits must not bounce IMAP.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "deploy/mail/**"
+      - ".github/workflows/deploy-mail.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-mail
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: mail
+      url: https://mail.brockcsc.ca
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Sync mail secrets to Komodo Variables
+        env:
+          KOMODO_HOST: ${{ vars.KOMODO_HOST }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
+          VAL_BROCKCSC_STALWART_ADMIN_USER: ${{ vars.BROCKCSC_STALWART_ADMIN_USER }}
+          VAL_BROCKCSC_STALWART_ADMIN_SECRET: ${{ secrets.BROCKCSC_STALWART_ADMIN_SECRET }}
+          VAL_BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_ID: ${{ vars.BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_ID }}
+          VAL_BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_SECRET: ${{ secrets.BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_SECRET }}
+        run: |
+          source .github/scripts/komodo.sh
+
+          sync_var() {
+            local name="$1" value="$2" is_secret="$3"
+            if komodo /read "$(jq -n --arg name "$name" '{type:"GetVariable", params:{name:$name}}')" quiet >/dev/null; then
+              komodo /write "$(jq -n --arg name "$name" --arg value "$value" \
+                '{type:"UpdateVariableValue", params:{name:$name, value:$value}}')" >/dev/null
+            else
+              komodo /write "$(jq -n --arg name "$name" --arg value "$value" --argjson is_secret "$is_secret" \
+                '{type:"CreateVariable", params:{name:$name, value:$value, is_secret:$is_secret}}')" >/dev/null
+            fi
+          }
+
+          sync_var BROCKCSC_STALWART_ADMIN_USER "$VAL_BROCKCSC_STALWART_ADMIN_USER" false
+          sync_var BROCKCSC_STALWART_ADMIN_SECRET "$VAL_BROCKCSC_STALWART_ADMIN_SECRET" true
+          sync_var BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_ID "$VAL_BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_ID" false
+          sync_var BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_SECRET "$VAL_BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_SECRET" true
+
+      - name: Ensure and deploy the mail stack
+        env:
+          KOMODO_HOST: ${{ vars.KOMODO_HOST }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
+          STACK_NAME: brockcsc-mail
+        run: |
+          source .github/scripts/komodo.sh
+
+          # auto_pull, unlike the app stack: these are upstream images, not ones
+          # this repo builds, so a redeploy is how they pick up a new tag.
+          config=$(jq -n '{
+            server: "wayfarerbx-vps",
+            repo: "BrockCSC/website",
+            branch: "main",
+            git_provider: "github.com",
+            file_paths: ["deploy/mail/docker-compose.yml"],
+            auto_pull: true,
+            destroy_before_deploy: false,
+            webhook_enabled: false,
+            environment: (
+              "STALWART_ADMIN_USER=[[BROCKCSC_STALWART_ADMIN_USER]]\n" +
+              "STALWART_ADMIN_SECRET=[[BROCKCSC_STALWART_ADMIN_SECRET]]\n" +
+              "KEYCLOAK_ISSUER=[[BROCKCSC_KEYCLOAK_ISSUER]]\n" +
+              "ROUNDCUBE_OAUTH_CLIENT_ID=[[BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_ID]]\n" +
+              "ROUNDCUBE_OAUTH_CLIENT_SECRET=[[BROCKCSC_ROUNDCUBE_OAUTH_CLIENT_SECRET]]"
+            )
+          }')
+
+          if komodo /read "$(jq -n --arg s "$STACK_NAME" '{type:"GetStack", params:{stack:$s}}')" quiet >/dev/null; then
+            komodo /write "$(jq -n --arg id "$STACK_NAME" --argjson config "$config" \
+              '{type:"UpdateStack", params:{id:$id, config:$config}}')" >/dev/null
+          else
+            komodo /write "$(jq -n --arg name "$STACK_NAME" --argjson config "$config" \
+              '{type:"CreateStack", params:{name:$name, config:$config}}')" >/dev/null
+          fi
+
+          update=$(komodo /execute "$(jq -n --arg s "$STACK_NAME" '{type:"DeployStack", params:{stack:$s}}')")
+          komodo_await "$update" 36 >/dev/null

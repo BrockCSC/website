@@ -93,6 +93,24 @@ export const findUserByUsername = async (
   return users[0] ?? null;
 };
 
+/** First free of base, base2, base3... `reserved` rules out retired mailbox
+ * local-parts, which outlive their Keycloak user and must never be reissued. */
+export const allocateUsername = async (
+  base: string,
+  reserved: (candidate: string) => Promise<boolean> = async () => false,
+): Promise<string> => {
+  for (let suffix = 1; suffix <= 50; suffix++) {
+    const candidate = suffix === 1 ? base : `${base}${suffix}`;
+    if (
+      !(await findUserByUsername(candidate)) &&
+      !(await reserved(candidate))
+    ) {
+      return candidate;
+    }
+  }
+  throw new Error(`Could not allocate a username from "${base}".`);
+};
+
 /** Creates a disabled user. Approval enables it; the password never touches our DB. */
 export const createDisabledUser = async (
   user: NewKeycloakUser,

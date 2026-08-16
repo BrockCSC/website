@@ -1,0 +1,68 @@
+# Its own Komodo stack, not per-branch: mailboxes outlive any deploy of the app.
+# OCI blocks outbound 25, so Stalwart relays through Email Delivery on 587.
+networks:
+  wayfarer-net:
+    external: true
+
+services:
+  stalwart:
+    image: stalwartlabs/stalwart:${STALWART_TAG:-latest}
+    container_name: brockcsc-stalwart
+    restart: unless-stopped
+    networks: [wayfarer-net]
+    ports:
+      - "25:25"
+      - "465:465"
+      - "587:587"
+      - "993:993"
+    volumes:
+      - stalwart-data:/opt/stalwart
+    environment:
+      - FALLBACK_ADMIN_USER=${STALWART_ADMIN_USER}
+      - FALLBACK_ADMIN_SECRET=${STALWART_ADMIN_SECRET}
+    # Only the autoconfig paths are routed. The admin UI and JMAP authenticate
+    # against Stalwart's own credentials, not Keycloak, so they stay unreachable
+    # from outside: `ssh -L 8080:localhost:8080 opc@129.153.49.190`.
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.stalwart-autoconfig.rule=(Host(`autoconfig.brockcsc.ca`) && PathPrefix(`/mail/config-v1.1.xml`)) || (Host(`autodiscover.brockcsc.ca`) && PathPrefix(`/autodiscover/`))"
+      - "traefik.http.routers.stalwart-autoconfig.entrypoints=websecure"
+      - "traefik.http.routers.stalwart-autoconfig.tls.certresolver=letsencrypt"
+      - "traefik.http.services.stalwart-autoconfig.loadbalancer.server.port=8080"
+
+  # IMAP over the shared network, so 143 never leaves the host.
+  roundcube:
+    image: roundcube/roundcubemail:${ROUNDCUBE_TAG:-latest}
+    container_name: brockcsc-roundcube
+    restart: unless-stopped
+    networks: [wayfarer-net]
+    depends_on: [stalwart]
+    volumes:
+      - roundcube-data:/var/roundcube/db
+      - ./roundcube-oauth.php:/var/roundcube/config/oauth.inc.php:ro
+      # Installed by BrockCSC/brand-themes, not built here.
+      - /opt/wayfarer/mail/skins/brockcsc:/var/www/html/skins/brockcsc:ro
+    environment:
+      - ROUNDCUBEMAIL_DB_TYPE=sqlite
+      - ROUNDCUBEMAIL_DEFAULT_HOST=stalwart
+      - ROUNDCUBEMAIL_DEFAULT_PORT=143
+      - ROUNDCUBEMAIL_SMTP_SERVER=stalwart
+      - ROUNDCUBEMAIL_SMTP_PORT=587
+      - ROUNDCUBEMAIL_PLUGINS=archive,zipdownload,managesieve
+      - ROUNDCUBEMAIL_SKIN=brockcsc
+      - ROUNDCUBEMAIL_UPLOAD_MAX_FILESIZE=25M
+      - KEYCLOAK_ISSUER=${KEYCLOAK_ISSUER}
+      - ROUNDCUBE_OAUTH_CLIENT_ID=${ROUNDCUBE_OAUTH_CLIENT_ID}
+      - ROUNDCUBE_OAUTH_CLIENT_SECRET=${ROUNDCUBE_OAUTH_CLIENT_SECRET}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.roundcube.rule=Host(`mail.brockcsc.ca`)"
+      - "traefik.http.routers.roundcube.entrypoints=websecure"
+      - "traefik.http.routers.roundcube.tls.certresolver=letsencrypt"
+      - "traefik.http.services.roundcube.loadbalancer.server.port=80"
+
+volumes:
+  stalwart-data:
+    name: brockcsc-stalwart-data
+  roundcube-data:
+    name: brockcsc-roundcube-data
