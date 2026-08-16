@@ -40,9 +40,13 @@ if (ref.startsWith("refs/tags/")) {
 }
 
 const databaseUrl = `postgresql://brockcsc:[[BROCKCSC_DB_PASSWORD]]@postgres:5432/brockcsc`;
+const adminSubdomain = `admin.${subdomain}`;
+
 const environment = [
   `PROJECT_NAME=${projectName}`,
   `SUBDOMAIN=${subdomain}`,
+  `ADMIN_SUBDOMAIN=${adminSubdomain}`,
+  `PUBLIC_SUBDOMAIN=${subdomain}`,
   `DATABASE_URL=${databaseUrl}`,
   `DB_SCHEMA=${dbSchema}`,
   `KEYCLOAK_ISSUER=[[BROCKCSC_KEYCLOAK_ISSUER]]`,
@@ -64,7 +68,9 @@ const environment = [
   `PROTECTED_MAIL_USERS=alaqmargandhi`,
 ].join("\n");
 
-console.log(`Deploying ${projectName} from ${branch} -> https://${subdomain}`);
+console.log(
+  `Deploying ${projectName} from ${branch} -> https://${subdomain} (+ https://${adminSubdomain})`,
+);
 
 const output = process.env.GITHUB_OUTPUT;
 appendFileSync(output, `branch=${branch}\n`);

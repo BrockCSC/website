@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCredentials } from "@/lib/auth/keycloak";
+import { REFRESH_COOKIE, refreshCookieOptions } from "@/lib/auth/mail-token";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import {
@@ -67,5 +68,12 @@ export const POST = async (req: NextRequest) => {
     signSession(identity),
     sessionCookieOptions,
   );
+  if (identity.refreshToken) {
+    response.cookies.set(
+      REFRESH_COOKIE,
+      identity.refreshToken,
+      refreshCookieOptions,
+    );
+  }
   return response;
 };

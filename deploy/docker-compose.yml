@@ -37,6 +37,8 @@ services:
       - STALWART_ADMIN_SECRET=${STALWART_ADMIN_SECRET}
       - OCI_COMPARTMENT_OCID=${OCI_COMPARTMENT_OCID}
       - PROTECTED_MAIL_USERS=${PROTECTED_MAIL_USERS}
+      - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN}
+      - PUBLIC_SUBDOMAIN=${PUBLIC_SUBDOMAIN}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s
@@ -45,7 +47,7 @@ services:
       start_period: 20s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.${PROJECT_NAME}-app.rule=Host(`${SUBDOMAIN}`)"
+      - "traefik.http.routers.${PROJECT_NAME}-app.rule=Host(`${SUBDOMAIN}`) || Host(`${ADMIN_SUBDOMAIN}`)"
       - "traefik.http.routers.${PROJECT_NAME}-app.entrypoints=websecure"
       - "traefik.http.routers.${PROJECT_NAME}-app.tls.certresolver=letsencrypt"
       - "traefik.http.services.${PROJECT_NAME}-app.loadbalancer.server.port=3000"

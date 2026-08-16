@@ -12,6 +12,8 @@ export type KeycloakIdentity = {
   email: string;
   name: string;
   roles: string[];
+  /** Kept so mail can be read as this user rather than as an admin. */
+  refreshToken?: string;
 };
 
 export const exchangeCredentials = async (
@@ -49,8 +51,9 @@ export const exchangeCredentials = async (
     return null;
   }
 
-  const { access_token } = (await tokenResponse.json()) as {
+  const { access_token, refresh_token } = (await tokenResponse.json()) as {
     access_token: string;
+    refresh_token?: string;
   };
 
   // Not re-verifying: token comes straight from Keycloak over TLS.
@@ -64,5 +67,6 @@ export const exchangeCredentials = async (
     email: payload.email,
     name: payload.name,
     roles: payload.realm_access?.roles ?? [],
+    refreshToken: refresh_token,
   };
 };

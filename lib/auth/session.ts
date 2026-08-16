@@ -23,6 +23,7 @@ export const sessionCookieOptions = {
 };
 
 export const signSession = (identity: KeycloakIdentity): string => {
+  // refreshToken is deliberately excluded: it lives in its own cookie.
   const session: SessionUser = {
     sub: identity.sub,
     email: identity.email,
