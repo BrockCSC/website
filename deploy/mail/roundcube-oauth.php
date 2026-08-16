@@ -25,11 +25,9 @@ $config['imap_conn_options'] = $ssl;
 $config['smtp_conn_options'] = $ssl;
 
 $config['product_name'] = 'BrockCSC Mail';
-$config['skin_logo'] = [
-    '*' => '/skins/brockcsc/images/logo.svg',
-    'login[favicon]' => '/skins/brockcsc/images/logo.svg',
-    '*[favicon]' => '/skins/brockcsc/images/logo.svg',
-];
+// Relative values get the parent skin's path prepended, so this must be absolute.
+$logo = 'https://mail.brockcsc.ca/static.php/skins/brockcsc/images/logo.svg';
+$config['skin_logo'] = ['*' => $logo, '*[favicon]' => $logo];
 $config['support_url'] = 'https://brockcsc.ca';
 $config['username_domain'] = 'brockcsc.ca';
 $config['mail_domain'] = 'brockcsc.ca';
