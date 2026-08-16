@@ -8,6 +8,7 @@ import {
   update,
 } from "@/lib/db/repository";
 import { asBool, cleanExec } from "@/lib/execs/patch";
+import { badJson, jsonObject } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 
@@ -32,7 +33,8 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
   const { id } = await params;
-  const body = (await req.json()) as ExecRecord;
+  const body = await jsonObject<ExecRecord>(req);
+  if (!body) return badJson();
   const cleaned = cleanExec(body);
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });

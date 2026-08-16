@@ -1,6 +1,7 @@
 import { eq, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
+import { badJson, jsonObject } from "@/lib/json";
 import { db } from "./index";
 import type { eventsTable, execsTable, signupsTable } from "./schema";
 
@@ -74,7 +75,8 @@ export const createCollectionHandlers = <T>(table: JsonbTable) => ({
     if (!admin) {
       return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
-    const input = (await req.json()) as T;
+    const input = await jsonObject<T>(req);
+    if (!input) return badJson();
     const entity = await create<T>(table, input);
     return NextResponse.json(toWireRecord(entity), { status: 201 });
   },
@@ -102,7 +104,8 @@ export const createItemHandlers = <T>(table: JsonbTable) => ({
       return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
     const { id } = await params;
-    const patch = (await req.json()) as Partial<T>;
+    const patch = await jsonObject<Partial<T>>(req);
+    if (!patch) return badJson();
     const entity = await update<T>(table, id, patch);
     if (!entity) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

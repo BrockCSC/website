@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/keycloak-admin";
 import { create } from "@/lib/db/repository";
 import { rateLimit } from "@/lib/rate-limit";
+import { badJson, jsonObject } from "@/lib/json";
 import { signupsTable } from "@/lib/db/schema";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -36,7 +37,8 @@ export const POST = async (req: NextRequest) => {
   const flooding = rateLimit(req, "signup", 20, 60 * 60 * 1000);
   if (flooding) return flooding;
 
-  const body = (await req.json()) as Record<string, string | undefined>;
+  const body = await jsonObject<Record<string, string | undefined>>(req);
+  if (!body) return badJson();
   const inviteCode = body.inviteCode?.trim() ?? "";
   const firstName = body.firstName?.trim() ?? "";
   const lastName = body.lastName?.trim() ?? "";

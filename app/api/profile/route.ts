@@ -4,6 +4,7 @@ import { requireMember } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { cleanExec } from "@/lib/execs/patch";
+import { badJson, jsonObject } from "@/lib/json";
 import { execsTable } from "@/lib/db/schema";
 
 const unauthorized = () =>
@@ -29,7 +30,8 @@ export const PATCH = async (req: NextRequest) => {
     return NextResponse.json({ error: "No linked profile" }, { status: 404 });
   }
 
-  const body = (await req.json()) as ExecRecord;
+  const body = await jsonObject<ExecRecord>(req);
+  if (!body) return badJson();
   // Only the fields cleanExec returns: name, title and isCurrentExec are the
   // approver's to set, not the exec's own.
   const cleaned = cleanExec(body);

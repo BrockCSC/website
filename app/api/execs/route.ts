@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireApprover, requireMember } from "@/lib/auth/session";
 import { create, findAll, toWireRecord } from "@/lib/db/repository";
 import { asBool, cleanExec } from "@/lib/execs/patch";
+import { badJson, jsonObject } from "@/lib/json";
 import { execsTable } from "@/lib/db/schema";
 import type { ExecRecord } from "@/lib/api/types";
 
@@ -21,7 +22,8 @@ export const POST = async (req: NextRequest) => {
   if (!(await requireApprover(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
-  const body = (await req.json()) as ExecRecord;
+  const body = await jsonObject<ExecRecord>(req);
+  if (!body) return badJson();
   const cleaned = cleanExec(body);
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });

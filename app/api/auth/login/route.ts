@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCredentials } from "@/lib/auth/keycloak";
 import { rateLimit } from "@/lib/rate-limit";
+import { badJson, jsonObject } from "@/lib/json";
 import {
   sessionCookieOptions,
   signSession,
@@ -17,10 +18,9 @@ export const POST = async (req: NextRequest) => {
   const limited = rateLimit(req, "login", 10, 15 * 60 * 1000);
   if (limited) return limited;
 
-  const { username, password } = (await req.json()) as {
-    username?: string;
-    password?: string;
-  };
+  const body = await jsonObject<{ username?: string; password?: string }>(req);
+  if (!body) return badJson();
+  const { username, password } = body;
 
   if (!username || !password) {
     return NextResponse.json(

@@ -6,6 +6,7 @@ import {
   setUserEnabled,
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
+import { badJson, jsonObject } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
 import {
@@ -26,7 +27,9 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
-  const { action } = (await req.json()) as { action?: string };
+  const body = await jsonObject<{ action?: string }>(req);
+  if (!body) return badJson();
+  const { action } = body;
   if (action !== "approve" && action !== "reject") {
     return NextResponse.json({ error: "Unknown action" }, { status: 400 });
   }
