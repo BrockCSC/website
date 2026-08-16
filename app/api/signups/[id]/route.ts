@@ -13,6 +13,7 @@ import {
   isProtectedMailbox,
   makeMailboxReadOnly,
   provisionMailbox,
+  syncAdminGroup,
 } from "@/lib/mail/provision";
 import {
   create,
@@ -125,6 +126,18 @@ export const PATCH = async (
           { status: 422 },
         );
       }
+    }
+
+    try {
+      await syncAdminGroup();
+    } catch {
+      return NextResponse.json(
+        {
+          error:
+            "The account is approved but admin@ could not be updated. Approve again to retry.",
+        },
+        { status: 422 },
+      );
     }
   }
 

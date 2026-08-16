@@ -40,7 +40,12 @@ const jmap = async <T>(calls: Call[]): Promise<T[]> => {
   });
 };
 
-type Account = { id: string; name: string; emailAddress: string };
+type Account = {
+  id: string;
+  name: string;
+  emailAddress: string;
+  memberGroupIds?: Record<string, boolean>;
+};
 
 const accounts = async (): Promise<Account[]> => {
   const [res] = await jmap<{ list: Account[] }>([["x:Account/get", {}, "c0"]]);
@@ -100,6 +105,33 @@ export const createMailbox = async (mailbox: {
     );
   }
   return created.id;
+};
+
+/** Membership is held on the member, not the group, so this diffs every account
+ * against the wanted set and patches only the ones that changed. */
+export const setGroupMembers = async (
+  group: string,
+  localParts: string[],
+): Promise<void> => {
+  const all = await accounts();
+  const target = all.find((a) => a.name === group);
+  if (!target) throw new Error(`Stalwart has no group "${group}".`);
+
+  const wanted = new Set(localParts);
+  const update: Record<string, Record<string, true | null>> = {};
+  for (const account of all) {
+    if (account.id === target.id) continue;
+    const member = account.memberGroupIds?.[target.id] === true;
+    const shouldBe = wanted.has(account.name);
+    if (member !== shouldBe) {
+      update[account.id] = {
+        [`memberGroupIds/${target.id}`]: shouldBe ? true : null,
+      };
+    }
+  }
+  if (Object.keys(update).length === 0) return;
+
+  await jmap([["x:Account/set", { update }, "c0"]]);
 };
 
 /** disabledPermissions wins over anything inherited from roles or groups. */
