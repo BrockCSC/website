@@ -138,6 +138,30 @@ export const effectiveRealmRoles = async (
   return roles.map((role) => role.name);
 };
 
+/**
+ * Ids of users whose roles changed since `since`. Needs realm-management
+ * `view-events` and admin events enabled on the realm, or this throws.
+ */
+export const recentRoleEvents = async (
+  since: number,
+): Promise<{ userId: string; time: number }[]> => {
+  const res = await adminFetch(
+    "/admin-events?max=100&resourceTypes=REALM_ROLE_MAPPING" +
+      "&resourceTypes=CLIENT_ROLE_MAPPING&resourceTypes=USER",
+  );
+  if (!res.ok) throw new Error(`Keycloak admin events failed (${res.status}).`);
+  const events = (await res.json()) as {
+    time?: number;
+    resourcePath?: string;
+  }[];
+
+  return events.flatMap(({ time, resourcePath }) => {
+    // authDetails.userId is the admin who acted; the target is in the path.
+    const userId = /^users\/([^/]+)/.exec(resourcePath ?? "")?.[1];
+    return userId && time && time > since ? [{ userId, time }] : [];
+  });
+};
+
 export const usersWithRealmRole = async (
   roleName: string,
 ): Promise<{ id: string; username: string }[]> => {

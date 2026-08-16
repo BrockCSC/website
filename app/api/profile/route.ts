@@ -32,8 +32,7 @@ export const PATCH = async (req: NextRequest) => {
 
   const body = await jsonObject<ExecRecord>(req);
   if (!body) return badJson();
-  // Only the fields cleanExec returns: name, title and isCurrentExec are the
-  // approver's to set, not the exec's own.
+  // cleanExec omits name/title/isCurrentExec: those are the approver's.
   const cleaned = cleanExec(body);
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
