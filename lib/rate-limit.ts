@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
  * container, so a shared store would be more moving parts than it is worth.
  */
 const windows = new Map<string, { count: number; resetAt: number }>();
+const MAX_WINDOWS = 10_000;
 
 /** Traefik appends the peer it saw, so the last hop is the one a client cannot forge. */
 const clientIp = (req: NextRequest): string => {
@@ -27,9 +28,16 @@ export const rateLimit = (
   const window = windows.get(key);
 
   if (!window || now >= window.resetAt) {
-    if (windows.size > 10_000) {
+    if (windows.size > MAX_WINDOWS) {
       for (const [k, v] of windows) {
         if (now >= v.resetAt) windows.delete(k);
+      }
+      // Sweeping only reclaims expired windows, so a caller spraying addresses
+      // could still grow this without bound. Insertion order is roughly expiry
+      // order, so evicting from the front drops the closest to expiring.
+      for (const k of windows.keys()) {
+        if (windows.size <= MAX_WINDOWS) break;
+        windows.delete(k);
       }
     }
     windows.set(key, { count: 1, resetAt: now + windowMs });
