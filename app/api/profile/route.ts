@@ -3,8 +3,8 @@ import type { ExecRecord } from "@/lib/api/types";
 import { requireMember } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { findSignupByUserId } from "@/lib/db/signups";
-import { sanitiseSocials } from "@/lib/execs/socials";
-import { isValidTerm } from "@/lib/execs/terms";
+import { cleanExec } from "@/lib/execs/patch";
+import { badJson, jsonObject } from "@/lib/json";
 import { execsTable } from "@/lib/db/schema";
 
 const unauthorized = () =>
@@ -30,17 +30,20 @@ export const PATCH = async (req: NextRequest) => {
     return NextResponse.json({ error: "No linked profile" }, { status: 404 });
   }
 
-  const body = (await req.json()) as ExecRecord;
-  if (body.term && !isValidTerm(body.term)) {
-    return NextResponse.json({ error: "Unknown term." }, { status: 400 });
+  const body = await jsonObject<ExecRecord>(req);
+  if (!body) return badJson();
+  // Only the fields cleanExec returns: name, title and isCurrentExec are the
+  // approver's to set, not the exec's own.
+  const cleaned = cleanExec(body);
+  if ("error" in cleaned) {
+    return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
-  const exec = await update<ExecRecord>(execsTable, signup.execKey, {
-    description: body.description,
-    term: body.term,
-    socials: sanitiseSocials(body.socials),
-    image: body.image,
-    hidden: body.hidden,
-  });
+
+  const exec = await update<ExecRecord>(
+    execsTable,
+    signup.execKey,
+    cleaned.patch,
+  );
   if (!exec) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

@@ -26,6 +26,8 @@ export const GET = async (
       headers: {
         "content-type": contentTypeForPath(resolved),
         "content-length": String(info.size),
+        // These bytes are user-supplied; never let a browser re-guess the type.
+        "x-content-type-options": "nosniff",
         // Names are random, so a file never changes under the same URL.
         "cache-control": "public, max-age=31536000, immutable",
       },

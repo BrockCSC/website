@@ -1,16 +1,29 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { requireApprover } from "@/lib/auth/session";
+import { requireApprover, requireMember } from "@/lib/auth/session";
 import {
-  createItemHandlers,
   findAll,
+  findById,
   remove,
   toWireRecord,
   update,
 } from "@/lib/db/repository";
+import { asBool, cleanExec } from "@/lib/execs/patch";
+import { badJson, jsonObject } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 
-export const { GET } = createItemHandlers<ExecRecord>(execsTable);
+/** A hidden tile reads as absent to the public, same as the collection route. */
+export const GET = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const { id } = await params;
+  const exec = await findById<ExecRecord>(execsTable, id);
+  if (!exec || (exec.hidden && !(await requireMember(req)))) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  return NextResponse.json(toWireRecord(exec));
+};
 
 export const PATCH = async (
   req: NextRequest,
@@ -20,8 +33,18 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
   const { id } = await params;
-  const patch = (await req.json()) as Partial<ExecRecord>;
-  const entity = await update<ExecRecord>(execsTable, id, patch);
+  const body = await jsonObject<ExecRecord>(req);
+  if (!body) return badJson();
+  const cleaned = cleanExec(body);
+  if ("error" in cleaned) {
+    return NextResponse.json({ error: cleaned.error }, { status: 400 });
+  }
+  const entity = await update<ExecRecord>(execsTable, id, {
+    ...cleaned.patch,
+    name: body.name,
+    title: body.title,
+    isCurrentExec: asBool(body.isCurrentExec),
+  });
   if (!entity) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
