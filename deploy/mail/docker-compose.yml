@@ -18,6 +18,7 @@ services:
     volumes:
       - stalwart-data:/var/lib/stalwart
       - stalwart-logs:/var/log/stalwart
+      - stalwart-etc:/etc/stalwart
     environment:
       - STALWART_RECOVERY_ADMIN=${STALWART_ADMIN_USER}:${STALWART_ADMIN_SECRET}
     # Only the autoconfig paths are routed. The admin UI and JMAP authenticate
@@ -66,5 +67,7 @@ volumes:
     name: brockcsc-stalwart-data
   stalwart-logs:
     name: brockcsc-stalwart-logs
+  stalwart-etc:
+    name: brockcsc-stalwart-etc
   roundcube-data:
     name: brockcsc-roundcube-data
