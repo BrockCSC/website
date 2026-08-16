@@ -9,9 +9,9 @@ import {
   useState,
 } from "react";
 
-/** Matches the server's own role cache, so a poll never reads something the
- * gated routes would still refuse. */
-const POLL_MS = 15_000;
+/** The stream is what makes this feel instant; this is only the net under it,
+ * for a proxy that drops SSE or a watcher that cannot reach Keycloak. */
+const FALLBACK_POLL_MS = 5 * 60_000;
 
 type Session = {
   user: SessionUser | null;
@@ -69,13 +69,20 @@ export const SessionProvider = ({
     const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
     };
-    const timer = setInterval(onVisible, POLL_MS);
+    const timer = setInterval(onVisible, FALLBACK_POLL_MS);
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
+
+    // Server-sent events carry no payload — they only say "ask again" — so a
+    // stale or spoofed message can never widen what this browser thinks it may
+    // do. EventSource reconnects on its own if the stream drops.
+    const stream = new EventSource("/api/auth/roles-stream");
+    stream.addEventListener("roles", () => void refresh());
 
     return () => {
       cancelled = true;
       clearInterval(timer);
+      stream.close();
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
     };
