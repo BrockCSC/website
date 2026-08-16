@@ -1,15 +1,17 @@
 import { eq, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
+import { badJson, jsonObject } from "@/lib/json";
 import { db } from "./index";
 import type { eventsTable, execsTable, signupsTable } from "./schema";
 
 type JsonbTable = typeof eventsTable | typeof execsTable | typeof signupsTable;
 type Entity<T> = T & { id: string };
 
+/** id last: a stray `id` inside the stored JSON must not shadow the real one. */
 const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
-  id: row.id,
   ...(row.data as T),
+  id: row.id,
 });
 
 export const toWireRecord = <T>(entity: Entity<T>) => {
@@ -73,7 +75,8 @@ export const createCollectionHandlers = <T>(table: JsonbTable) => ({
     if (!admin) {
       return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
-    const input = (await req.json()) as T;
+    const input = await jsonObject<T>(req);
+    if (!input) return badJson();
     const entity = await create<T>(table, input);
     return NextResponse.json(toWireRecord(entity), { status: 201 });
   },
@@ -101,7 +104,8 @@ export const createItemHandlers = <T>(table: JsonbTable) => ({
       return NextResponse.json({ error: "Not authorized" }, { status: 401 });
     }
     const { id } = await params;
-    const patch = (await req.json()) as Partial<T>;
+    const patch = await jsonObject<Partial<T>>(req);
+    if (!patch) return badJson();
     const entity = await update<T>(table, id, patch);
     if (!entity) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });

@@ -1,5 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCredentials } from "@/lib/auth/keycloak";
+import { rateLimit } from "@/lib/rate-limit";
+import { badJson, jsonObject } from "@/lib/json";
 import {
   sessionCookieOptions,
   signSession,
@@ -13,10 +15,12 @@ const {
 } = process.env;
 
 export const POST = async (req: NextRequest) => {
-  const { username, password } = (await req.json()) as {
-    username?: string;
-    password?: string;
-  };
+  const limited = rateLimit(req, "login", 10, 15 * 60 * 1000);
+  if (limited) return limited;
+
+  const body = await jsonObject<{ username?: string; password?: string }>(req);
+  if (!body) return badJson();
+  const { username, password } = body;
 
   if (!username || !password) {
     return NextResponse.json(
@@ -24,6 +28,17 @@ export const POST = async (req: NextRequest) => {
       { status: 400 },
     );
   }
+
+  // The per-IP cap alone does nothing against one account guessed from many
+  // addresses. Set above it, so a campus NAT hits the IP cap first.
+  const guessed = rateLimit(
+    req,
+    "login-user",
+    30,
+    15 * 60 * 1000,
+    username.toLowerCase(),
+  );
+  if (guessed) return guessed;
 
   const identity = await exchangeCredentials(username, password);
   if (!identity) {

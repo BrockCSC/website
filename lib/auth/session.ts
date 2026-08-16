@@ -29,14 +29,20 @@ export const signSession = (identity: KeycloakIdentity): string => {
     name: identity.name,
     roles: identity.roles,
   };
-  return jwt.sign(session, getSessionSecret(), { expiresIn: "1d" });
+  return jwt.sign(session, getSessionSecret(), {
+    algorithm: "HS256",
+    expiresIn: "1d",
+  });
 };
 
 export const getSessionUser = (req: NextRequest): SessionUser | null => {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) return null;
   try {
-    return jwt.verify(token, getSessionSecret()) as SessionUser;
+    // Pinned so the token's own header can never choose the algorithm.
+    return jwt.verify(token, getSessionSecret(), {
+      algorithms: ["HS256"],
+    }) as SessionUser;
   } catch {
     return null;
   }
