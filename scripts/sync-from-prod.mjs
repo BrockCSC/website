@@ -26,7 +26,7 @@ if (prodSchemaExists.rowCount === 0) {
   process.exit(0);
 }
 
-for (const table of ["events", "execs"]) {
+for (const table of ["events", "execs", "signups"]) {
   await pool.query(`TRUNCATE TABLE "${schema}"."${table}"`);
   await pool.query(
     `INSERT INTO "${schema}"."${table}" SELECT * FROM "prod"."${table}"`,

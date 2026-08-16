@@ -6,6 +6,7 @@ import {
   setUserEnabled,
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
+import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
@@ -59,8 +60,8 @@ export const PATCH = async (
         { status: 422 },
       );
     }
-    await setUserEnabled(signup.keycloakUserId, true);
-  } else if (signup.keycloakUserId) {
+    if (ownsIdentities()) await setUserEnabled(signup.keycloakUserId, true);
+  } else if (signup.keycloakUserId && ownsIdentities()) {
     await deleteUser(signup.keycloakUserId);
   }
 
@@ -94,9 +95,11 @@ export const PATCH = async (
       : (process.env.ADMIN_ROLE ?? "executive");
 
     try {
-      await assignRealmRole(signup.keycloakUserId!, role);
-      if (!isPastExec && grantsApproval(exec?.title)) {
-        await assignRealmRole(signup.keycloakUserId!, "co-president");
+      if (ownsIdentities()) {
+        await assignRealmRole(signup.keycloakUserId!, role);
+        if (!isPastExec && grantsApproval(exec?.title)) {
+          await assignRealmRole(signup.keycloakUserId!, "co-president");
+        }
       }
     } catch (err) {
       return NextResponse.json(
@@ -110,7 +113,7 @@ export const PATCH = async (
       );
     }
 
-    if (!isPastExec && signup.username) {
+    if (ownsIdentities() && !isPastExec && signup.username) {
       try {
         await provisionMailbox({
           username: signup.username,
@@ -129,7 +132,7 @@ export const PATCH = async (
     }
 
     try {
-      await syncAdminGroup();
+      if (ownsIdentities()) await syncAdminGroup();
     } catch {
       return NextResponse.json(
         {
@@ -184,11 +187,9 @@ export const DELETE = async (
 
   const deleteExec = new URL(req.url).searchParams.get("deleteExec") === "true";
 
-  if (signup.keycloakUserId) {
-    await deleteUser(signup.keycloakUserId);
-  }
-  if (signup.username) {
-    await makeMailboxReadOnly(signup.username);
+  if (ownsIdentities()) {
+    if (signup.keycloakUserId) await deleteUser(signup.keycloakUserId);
+    if (signup.username) await makeMailboxReadOnly(signup.username);
   }
   if (deleteExec && signup.execKey) {
     await remove(execsTable, signup.execKey);

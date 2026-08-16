@@ -1,30 +1,39 @@
 "use client";
 
 import { useState } from "react";
+import { RecipientInput, type Contact } from "./recipient-input";
 
-const splitAddresses = (value: string) =>
-  value
-    .split(/[,;\s]+/)
-    .map((entry) => entry.trim())
-    .filter(Boolean);
+export type Draft = {
+  to?: string[];
+  cc?: string[];
+  subject?: string;
+  text?: string;
+};
 
 export function Compose({
+  from,
+  contacts,
+  initial,
   onClose,
   onSent,
 }: {
+  from: string | null;
+  contacts: Contact[];
+  initial?: Draft;
   onClose: () => void;
   onSent: () => void;
 }) {
-  const [to, setTo] = useState("");
-  const [subject, setSubject] = useState("");
-  const [text, setText] = useState("");
+  const [to, setTo] = useState<string[]>(initial?.to ?? []);
+  const [cc, setCc] = useState<string[]>(initial?.cc ?? []);
+  const [showCc, setShowCc] = useState((initial?.cc ?? []).length > 0);
+  const [subject, setSubject] = useState(initial?.subject ?? "");
+  const [text, setText] = useState(initial?.text ?? "");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const send = async () => {
     setError(null);
-    const recipients = splitAddresses(to);
-    if (recipients.length === 0) {
+    if (to.length === 0) {
       setError("Add at least one recipient.");
       return;
     }
@@ -33,12 +42,10 @@ export function Compose({
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to: recipients, subject, text }),
+        body: JSON.stringify({ to, cc, subject, text }),
       });
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          error?: string;
-        };
+        const body = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(body.error ?? "Could not send this message.");
       }
       onSent();
@@ -49,49 +56,84 @@ export function Compose({
     }
   };
 
-  const field =
-    "w-full rounded-[10px] border-2 border-black px-3 py-2 focus:outline-none focus:border-[#9A4440]";
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-xl rounded-[20px] border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
-        <h2 className="mb-4 text-lg font-extrabold text-[#9A4440]">
-          New message
-        </h2>
+      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[20px] border-2 border-black bg-white shadow-[6px_6px_0_0_#000]">
+        <header className="flex items-center justify-between border-b-2 border-black px-5 py-3">
+          <h2 className="text-base font-extrabold text-[#9A4440]">
+            New message
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="px-2 text-xl leading-none text-neutral-500 hover:text-black"
+          >
+            ×
+          </button>
+        </header>
 
-        <div className="space-y-3">
+        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-5 py-4">
+          {from && (
+            <div className="flex items-center gap-2 px-1 text-sm">
+              <span className="font-bold text-neutral-500">From</span>
+              <span className="font-semibold">{from}</span>
+            </div>
+          )}
+
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <RecipientInput
+                label="To"
+                value={to}
+                onChange={setTo}
+                contacts={contacts}
+                autoFocus
+              />
+            </div>
+            {!showCc && (
+              <button
+                type="button"
+                onClick={() => setShowCc(true)}
+                className="rounded-[10px] border-2 border-black px-3 py-2 text-sm font-bold hover:bg-neutral-100"
+              >
+                Cc
+              </button>
+            )}
+          </div>
+
+          {showCc && (
+            <RecipientInput
+              label="Cc"
+              value={cc}
+              onChange={setCc}
+              contacts={contacts}
+            />
+          )}
+
           <input
-            className={field}
-            placeholder="To"
-            value={to}
-            onChange={(event) => setTo(event.target.value)}
-            autoFocus
-          />
-          <input
-            className={field}
+            className="w-full rounded-[10px] border-2 border-black px-3 py-2 focus:border-[#9A4440] focus:outline-none"
             placeholder="Subject"
             value={subject}
             onChange={(event) => setSubject(event.target.value)}
           />
           <textarea
-            className={`${field} min-h-48 resize-y`}
+            className="min-h-64 w-full resize-y rounded-[10px] border-2 border-black px-3 py-2 focus:border-[#9A4440] focus:outline-none"
             placeholder="Write your message…"
             value={text}
             onChange={(event) => setText(event.target.value)}
           />
+
+          {error && <p className="text-sm font-bold text-[#9A4440]">{error}</p>}
         </div>
 
-        {error && (
-          <p className="mt-3 text-sm font-bold text-[#9A4440]">{error}</p>
-        )}
-
-        <div className="mt-5 flex justify-end gap-3">
+        <footer className="flex justify-end gap-3 border-t-2 border-black px-5 py-3">
           <button
             type="button"
             onClick={onClose}
             className="rounded-[10px] border-2 border-black px-4 py-2 font-bold hover:bg-neutral-100"
           >
-            Cancel
+            Discard
           </button>
           <button
             type="button"
@@ -101,7 +143,7 @@ export function Compose({
           >
             {sending ? "Sending…" : "Send"}
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

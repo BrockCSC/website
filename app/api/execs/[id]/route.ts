@@ -10,6 +10,7 @@ import {
 import { asBool, cleanExec } from "@/lib/execs/patch";
 import { findSignupByExecKey } from "@/lib/db/signups";
 import { makeMailboxReadOnly } from "@/lib/mail/provision";
+import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
@@ -54,7 +55,7 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (before?.isCurrentExec !== false && !stillCurrent) {
+  if (ownsIdentities() && before?.isCurrentExec !== false && !stillCurrent) {
     const signup = await findSignupByExecKey(id);
     if (signup?.username) await makeMailboxReadOnly(signup.username);
   }

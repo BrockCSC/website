@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { removeRealmRole, usersWithRealmRole } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
 import { syncAdminGroup } from "@/lib/mail/provision";
+import { ownsIdentities } from "@/lib/env";
 
 const CO_PRESIDENT_ROLE = "co-president";
 
@@ -29,6 +30,12 @@ export const POST = async (req: NextRequest) => {
     );
   }
 
+  if (!ownsIdentities()) {
+    return NextResponse.json(
+      { error: "Role changes are only made from production." },
+      { status: 409 },
+    );
+  }
   await removeRealmRole(user.sub, CO_PRESIDENT_ROLE);
   await syncAdminGroup();
   return NextResponse.json({ remaining: holders.length - 1 });
