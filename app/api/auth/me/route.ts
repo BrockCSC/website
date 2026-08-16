@@ -7,8 +7,7 @@ import {
   requireMember,
 } from "@/lib/auth/session";
 
-/** The admin UI polls this to keep its tabs honest, so it reads Keycloak fresh
- * rather than trusting the cache it then repopulates for the gated routes. */
+/** Reads Keycloak fresh, repopulating the cache the gated routes share. */
 export const GET = async (req: NextRequest) => {
   const user = getSessionUser(req);
   if (!user) {

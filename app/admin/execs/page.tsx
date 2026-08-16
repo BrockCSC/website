@@ -61,9 +61,7 @@ export default function ExecutivesManagementPage() {
   const [rejecting, setRejecting] = useState<Signup | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /** Only approvers can read sign-ups; plain admins just see the tiles. The
-   * flag below re-runs the load when that changes, so gaining the role fills
-   * this in rather than showing an approver column with nothing behind it. */
+  /** Only approvers can read sign-ups; plain admins just see the tiles. */
   const { user } = useSession();
   const isApprover = signups !== null;
   const accountFor = (exec: TeamMember) =>

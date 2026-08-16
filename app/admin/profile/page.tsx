@@ -74,7 +74,6 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState<Form>(formFor(null));
   const [steppingDown, setSteppingDown] = useState(false);
   const [stepDownNote, setStepDownNote] = useState<string | null>(null);
-  // Polled, so losing the role elsewhere hides this section on its own.
   const { user, refresh } = useSession();
   const isApprover = !!user?.isApprover;
 

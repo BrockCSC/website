@@ -139,10 +139,8 @@ export const effectiveRealmRoles = async (
 };
 
 /**
- * Role and account changes Keycloak has recorded since `since`, as the ids of
- * the users they affected. Needs realm-management `view-events` on the service
- * account, and admin events enabled on the realm; without either this throws
- * and callers fall back to asking again later.
+ * Ids of users whose roles changed since `since`. Needs realm-management
+ * `view-events` and admin events enabled on the realm, or this throws.
  */
 export const recentRoleEvents = async (
   since: number,
@@ -158,8 +156,7 @@ export const recentRoleEvents = async (
   }[];
 
   return events.flatMap(({ time, resourcePath }) => {
-    // authDetails.userId is the admin who made the change; the person it was
-    // made to is only in the path, as users/{id}/role-mappings/realm.
+    // authDetails.userId is the admin who acted; the target is in the path.
     const userId = /^users\/([^/]+)/.exec(resourcePath ?? "")?.[1];
     return userId && time && time > since ? [{ userId, time }] : [];
   });

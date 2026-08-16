@@ -9,8 +9,7 @@ import {
   useState,
 } from "react";
 
-/** The stream is what makes this feel instant; this is only the net under it,
- * for a proxy that drops SSE or a watcher that cannot reach Keycloak. */
+/** Only a net under the stream, for a proxy that drops SSE. */
 const FALLBACK_POLL_MS = 5 * 60_000;
 
 type Session = {
@@ -27,12 +26,7 @@ const SessionContext = createContext<Session>({
 
 export const useSession = () => useContext(SessionContext);
 
-/**
- * One poll of /api/auth/me for the whole admin area. Roles are re-read on a
- * timer and whenever the tab comes back, so a grant or revocation in Keycloak
- * reaches the tabs without a reload. That request also refreshes the server's
- * role cache, which keeps what the UI offers and what the API allows in step.
- */
+/** One shared /api/auth/me for the whole admin area, kept current by SSE. */
 export const SessionProvider = ({
   children,
 }: {
@@ -41,9 +35,7 @@ export const SessionProvider = ({
   const [user, setUser] = useState<SessionUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // fetchCurrentUser answers null for 401 and throws for anything else. Only
-  // the former is a sign-out; polling every 15s makes a blip likely enough
-  // that treating one as a sign-out would eventually log someone out for it.
+  // Null means 401; a throw is a blip and must not read as a sign-out.
   const refresh = useCallback(async () => {
     try {
       setUser(await fetchCurrentUser());
@@ -65,7 +57,6 @@ export const SessionProvider = ({
         if (!cancelled) setLoading(false);
       });
 
-    // A background tab polling Keycloak every 15s is all cost and no benefit.
     const onVisible = () => {
       if (document.visibilityState === "visible") void refresh();
     };
@@ -73,9 +64,7 @@ export const SessionProvider = ({
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
 
-    // Server-sent events carry no payload — they only say "ask again" — so a
-    // stale or spoofed message can never widen what this browser thinks it may
-    // do. EventSource reconnects on its own if the stream drops.
+    // Payload-free by design: the client re-reads /api/auth/me to decide.
     const stream = new EventSource("/api/auth/roles-stream");
     stream.addEventListener("roles", () => void refresh());
 

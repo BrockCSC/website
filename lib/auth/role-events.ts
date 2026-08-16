@@ -2,12 +2,9 @@ import { recentRoleEvents } from "./keycloak-admin";
 import { invalidateRoles } from "./session";
 
 /**
- * Keycloak will not call us — no webhook extension is installed — so one
- * watcher reads its admin-event log on behalf of everyone connected. That is a
- * single request per tick however many admins have the page open, in place of
- * every browser asking about itself, and it only runs while someone is
- * listening. Swapping in a webhook later means replacing `poll` and nothing
- * else: subscribers already work off `publish`.
+ * No webhook extension is installed, so one watcher reads Keycloak's admin
+ * event log for everyone connected. Replacing `poll` with a webhook leaves
+ * subscribers untouched.
  */
 const POLL_MS = 5_000;
 
@@ -15,7 +12,7 @@ type Listener = () => void;
 
 const listeners = new Map<string, Set<Listener>>();
 let timer: ReturnType<typeof setInterval> | null = null;
-/** Keycloak's clock, not ours: the app container's may differ by seconds. */
+/** Keycloak's clock, not ours. */
 let watermark = 0;
 
 const publish = (userId: string) => {
@@ -28,8 +25,7 @@ const poll = async () => {
     const events = await recentRoleEvents(watermark);
     const newest = Math.max(watermark, ...events.map((event) => event.time));
 
-    // The first tick only learns where "now" is on Keycloak's clock. Without
-    // it a restart would replay every role change in the log as if it were new.
+    // First tick sets the watermark rather than replaying the log.
     if (watermark === 0) {
       watermark = newest || Date.now();
       return;
@@ -37,13 +33,11 @@ const poll = async () => {
     watermark = newest;
     for (const { userId } of events) publish(userId);
   } catch {
-    // Reading events is best-effort: the next tick tries again, and the client
-    // keeps its own slow refresh for the case where this never recovers.
+    // Best-effort: the next tick retries.
   }
 };
 
-/** Returns the unsubscribe. The watcher starts with the first listener and
- * stops with the last, so an empty admin area costs nothing. */
+/** Returns the unsubscribe. The watcher runs only while someone listens. */
 export const subscribeToRoleChanges = (userId: string, listener: Listener) => {
   const forUser = listeners.get(userId) ?? new Set<Listener>();
   forUser.add(listener);

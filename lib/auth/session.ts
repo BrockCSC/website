@@ -64,11 +64,9 @@ const liveRoles = (sub: string): Promise<string[] | null> => {
   if (cached && Date.now() - cached.readAt < ROLE_CACHE_MS) {
     return cached.roles;
   }
-  // The promise is cached, not just its result, so the several role checks a
-  // single request makes collapse into one lookup instead of racing.
+  // Caching the promise collapses one request's role checks into one lookup.
   const roles = effectiveRealmRoles(sub).catch(() => {
-    // Fail closed: a revoked role must not survive a Keycloak outage. Drop the
-    // entry so the next request retries rather than holding the failure.
+    // Fail closed, but drop the entry so the next request retries.
     roleCache.delete(sub);
     return null;
   });
@@ -76,8 +74,7 @@ const liveRoles = (sub: string): Promise<string[] | null> => {
   return roles;
 };
 
-/** Forces the next check to re-read Keycloak. /api/auth/me calls this, so the
- * poll that refreshes the admin UI refreshes what the server enforces too. */
+/** Forces the next check to re-read Keycloak. */
 export const invalidateRoles = (sub: string) => {
   roleCache.delete(sub);
 };

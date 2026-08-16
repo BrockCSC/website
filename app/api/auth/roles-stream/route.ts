@@ -4,12 +4,9 @@ import { getSessionUser } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
-/** Traefik's idle timeout is well under a quiet admin session. */
 const HEARTBEAT_MS = 25_000;
 
-/** Tells one signed-in person, and only them, that their roles moved. The
- * payload is deliberately empty: the client re-reads /api/auth/me, so this
- * stream never becomes a second source of truth for what someone may do. */
+/** Signals one signed-in user that their roles moved. Carries no payload. */
 export const GET = (req: NextRequest) => {
   const user = getSessionUser(req);
   if (!user) return new Response("Not authenticated", { status: 401 });
@@ -31,8 +28,7 @@ export const GET = (req: NextRequest) => {
       const unsubscribe = subscribeToRoleChanges(user.sub, () =>
         send("event: roles\ndata: changed\n\n"),
       );
-      // A comment line is the cheapest thing that stops a proxy culling an
-      // idle stream, and EventSource ignores it.
+      // Stops a proxy culling an idle stream; EventSource ignores it.
       const beat = setInterval(() => send(": ping\n\n"), HEARTBEAT_MS);
 
       req.signal.addEventListener("abort", () => {
@@ -42,7 +38,7 @@ export const GET = (req: NextRequest) => {
         try {
           controller.close();
         } catch {
-          // Already closed by the disconnect itself.
+          // Already closed by the disconnect.
         }
       });
     },

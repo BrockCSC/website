@@ -40,9 +40,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     return <LoginForm onSuccess={() => void refresh()} />;
   }
 
-  // Signed in, but Keycloak grants them nothing. Every route behind here would
-  // refuse them, so offer the shell to nobody — but not the login form either,
-  // since their session is fine and signing back in would change nothing.
+  // Signed in, but every route behind here would refuse them.
   if (!user.isMember) {
     return (
       <div className="py-32 text-center">
