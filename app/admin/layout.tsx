@@ -1,10 +1,10 @@
 "use client";
 
-import { fetchCurrentUser, logout } from "@/lib/api";
-import { useEffect, useState } from "react";
+import { logout } from "@/lib/api";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { LoginForm } from "@/components/admin/login-form";
+import { SessionProvider, useSession } from "./session";
 
 const adminTabs = [
   { name: "Dashboard", href: "/admin" },
@@ -13,38 +13,15 @@ const adminTabs = [
   { name: "My Profile", href: "/admin/profile" },
 ];
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const [loading, setLoading] = useState(true);
-  const [authenticated, setAuthenticated] = useState(false);
-  const [isApprover, setIsApprover] = useState(false);
-  const [isExecutive, setIsExecutive] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    fetchCurrentUser().then((user) => {
-      if (cancelled) return;
-      setAuthenticated(!!user);
-      setIsApprover(!!user?.isApprover);
-      setIsExecutive(!!user?.isExecutive);
-      setLoading(false);
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  const { user, loading, refresh } = useSession();
 
   const handleLogout = async () => {
     try {
       await logout();
-      setAuthenticated(false);
+      await refresh();
       router.push("/");
     } catch (error) {
       console.error("Logout failed:", error);
@@ -59,8 +36,29 @@ export default function AdminLayout({
     );
   }
 
-  if (!authenticated) {
-    return <LoginForm onSuccess={() => setAuthenticated(true)} />;
+  if (!user) {
+    return <LoginForm onSuccess={() => void refresh()} />;
+  }
+
+  // Signed in, but Keycloak grants them nothing. Every route behind here would
+  // refuse them, so offer the shell to nobody — but not the login form either,
+  // since their session is fine and signing back in would change nothing.
+  if (!user.isMember) {
+    return (
+      <div className="py-32 text-center">
+        <p className="text-lg font-bold">Your access has been removed.</p>
+        <p className="mt-2 text-sm text-neutral-600">
+          Ask a co-president if you think this is a mistake. This page updates
+          on its own if your roles come back.
+        </p>
+        <button
+          onClick={handleLogout}
+          className="mt-6 font-bold text-gray-500 underline hover:text-black"
+        >
+          Log out
+        </button>
+      </div>
+    );
   }
 
   return (
@@ -69,8 +67,8 @@ export default function AdminLayout({
         <div className="flex items-center justify-between mb-8">
           <nav className="flex gap-2">
             {adminTabs
-              .filter((tab) => !tab.approverOnly || isApprover)
-              .filter((tab) => !tab.executiveOnly || isExecutive)
+              .filter((tab) => !tab.approverOnly || user.isApprover)
+              .filter((tab) => !tab.executiveOnly || user.isExecutive)
               .map((tab) => {
                 const isActive =
                   tab.href === "/admin"
@@ -103,5 +101,17 @@ export default function AdminLayout({
         <div className="p-8">{children}</div>
       </div>
     </div>
+  );
+}
+
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <SessionProvider>
+      <AdminShell>{children}</AdminShell>
+    </SessionProvider>
   );
 }

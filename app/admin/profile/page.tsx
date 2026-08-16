@@ -6,7 +6,6 @@ import { ImageFocus } from "@/components/ui/image-focus";
 import {
   ExecRecord,
   WithKey,
-  fetchCurrentUser,
   fetchProfile,
   stepDownAsCoPresident,
   updateProfile,
@@ -20,6 +19,7 @@ import {
   type SocialKey,
 } from "@/lib/execs/socials";
 import { academicTerms } from "@/lib/execs/terms";
+import { useSession } from "../session";
 import { useEffect, useMemo, useState } from "react";
 
 type TeamMember = WithKey<ExecRecord>;
@@ -72,19 +72,17 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState<Form>(formFor(null));
   const [saved, setSaved] = useState<Form>(formFor(null));
-  const [isApprover, setIsApprover] = useState(false);
   const [steppingDown, setSteppingDown] = useState(false);
   const [stepDownNote, setStepDownNote] = useState<string | null>(null);
+  // Polled, so losing the role elsewhere hides this section on its own.
+  const { user, refresh } = useSession();
+  const isApprover = !!user?.isApprover;
 
   useEffect(() => {
     void (async () => {
       try {
-        const [exec, me] = await Promise.all([
-          fetchProfile(),
-          fetchCurrentUser().catch(() => null),
-        ]);
+        const exec = await fetchProfile();
         setProfile(exec);
-        setIsApprover(!!me?.isApprover);
         setForm(formFor(exec));
         setSaved(formFor(exec));
       } catch {
@@ -334,7 +332,7 @@ export default function ProfilePage() {
                     try {
                       await stepDownAsCoPresident();
                       setStepDownNote("You are no longer a co-president.");
-                      setIsApprover(false);
+                      await refresh();
                     } catch (err) {
                       setStepDownNote(
                         err instanceof Error

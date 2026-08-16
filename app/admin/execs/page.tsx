@@ -19,6 +19,7 @@ import ExecModal from "./exec-modal";
 import Modal, { ConfirmationModal } from "@/components/ui/modal";
 import { AdminTable, ColumnDef } from "@/components/ui/admin-table";
 import { grantsApproval } from "@/lib/execs/titles";
+import { useSession } from "../session";
 
 type TeamMember = WithKey<ExecRecord>;
 type ExecMatch = {
@@ -60,7 +61,10 @@ export default function ExecutivesManagementPage() {
   const [rejecting, setRejecting] = useState<Signup | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  /** Only approvers can read sign-ups; plain admins just see the tiles. */
+  /** Only approvers can read sign-ups; plain admins just see the tiles. The
+   * flag below re-runs the load when that changes, so gaining the role fills
+   * this in rather than showing an approver column with nothing behind it. */
+  const { user } = useSession();
   const isApprover = signups !== null;
   const accountFor = (exec: TeamMember) =>
     signups?.find((signup) => signup.execKey === exec.$key) ?? null;
@@ -92,7 +96,7 @@ export default function ExecutivesManagementPage() {
         setInvite(null);
       }
     })();
-  }, []);
+  }, [user?.isApprover, user?.isExecutive]);
 
   const review = async (signup: Signup, action: "approve" | "reject") => {
     setError(null);
