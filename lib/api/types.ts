@@ -9,6 +9,8 @@ export type SessionUser = {
   isExecutive?: boolean;
   /** Holds the approver role, so may manage executives. */
   isApprover?: boolean;
+  /** Current exec or alumnus. False once every role is revoked. */
+  isMember?: boolean;
 };
 
 export type ExecSocialLinks = {

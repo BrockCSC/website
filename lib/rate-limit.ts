@@ -1,13 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Fixed-window limiter kept in process memory. Each environment runs a single
- * container, so a shared store would be more moving parts than it is worth.
- */
+/** Fixed-window limiter in process memory; one container per environment. */
 const windows = new Map<string, { count: number; resetAt: number }>();
 const MAX_WINDOWS = 10_000;
 
-/** Traefik appends the peer it saw, so the last hop is the one a client cannot forge. */
+/** Last hop only: earlier entries are client-supplied. */
 const clientIp = (req: NextRequest): string => {
   const chain = req.headers
     .get("x-forwarded-for")
@@ -34,9 +31,7 @@ export const rateLimit = (
       for (const [k, v] of windows) {
         if (now >= v.resetAt) windows.delete(k);
       }
-      // Sweeping only reclaims expired windows, so a caller spraying addresses
-      // could still grow this without bound. Insertion order is roughly expiry
-      // order, so evicting from the front drops the closest to expiring.
+      // Sweeping frees only expired windows; evict oldest-first for the rest.
       for (const k of windows.keys()) {
         if (windows.size <= MAX_WINDOWS) break;
         windows.delete(k);
