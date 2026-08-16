@@ -26,7 +26,9 @@ export const logout = async (): Promise<void> => {
 };
 
 /** Not apiFetch: the sign-up form shows the server's rejection reason. */
-export const signup = async (input: SignupInput): Promise<string> => {
+export const signup = async (
+  input: SignupInput,
+): Promise<{ confirmationCode: string; username: string }> => {
   const res = await fetch("/api/signup", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -35,9 +37,13 @@ export const signup = async (input: SignupInput): Promise<string> => {
   const body = (await res.json().catch(() => ({}))) as {
     error?: string;
     confirmationCode?: string;
+    username?: string;
   };
   if (!res.ok) {
     throw new Error(body.error ?? "Could not submit your request right now.");
   }
-  return body.confirmationCode ?? "";
+  return {
+    confirmationCode: body.confirmationCode ?? "",
+    username: body.username ?? "",
+  };
 };

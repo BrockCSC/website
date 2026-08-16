@@ -46,6 +46,7 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [assigned, setAssigned] = useState("");
 
   const set =
     (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -64,7 +65,9 @@ export default function SignupPage() {
     }
     setSubmitting(true);
     try {
-      setConfirmation(await signup(form));
+      const result = await signup(form);
+      setAssigned(result.username);
+      setConfirmation(result.confirmationCode);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -80,7 +83,7 @@ export default function SignupPage() {
             Request submitted
           </h1>
           <p className="text-sm text-muted-foreground">
-            Your account <span className="font-bold">{username}</span> is
+            Your account <span className="font-bold">{assigned}</span> is
             waiting for a co-president to approve it.
           </p>
 

@@ -1,13 +1,14 @@
 import { randomInt } from "node:crypto";
+import anyAscii from "any-ascii";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SignupRecord } from "@/lib/api/types";
 import { isValidInviteCode } from "@/lib/auth/invite-code";
 import {
+  allocateUsername,
   createDisabledUser,
   deleteUser,
-  findUserByUsername,
-  usernameFor,
 } from "@/lib/auth/keycloak-admin";
+import { fold, usernameFor } from "@/lib/auth/username";
 import { create } from "@/lib/db/repository";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
@@ -90,13 +91,13 @@ export const POST = async (req: NextRequest) => {
     return badRequest("Passwords do not match.");
   }
 
-  const username = usernameFor(firstName, lastName);
-  if (await findUserByUsername(username)) {
-    return NextResponse.json(
-      { error: "That username is already taken." },
-      { status: 409 },
-    );
+  const base =
+    usernameFor(firstName, lastName) ||
+    fold(anyAscii(`${firstName}${lastName}`));
+  if (!base) {
+    return badRequest("We could not build a username from that name.");
   }
+  const username = await allocateUsername(base);
 
   const keycloakUserId = await createDisabledUser({
     username,
@@ -129,5 +130,8 @@ export const POST = async (req: NextRequest) => {
     throw err;
   }
 
-  return NextResponse.json({ confirmationCode: confirmation }, { status: 201 });
+  return NextResponse.json(
+    { confirmationCode: confirmation, username },
+    { status: 201 },
+  );
 };
