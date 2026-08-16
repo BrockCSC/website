@@ -19,6 +19,7 @@ services:
       - stalwart-etc:/etc/stalwart
     environment:
       - STALWART_RECOVERY_ADMIN=${STALWART_ADMIN_USER}:${STALWART_ADMIN_SECRET}
+      - OCI_SMTP_PASSWORD=${OCI_SMTP_PASSWORD}
     # Only autoconfig paths are routed; admin and JMAP stay on wayfarer-net.
     labels:
       - "traefik.enable=true"
