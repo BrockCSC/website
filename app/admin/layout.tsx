@@ -2,6 +2,7 @@
 
 import { logout } from "@/lib/api";
 import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoginForm } from "@/components/admin/login-form";
 import { SessionProvider, useSession } from "./session";
@@ -10,7 +11,7 @@ const adminTabs = [
   { name: "Dashboard", href: "/admin" },
   { name: "Events Management", href: "/admin/events", executiveOnly: true },
   { name: "Executives Management", href: "/admin/execs", approverOnly: true },
-  { name: "Mail", href: "/admin/mail", executiveOnly: true },
+  { name: "Mail", href: "/admin/mail", executiveOnly: true, mailboxOnly: true },
   { name: "My Profile", href: "/admin/profile" },
 ];
 
@@ -18,6 +19,15 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, refresh } = useSession();
+  const [mailAddress, setMailAddress] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.isExecutive) return;
+    fetch("/api/mail/me")
+      .then((res) => (res.ok ? res.json() : { email: null }))
+      .then((data: { email: string | null }) => setMailAddress(data.email))
+      .catch(() => setMailAddress(null));
+  }, [user?.isExecutive]);
 
   const handleLogout = async () => {
     try {
@@ -72,6 +82,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
             {adminTabs
               .filter((tab) => !tab.approverOnly || user.isApprover)
               .filter((tab) => !tab.executiveOnly || user.isExecutive)
+              .filter((tab) => !tab.mailboxOnly || mailAddress)
               .map((tab) => {
                 const isActive =
                   tab.href === "/admin"
@@ -93,6 +104,14 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               })}
           </nav>
           <div className="flex items-center gap-3">
+            {mailAddress && (
+              <span
+                className="hidden truncate text-sm font-semibold text-neutral-600 sm:inline"
+                title={`Signed in as ${mailAddress}`}
+              >
+                {mailAddress}
+              </span>
+            )}
             <button
               onClick={handleLogout}
               className="relative text-gray-500 font-bold px-4 py-2 hover:text-black transition-colors after:content-[''] after:absolute after:bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-[#9A4440] after:origin-center after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100"

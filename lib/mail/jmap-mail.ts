@@ -228,6 +228,20 @@ export const getMessage = async (
   return message;
 };
 
+/** The address this account sends from, or null when it has no mailbox. */
+export const sendingAddress = async (token: string): Promise<string | null> => {
+  const { session, accountId } = await mailSession(token);
+  const [identities] = (await jmap(token, [
+    [
+      "Identity/get",
+      { accountId, ids: null, properties: ["id", "email"] },
+      "i0",
+    ],
+  ])) as [{ list: Identity[] }];
+  if (identities.list.length === 0) return null;
+  return senderIdentity(session, accountId, identities.list).email;
+};
+
 export type OutgoingMessage = {
   to: string[];
   cc?: string[];

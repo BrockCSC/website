@@ -34,6 +34,7 @@ export const GET = async (
     : emailBodyToText(raw ?? "");
 
   const doc = `<!doctype html><html><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="${EMAIL_IFRAME_CSP}">
 <style>body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;color:#111;word-wrap:break-word}
 img{max-width:100%;height:auto}table{max-width:100%}a{color:#9a4440}</style>
 </head><body>${body}</body></html>`;

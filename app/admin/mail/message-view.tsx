@@ -8,13 +8,25 @@ const addressLine = (list: MessageDetail["from"]) =>
 
 export function MessageView({ id }: { id: string }) {
   const [message, setMessage] = useState<MessageDetail | null>(null);
+  const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    fetch(`/api/mail/messages/${encodeURIComponent(id)}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((data) => live && setMessage(data))
+    const path = `/api/mail/messages/${encodeURIComponent(id)}`;
+    Promise.all([
+      fetch(path).then((res) =>
+        res.ok ? res.json() : Promise.reject(res.status),
+      ),
+      fetch(`${path}/body`).then((res) =>
+        res.ok ? res.text() : Promise.reject(res.status),
+      ),
+    ])
+      .then(([detail, html]) => {
+        if (!live) return;
+        setMessage(detail);
+        setBody(html);
+      })
       .catch(() => live && setError("Could not load this message."));
     return () => {
       live = false;
@@ -41,10 +53,11 @@ export function MessageView({ id }: { id: string }) {
         </p>
       </header>
 
-      {/* Sandboxed: the body is untrusted even after sanitising. */}
+      {/* Sandboxed: the body is untrusted even after sanitising. srcdoc rather
+          than src so the app's own X-Frame-Options cannot block it. */}
       <iframe
         title="Message body"
-        src={`/api/mail/messages/${encodeURIComponent(id)}/body`}
+        srcDoc={body}
         sandbox=""
         referrerPolicy="no-referrer"
         className="w-full flex-1 border-0 bg-white"
