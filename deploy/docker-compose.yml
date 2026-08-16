@@ -31,6 +31,11 @@ services:
       - INVITE_CODE_SECRET=${INVITE_CODE_SECRET}
       - PORT=3000
       - UPLOAD_DIR=/data/uploads
+      - MAIL_DOMAIN=${MAIL_DOMAIN}
+      - STALWART_URL=${STALWART_URL}
+      - STALWART_ADMIN_USER=${STALWART_ADMIN_USER}
+      - STALWART_ADMIN_SECRET=${STALWART_ADMIN_SECRET}
+      - OCI_COMPARTMENT_OCID=${OCI_COMPARTMENT_OCID}
     healthcheck:
       test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
       interval: 30s

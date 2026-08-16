@@ -8,6 +8,8 @@ import {
   update,
 } from "@/lib/db/repository";
 import { asBool, cleanExec } from "@/lib/execs/patch";
+import { findSignupByExecKey } from "@/lib/db/signups";
+import { makeMailboxReadOnly } from "@/lib/mail/provision";
 import { badJson, jsonObject } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
@@ -39,14 +41,22 @@ export const PATCH = async (
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
+  const before = await findById<ExecRecord>(execsTable, id);
+  const stillCurrent = asBool(body.isCurrentExec);
+
   const entity = await update<ExecRecord>(execsTable, id, {
     ...cleaned.patch,
     name: body.name,
     title: body.title,
-    isCurrentExec: asBool(body.isCurrentExec),
+    isCurrentExec: stillCurrent,
   });
   if (!entity) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (before?.isCurrentExec !== false && !stillCurrent) {
+    const signup = await findSignupByExecKey(id);
+    if (signup?.username) await makeMailboxReadOnly(signup.username);
   }
   return NextResponse.json(toWireRecord(entity));
 };

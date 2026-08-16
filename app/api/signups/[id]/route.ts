@@ -9,6 +9,7 @@ import { requireApprover } from "@/lib/auth/session";
 import { badJson, jsonObject } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
+import { makeMailboxReadOnly, provisionMailbox } from "@/lib/mail/provision";
 import {
   create,
   findById,
@@ -103,6 +104,25 @@ export const PATCH = async (
         { status: 422 },
       );
     }
+
+    // Alumni keep their login without a mailbox.
+    if (!isPastExec && signup.username) {
+      try {
+        await provisionMailbox({
+          username: signup.username,
+          firstName: signup.firstName ?? "",
+          lastName: signup.lastName ?? "",
+        });
+      } catch {
+        return NextResponse.json(
+          {
+            error:
+              "The account is approved but the mailbox could not be created. Approve again to retry.",
+          },
+          { status: 422 },
+        );
+      }
+    }
   }
 
   const reviewed = await update<SignupRecord>(signupsTable, id, {
@@ -142,6 +162,9 @@ export const DELETE = async (
 
   if (signup.keycloakUserId) {
     await deleteUser(signup.keycloakUserId);
+  }
+  if (signup.username) {
+    await makeMailboxReadOnly(signup.username);
   }
   if (deleteExec && signup.execKey) {
     await remove(execsTable, signup.execKey);
