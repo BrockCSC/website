@@ -16,8 +16,6 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/avif": ".avif",
 };
 
-export const isAllowedImageType = (type: string) => type in EXTENSION_BY_TYPE;
-
 const extensionForType = (type: string) => EXTENSION_BY_TYPE[type] ?? "";
 
 /** Random name keyed by date; the original filename is never trusted. */
