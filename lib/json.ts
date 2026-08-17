@@ -8,3 +8,9 @@ export const jsonObject = async <T>(req: Request): Promise<T | null> => {
 
 export const badJson = () =>
   NextResponse.json({ error: "Expected a JSON object." }, { status: 400 });
+
+export const notAuthorized = () =>
+  NextResponse.json({ error: "Not authorized" }, { status: 401 });
+
+export const notFound = () =>
+  NextResponse.json({ error: "Not found" }, { status: 404 });

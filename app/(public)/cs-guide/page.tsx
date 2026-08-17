@@ -12,6 +12,40 @@ export const metadata: Metadata = {
     "An open-source guide to course registration, program requirements, resources and opportunities for Computer Science students at Brock University.",
 };
 
+type CourseType = {
+  badge: string;
+  badgeStyle: string;
+  title: string;
+  body: string;
+};
+
+const courseTypes: CourseType[] = [
+  {
+    badge: "F",
+    badgeStyle: "bg-surface",
+    title: "Full-Credit Course",
+    body: "Full-credit courses run through both Fall and Winter semesters (D1 duration). Some intensive thesis or project courses are weighted as 1.0 credits.",
+  },
+  {
+    badge: "P/Q",
+    badgeStyle: "bg-brand text-brand-ink",
+    title: "Half-Credit Course",
+    body: "Most courses at Brock are 0.5 credits. These typically run for one semester (12 weeks). You need 20.0 credits total to graduate with an Honours degree.Q is the same thing, it is used for cross-listed courses.",
+  },
+  {
+    badge: "C",
+    badgeStyle: "bg-brand text-brand-ink",
+    title: "Coop-Credit Course",
+    body: "Only required for co-op, and the credit is only weighted for OSAP but does not apply to your graduation requirement",
+  },
+  {
+    badge: "N",
+    badgeStyle: "bg-brand text-brand-ink",
+    title: "No-Credit Course",
+    body: "Only required for co-op",
+  },
+];
+
 const Guide: React.FC = () => {
   return (
     <main className="min-h-screen py-10 sm:py-16">
@@ -77,10 +111,7 @@ const Guide: React.FC = () => {
 
           {/* COURSE CODES  */}
           <section id="course-codes" className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Course Codes
-            </h2>
+            <SectionHeading>Course Codes</SectionHeading>
 
             <Prose className="mb-8">
               <p>
@@ -115,74 +146,25 @@ const Guide: React.FC = () => {
 
           {/* CREDIT BREAKDOWN */}
           <section id="common-course-types" className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Common Course Types
-            </h2>
+            <SectionHeading>Common Course Types</SectionHeading>
 
             <div className="grid md:grid-cols-2 gap-8">
-              {/* FULL CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
-                <div className="absolute -top-4 left-6 bg-surface border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
-                  F
+              {courseTypes.map(({ badge, badgeStyle, title, body }) => (
+                <div
+                  key={badge}
+                  className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]"
+                >
+                  <div
+                    className={`absolute -top-4 left-6 ${badgeStyle} border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold`}
+                  >
+                    {badge}
+                  </div>
+
+                  <h3 className="text-xl font-semibold mb-4 mt-4">{title}</h3>
+
+                  <p className="text-subtle">{body}</p>
                 </div>
-
-                <h3 className="text-xl font-semibold mb-4 mt-4">
-                  Full-Credit Course
-                </h3>
-
-                <p className="text-subtle">
-                  Full-credit courses run through both Fall and Winter semesters
-                  (D1 duration). Some intensive thesis or project courses are
-                  weighted as 1.0 credits.
-                </p>
-              </div>
-
-              {/* HALF CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
-                <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
-                  P/Q
-                </div>
-
-                <h3 className="text-xl font-semibold mb-4 mt-4">
-                  Half-Credit Course
-                </h3>
-
-                <p className="text-subtle">
-                  Most courses at Brock are 0.5 credits. These typically run for
-                  one semester (12 weeks). You need 20.0 credits total to
-                  graduate with an Honours degree.Q is the same thing, it is
-                  used for cross-listed courses.
-                </p>
-              </div>
-
-              {/* COOP CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
-                <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
-                  C
-                </div>
-
-                <h3 className="text-xl font-semibold mb-4 mt-4">
-                  Coop-Credit Course
-                </h3>
-
-                <p className="text-subtle">
-                  Only required for co-op, and the credit is only weighted for
-                  OSAP but does not apply to your graduation requirement
-                </p>
-              </div>
-              {/* COOP CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
-                <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
-                  N
-                </div>
-
-                <h3 className="text-xl font-semibold mb-4 mt-4">
-                  No-Credit Course
-                </h3>
-
-                <p className="text-subtle">Only required for co-op</p>
-              </div>
+              ))}
             </div>
             <div className="mt-6">
               <Callout>
@@ -193,10 +175,7 @@ const Guide: React.FC = () => {
 
           {/* Course Durations*/}
           <section id="course-duration" className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Course Durations
-            </h2>
+            <SectionHeading>Course Durations</SectionHeading>
             <Prose className="mb-8">
               <p>
                 Courses are offered during various times throughout the year and
@@ -209,10 +188,7 @@ const Guide: React.FC = () => {
 
           {/* Sections*/}
           <section id="course-sections" className="mb-8">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Sections
-            </h2>
+            <SectionHeading>Sections</SectionHeading>
             <Prose className="mb-8">
               <p>
                 Some courses are large and divided into sections for lectures,
@@ -226,10 +202,7 @@ const Guide: React.FC = () => {
 
           {/* Context Credits*/}
           <section id="context-credits" className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Context Credits
-            </h2>
+            <SectionHeading>Context Credits</SectionHeading>
             <Prose className="mb-8">
               <p>
                 All students must include one credit (or two half-credits) from
@@ -300,10 +273,9 @@ const Guide: React.FC = () => {
             </h1>
 
             <section id="bachelor">
-              <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
+              <SectionHeading>
                 Credit Requirements for Bachelor of Science, Computer Science
-              </h2>
+              </SectionHeading>
 
               <Table data={requirements as TableData} mobileVariant="scroll" />
 
@@ -323,10 +295,7 @@ const Guide: React.FC = () => {
 
           {/* Minor in Applied Computing*/}
           <section id="minor-computing" className="mb-8">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Minor in Applied Computing
-            </h2>
+            <SectionHeading>Minor in Applied Computing</SectionHeading>
             <Prose className="mb-8">
               <Callout>
                 ⚠ Note: This is the only minor that the CS Department offers.
@@ -348,10 +317,7 @@ const Guide: React.FC = () => {
 
           {/* Double Major*/}
           <section id="double-major" className="mb-8">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Double Major
-            </h2>
+            <SectionHeading>Double Major</SectionHeading>
 
             <Prose className="mb-8">
               <p>
@@ -386,10 +352,7 @@ const Guide: React.FC = () => {
 
           {/* Courses*/}
           <section id="courses" className="mb-20">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Courses
-            </h2>
+            <SectionHeading>Courses</SectionHeading>
 
             <Prose className="mb-8">
               <p>
@@ -467,10 +430,7 @@ const Guide: React.FC = () => {
 
           {/* RESOURCES */}
           <section id="resources" className="mb-10">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Resources
-            </h2>
+            <SectionHeading>Resources</SectionHeading>
 
             <Prose className="mb-8">
               <div>
@@ -608,10 +568,7 @@ const Guide: React.FC = () => {
 
           {/* OPPORTUNITIES */}
           <section id="opportunities" className="mb-16">
-            <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
-              Opportunities
-            </h2>
+            <SectionHeading>Opportunities</SectionHeading>
 
             <Prose className="mb-8">
               <div>
@@ -676,6 +633,15 @@ function Prose({
     >
       {children}
     </div>
+  );
+}
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+      <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
+      {children}
+    </h2>
   );
 }
 

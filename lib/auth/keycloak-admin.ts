@@ -7,6 +7,8 @@
  * login client when they are not set separately.
  */
 
+import { tokenRequest } from "./keycloak-token";
+
 export type NewKeycloakUser = {
   username: string;
   email?: string;
@@ -41,14 +43,10 @@ const config = () => {
 
 const adminToken = async (): Promise<string> => {
   const { issuer, clientId, clientSecret } = config();
-  const res = await fetch(`${issuer}/protocol/openid-connect/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      client_id: clientId,
-      client_secret: clientSecret,
-    }),
+  const res = await tokenRequest(issuer, {
+    grant_type: "client_credentials",
+    client_id: clientId,
+    client_secret: clientSecret,
   });
   if (!res.ok) {
     throw new Error(
@@ -190,20 +188,28 @@ export const usersWithRealmRole = async (
   return (await res.json()) as { id: string; username: string }[];
 };
 
-export const removeRealmRole = async (userId: string, roleName: string) => {
+const mapRealmRole = async (
+  userId: string,
+  roleName: string,
+  method: "POST" | "DELETE",
+  failure: string,
+) => {
   const roleRes = await adminFetch(`/roles/${encodeURIComponent(roleName)}`);
   if (!roleRes.ok) {
     throw new Error(`Keycloak realm role "${roleName}" not found.`);
   }
   const role = (await roleRes.json()) as { id: string; name: string };
   const res = await adminFetch(userPath(userId, "/role-mappings/realm"), {
-    method: "DELETE",
+    method,
     body: JSON.stringify([{ id: role.id, name: role.name }]),
   });
   if (!res.ok) {
-    throw new Error(`Keycloak role removal failed (${res.status}).`);
+    throw new Error(`${failure} (${res.status}).`);
   }
 };
+
+export const removeRealmRole = (userId: string, roleName: string) =>
+  mapRealmRole(userId, roleName, "DELETE", "Keycloak role removal failed");
 
 export const setUserEnabled = async (userId: string, enabled: boolean) => {
   const res = await adminFetch(userPath(userId), {
@@ -220,18 +226,5 @@ export const deleteUser = async (userId: string) => {
   }
 };
 
-export const assignRealmRole = async (userId: string, roleName: string) => {
-  const roleRes = await adminFetch(`/roles/${encodeURIComponent(roleName)}`);
-  if (!roleRes.ok) {
-    throw new Error(`Keycloak realm role "${roleName}" not found.`);
-  }
-  const role = (await roleRes.json()) as { id: string; name: string };
-
-  const res = await adminFetch(userPath(userId, "/role-mappings/realm"), {
-    method: "POST",
-    body: JSON.stringify([{ id: role.id, name: role.name }]),
-  });
-  if (!res.ok) {
-    throw new Error(`Keycloak role assignment failed (${res.status}).`);
-  }
-};
+export const assignRealmRole = (userId: string, roleName: string) =>
+  mapRealmRole(userId, roleName, "POST", "Keycloak role assignment failed");

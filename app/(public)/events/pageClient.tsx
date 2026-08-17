@@ -1,7 +1,6 @@
 "use client";
 
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useRevealedGroups } from "@/lib/use-revealed-groups";
@@ -10,6 +9,7 @@ import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
 import { classifyEventsByTiming } from "@/lib/events/classify";
 import { getEventStartTimestamp } from "@/lib/events/schedule";
 
+import { RetryNotice, SearchField } from "../components/search-panel";
 import { EventTimelineCard } from "./components/event-timeline-card";
 
 type EventItem = WithKey<EventRecord>;
@@ -184,36 +184,19 @@ export default function EventsPageClient({
       </section>
 
       {!loading && !error && events.length > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle"
-            />
-            <input
-              aria-label="Search events"
-              className="w-full rounded-[10px] border-2 border-line bg-surface py-2 pr-3 pl-9 text-ink"
-              onChange={(changeEvent) => updateQuery(changeEvent.target.value)}
-              placeholder="Search by title, presenter or location"
-              type="search"
-              value={query}
-            />
-          </div>
-          {isSearching && (
-            <>
-              <span aria-live="polite" className="text-sm text-subtle">
+        <SearchField
+          ariaLabel="Search events"
+          onQueryChange={updateQuery}
+          placeholder="Search by title, presenter or location"
+          query={query}
+          results={
+            isSearching && (
+              <>
                 {matchCount} of {events.length} events
-              </span>
-              <Button
-                onClick={() => updateQuery("")}
-                size="sm"
-                variant="outline"
-              >
-                Clear
-              </Button>
-            </>
-          )}
-        </div>
+              </>
+            )
+          }
+        />
       )}
 
       <div className={resultsClass}>
@@ -310,18 +293,10 @@ export default function EventsPageClient({
             What we&apos;ve hosted.
           </p>
 
-          {error && (
-            <div className="mb-4 flex flex-wrap items-center gap-3">
-              <p className="m-0 text-subtle">{error}</p>
-              <Button
-                onClick={() => setReloadCount((count) => count + 1)}
-                size="sm"
-                variant="outline"
-              >
-                Try again
-              </Button>
-            </div>
-          )}
+          <RetryNotice
+            message={error}
+            onRetry={() => setReloadCount((count) => count + 1)}
+          />
           {loading && (
             <div
               aria-label="Loading past events"

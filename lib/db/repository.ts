@@ -1,12 +1,12 @@
 import { eq, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
-import { badJson, jsonObject } from "@/lib/json";
+import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { db } from "./index";
 import type { eventsTable, execsTable, signupsTable } from "./schema";
 
 type JsonbTable = typeof eventsTable | typeof execsTable | typeof signupsTable;
-type Entity<T> = T & { id: string };
+export type Entity<T> = T & { id: string };
 
 /** id last: a stray `id` inside the stored JSON must not shadow the real one. */
 const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
@@ -72,9 +72,7 @@ export const createCollectionHandlers = <T>(table: JsonbTable) => ({
 
   POST: async (req: NextRequest) => {
     const admin = await requireAdmin(req);
-    if (!admin) {
-      return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-    }
+    if (!admin) return notAuthorized();
     const input = await jsonObject<T>(req);
     if (!input) return badJson();
     const entity = await create<T>(table, input);
@@ -89,9 +87,7 @@ export const createItemHandlers = <T>(table: JsonbTable) => ({
   ) => {
     const { id } = await params;
     const entity = await findById<T>(table, id);
-    if (!entity) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    if (!entity) return notFound();
     return NextResponse.json(toWireRecord(entity));
   },
 
@@ -100,16 +96,12 @@ export const createItemHandlers = <T>(table: JsonbTable) => ({
     { params }: { params: Promise<{ id: string }> },
   ) => {
     const admin = await requireAdmin(req);
-    if (!admin) {
-      return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-    }
+    if (!admin) return notAuthorized();
     const { id } = await params;
     const patch = await jsonObject<Partial<T>>(req);
     if (!patch) return badJson();
     const entity = await update<T>(table, id, patch);
-    if (!entity) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    if (!entity) return notFound();
     return NextResponse.json(toWireRecord(entity));
   },
 
@@ -118,14 +110,10 @@ export const createItemHandlers = <T>(table: JsonbTable) => ({
     { params }: { params: Promise<{ id: string }> },
   ) => {
     const admin = await requireAdmin(req);
-    if (!admin) {
-      return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-    }
+    if (!admin) return notAuthorized();
     const { id } = await params;
     const removed = await remove(table, id);
-    if (!removed) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
+    if (!removed) return notFound();
     return new NextResponse(null, { status: 204 });
   },
 });

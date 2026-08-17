@@ -11,7 +11,7 @@ import { asBool, cleanExec } from "@/lib/execs/patch";
 import { findSignupByExecKey } from "@/lib/db/signups";
 import { makeMailboxReadOnly } from "@/lib/mail/provision";
 import { ownsIdentities } from "@/lib/env";
-import { badJson, jsonObject } from "@/lib/json";
+import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 
@@ -21,9 +21,7 @@ export const GET = async (
 ) => {
   const { id } = await params;
   const exec = await findById<ExecRecord>(execsTable, id);
-  if (!exec || (exec.hidden && !(await requireMember(req)))) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!exec || (exec.hidden && !(await requireMember(req)))) return notFound();
   return NextResponse.json(toWireRecord(exec));
 };
 
@@ -31,9 +29,7 @@ export const PATCH = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  if (!(await requireApprover(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireApprover(req))) return notAuthorized();
   const { id } = await params;
   const body = await jsonObject<ExecRecord>(req);
   if (!body) return badJson();
@@ -50,9 +46,7 @@ export const PATCH = async (
     title: body.title,
     isCurrentExec: stillCurrent,
   });
-  if (!entity) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!entity) return notFound();
 
   // must not retire the mailbox either.
   if (
@@ -71,15 +65,11 @@ export const DELETE = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  if (!(await requireApprover(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireApprover(req))) return notAuthorized();
 
   const { id } = await params;
   const removed = await remove(execsTable, id);
-  if (!removed) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!removed) return notFound();
 
   const signups = await findAll<SignupRecord>(signupsTable);
   await Promise.all(

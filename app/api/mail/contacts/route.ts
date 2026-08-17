@@ -3,14 +3,13 @@ import { requireMember } from "@/lib/auth/session";
 import { findAll } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
+import { notAuthorized } from "@/lib/json";
 
 const domain = () => process.env.MAIL_DOMAIN ?? "brockcsc.ca";
 
 /** Club addresses for compose autocomplete: current execs who hold a mailbox. */
 export const GET = async (req: NextRequest) => {
-  if (!(await requireMember(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireMember(req))) return notAuthorized();
 
   const [signups, execs] = await Promise.all([
     findAll<SignupRecord>(signupsTable),

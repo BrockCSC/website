@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { setKeywords } from "@/lib/mail/jmap-mail";
 import { mailToken, unauthorized } from "../../../auth";
+import { jsonObject } from "@/lib/json";
 
 const KEYWORDS = { seen: "$seen", flagged: "$flagged" } as const;
 
@@ -11,10 +12,7 @@ export const POST = async (
   const token = await mailToken(req);
   if (!token) return unauthorized();
 
-  const body = (await req.json().catch(() => null)) as Record<
-    string,
-    unknown
-  > | null;
+  const body = await jsonObject<Record<string, unknown>>(req);
   const wanted = Object.entries(KEYWORDS).flatMap(([key, keyword]) =>
     typeof body?.[key] === "boolean" ? [[keyword, body[key]] as const] : [],
   );

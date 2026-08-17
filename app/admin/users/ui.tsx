@@ -1,7 +1,25 @@
 import { cn } from "@/lib/utils";
 
-export const field =
-  "w-full rounded-[10px] border-2 border-line bg-raised px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle focus:border-brand";
+export const fieldOn = (bg: "bg-raised" | "bg-surface") =>
+  `w-full rounded-[10px] border-2 border-line ${bg} px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle focus:border-brand`;
+
+export const field = fieldOn("bg-raised");
+
+export const labelClass = "mb-1 block text-sm font-bold text-ink";
+
+export function Label({
+  children,
+  htmlFor,
+}: {
+  children: React.ReactNode;
+  htmlFor: string;
+}) {
+  return (
+    <label className={labelClass} htmlFor={htmlFor}>
+      {children}
+    </label>
+  );
+}
 
 export function Pill({
   tone = "flat",
@@ -22,25 +40,48 @@ export function Pill({
   );
 }
 
+export type PanelProps = {
+  title: string;
+  note?: string;
+  action?: React.ReactNode;
+  /** Brand-coloured heading. */
+  accent?: boolean;
+  tone?: "danger";
+  smallNote?: boolean;
+  children: React.ReactNode;
+};
+
 export function Panel({
   title,
   note,
   action,
+  accent,
+  tone,
+  smallNote,
   children,
-}: {
-  title: string;
-  note?: string;
-  action?: React.ReactNode;
-  children: React.ReactNode;
-}) {
+}: PanelProps) {
   return (
-    <section className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
+    <section
+      className={`animate-fade-in rounded-[20px] border-2 border-line ${
+        tone ? "bg-tint" : "bg-surface"
+      } p-5 shadow-brut`}
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink">
+          <h2
+            className={`text-sm font-extrabold uppercase tracking-wide ${
+              accent ? "text-brand" : "text-ink"
+            }`}
+          >
             {title}
           </h2>
-          {note && <p className="mt-1 text-sm text-subtle">{note}</p>}
+          {note && (
+            <p
+              className={`mt-1 ${smallNote ? "text-xs" : "text-sm"} text-subtle`}
+            >
+              {note}
+            </p>
+          )}
         </div>
         {action}
       </div>

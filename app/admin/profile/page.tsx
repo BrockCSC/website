@@ -20,6 +20,7 @@ import {
 } from "@/lib/execs/socials";
 import { academicTerms } from "@/lib/execs/terms";
 import { useSession } from "../session";
+import { Panel, fieldOn, labelClass, type PanelProps } from "../users/ui";
 import { ask } from "../ask";
 import { useEffect, useMemo, useState } from "react";
 
@@ -49,33 +50,9 @@ const formFor = (exec: TeamMember | null): Form => ({
 });
 
 const page = "mx-auto w-full max-w-[1060px] px-5 py-10";
-const label = "mb-1 block text-sm font-bold text-ink";
-const field =
-  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle focus:border-brand";
+const field = fieldOn("bg-surface");
 
-const Section = ({
-  title,
-  note,
-  tone,
-  children,
-}: {
-  title: string;
-  note?: string;
-  tone?: "danger";
-  children: React.ReactNode;
-}) => (
-  <section
-    className={`rounded-[20px] border-2 border-line p-5 shadow-brut ${
-      tone ? "bg-tint" : "bg-surface"
-    }`}
-  >
-    <h2 className="text-sm font-extrabold uppercase tracking-wide text-brand">
-      {title}
-    </h2>
-    {note && <p className="mt-1 text-sm text-subtle">{note}</p>}
-    <div className="mt-4">{children}</div>
-  </section>
-);
+const Section = (props: PanelProps) => <Panel {...props} accent />;
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<TeamMember | null>(null);
@@ -246,7 +223,7 @@ export default function ProfilePage() {
           </Section>
 
           <Section title="About you">
-            <label className={label} htmlFor="about">
+            <label className={labelClass} htmlFor="about">
               Short bio
             </label>
             <textarea
@@ -261,7 +238,7 @@ export default function ProfilePage() {
               {form.description.length}/400
             </div>
 
-            <label className={`${label} mt-3`} htmlFor="term">
+            <label className={`${labelClass} mt-3`} htmlFor="term">
               Term
             </label>
             <select
@@ -286,7 +263,7 @@ export default function ProfilePage() {
                 const bad = !!value.trim() && !isValidHandle(key, value.trim());
                 return (
                   <div key={key}>
-                    <label className={label} htmlFor={key}>
+                    <label className={labelClass} htmlFor={key}>
                       {name}
                     </label>
                     <div

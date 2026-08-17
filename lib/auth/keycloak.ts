@@ -1,4 +1,5 @@
 import jwt from "jsonwebtoken";
+import { tokenRequest } from "./keycloak-token";
 
 type KeycloakTokenPayload = {
   sub: string;
@@ -31,21 +32,14 @@ export const exchangeCredentials = async (
     if (!value) throw new Error(`${name} env var is not set.`);
   }
 
-  const tokenResponse = await fetch(
-    `${KEYCLOAK_ISSUER}/protocol/openid-connect/token`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({
-        grant_type: "password",
-        client_id: KEYCLOAK_CLIENT_ID!,
-        client_secret: KEYCLOAK_CLIENT_SECRET!,
-        scope: "openid",
-        username,
-        password,
-      }),
-    },
-  );
+  const tokenResponse = await tokenRequest(KEYCLOAK_ISSUER!, {
+    grant_type: "password",
+    client_id: KEYCLOAK_CLIENT_ID!,
+    client_secret: KEYCLOAK_CLIENT_SECRET!,
+    scope: "openid",
+    username,
+    password,
+  });
 
   if (!tokenResponse.ok) {
     return null;

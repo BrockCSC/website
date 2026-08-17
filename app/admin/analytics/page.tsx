@@ -3,6 +3,7 @@
 import { DashboardStats, DayCount, fetchDashboardStats } from "@/lib/api";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Panel } from "../users/ui";
 import { BarList, formatDay, SplitBar, TrendChart } from "./charts";
 
 type MailStats = { sent: number; received: number };
@@ -58,22 +59,13 @@ const Stat = ({
 };
 
 const Card = ({
-  title,
   hint,
-  children,
+  ...rest
 }: {
   title: string;
   hint?: string;
   children: React.ReactNode;
-}) => (
-  <section className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
-    <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink">
-      {title}
-    </h2>
-    {hint && <p className="mt-1 text-xs text-subtle">{hint}</p>}
-    <div className="mt-4">{children}</div>
-  </section>
-);
+}) => <Panel {...rest} note={hint} smallNote />;
 
 const Note = ({ children }: { children: React.ReactNode }) => (
   <p className="animate-fade-in rounded-[14px] border-2 border-dashed border-line/40 p-4 text-sm text-subtle">

@@ -14,19 +14,7 @@ import {
 import { academicTerms } from "@/lib/execs/terms";
 import { ACTIVE_TITLES, isDeprecatedTitle } from "@/lib/execs/titles";
 import { createTile, updateTile, type Exec } from "./api";
-import { field } from "./ui";
-
-const Label = ({
-  children,
-  htmlFor,
-}: {
-  children: React.ReactNode;
-  htmlFor: string;
-}) => (
-  <label className="mb-1 block text-sm font-bold text-ink" htmlFor={htmlFor}>
-    {children}
-  </label>
-);
+import { Label, field } from "./ui";
 
 export default function ProfileForm({
   exec,

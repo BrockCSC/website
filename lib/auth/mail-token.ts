@@ -1,4 +1,5 @@
 import type { NextRequest } from "next/server";
+import { tokenRequest } from "./keycloak-token";
 
 /**
  * Mail is read as the signed-in user, not as an admin, so Stalwart enforces
@@ -40,15 +41,11 @@ export const exchangeRefreshToken = async (
   if (!refresh) return null;
 
   const { issuer, clientId, clientSecret } = config();
-  const res = await fetch(`${issuer}/protocol/openid-connect/token`, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "refresh_token",
-      client_id: clientId,
-      client_secret: clientSecret,
-      refresh_token: refresh,
-    }),
+  const res = await tokenRequest(issuer, {
+    grant_type: "refresh_token",
+    client_id: clientId,
+    client_secret: clientSecret,
+    refresh_token: refresh,
   });
   if (!res.ok) return null;
 

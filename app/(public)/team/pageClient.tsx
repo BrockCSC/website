@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useDeferredValue, useEffect, useMemo, useState } from "react";
-import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useRevealedGroups } from "@/lib/use-revealed-groups";
@@ -18,6 +17,7 @@ import {
   termStartYear,
 } from "@/lib/execs/order";
 
+import { RetryNotice, SearchField } from "../components/search-panel";
 import { TeamMemberCard } from "./components/team-member-card";
 
 type TeamMember = WithKey<ExecRecord>;
@@ -144,18 +144,6 @@ export default function TeamPageClient() {
   const alumni = useRevealedGroups(previousExecGroups, 10, isSearching);
   const totalPeople = currentExecs.length + previousExecs.length;
   const matchCount = visibleCurrentExecs.length + visiblePreviousExecs.length;
-  const errorMessage = error ? (
-    <div className="mb-4 flex flex-wrap items-center gap-3">
-      <p className="m-0 text-subtle">{error}</p>
-      <Button
-        onClick={() => setReloadCount((count) => count + 1)}
-        size="sm"
-        variant="outline"
-      >
-        Try again
-      </Button>
-    </div>
-  ) : null;
 
   return (
     <main className="min-h-screen bg-surface pb-10">
@@ -170,32 +158,19 @@ export default function TeamPageClient() {
       </section>
 
       {!loading && !error && totalPeople > 0 && (
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <div className="relative min-w-[220px] flex-1">
-            <Search
-              aria-hidden="true"
-              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle"
-            />
-            <input
-              aria-label="Search team members"
-              className="w-full rounded-[10px] border-2 border-line bg-surface py-2 pr-3 pl-9 text-ink"
-              onChange={(changeEvent) => setQuery(changeEvent.target.value)}
-              placeholder="Search by name, role or term"
-              type="search"
-              value={query}
-            />
-          </div>
-          {isSearching && (
-            <>
-              <span aria-live="polite" className="text-sm text-subtle">
+        <SearchField
+          ariaLabel="Search team members"
+          onQueryChange={setQuery}
+          placeholder="Search by name, role or term"
+          query={query}
+          results={
+            isSearching && (
+              <>
                 {matchCount} of {totalPeople} people
-              </span>
-              <Button onClick={() => setQuery("")} size="sm" variant="outline">
-                Clear
-              </Button>
-            </>
-          )}
-        </div>
+              </>
+            )
+          }
+        />
       )}
 
       <div className={resultsClass}>
@@ -226,7 +201,10 @@ export default function TeamPageClient() {
             The current leadership team.
           </p>
 
-          {errorMessage}
+          <RetryNotice
+            message={error}
+            onRetry={() => setReloadCount((count) => count + 1)}
+          />
           {loading && (
             <div
               aria-busy="true"

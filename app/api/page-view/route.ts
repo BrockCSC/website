@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { create } from "@/lib/db/repository";
 import { rateLimit } from "@/lib/rate-limit";
 import { pageViewsTable } from "@/lib/db/schema";
+import { jsonObject } from "@/lib/json";
 
 /** Admin traffic is the club's own work, so it is not a visit to the website. */
 const isPublicPath = (path: unknown): path is string =>
@@ -16,8 +17,7 @@ export const POST = async (req: NextRequest) => {
     return new NextResponse(null, { status: 204 });
   }
 
-  const body: unknown = await req.json().catch(() => null);
-  const path = (body as { path?: unknown } | null)?.path;
+  const path = (await jsonObject<{ path?: unknown }>(req))?.path;
   if (isPublicPath(path)) {
     await create(pageViewsTable, { path });
   }

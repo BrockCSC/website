@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { EventRecord, WithKey, createEvent, editEvent } from "@/lib/api";
-import { Label, PosterField, Sheet, btn, errorText, field } from "./ui";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { Label } from "../users/ui";
+import { Sheet, btn, errorText, field } from "./ui";
 
 type Errors = Partial<
   Record<"title" | "start" | "end" | "signupUrl" | "form", string>
@@ -191,7 +193,11 @@ export default function EventModal({
             />
           </div>
 
-          <PosterField onChange={setPosterUrl} value={posterUrl} />
+          <ImageUpload
+            label="Poster"
+            onChange={setPosterUrl}
+            value={posterUrl}
+          />
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>

@@ -10,6 +10,7 @@ import {
   UPLOAD_ROOT,
   uploadNameFor,
 } from "@/lib/uploads";
+import { notAuthorized } from "@/lib/json";
 
 const tooLarge = () =>
   NextResponse.json(
@@ -18,9 +19,7 @@ const tooLarge = () =>
   );
 
 export const POST = async (req: NextRequest) => {
-  if (!(await requireMember(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireMember(req))) return notAuthorized();
   const limited = rateLimit(req, "upload", 60, 60 * 60 * 1000);
   if (limited) return limited;
 
