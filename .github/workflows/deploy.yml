@@ -34,8 +34,13 @@ jobs:
       url: ${{ steps.ctx.outputs.url }}
     steps:
       - id: ctx
+        env:
+          VPS_HOST: ${{ vars.VPS_HOST }}
         run: |
-          VPS_HOST="129-153-49-190.sslip.io"
+          if [[ -z "$VPS_HOST" ]]; then
+            echo "::error::Repository variable VPS_HOST is not set."
+            exit 1
+          fi
           if [[ "${{ github.ref }}" == refs/tags/* ]]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
             echo "url=https://brockcsc.ca" >> "$GITHUB_OUTPUT"
@@ -108,6 +113,7 @@ jobs:
         run: node komodo/deploy-context.mjs
         env:
           REF: ${{ github.ref }}
+          VPS_HOST: ${{ vars.VPS_HOST }}
 
       - uses: BrockCSC/komodo-deploy/deploy@v1
         with:

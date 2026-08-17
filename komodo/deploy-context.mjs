@@ -3,7 +3,10 @@ import { appendFileSync } from "node:fs";
 // Production lives on the club domain; uat and previews stay on sslip.io so
 // they are not discoverable under brockcsc.ca (their DBs are copies of prod).
 const PROD_HOST = "brockcsc.ca";
-const VPS_HOST = "129-153-49-190.sslip.io";
+const VPS_HOST = process.env.VPS_HOST;
+if (!VPS_HOST) {
+  throw new Error("VPS_HOST is not set.");
+}
 
 const slugify = (branch) =>
   branch
