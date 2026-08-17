@@ -10,6 +10,7 @@ import {
   buildPeople,
   fetchExecs,
   fetchPeopleSignups,
+  reviewMailDeletion,
   reviewMailLimit,
   searchPeople,
   type Exec,
@@ -60,9 +61,9 @@ export default function UsersPage() {
     code: string;
     expiresInMs: number;
   } | null>(null);
-  const [tab, setTab] = useState<"directory" | "pending" | "limits">(
-    "directory",
-  );
+  const [tab, setTab] = useState<
+    "directory" | "pending" | "limits" | "deletions"
+  >("directory");
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<Scope>("all");
   const [selected, setSelected] = useState<string | null>(null);
@@ -110,6 +111,11 @@ export default function UsersPage() {
   const limitRequests = signups.filter(
     (signup) => signup.mailLimitRequest?.status === "pending",
   );
+  const deletionRequests = signups.flatMap((signup) =>
+    (signup.mailDeletionRequests ?? [])
+      .filter((request) => request.status === "pending")
+      .map((request) => ({ signup, request })),
+  );
   const person = people.find((p) => p.id === selected) ?? null;
 
   const review = async (signup: Signup, action: "approve" | "reject") => {
@@ -128,6 +134,19 @@ export default function UsersPage() {
       await load();
     } catch {
       setError(`Could not ${action} the request from ${fullName(signup)}.`);
+    }
+  };
+
+  const reviewDeletion = async (
+    signup: Signup,
+    requestId: string,
+    action: "approve" | "decline",
+  ) => {
+    try {
+      await reviewMailDeletion(signup.$key, requestId, action);
+      await load();
+    } catch {
+      setError(`Could not ${action} the deletion from ${fullName(signup)}.`);
     }
   };
 
@@ -181,6 +200,14 @@ export default function UsersPage() {
               variant={tab === "limits" ? "primary" : "secondary"}
             >
               Send limits ({limitRequests.length})
+            </Button>
+            <Button
+              onClick={() => setTab("deletions")}
+              size="sm"
+              type="button"
+              variant={tab === "deletions" ? "primary" : "secondary"}
+            >
+              Deletions ({deletionRequests.length})
             </Button>
           </div>
 
@@ -383,7 +410,7 @@ export default function UsersPage() {
                 );
               })}
             </>
-          ) : (
+          ) : tab === "limits" ? (
             <>
               {!limitRequests.length && (
                 <p className="text-subtle">
@@ -444,6 +471,66 @@ export default function UsersPage() {
                   </Panel>
                 );
               })}
+            </>
+          ) : (
+            <>
+              {!deletionRequests.length && (
+                <p className="text-subtle">
+                  No one is asking to destroy a message.
+                </p>
+              )}
+              {deletionRequests.map(({ signup, request }) => (
+                <Panel
+                  key={request.id}
+                  note={[signup.username, signup.email]
+                    .filter(Boolean)
+                    .join(" · ")}
+                  title={fullName(signup)}
+                >
+                  <div className="flex flex-col gap-3">
+                    <p className="text-sm text-subtle">
+                      Wants{" "}
+                      <strong className="text-ink">
+                        “{request.subject || "(no subject)"}”
+                      </strong>{" "}
+                      destroyed for good. Approving does it the next time they
+                      open Mail, and it cannot be recovered after that.
+                    </p>
+                    {request.reason && (
+                      <p className="text-sm text-ink">“{request.reason}”</p>
+                    )}
+
+                    {signup.keycloakUserId === user.sub ? (
+                      <Note>
+                        Another co-president has to review your own request.
+                      </Note>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          onClick={() =>
+                            void reviewDeletion(signup, request.id, "approve")
+                          }
+                          size="sm"
+                          type="button"
+                          variant="primary"
+                        >
+                          Approve
+                        </Button>
+                        <Button
+                          onClick={() =>
+                            void reviewDeletion(signup, request.id, "decline")
+                          }
+                          size="sm"
+                          type="button"
+                          variant="destructive"
+                        >
+                          Decline
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                </Panel>
+              ))}
             </>
           )}
         </div>

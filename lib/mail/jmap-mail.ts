@@ -418,6 +418,17 @@ export const getMessage = async (
   return message;
 };
 
+export const subjectOf = async (
+  token: string,
+  id: string,
+): Promise<string | null> => {
+  const accountId = await mailAccountId(token);
+  const [res] = (await jmap(token, [
+    ["Email/get", { accountId, ids: [id], properties: ["subject"] }, "g0"],
+  ])) as [{ list: { subject: string | null }[] }];
+  return res.list[0]?.subject ?? null;
+};
+
 export const destroyMessages = async (
   token: string,
   ids: string[],

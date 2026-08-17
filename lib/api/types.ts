@@ -60,6 +60,18 @@ export type MailLimitRequest = {
   reviewedAt?: string;
 };
 
+export type MailDeletionRequest = {
+  id: string;
+  messageIds: string[];
+  subject?: string;
+  reason?: string;
+  requestedAt: string;
+  status: "pending" | "approved" | "declined" | "done";
+  reviewedBy?: string;
+  reviewedAt?: string;
+  deletedAt?: string;
+};
+
 export type SignupRecord = {
   firstName?: string;
   lastName?: string;
@@ -76,6 +88,8 @@ export type SignupRecord = {
   /** Beats MAIL_DAILY_LIMIT. Only an approver may set it. */
   mailDailyLimit?: number;
   mailLimitRequest?: MailLimitRequest | null;
+  /** Many may be open at once: one per message the member wants destroyed. */
+  mailDeletionRequests?: MailDeletionRequest[];
   execKey?: string | null;
   submittedAt?: string;
   reviewedBy?: string;

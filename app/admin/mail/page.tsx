@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ArrowLeft, MailOpen, Search, Star } from "lucide-react";
 import { logout } from "@/lib/api";
+import type { MailDeletionRequest } from "@/lib/api/types";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { useSession } from "../session";
 import { useHandoff, usePalette } from "../palette";
@@ -54,6 +55,7 @@ export default function MailPage() {
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [found, setFound] = useState<MessageSummary | null>(null);
+  const [deletions, setDeletions] = useState<MailDeletionRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -72,6 +74,27 @@ export default function MailPage() {
           setMailbox((current) => current ?? boxes[0]?.id ?? null);
         }),
     [],
+  );
+
+  const settleDeletions = useCallback(
+    () =>
+      fetch("/api/mail/deletions", { method: "POST" })
+        .then((res) => (res.ok ? res.json() : null))
+        .then(
+          (
+            data: { requests: MailDeletionRequest[]; deleted: number } | null,
+          ) => {
+            if (!data) return;
+            setDeletions(data.requests);
+            if (data.deleted) {
+              setSelected(null);
+              setReload((count) => count + 1);
+              void loadMailboxes().catch(() => {});
+            }
+          },
+        )
+        .catch(() => {}),
+    [loadMailboxes],
   );
 
   useEffect(() => {
@@ -99,7 +122,9 @@ export default function MailPage() {
         if (data?.purged) void loadMailboxes().catch(() => {});
       })
       .catch(() => {});
-  }, [loadMailboxes]);
+
+    void settleDeletions();
+  }, [loadMailboxes, settleDeletions]);
 
   const load = useCallback(
     async (position: number) => {
@@ -208,24 +233,41 @@ export default function MailPage() {
   useHandoff("compose", startDraft);
   useHandoff("message", showMessage);
 
-  const purge = useCallback(
+  const requestPurge = useCallback(
     async (id: string) => {
-      if (
-        !window.confirm("Delete this message forever? This cannot be undone.")
-      )
-        return;
+      const reason = window.prompt(
+        "A co-president has to approve deleting a message forever. Why should it go?",
+      );
+      if (reason === null) return;
       setBusy(true);
       const res = await fetch(
         `/api/mail/messages/${encodeURIComponent(id)}/purge`,
-        { method: "POST" },
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason }),
+        },
       ).catch(() => null);
       setBusy(false);
-      if (!res?.ok) return;
-      setSelected(null);
-      setReload((count) => count + 1);
-      void loadMailboxes().catch(() => {});
+      const data = (await res?.json().catch(() => null)) as {
+        purged?: number;
+        error?: string;
+      } | null;
+
+      if (!res?.ok) {
+        window.alert(data?.error ?? "Could not ask for that deletion.");
+        return;
+      }
+      if (data?.purged !== undefined) {
+        setSelected(null);
+        setReload((count) => count + 1);
+        void loadMailboxes().catch(() => {});
+        return;
+      }
+      window.alert("Asked a co-president to approve it. Nothing is gone yet.");
+      void settleDeletions();
     },
-    [loadMailboxes],
+    [loadMailboxes, settleDeletions],
   );
 
   const quoteInto = useCallback((target: MessageSummary, base: Draft) => {
@@ -449,7 +491,13 @@ export default function MailPage() {
                 inTrash={
                   mailboxes.find((box) => box.id === mailbox)?.role === "trash"
                 }
-                onPurge={() => void purge(message.id)}
+                deletionPending={deletions.some(
+                  (request) =>
+                    (request.status === "pending" ||
+                      request.status === "approved") &&
+                    request.messageIds.includes(message.id),
+                )}
+                onPurge={() => void requestPurge(message.id)}
               />
               <h2 className="shrink-0 border-b-2 border-line px-5 py-3 text-lg font-extrabold text-brand">
                 {message.subject || "(no subject)"}
@@ -509,6 +557,7 @@ function MessageActions({
   onUnread,
   onMove,
   inTrash,
+  deletionPending,
   onPurge,
 }: {
   message: MessageSummary;
@@ -522,6 +571,7 @@ function MessageActions({
   onUnread: () => void;
   onMove: (to: { to?: string; mailboxId?: string }) => void;
   inTrash: boolean;
+  deletionPending: boolean;
   onPurge: () => void;
 }) {
   const flagged = Boolean(message.keywords?.$flagged);
@@ -598,14 +648,20 @@ function MessageActions({
           Archive
         </button>
         {inTrash ? (
-          <button
-            type="button"
-            disabled={busy}
-            className={`${ACTION} text-destructive`}
-            onClick={onPurge}
-          >
-            Delete forever
-          </button>
+          deletionPending ? (
+            <span className="rounded-[8px] border-2 border-line bg-tint px-2.5 py-1.5 text-sm font-bold text-ink">
+              Waiting on a co-president
+            </span>
+          ) : (
+            <button
+              type="button"
+              disabled={busy}
+              className={`${ACTION} text-destructive`}
+              onClick={onPurge}
+            >
+              Request deletion
+            </button>
+          )
         ) : (
           <button
             type="button"

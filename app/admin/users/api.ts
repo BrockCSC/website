@@ -52,6 +52,16 @@ export const reviewMailLimit = (key: string, action: "approve" | "decline") =>
     body: JSON.stringify({ action }),
   });
 
+export const reviewMailDeletion = (
+  key: string,
+  requestId: string,
+  action: "approve" | "decline",
+) =>
+  apiFetch<void>(`/api/signups/${key}/mail-deletion`, {
+    method: "POST",
+    body: JSON.stringify({ action, requestId }),
+  });
+
 export const createTile = (exec: ExecRecord) =>
   apiFetch<Exec>("/api/execs", { method: "POST", body: JSON.stringify(exec) });
 
