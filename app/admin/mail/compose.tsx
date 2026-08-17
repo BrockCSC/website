@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { Editor } from "./editor";
+import { toPlainText } from "./html";
 import { RecipientInput, type Contact } from "./recipient-input";
 
 export type Draft = {
   to?: string[];
   cc?: string[];
   subject?: string;
-  text?: string;
+  html?: string;
 };
 
 export function Compose({
@@ -27,9 +29,9 @@ export function Compose({
   const [cc, setCc] = useState<string[]>(initial?.cc ?? []);
   const [showCc, setShowCc] = useState((initial?.cc ?? []).length > 0);
   const [subject, setSubject] = useState(initial?.subject ?? "");
-  const [text, setText] = useState(initial?.text ?? "");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const body = useRef<HTMLDivElement>(null);
 
   const send = async () => {
     setError(null);
@@ -37,12 +39,20 @@ export function Compose({
       setError("Add at least one recipient.");
       return;
     }
+    const html = body.current?.innerHTML ?? "";
+    const text = body.current ? toPlainText(body.current) : "";
     setSending(true);
     try {
       const res = await fetch("/api/mail/send", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to, cc, subject, text }),
+        body: JSON.stringify({
+          to,
+          cc,
+          subject,
+          text,
+          html: html || undefined,
+        }),
       });
       if (!res.ok) {
         const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -88,7 +98,7 @@ export function Compose({
                 value={to}
                 onChange={setTo}
                 contacts={contacts}
-                autoFocus
+                autoFocus={!initial?.html}
               />
             </div>
             {!showCc && (
@@ -117,11 +127,10 @@ export function Compose({
             value={subject}
             onChange={(event) => setSubject(event.target.value)}
           />
-          <textarea
-            className="min-h-64 w-full resize-y rounded-[10px] border-2 border-black px-3 py-2 focus:border-[#9A4440] focus:outline-none"
-            placeholder="Write your message…"
-            value={text}
-            onChange={(event) => setText(event.target.value)}
+          <Editor
+            editorRef={body}
+            initialHtml={initial?.html ?? ""}
+            autoFocus={Boolean(initial?.html)}
           />
 
           {error && <p className="text-sm font-bold text-[#9A4440]">{error}</p>}

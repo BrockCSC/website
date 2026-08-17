@@ -8,6 +8,7 @@ import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { MessageView } from "./message-view";
 import { Compose, type Draft } from "./compose";
+import { buildQuote } from "./html";
 import type { Contact } from "./recipient-input";
 
 export default function MailPage() {
@@ -186,11 +187,6 @@ export default function MailPage() {
   );
 }
 
-const quote = (message: MessageSummary) =>
-  `\n\nOn ${new Date(message.receivedAt).toLocaleString()}, ${
-    message.from?.[0]?.email ?? "someone"
-  } wrote:\n> ${message.preview}`;
-
 const prefixed = (subject: string | null, prefix: string) =>
   subject?.toLowerCase().startsWith(prefix.toLowerCase())
     ? subject
@@ -213,16 +209,19 @@ function MessageActions({
   const action =
     "rounded-[8px] border-2 border-black px-3 py-1.5 text-sm font-bold transition hover:bg-[#fff1f0]";
 
+  const open = (draft: Draft) => {
+    void buildQuote(message).then((html) => onDraft({ ...draft, html }));
+  };
+
   return (
     <div className="flex gap-2 border-b-2 border-black px-5 py-2.5">
       <button
         type="button"
         className={action}
         onClick={() =>
-          onDraft({
+          open({
             to: sender ? [sender] : [],
             subject: prefixed(message.subject, "Re:"),
-            text: quote(message),
           })
         }
       >
@@ -233,11 +232,10 @@ function MessageActions({
           type="button"
           className={action}
           onClick={() =>
-            onDraft({
+            open({
               to: sender ? [sender] : [],
               cc: others,
               subject: prefixed(message.subject, "Re:"),
-              text: quote(message),
             })
           }
         >
@@ -247,12 +245,7 @@ function MessageActions({
       <button
         type="button"
         className={action}
-        onClick={() =>
-          onDraft({
-            subject: prefixed(message.subject, "Fwd:"),
-            text: quote(message),
-          })
-        }
+        onClick={() => open({ subject: prefixed(message.subject, "Fwd:") })}
       >
         Forward
       </button>
