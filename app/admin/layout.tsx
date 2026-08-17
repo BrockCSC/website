@@ -5,24 +5,15 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoginForm } from "@/components/admin/login-form";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SessionProvider, useSession } from "./session";
-
-const adminTabs = [
-  { name: "Dashboard", href: "/admin" },
-  { name: "Events Management", href: "/admin/events", executiveOnly: true },
-  { name: "Executives Management", href: "/admin/execs", approverOnly: true },
-  { name: "Mail", href: "/admin/mail", executiveOnly: true, mailboxOnly: true },
-  { name: "My Profile", href: "/admin/profile" },
-];
+import { sectionFor } from "./sections";
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, refresh } = useSession();
   const [mailAddress, setMailAddress] = useState<string | null>(null);
-  // Only a clean answer of "no mailbox" hides Mail. An expired token or an
-  // unreachable server must not, or the tab vanishes with nothing to click.
-  const [hasMailbox, setHasMailbox] = useState(true);
 
   // Well inside Keycloak's 30 minute idle window, and again on returning to the
   // tab, which is what a closed laptop looks like from here.
@@ -46,9 +37,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     fetch("/api/mail/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { email: string | null } | null) => {
-        if (!data) return;
-        setMailAddress(data.email);
-        setHasMailbox(Boolean(data.email));
+        if (data) setMailAddress(data.email);
       })
       .catch(() => {});
   }, [user?.isExecutive]);
@@ -94,58 +83,48 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     );
   }
 
-  const wide = pathname.startsWith("/admin/mail");
+  const section = sectionFor(pathname);
+  const onMenu = pathname === "/admin";
 
   return (
-    <div className="pt-6">
-      <div
-        className={`mx-auto w-full px-5 ${wide ? "max-w-[1600px]" : "max-w-[1060px]"}`}
-      >
-        <div className="flex items-center justify-between mb-8">
-          <nav className="flex gap-2">
-            {adminTabs
-              .filter((tab) => !tab.approverOnly || user.isApprover)
-              .filter((tab) => !tab.executiveOnly || user.isExecutive)
-              .filter((tab) => !tab.mailboxOnly || hasMailbox)
-              .map((tab) => {
-                const isActive =
-                  tab.href === "/admin"
-                    ? pathname === "/admin"
-                    : pathname.startsWith(tab.href);
-                return (
-                  <Link
-                    key={tab.name}
-                    href={tab.href}
-                    className={`px-4 py-2 rounded-[12px] font-semibold border-2 border-transparent transition-colors ${
-                      isActive
-                        ? "border-[#9A4440] text-[#9A4440] bg-[#fff1f0]"
-                        : "text-black hover:bg-neutral-100"
-                    }`}
-                  >
-                    {tab.name}
-                  </Link>
-                );
-              })}
-          </nav>
-          <div className="flex items-center gap-3">
-            {mailAddress && (
-              <span
-                className="hidden truncate text-sm font-semibold text-neutral-600 sm:inline"
-                title={`Signed in as ${mailAddress}`}
-              >
-                {mailAddress}
-              </span>
-            )}
-            <button
-              onClick={handleLogout}
-              className="relative text-gray-500 font-bold px-4 py-2 hover:text-black transition-colors after:content-[''] after:absolute after:bottom-1 after:left-0 after:w-full after:h-[2px] after:bg-[#9A4440] after:origin-center after:scale-x-0 after:transition-transform after:duration-300 hover:after:scale-x-100"
+    <div className="flex min-h-screen flex-col">
+      <header className="flex items-center gap-3 border-b-2 border-line px-4 py-2.5 sm:px-6">
+        {onMenu ? (
+          <span className="font-extrabold text-brand">BrockCSC Admin</span>
+        ) : (
+          <Link
+            href="/admin"
+            className="flex items-center gap-2 rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink transition hover:bg-tint"
+          >
+            <span aria-hidden>←</span> Menu
+          </Link>
+        )}
+        {section && (
+          <span className="truncate font-extrabold text-ink">
+            {section.name}
+          </span>
+        )}
+
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {mailAddress && (
+            <span
+              className="hidden max-w-[16rem] truncate text-sm font-semibold text-subtle lg:inline"
+              title={`Signed in as ${mailAddress}`}
             >
-              Logout
-            </button>
-          </div>
+              {mailAddress}
+            </span>
+          )}
+          <ThemeToggle />
+          <button
+            onClick={handleLogout}
+            className="rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink transition hover:bg-tint"
+          >
+            Log out
+          </button>
         </div>
-        <div className="p-8">{children}</div>
-      </div>
+      </header>
+
+      <main className="min-h-0 flex-1">{children}</main>
     </div>
   );
 }

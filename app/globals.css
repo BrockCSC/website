@@ -44,6 +44,45 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-ink: var(--ink);
+  --color-subtle: var(--subtle);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-tint: var(--tint);
+  --shadow-brut: var(--brut);
+  --shadow-brut-sm: var(--brut-sm);
+}
+
+/**
+ * Semantic tokens for the club's look: a hard border, a flat offset shadow and
+ * one accent. Use these rather than literal colours, so dark mode is a matter
+ * of swapping values here instead of auditing every component again.
+ */
+:root {
+  --surface: #ffffff;
+  --raised: #fafafa;
+  --ink: #0a0a0a;
+  --subtle: #6b7280;
+  --line: #000000;
+  --brand: #9a4440;
+  --brand-ink: #ffffff;
+  --tint: #fff1f0;
+  --brut: 6px 6px 0 0 var(--line);
+  --brut-sm: 3px 3px 0 0 var(--line);
+}
+
+.dark {
+  --surface: #1a181b;
+  --raised: #232025;
+  --ink: #f4f1ee;
+  --subtle: #a1a1aa;
+  --line: #f4f1ee;
+  --brand: #d98079;
+  --brand-ink: #1a181b;
+  --tint: #33262a;
 }
 
 :root {
