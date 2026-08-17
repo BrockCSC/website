@@ -9,6 +9,7 @@ import { LoginForm } from "@/components/admin/login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SessionProvider, useSession } from "./session";
 import { PaletteProvider, SearchButton } from "./palette";
+import { AskHost } from "./ask";
 import { sectionFor } from "./sections";
 
 function AdminShell({ children }: { children: React.ReactNode }) {
@@ -134,6 +135,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
+        <AskHost />
         <main className="min-h-0 flex-1 animate-fade-in" key={pathname}>
           {children}
         </main>

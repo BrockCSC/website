@@ -13,6 +13,7 @@ import { MessageList } from "./message-list";
 import { Conversation } from "./message-view";
 import { Compose, type Draft } from "./compose";
 import { buildQuote } from "./html";
+import { ask } from "../ask";
 import type { Contact } from "./recipient-input";
 
 const PAGE = 50;
@@ -235,9 +236,16 @@ export default function MailPage() {
 
   const requestPurge = useCallback(
     async (id: string) => {
-      const reason = window.prompt(
-        "A co-president has to approve deleting a message forever. Why should it go?",
-      );
+      const reason = await ask({
+        title: "Request permanent deletion",
+        detail:
+          "A co-president has to approve this before the message is destroyed. Say why it should go.",
+        placeholder: "Reason",
+        confirmLabel: "Request deletion",
+        destructive: true,
+        withInput: true,
+        required: true,
+      });
       if (reason === null) return;
       setBusy(true);
       const res = await fetch(

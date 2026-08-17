@@ -2,6 +2,7 @@
 
 import { useEffect, type RefObject } from "react";
 import { harden } from "./html";
+import { ask } from "../ask";
 
 const COMMANDS: [
   command: string,
@@ -47,8 +48,16 @@ export function Editor({
     document.execCommand(command, false, value);
   };
 
-  const addLink = () => {
-    const url = window.prompt("Link to")?.trim();
+  const addLink = async () => {
+    const url = (
+      await ask({
+        title: "Insert a link",
+        placeholder: "https://example.com",
+        confirmLabel: "Insert",
+        withInput: true,
+        required: true,
+      })
+    )?.trim();
     if (!url) return;
     run("createLink", /^(https?:|mailto:)/i.test(url) ? url : `https://${url}`);
   };
@@ -73,7 +82,7 @@ export function Editor({
           type="button"
           title="Insert link"
           onMouseDown={(event) => event.preventDefault()}
-          onClick={addLink}
+          onClick={() => void addLink()}
           className={BUTTON}
         >
           Link
