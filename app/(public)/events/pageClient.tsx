@@ -173,7 +173,7 @@ export default function EventsPageClient({
 
   return (
     <main className="min-h-screen bg-surface pb-10">
-      <section className="border-b border-line/25 pt-4 pb-4">
+      <section className="animate-rise-in border-b border-line/25 pt-4 pb-4">
         <h1 className="m-0 font-semibold text-[clamp(2.1rem,3.5vw,2.9rem)] leading-[1.05]">
           Events
         </h1>

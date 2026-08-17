@@ -159,7 +159,7 @@ export default function TeamPageClient() {
 
   return (
     <main className="min-h-screen bg-surface pb-10">
-      <section className="border-b border-line/25 pb-5 pt-4">
+      <section className="animate-rise-in border-b border-line/25 pb-5 pt-4">
         <h1 className="m-0 font-semibold leading-[1.05] text-[clamp(2.1rem,3.5vw,2.9rem)]">
           Our Team
         </h1>

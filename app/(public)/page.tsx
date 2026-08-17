@@ -6,12 +6,13 @@ import { PhotoFrame } from "@/components/ui/photo-frame";
 import { MemberBadge } from "@/components/ui/member-badge";
 import { UpcomingEventsSection } from "@/components/sections/upcoming-events";
 import { AboutUsSection } from "@/components/sections/about-us";
+import { Reveal } from "@/components/reveal";
 
 export default function Home() {
   return (
     <main className="flex flex-col w-full font-sans bg-surface overflow-x-hidden">
       <section className="relative w-full border-b-2 border-line">
-        <div className="max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="animate-rise-in max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col items-start gap-6 z-10">
             <Badge
               variant="outline"
@@ -62,8 +63,12 @@ export default function Home() {
         </div>
       </section>
 
-      <UpcomingEventsSection />
-      <AboutUsSection />
+      <Reveal>
+        <UpcomingEventsSection />
+      </Reveal>
+      <Reveal>
+        <AboutUsSection />
+      </Reveal>
     </main>
   );
 }

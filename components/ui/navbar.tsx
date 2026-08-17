@@ -84,19 +84,19 @@ export function Navbar() {
           <span className="relative h-4 w-5">
             <span
               className={cn(
-                "absolute left-0 top-0 h-[2px] w-full bg-current transition-transform",
+                "absolute left-0 top-0 h-[2px] w-full bg-current transition-transform duration-[var(--dur)] ease-smooth",
                 isMenuOpen && "translate-y-[7px] rotate-45",
               )}
             />
             <span
               className={cn(
-                "absolute left-0 top-[7px] h-[2px] w-full bg-current transition-opacity",
+                "absolute left-0 top-[7px] h-[2px] w-full bg-current transition-opacity duration-[var(--dur-fast)] ease-smooth",
                 isMenuOpen && "opacity-0",
               )}
             />
             <span
               className={cn(
-                "absolute left-0 top-[14px] h-[2px] w-full bg-current transition-transform",
+                "absolute left-0 top-[14px] h-[2px] w-full bg-current transition-transform duration-[var(--dur)] ease-smooth",
                 isMenuOpen && "-translate-y-[7px] -rotate-45",
               )}
             />

@@ -82,7 +82,7 @@ export function EventCard({
         </div>
 
         {/* Action Button */}
-        <div className="mt-2 w-full rounded-[14px] bg-brand text-brand-ink py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-line shadow-[2px_2px_0_0_var(--shade)] group-hover/card:opacity-90 transition-opacity">
+        <div className="mt-2 w-full rounded-[14px] bg-brand text-brand-ink py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-line shadow-[2px_2px_0_0_var(--shade)] group-hover/card:opacity-90 transition-opacity duration-[var(--dur-fast)] ease-smooth">
           More Info
           <ArrowUpRight className="size-4 opacity-80 shrink-0" />
         </div>

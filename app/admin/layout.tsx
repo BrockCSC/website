@@ -43,6 +43,11 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       .catch(() => {});
   }, [user?.isExecutive]);
 
+  useEffect(() => {
+    const name = sectionFor(pathname)?.name;
+    document.title = name ? `${name} | BrockCSC Admin` : "BrockCSC Admin";
+  }, [pathname]);
+
   const handleLogout = async () => {
     try {
       await logout();

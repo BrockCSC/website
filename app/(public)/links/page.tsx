@@ -81,7 +81,7 @@ function LinkIcon({ link }: { link: QuickLink }): ReactElement {
 export default function LinksPage(): ReactElement {
   return (
     <main className="bg-surface pb-10">
-      <section className="border-b border-line/25 pt-4 pb-4">
+      <section className="animate-rise-in border-b border-line/25 pt-4 pb-4">
         <h1 className="m-0 text-[clamp(2.1rem,3.5vw,2.9rem)] font-semibold leading-[1.05]">
           Links
         </h1>
@@ -91,7 +91,7 @@ export default function LinksPage(): ReactElement {
         </p>
       </section>
 
-      <div className="mx-auto flex w-full max-w-136 flex-col gap-3 pt-6 sm:gap-4 sm:pt-8 md:pt-10">
+      <div className="animate-rise-in mx-auto flex w-full max-w-136 flex-col gap-3 pt-6 sm:gap-4 sm:pt-8 md:pt-10">
         {quickLinks.map((link) => (
           <Button
             key={link.href}

@@ -19,7 +19,7 @@ export function MessagePage({
         <SkipLink />
         <Navbar />
         <main
-          className="mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center gap-5 px-5 py-20 text-center"
+          className="animate-rise-in mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center gap-5 px-5 py-20 text-center"
           id="main-content"
           tabIndex={-1}
         >

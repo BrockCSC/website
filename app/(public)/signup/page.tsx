@@ -209,7 +209,7 @@ export default function SignupPage() {
   return (
     <main className="flex min-h-[70vh] items-center justify-center px-4 py-10">
       {submitted ? (
-        <div className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8">
+        <div className="animate-pop-in w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8">
           <h1
             className="text-center text-2xl font-extrabold text-brand"
             ref={headingRef}
@@ -288,7 +288,7 @@ export default function SignupPage() {
         <form
           noValidate
           onSubmit={handleSubmit}
-          className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8"
+          className="animate-rise-in w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8"
         >
           <h1 className="mb-1 text-center text-2xl font-extrabold text-brand">
             Request an exec account

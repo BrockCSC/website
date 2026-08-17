@@ -15,7 +15,7 @@ const Guide: React.FC = () => {
         <Sidebar />
 
         {/* MAIN CONTENT */}
-        <div className="flex-1 max-w-full md:max-w-3xl">
+        <div className="animate-fade-in flex-1 max-w-full md:max-w-3xl">
           {/* HERO */}
           <section id="introduction" className="mb-16">
             <h1 className="text-3xl sm:text-4xl font-bold mb-6">
