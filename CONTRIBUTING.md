@@ -193,6 +193,14 @@ Send limits (`lib/mail/limit.ts`) count the Sent mailbox since local midnight vi
 `POST /api/mail/send` returns **429**. Caps per message: 100 KB text, 400 KB HTML, 20 attachments,
 50 recipients, 15 MB per uploaded file.
 
+**TLS.** Stalwart serves its own self-signed certificate unless given one, which mail apps either
+refuse outright or warn about. Traefik already holds a Let's Encrypt wildcard for `*.brockcsc.ca`
+(Cloudflare DNS-01, stored under `le-dns` in `acme-dns.json`), so `deploy/mail/refresh-cert.sh` copies
+it into Stalwart through `x:Certificate/set` and restarts the container when the expiry changes. It is
+idempotent, so run it as often as you like. Install it on the VPS beside `drop-db.sh` and give it a
+daily timer - nothing runs it automatically from this repo, and the certificate goes stale roughly
+every sixty days without it.
+
 **Outside mail apps.** Keycloak passwords do not authenticate against Stalwart, so IMAP and SMTP need
 a Stalwart app password. `/admin/mail/setup` lets a member mint one per device and revoke it, through
 `x:AppPassword/set` in `lib/mail/stalwart.ts`; the secret is returned once and never readable again.
