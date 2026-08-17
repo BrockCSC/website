@@ -10,6 +10,7 @@ import {
   buildPeople,
   fetchExecs,
   fetchPeopleSignups,
+  reviewMailLimit,
   searchPeople,
   type Exec,
   type Person,
@@ -59,7 +60,9 @@ export default function UsersPage() {
     code: string;
     expiresInMs: number;
   } | null>(null);
-  const [tab, setTab] = useState<"directory" | "pending">("directory");
+  const [tab, setTab] = useState<"directory" | "pending" | "limits">(
+    "directory",
+  );
   const [query, setQuery] = useState("");
   const [scope, setScope] = useState<Scope>("all");
   const [selected, setSelected] = useState<string | null>(null);
@@ -104,6 +107,9 @@ export default function UsersPage() {
   }, [people, scope, query]);
 
   const pending = signups.filter((signup) => signup.status === "pending");
+  const limitRequests = signups.filter(
+    (signup) => signup.mailLimitRequest?.status === "pending",
+  );
   const person = people.find((p) => p.id === selected) ?? null;
 
   const review = async (signup: Signup, action: "approve" | "reject") => {
@@ -113,6 +119,15 @@ export default function UsersPage() {
       await load();
     } catch {
       setError(`Could not ${action} ${fullName(signup)}.`);
+    }
+  };
+
+  const reviewLimit = async (signup: Signup, action: "approve" | "decline") => {
+    try {
+      await reviewMailLimit(signup.$key, action);
+      await load();
+    } catch {
+      setError(`Could not ${action} the request from ${fullName(signup)}.`);
     }
   };
 
@@ -158,6 +173,14 @@ export default function UsersPage() {
               variant={tab === "pending" ? "primary" : "secondary"}
             >
               Pending sign-ups ({pending.length})
+            </Button>
+            <Button
+              onClick={() => setTab("limits")}
+              size="sm"
+              type="button"
+              variant={tab === "limits" ? "primary" : "secondary"}
+            >
+              Send limits ({limitRequests.length})
             </Button>
           </div>
 
@@ -265,7 +288,7 @@ export default function UsersPage() {
                 </span>
               </Panel>
             </>
-          ) : (
+          ) : tab === "pending" ? (
             <>
               {!pending.length && (
                 <p className="text-subtle">No sign-ups are waiting.</p>
@@ -352,6 +375,68 @@ export default function UsersPage() {
                             variant="destructive"
                           >
                             Reject...
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </Panel>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              {!limitRequests.length && (
+                <p className="text-subtle">
+                  No one is asking to send more mail.
+                </p>
+              )}
+              {limitRequests.map((signup) => {
+                const request = signup.mailLimitRequest!;
+                return (
+                  <Panel
+                    key={signup.$key}
+                    note={[signup.username, signup.email]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    title={fullName(signup)}
+                  >
+                    <div className="flex flex-col gap-3">
+                      <p className="text-sm text-subtle">
+                        Wants{" "}
+                        <strong className="text-ink">
+                          {request.requested} messages a day
+                        </strong>
+                        {signup.mailDailyLimit
+                          ? `, up from their ${signup.mailDailyLimit}.`
+                          : ", up from the club default."}{" "}
+                        Outbound mail is metered, so approving raises what the
+                        club can be billed for.
+                      </p>
+                      {request.reason && (
+                        <p className="text-sm text-ink">“{request.reason}”</p>
+                      )}
+
+                      {signup.keycloakUserId === user.sub ? (
+                        <Note>
+                          Another co-president has to review your own request.
+                        </Note>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            onClick={() => void reviewLimit(signup, "approve")}
+                            size="sm"
+                            type="button"
+                            variant="primary"
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            onClick={() => void reviewLimit(signup, "decline")}
+                            size="sm"
+                            type="button"
+                            variant="destructive"
+                          >
+                            Decline
                           </Button>
                         </div>
                       )}

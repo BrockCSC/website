@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { findSignupByUserId } from "@/lib/db/signups";
 import { sendMessage, type Attachment } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../auth";
+import { allowanceFor, overLimitMessage } from "@/lib/mail/limit";
+import { mailUser, unauthorized } from "../auth";
 
 const MAX_RECIPIENTS = 50;
 const MAX_ATTACHMENTS = 20;
@@ -30,8 +32,9 @@ const attachments = (value: unknown): Attachment[] | null => {
 };
 
 export const POST = async (req: NextRequest) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const session = await mailUser(req);
+  if (!session) return unauthorized();
+  const { token } = session;
 
   const body = (await req.json().catch(() => null)) as {
     to?: unknown;
@@ -64,6 +67,17 @@ export const POST = async (req: NextRequest) => {
 
   const files = attachments(body.attachments);
   if (!files) return bad("attachments must each carry a blobId");
+
+  const allowance = await allowanceFor(
+    token,
+    await findSignupByUserId(session.user.sub),
+  );
+  if (!allowance.exempt && allowance.remaining <= 0) {
+    return NextResponse.json(
+      { error: overLimitMessage(allowance), ...allowance },
+      { status: 429 },
+    );
+  }
 
   const id = await sendMessage(token, {
     to,

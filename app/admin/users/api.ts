@@ -46,6 +46,12 @@ export const applyToPerson = (id: string, apply: string[]) =>
     body: JSON.stringify({ apply }),
   });
 
+export const reviewMailLimit = (key: string, action: "approve" | "decline") =>
+  apiFetch<void>(`/api/signups/${key}/mail-limit`, {
+    method: "POST",
+    body: JSON.stringify({ action }),
+  });
+
 export const createTile = (exec: ExecRecord) =>
   apiFetch<Exec>("/api/execs", { method: "POST", body: JSON.stringify(exec) });
 

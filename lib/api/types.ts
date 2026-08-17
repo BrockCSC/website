@@ -51,6 +51,15 @@ export type SignupInput = {
 
 export type SignupStatus = "pending" | "approved" | "rejected";
 
+export type MailLimitRequest = {
+  requested: number;
+  reason?: string;
+  requestedAt: string;
+  status: "pending" | "approved" | "declined";
+  reviewedBy?: string;
+  reviewedAt?: string;
+};
+
 export type SignupRecord = {
   firstName?: string;
   lastName?: string;
@@ -64,6 +73,9 @@ export type SignupRecord = {
   /** Shown once at sign-up; the approver checks it out-of-band. */
   confirmationCode?: string;
   status?: SignupStatus;
+  /** Beats MAIL_DAILY_LIMIT. Only an approver may set it. */
+  mailDailyLimit?: number;
+  mailLimitRequest?: MailLimitRequest | null;
   execKey?: string | null;
   submittedAt?: string;
   reviewedBy?: string;

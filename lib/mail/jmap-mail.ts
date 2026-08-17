@@ -73,9 +73,12 @@ export type MessageDetail = MessageSummary & {
   attachments: BodyPart[];
 };
 
-type Call = [string, Record<string, unknown>, string];
+export type Call = [string, Record<string, unknown>, string];
 
-const jmap = async (token: string, calls: Call[]): Promise<unknown[]> => {
+export const jmap = async (
+  token: string,
+  calls: Call[],
+): Promise<unknown[]> => {
   const { url } = config();
   const res = await fetch(`${url}/jmap`, {
     method: "POST",

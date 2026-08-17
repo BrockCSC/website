@@ -6,6 +6,7 @@ import { logout } from "@/lib/api";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { useSession } from "../session";
 import { useHandoff, usePalette } from "../palette";
+import { Allowance } from "./allowance";
 import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { Conversation } from "./message-view";
@@ -363,6 +364,7 @@ export default function MailPage() {
             setMailbox(id);
           }}
         />
+        <Allowance refresh={reload} />
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut">
