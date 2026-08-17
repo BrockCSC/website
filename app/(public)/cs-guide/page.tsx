@@ -1,8 +1,6 @@
 import React from "react";
 import type { Metadata } from "next";
-import type { VariantProps } from "class-variance-authority";
 import { Table, type TableData } from "@/components/ui/table";
-import { Badge, badgeVariants } from "@/components/ui/badge";
 import Sidebar from "@/components/ui/sidebar";
 import durations from "@/data/courseDurations.json";
 import requirements from "@/data/programRequirements.json";
@@ -99,22 +97,18 @@ const Guide: React.FC = () => {
               <CourseRow
                 code="COSC"
                 title="The department which is offering the course."
-                badges={[]}
               />
               <CourseRow
                 code="1"
                 title="Indicates the year the course is intended for."
-                badges={[]}
               />
               <CourseRow
                 code="P"
                 title="Represents the number of credits you get for completing the course."
-                badges={[]}
               />
               <CourseRow
                 code="02"
                 title="Department code for the specific course."
-                badges={[]}
               />
             </div>
           </section>
@@ -713,13 +707,9 @@ const linkStyle = "underline text-brand hover:decoration-2";
 type CourseRowProps = {
   code: string;
   title: string;
-  badges: {
-    label: string;
-    variant?: VariantProps<typeof badgeVariants>["variant"];
-  }[];
 };
 
-function CourseRow({ code, title, badges }: CourseRowProps) {
+function CourseRow({ code, title }: CourseRowProps) {
   return (
     <div className="flex items-center justify-between gap-3 bg-surface border-2 border-line rounded-xl px-4 py-4 shadow-brut-sm sm:px-6">
       <div className="flex items-center gap-4">
@@ -727,14 +717,6 @@ function CourseRow({ code, title, badges }: CourseRowProps) {
           {code}
         </div>
         <span className="font-medium">{title}</span>
-      </div>
-
-      <div className="flex gap-3">
-        {badges.map((badge, i) => (
-          <Badge key={i} variant={badge.variant || "default"} size="sm">
-            {badge.label}
-          </Badge>
-        ))}
       </div>
     </div>
   );

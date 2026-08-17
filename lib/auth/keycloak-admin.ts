@@ -235,5 +235,3 @@ export const assignRealmRole = async (userId: string, roleName: string) => {
     throw new Error(`Keycloak role assignment failed (${res.status}).`);
   }
 };
-
-export { usernameFor } from "./username";

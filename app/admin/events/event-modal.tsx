@@ -20,18 +20,15 @@ const isHttpUrl = (value: string) => {
 };
 
 export default function EventModal({
-  showModal,
   setShowModal,
-  variant = "create",
   selectedEvent,
   onSave,
 }: {
-  showModal: boolean;
   setShowModal: (value: boolean) => void;
-  variant: "create" | "edit";
   selectedEvent?: WithKey<EventRecord> | null;
   onSave: () => void;
 }) {
+  const variant = selectedEvent ? "edit" : "create";
   const schedule = selectedEvent?.schedule;
   const [title, setTitle] = useState(selectedEvent?.title ?? "");
   const [presenter, setPresenter] = useState(selectedEvent?.presenter ?? "");
@@ -55,8 +52,6 @@ export default function EventModal({
   const [signupUrl, setSignupUrl] = useState(selectedEvent?.signupUrl ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-
-  if (!showModal) return null;
 
   const clear = (key: keyof Errors) =>
     setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));

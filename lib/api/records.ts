@@ -1,14 +1,8 @@
 import { apiFetch } from "./client";
-import type {
-  DashboardStats,
-  EventRecord,
-  ExecRecord,
-  SignupRecord,
-  WithKey,
-} from "./types";
+import type { DashboardStats, EventRecord, ExecRecord, WithKey } from "./types";
 import { getEventStartTimestamp, getEventTiming } from "@/lib/events/schedule";
 
-export const fetchAllExecs = async (): Promise<WithKey<ExecRecord>[]> =>
+const fetchAllExecs = async (): Promise<WithKey<ExecRecord>[]> =>
   apiFetch<WithKey<ExecRecord>[]>("/api/execs");
 
 export const fetchCurrentExecs = async (): Promise<WithKey<ExecRecord>[]> =>
@@ -16,24 +10,6 @@ export const fetchCurrentExecs = async (): Promise<WithKey<ExecRecord>[]> =>
 
 export const fetchPreviousExecs = async (): Promise<WithKey<ExecRecord>[]> =>
   (await fetchAllExecs()).filter((exec) => exec.isCurrentExec === false);
-
-export const createExec = async (exec: ExecRecord): Promise<void> => {
-  await apiFetch("/api/execs", { method: "POST", body: JSON.stringify(exec) });
-};
-
-export const updateExec = async (
-  key: string,
-  exec: Partial<ExecRecord>,
-): Promise<void> => {
-  await apiFetch(`/api/execs/${key}`, {
-    method: "PATCH",
-    body: JSON.stringify(exec),
-  });
-};
-
-export const deleteExec = async (key: string): Promise<void> => {
-  await apiFetch(`/api/execs/${key}`, { method: "DELETE" });
-};
 
 export const fetchProfile = async (): Promise<WithKey<ExecRecord> | null> =>
   apiFetch<WithKey<ExecRecord> | null>("/api/profile");
@@ -99,9 +75,6 @@ export const deleteEvent = async (eventId: string): Promise<void> => {
   await apiFetch(`/api/events/${eventId}`, { method: "DELETE" });
 };
 
-export const fetchSignups = async (): Promise<WithKey<SignupRecord>[]> =>
-  apiFetch<WithKey<SignupRecord>[]>("/api/signups");
-
 export const reviewSignup = async (
   key: string,
   action: "approve" | "reject",
@@ -109,15 +82,6 @@ export const reviewSignup = async (
   await apiFetch(`/api/signups/${key}`, {
     method: "PATCH",
     body: JSON.stringify({ action }),
-  });
-};
-
-export const deleteSignup = async (
-  key: string,
-  deleteExec: boolean,
-): Promise<void> => {
-  await apiFetch(`/api/signups/${key}?deleteExec=${deleteExec}`, {
-    method: "DELETE",
   });
 };
 

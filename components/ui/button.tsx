@@ -13,7 +13,6 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: `bg-brand text-brand-ink ${hard}`,
-        default: `bg-brand text-brand-ink ${hard}`,
         destructive: `bg-destructive text-white ${hard}`,
         outline: `bg-transparent text-ink ${hard}`,
         secondary: `bg-raised text-ink ${hard}`,
@@ -25,10 +24,6 @@ const buttonVariants = cva(
         xs: "h-8 rounded-[14px] gap-1 px-3 text-xs has-[>svg]:px-2.5 [&_svg:not([class*='size-'])]:size-3",
         sm: "h-9 rounded-[15px] gap-1.5 px-4 has-[>svg]:px-3",
         lg: "h-11 rounded-[16px] px-7 has-[>svg]:px-6",
-        icon: "size-8 rounded-[14px]",
-        "icon-xs": "size-6 rounded-[12px] [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-7 rounded-[13px]",
-        "icon-lg": "size-9 rounded-[15px]",
       },
     },
     defaultVariants: {
