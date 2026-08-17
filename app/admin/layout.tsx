@@ -20,13 +20,20 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, loading, refresh } = useSession();
   const [mailAddress, setMailAddress] = useState<string | null>(null);
+  // Only a clean answer of "no mailbox" hides Mail. An expired token or an
+  // unreachable server must not, or the tab vanishes with nothing to click.
+  const [hasMailbox, setHasMailbox] = useState(true);
 
   useEffect(() => {
     if (!user?.isExecutive) return;
     fetch("/api/mail/me")
-      .then((res) => (res.ok ? res.json() : { email: null }))
-      .then((data: { email: string | null }) => setMailAddress(data.email))
-      .catch(() => setMailAddress(null));
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { email: string | null } | null) => {
+        if (!data) return;
+        setMailAddress(data.email);
+        setHasMailbox(Boolean(data.email));
+      })
+      .catch(() => {});
   }, [user?.isExecutive]);
 
   const handleLogout = async () => {
@@ -82,7 +89,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
             {adminTabs
               .filter((tab) => !tab.approverOnly || user.isApprover)
               .filter((tab) => !tab.executiveOnly || user.isExecutive)
-              .filter((tab) => !tab.mailboxOnly || mailAddress)
+              .filter((tab) => !tab.mailboxOnly || hasMailbox)
               .map((tab) => {
                 const isActive =
                   tab.href === "/admin"

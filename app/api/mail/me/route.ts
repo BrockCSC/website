@@ -12,6 +12,14 @@ export const GET = async (req: NextRequest) => {
     return NextResponse.json({ error: "Sign in again" }, { status: 401 });
   }
 
-  const email = await sendingAddress(token).catch(() => null);
-  return NextResponse.json({ email });
+  // A null email means "this account has no mailbox" and hides Mail, so a
+  // server that simply could not be reached must not answer with one.
+  try {
+    return NextResponse.json({ email: await sendingAddress(token) });
+  } catch {
+    return NextResponse.json(
+      { error: "Could not reach the mail server" },
+      { status: 502 },
+    );
+  }
 };
