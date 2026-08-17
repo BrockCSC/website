@@ -1,5 +1,6 @@
 # Shared across every environment - differences come entirely from env vars
-# Komodo sets per Stack (image tag, hostname, secrets, DB).
+# Komodo sets per Stack (image, hostname, secrets, DB). The image is built and
+# pushed by GitHub Actions; the VPS only pulls it.
 networks:
   wayfarer-net:
     external: true
@@ -8,8 +9,7 @@ services:
   # Uploads volume ownership comes from the image: the Dockerfile creates
   # /data/uploads as nextjs:nodejs, which an empty volume inherits on first mount.
   app:
-    image: brockcsc-ca:${IMAGE_TAG}
-    pull_policy: never
+    image: ${IMAGE}
     container_name: ${PROJECT_NAME}-app
     restart: unless-stopped
     networks: [wayfarer-net]
@@ -37,6 +37,9 @@ services:
       - STALWART_ADMIN_SECRET=${STALWART_ADMIN_SECRET}
       - OCI_COMPARTMENT_OCID=${OCI_COMPARTMENT_OCID}
       - PROTECTED_MAIL_USERS=${PROTECTED_MAIL_USERS}
+      - MAIL_DAILY_LIMIT=${MAIL_DAILY_LIMIT}
+      - MAIL_SITE_URL=${MAIL_SITE_URL}
+      - ADMIN_MAIL_GROUP=${ADMIN_MAIL_GROUP}
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN}
       - PUBLIC_SUBDOMAIN=${PUBLIC_SUBDOMAIN}
     healthcheck:

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" width="880" height="520" role="img" aria-label="Deploy pipeline: a push or tag runs checks, then deploy-context, then a GitHub Environment approval, then Komodo builds and deploys a Stack — tags go to production, main goes to UAT, any other branch gets its own preview">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" width="880" height="520" role="img" aria-label="Deploy pipeline: a push or tag builds the image on GitHub Actions and pushes it to GHCR, then deploy-context, then a GitHub Environment approval, then Komodo pulls the image and deploys a Stack — tags go to production, main goes to UAT, any other branch gets its own preview">
   <title>Deploy pipeline</title>
 
   <defs>
@@ -41,9 +41,9 @@
 
   <g>
     <rect x="211" y="96" width="132" height="76" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
-    <text class="h" x="227" y="124">CHECKS</text>
-    <text class="b" x="227" y="144">lint · typecheck</text>
-    <text class="b" x="227" y="158">format:check</text>
+    <text class="h" x="227" y="124">BUILD</text>
+    <text class="b" x="227" y="144">image built here,</text>
+    <text class="b" x="227" y="158">pushed to GHCR</text>
   </g>
   <path d="M347 134 H370" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
 
@@ -69,7 +69,7 @@
   <g>
     <rect x="700" y="96" width="132" height="76" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
     <text class="h" x="716" y="124">KOMODO</text>
-    <text class="b" x="716" y="144">builds the image,</text>
+    <text class="b" x="716" y="144">pulls the image,</text>
     <text class="b" x="716" y="158">deploys the Stack</text>
   </g>
 

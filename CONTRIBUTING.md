@@ -200,13 +200,22 @@ bounce IMAP.
 Self-hosted, orchestrated by [Komodo](https://komo.do) through the reusable actions in
 [`BrockCSC/komodo-deploy`](https://github.com/BrockCSC/komodo-deploy).
 
-<img src="public/readme/arch-deploy.svg" alt="Deploy pipeline: a push or tag runs lint, typecheck and format checks; deploy-context reads the ref; the job waits on its GitHub Environment before Komodo builds the image and deploys the Stack. A tag lands on production, main on uat, any other branch on its own preview" width="850" />
+**The VPS does not build anything.** GitHub Actions builds the image and pushes it to
+`ghcr.io/brockcsc/brockcsc-ca:<commit-sha>`; the VPS pulls that tag and runs it. Actions minutes are
+free and unlimited on a public repo, VPS cores are not — and a preview deploy no longer competes with
+production for them.
 
-| Workflow                                              | Trigger                                             | What it does                                                                                                   |
-| ----------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
-| `.github/workflows/deploy.yml` — **Build & Deploy**   | push to any branch, tags `v*`                       | lint + typecheck + `format:check`, syncs GitHub secrets into Komodo Variables, then builds and deploys a Stack |
-| `.github/workflows/deploy-mail.yml` — **Deploy Mail** | push to `main` touching `deploy/mail/**`, or manual | deploys the single long-lived `brockcsc-mail` Stack                                                            |
-| `.github/workflows/cleanup.yml` — **Cleanup**         | branch deleted                                      | deletes that branch's Komodo Stack and drops its `preview_*` schema                                            |
+<img src="public/readme/arch-deploy.svg" alt="Deploy pipeline: a push or tag builds the image on GitHub Actions and pushes it to GHCR; deploy-context reads the ref; the job waits on its GitHub Environment before Komodo pulls the image and deploys the Stack. A tag lands on production, main on uat, any other branch on its own preview" width="850" />
+
+| Workflow                                              | Trigger                                             | What it does                                                                                           |
+| ----------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `.github/workflows/ci.yml` — **CI**                   | every pull request, push to `main`, tags `v*`       | lint + typecheck + `format:check`, CodeQL, `npm audit`, dependency review — the merge gate             |
+| `.github/workflows/deploy.yml` — **Build & Deploy**   | push to any branch, tags `v*`                       | builds and pushes the image, scans it with Trivy, syncs secrets into Komodo Variables, deploys a Stack |
+| `.github/workflows/deploy-mail.yml` — **Deploy Mail** | push to `main` touching `deploy/mail/**`, or manual | deploys the single long-lived `brockcsc-mail` Stack                                                    |
+| `.github/workflows/cleanup.yml` — **Cleanup**         | branch deleted                                      | deletes that branch's Komodo Stack and drops its `preview_*` schema                                    |
+
+The image scan does not gate the deploy: a CVE published against the base image overnight should
+shout, not stand between you and a hotfix. Findings land in the repository's Security tab.
 
 `komodo/deploy-context.mjs` reads `GITHUB_REF` and prints the Stack's whole `KEY=VALUE` environment
 block. Secrets are never in it — they are `[[BROCKCSC_NAME]]` placeholders Komodo resolves from its
@@ -248,7 +257,9 @@ Before opening a PR:
 npm run lint && npm run typecheck && npm run format:check && npm run build
 ```
 
-CI runs the first three and fails the deploy job if any of them do.
+CI runs the first three, plus CodeQL and a dependency review, and `main` will not take a pull request
+until they pass. `npm audit` runs too but does not block: an advisory in a transitive dependency is
+not the fault of whichever PR is open when it lands.
 
 ## Opening a pull request
 
