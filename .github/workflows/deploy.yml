@@ -14,7 +14,9 @@ env:
 
 jobs:
   build-image:
-    runs-on: ubuntu-latest
+    # The VPS is an Oracle Ampere box, so the image has to be arm64. GitHub's
+    # arm runners are free on a public repo, which beats emulating it.
+    runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
       packages: write
@@ -31,7 +33,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          platforms: linux/amd64
+          platforms: linux/arm64
           push: true
           tags: ${{ env.IMAGE }}:${{ github.sha }}
           cache-from: type=registry,ref=${{ env.IMAGE }}:buildcache
