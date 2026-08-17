@@ -120,13 +120,6 @@ export default function MailPage() {
       .then(setContacts)
       .catch(() => setContacts([]));
 
-    fetch("/api/mail/trash", { method: "POST" })
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data: { purged: number } | null) => {
-        if (data?.purged) void loadMailboxes().catch(() => {});
-      })
-      .catch(() => {});
-
     void settleDeletions();
   }, [loadMailboxes, settleDeletions]);
 
