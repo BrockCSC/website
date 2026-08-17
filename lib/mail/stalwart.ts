@@ -201,3 +201,73 @@ export const clearReadOnly = (localPart: string): Promise<void> =>
 
 export const makeReadOnly = (localPart: string): Promise<void> =>
   setReadOnly(localPart, true);
+
+export type AppPassword = {
+  id: string;
+  description: string;
+  createdAt: string;
+};
+
+export const listAppPasswords = async (
+  localPart: string,
+): Promise<AppPassword[]> => {
+  const account = await accountNamed(localPart);
+  if (!account) return [];
+  const [res] = await jmap<{ list: AppPassword[] }>([
+    ["x:AppPassword/get", { accountId: account.id }, "c0"],
+  ]);
+  return res.list;
+};
+
+/** The secret is returned once, at creation, and never readable again. */
+export const createAppPassword = async (
+  localPart: string,
+  description: string,
+): Promise<string | null> => {
+  const account = await accountNamed(localPart);
+  if (!account) return null;
+  const [res] = await jmap<{ created?: Record<string, { secret: string }> }>([
+    [
+      "x:AppPassword/set",
+      {
+        accountId: account.id,
+        create: {
+          new: {
+            description,
+            permissions: { "@type": "Inherit" },
+            allowedIps: {},
+          },
+        },
+      },
+      "c0",
+    ],
+  ]);
+  return res.created?.new?.secret ?? null;
+};
+
+export const deleteAppPassword = async (
+  localPart: string,
+  id: string,
+): Promise<void> => {
+  const account = await accountNamed(localPart);
+  if (!account) return;
+  await jmap([
+    ["x:AppPassword/set", { accountId: account.id, destroy: [id] }, "c0"],
+  ]);
+};
+
+export const revokeAppPasswords = async (localPart: string): Promise<void> => {
+  const account = await accountNamed(localPart);
+  if (!account) return;
+  const [res] = await jmap<{ list: AppPassword[] }>([
+    ["x:AppPassword/get", { accountId: account.id }, "c0"],
+  ]);
+  if (!res.list.length) return;
+  await jmap([
+    [
+      "x:AppPassword/set",
+      { accountId: account.id, destroy: res.list.map((one) => one.id) },
+      "c0",
+    ],
+  ]);
+};

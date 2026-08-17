@@ -193,6 +193,13 @@ Send limits (`lib/mail/limit.ts`) count the Sent mailbox since local midnight vi
 `POST /api/mail/send` returns **429**. Caps per message: 100 KB text, 400 KB HTML, 20 attachments,
 50 recipients, 15 MB per uploaded file.
 
+**Outside mail apps.** Keycloak passwords do not authenticate against Stalwart, so IMAP and SMTP need
+a Stalwart app password. `/admin/mail/setup` lets a member mint one per device and revoke it, through
+`x:AppPassword/set` in `lib/mail/stalwart.ts`; the secret is returned once and never readable again.
+`makeMailboxReadOnly` revokes every one of them, so a stepped-down exec's mail app stops when their
+portal access does. IMAP is `mail.brockcsc.ca:993` and submission `:465`, both SSL, username being the
+full address — the same values Stalwart publishes at `autoconfig.brockcsc.ca`.
+
 The mail stack (`deploy/mail/docker-compose.yml`) has its own workflow, so website commits never
 bounce IMAP.
 

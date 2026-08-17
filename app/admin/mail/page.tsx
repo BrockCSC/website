@@ -15,6 +15,7 @@ import { Compose, type Draft } from "./compose";
 import { buildQuote } from "./html";
 import { ask } from "../ask";
 import type { Contact } from "./recipient-input";
+import Link from "next/link";
 
 const PAGE = 50;
 
@@ -418,6 +419,12 @@ export default function MailPage() {
           }}
         />
         <Allowance refresh={reload} />
+        <Link
+          className="shrink-0 rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-center text-xs font-bold text-ink hover:bg-tint"
+          href="/admin/mail/setup"
+        >
+          Set up on your phone
+        </Link>
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut">
