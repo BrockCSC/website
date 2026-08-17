@@ -2,11 +2,13 @@
  * as the signed-in user via their Keycloak access token; Stalwart's OIDC
  * directory resolves it to that user's account and enforces isolation. */
 
+import { sanitizeOutboundHtml } from "./sanitize";
 import {
   htmlSignature,
   signerFor,
   textSignature,
   withFooter,
+  withHtmlFooter,
   type Signer,
 } from "./signature";
 
@@ -255,6 +257,7 @@ export type OutgoingMessage = {
   cc?: string[];
   subject: string;
   text: string;
+  html?: string;
 };
 
 type Identity = {
@@ -360,8 +363,23 @@ export const sendMessage = async (
               ? { cc: msg.cc.map((email) => ({ email })) }
               : {}),
             subject: msg.subject,
-            bodyValues: { body: { value: withFooter(msg.text, signer) } },
-            textBody: [{ partId: "body", type: "text/plain" }],
+            bodyValues: {
+              text: { value: withFooter(msg.text, signer) },
+              ...(msg.html
+                ? {
+                    html: {
+                      value: withHtmlFooter(
+                        sanitizeOutboundHtml(msg.html),
+                        signer,
+                      ),
+                    },
+                  }
+                : {}),
+            },
+            textBody: [{ partId: "text", type: "text/plain" }],
+            ...(msg.html
+              ? { htmlBody: [{ partId: "html", type: "text/html" }] }
+              : {}),
           },
         },
       },

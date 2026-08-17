@@ -5,6 +5,7 @@ import { sendMessage } from "@/lib/mail/jmap-mail";
 
 const MAX_RECIPIENTS = 50;
 const MAX_TEXT_BYTES = 100_000;
+const MAX_HTML_BYTES = 400_000;
 const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const addresses = (value: unknown): string[] | null =>
@@ -32,6 +33,7 @@ export const POST = async (req: NextRequest) => {
     cc?: unknown;
     subject?: unknown;
     text?: unknown;
+    html?: unknown;
   } | null;
   if (!body) return bad("Body must be JSON");
 
@@ -47,12 +49,19 @@ export const POST = async (req: NextRequest) => {
   if (Buffer.byteLength(body.text) > MAX_TEXT_BYTES) {
     return bad(`text must be under ${MAX_TEXT_BYTES} bytes`);
   }
+  if (body.html !== undefined && typeof body.html !== "string") {
+    return bad("html must be a string");
+  }
+  if (body.html && Buffer.byteLength(body.html) > MAX_HTML_BYTES) {
+    return bad(`html must be under ${MAX_HTML_BYTES} bytes`);
+  }
 
   const id = await sendMessage(token, {
     to,
     cc,
     subject: body.subject,
     text: body.text,
+    html: body.html || undefined,
   });
   return NextResponse.json({ id });
 };
