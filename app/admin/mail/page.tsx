@@ -5,11 +5,11 @@ import { ArrowLeft, MailOpen, Search, Star } from "lucide-react";
 import { logout } from "@/lib/api";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { useSession } from "../session";
+import { useHandoff, usePalette } from "../palette";
 import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { Conversation } from "./message-view";
 import { Compose, type Draft } from "./compose";
-import { SearchPalette } from "./search-palette";
 import { buildQuote } from "./html";
 import type { Contact } from "./recipient-input";
 
@@ -52,7 +52,6 @@ export default function MailPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [palette, setPalette] = useState(false);
   const [found, setFound] = useState<MessageSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -61,6 +60,7 @@ export default function MailPage() {
   const [reload, setReload] = useState(0);
   const request = useRef(0);
   const { refresh } = useSession();
+  const { open: openPalette, isOpen: palette } = usePalette();
 
   const loadMailboxes = useCallback(
     () =>
@@ -192,7 +192,20 @@ export default function MailPage() {
     [loadMailboxes],
   );
 
-  const closePalette = useCallback(() => setPalette(false), []);
+  const startDraft = useCallback(() => setDraft({}), []);
+
+  const showMessage = useCallback(
+    (hit: MessageSummary) => {
+      const box = mailboxes.find((item) => hit.mailboxIds?.[item.id]);
+      if (box) setMailbox(box.id);
+      setFound(hit);
+      setSelected(hit.id);
+    },
+    [mailboxes],
+  );
+
+  useHandoff("compose", startDraft);
+  useHandoff("message", showMessage);
 
   const purge = useCallback(
     async (id: string) => {
@@ -233,11 +246,6 @@ export default function MailPage() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setPalette(true);
-        return;
-      }
       if (palette || draft || event.metaKey || event.ctrlKey || event.altKey) {
         return;
       }
@@ -273,7 +281,7 @@ export default function MailPage() {
           break;
         case "/":
           event.preventDefault();
-          setPalette(true);
+          openPalette();
           break;
         case "e":
           if (selected) void move(selected, { to: "archive" });
@@ -296,7 +304,17 @@ export default function MailPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [draft, palette, messages, selected, message, move, flag, replyTo]);
+  }, [
+    draft,
+    palette,
+    openPalette,
+    messages,
+    selected,
+    message,
+    move,
+    flag,
+    replyTo,
+  ]);
 
   if (loading) {
     return <p className="p-6 text-sm text-subtle">Loading mail…</p>;
@@ -332,7 +350,7 @@ export default function MailPage() {
       >
         <button
           type="button"
-          onClick={() => setDraft({})}
+          onClick={startDraft}
           className="shrink-0 rounded-[10px] border-2 border-line bg-brand px-4 py-2.5 font-bold text-brand-ink shadow-brut-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0"
         >
           Compose
@@ -362,11 +380,11 @@ export default function MailPage() {
             </div>
             <button
               type="button"
-              onClick={() => setPalette(true)}
+              onClick={openPalette}
               className="flex w-full items-center gap-2 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-subtle hover:bg-tint"
             >
               <Search size={14} aria-hidden />
-              <span className="flex-1 text-left">Search all mail</span>
+              <span className="flex-1 text-left">Search everything</span>
               <kbd className="rounded-[6px] border-2 border-line px-1 text-[10px] font-bold text-ink">
                 ⌘K
               </kbd>
@@ -452,20 +470,6 @@ export default function MailPage() {
           )}
         </div>
       </div>
-
-      {palette && (
-        <SearchPalette
-          mailboxes={mailboxes}
-          contacts={contacts}
-          onClose={closePalette}
-          onOpen={(hit) => {
-            const box = mailboxes.find((item) => hit.mailboxIds?.[item.id]);
-            if (box) setMailbox(box.id);
-            setFound(hit);
-            setSelected(hit.id);
-          }}
-        />
-      )}
 
       {draft && (
         <Compose

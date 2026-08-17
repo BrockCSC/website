@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { EventRecord, fetchAllEvents, WithKey, deleteEvent } from "@/lib/api";
 import { classifyEventsByTiming } from "@/lib/events/classify";
 import {
@@ -12,6 +12,7 @@ import {
   getEventTiming,
   getRecurrenceLabel,
 } from "@/lib/events/schedule";
+import { useHandoff } from "../palette";
 import EventModal from "./event-modal";
 import { Sheet, btn, errorText } from "./ui";
 
@@ -150,10 +151,14 @@ export default function EventsManagementPage() {
   ];
   const shown = tabs.find((t) => t.id === tab)!.list;
 
-  const openModal = (event: EventItem | null) => {
+  const openModal = useCallback((event: EventItem | null) => {
     setSelectedEvent(event);
     setShowModal(true);
-  };
+  }, []);
+
+  const openNew = useCallback(() => openModal(null), [openModal]);
+  useHandoff("newEvent", openNew);
+  useHandoff("event", openModal);
 
   const empty = {
     upcoming: "Nothing on the calendar yet. Create the club's next event.",

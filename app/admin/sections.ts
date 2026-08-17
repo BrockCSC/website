@@ -29,6 +29,11 @@ export const SECTIONS: Section[] = [
     blurb: "Accounts, roles, profiles and mailboxes.",
     approverOnly: true,
   },
+  {
+    name: "Profile",
+    href: "/admin/profile",
+    blurb: "Your public tile, photo and account.",
+  },
 ];
 
 export const sectionFor = (pathname: string): Section | undefined =>

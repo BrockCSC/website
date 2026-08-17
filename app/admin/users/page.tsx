@@ -5,6 +5,7 @@ import { fetchInviteCode, reviewSignup } from "@/lib/api";
 import { grantsApproval } from "@/lib/execs/titles";
 import { Button } from "@/components/ui/button";
 import { useSession } from "../session";
+import { useHandoff } from "../palette";
 import {
   buildPeople,
   fetchExecs,
@@ -89,6 +90,12 @@ export default function UsersPage() {
       setInvite(await fetchInviteCode().catch(() => null));
     })();
   }, [load]);
+
+  useHandoff("person", setSelected);
+  useHandoff(
+    "pending",
+    useCallback(() => setTab("pending"), []),
+  );
 
   const people = useMemo(() => buildPeople(execs, signups), [execs, signups]);
   const shown = useMemo(() => {
