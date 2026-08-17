@@ -186,7 +186,7 @@ export default function ProfileForm({
       <label className="flex items-start gap-3 text-sm text-ink">
         <input
           checked={hidden}
-          className="mt-1 size-4 accent-[currentColor]"
+          className="check mt-0.5"
           onChange={(e) => setHidden(e.target.checked)}
           type="checkbox"
         />

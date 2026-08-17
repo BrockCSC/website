@@ -180,9 +180,9 @@ export function TeamMemberCard({
             <Image
               alt=""
               className="size-16 rounded-full border-2 border-brand/35 opacity-90"
-              height={64}
-              src="/email-logo.png"
-              width={64}
+              height={256}
+              src="/badger-256.png"
+              width={256}
             />
           </div>
         )}

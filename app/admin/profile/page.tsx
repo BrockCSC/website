@@ -328,7 +328,7 @@ export default function ProfilePage() {
             <label className="flex items-start gap-3 text-sm">
               <input
                 checked={form.hidden}
-                className="mt-1 size-4 accent-brand"
+                className="check mt-0.5"
                 onChange={(e) => set("hidden", e.target.checked)}
                 type="checkbox"
               />

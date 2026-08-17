@@ -15,6 +15,8 @@ import { useSession } from "../session";
 import Confirm, { type ConfirmItem } from "./confirm";
 import ProfileForm from "./profile-form";
 import { Note, Panel, Pill, Rows } from "./ui";
+import { ask } from "../ask";
+import { capabilitiesOf, impliedBy } from "@/lib/auth/capabilities";
 
 const date = (value?: string) =>
   value ? new Date(value).toLocaleDateString() : "—";
@@ -63,6 +65,30 @@ export default function PersonView({
       await load();
     })();
   }, [load]);
+
+  const confirmRole = async (
+    item: { id: string; title: string },
+    role: string,
+    held: boolean,
+  ) => {
+    const gains = capabilitiesOf(role);
+    const also = impliedBy(role);
+    const lines = gains.map((c) => `${c.label} — ${c.detail}`).join("\n");
+    const ok = await ask({
+      title: item.title,
+      detail:
+        (held
+          ? `${person.name} loses:\n${lines}`
+          : `${person.name} gains:\n${lines}`) +
+        (also.length
+          ? `\n\nThis role carries ${also.join(" and ")} with it.`
+          : ""),
+      confirmLabel: held ? "Revoke" : "Grant",
+      destructive: held,
+    });
+    if (ok === null) return;
+    await apply([item.id]);
+  };
 
   const apply = async (ids: string[]) => {
     setResult(null);
@@ -237,7 +263,7 @@ export default function PersonView({
                       {item && (
                         <Button
                           disabled={!!item.blocked || !!working}
-                          onClick={() => void apply([item.id])}
+                          onClick={() => void confirmRole(item, role, !!held)}
                           size="sm"
                           type="button"
                           variant="secondary"

@@ -93,10 +93,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           {onMenu ? (
             <span className="flex items-center gap-2.5">
               <Image
-                src="/email-logo.png"
+                src="/badger-256.png"
                 alt="BrockCSC"
-                width={32}
-                height={32}
+                width={128}
+                height={128}
                 className="size-8 rounded-[8px] border-2 border-line"
               />
               <span className="font-extrabold text-ink">Admin</span>

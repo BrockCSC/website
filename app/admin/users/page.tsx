@@ -230,6 +230,18 @@ export default function UsersPage() {
           {tab === "directory" ? (
             <>
               <Panel
+                note={
+                  invite
+                    ? `Rotates in ${humanise(invite.expiresInMs)}. Share it with execs who need an account.`
+                    : "Unavailable right now."
+                }
+                title="Invite code"
+              >
+                <span className="font-mono text-3xl font-extrabold tracking-[0.2em] text-brand">
+                  {invite?.code ?? "————"}
+                </span>
+              </Panel>
+              <Panel
                 action={
                   <Button
                     onClick={() => setAdding(!adding)}
@@ -315,19 +327,6 @@ export default function UsersPage() {
                   </li>
                 ))}
               </ul>
-
-              <Panel
-                note={
-                  invite
-                    ? `Rotates in ${humanise(invite.expiresInMs)}. Share it with execs who need an account.`
-                    : "Unavailable right now."
-                }
-                title="Invite code"
-              >
-                <span className="font-mono text-3xl font-extrabold tracking-[0.2em] text-brand">
-                  {invite?.code ?? "————"}
-                </span>
-              </Panel>
             </>
           ) : tab === "pending" ? (
             <>

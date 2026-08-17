@@ -348,7 +348,7 @@ export default function SignupPage() {
             <label className="mb-4 flex items-start gap-2 text-sm">
               <input
                 checked={former}
-                className="mt-1 accent-[var(--brand)]"
+                className="check mt-0.5"
                 onChange={(e) => {
                   setForm((prev) => ({
                     ...prev,

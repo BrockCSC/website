@@ -52,7 +52,7 @@ export default function Confirm({
               >
                 <input
                   checked={chosen.includes(item.id)}
-                  className="mt-1 size-4 shrink-0 accent-current"
+                  className="check mt-0.5"
                   disabled={locked}
                   onChange={() => toggle(item.id)}
                   type="checkbox"
