@@ -29,9 +29,8 @@ export const PATCH = async (req: NextRequest) => {
 
   const body = await jsonObject<ExecRecord>(req);
   if (!body) return badJson();
-  const current = await findById<ExecRecord>(execsTable, signup.execKey);
   // cleanExec omits name/title/isCurrentExec: those are the approver's.
-  const cleaned = cleanExec(body, current?.image?.url);
+  const cleaned = cleanExec(body);
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
