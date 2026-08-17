@@ -286,7 +286,6 @@ const transitionFor = (
   };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const stated = ({ run, ...rest }: Item): Consequence => rest;
 
 const wire = <T>(entity: Entity<T> | null) =>

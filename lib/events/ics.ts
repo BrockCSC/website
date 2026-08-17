@@ -13,7 +13,7 @@ const toIcsTimestamp = (timestamp: number): string =>
 const escapeIcsText = (value: string): string =>
   value.replace(/([\\;,])/g, "\\$1").replace(/\r?\n/g, "\\n");
 
-export const buildEventIcs = (
+const buildEventIcs = (
   event: WithKey<EventRecord>,
   startTimestamp: number,
   eventUrl: string,

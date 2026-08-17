@@ -9,7 +9,7 @@
 
 import { tokenRequest } from "./keycloak-token";
 
-export type NewKeycloakUser = {
+type NewKeycloakUser = {
   username: string;
   email?: string;
   firstName: string;
@@ -80,7 +80,7 @@ const adminFetch = async (path: string, init: RequestInit = {}) => {
   return res;
 };
 
-export const findUserByUsername = async (
+const findUserByUsername = async (
   username: string,
 ): Promise<{ id: string; enabled: boolean } | null> => {
   const res = await adminFetch(

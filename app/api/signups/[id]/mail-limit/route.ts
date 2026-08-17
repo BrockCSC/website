@@ -4,6 +4,7 @@ import { requireApprover } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
+import { isSelfReview, selfReviewRefused } from "../review";
 
 export const POST = async (
   req: NextRequest,
@@ -22,12 +23,8 @@ export const POST = async (
   const { id } = await params;
   const signup = await findById<SignupRecord>(signupsTable, id);
   if (!signup) return notFound();
-  if (signup.keycloakUserId === approver.sub) {
-    return NextResponse.json(
-      { error: "Another co-president has to review your own request." },
-      { status: 409 },
-    );
-  }
+  if (isSelfReview(approver, signup.keycloakUserId))
+    return selfReviewRefused("request");
 
   const request = signup.mailLimitRequest;
   if (request?.status !== "pending") {

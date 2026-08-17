@@ -51,7 +51,7 @@ export type SignupInput = {
   confirmPassword: string;
 };
 
-export type SignupStatus = "pending" | "approved" | "rejected";
+type SignupStatus = "pending" | "approved" | "rejected";
 
 export type MailLimitRequest = {
   requested: number;

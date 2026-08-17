@@ -30,7 +30,7 @@ const UNSAFE_STYLE_VALUE = /url\(|expression|javascript:|@import|[<\\]/i;
 
 const normalizeUrl = (url: string) => url.replace(/[\x00-\x20\u00a0]/g, "");
 
-export type ImagePolicy = {
+type ImagePolicy = {
   /** Content-ID, angle brackets stripped and lowercased, to a `data:` URI. */
   inline?: Record<string, string>;
   allowRemote?: boolean;

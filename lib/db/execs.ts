@@ -5,7 +5,7 @@ import { execsTable, signupsTable } from "./schema";
 const normalise = (value: string) =>
   value.trim().toLowerCase().replace(/\s+/g, " ");
 
-export type ExecMatch = {
+type ExecMatch = {
   execKey: string;
   name: string;
   title?: string;

@@ -4,7 +4,7 @@ import { getEventStartTimestamp, getEventTiming } from "./schedule";
 
 type EventItem = WithKey<EventRecord>;
 
-export type EventTimingGroups = {
+type EventTimingGroups = {
   ongoing: EventItem[];
   upcoming: EventItem[];
   past: EventItem[];

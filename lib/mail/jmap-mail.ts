@@ -22,7 +22,7 @@ const config = () => {
   return { url: STALWART_URL.replace(/\/$/, "") };
 };
 
-export type EmailAddress = { name: string | null; email: string };
+type EmailAddress = { name: string | null; email: string };
 
 export type Mailbox = {
   id: string;
@@ -180,7 +180,7 @@ const SUMMARY_PROPERTIES = [
   "keywords",
 ];
 
-export type MessageQuery = {
+type MessageQuery = {
   mailboxId?: string;
   search?: string;
   limit?: number;
@@ -644,7 +644,7 @@ export const sendingAddress = async (token: string): Promise<string | null> => {
 
 export type Attachment = { blobId: string; type: string; name: string };
 
-export type OutgoingMessage = {
+type OutgoingMessage = {
   to: string[];
   cc?: string[];
   subject: string;

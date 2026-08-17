@@ -53,7 +53,7 @@ const accounts = async (): Promise<Account[]> => {
   return res.list;
 };
 
-export const domainId = async (name: string): Promise<string> => {
+const domainId = async (name: string): Promise<string> => {
   const [res] = await jmap<{ list: { id: string; name: string }[] }>([
     ["x:Domain/get", {}, "c0"],
   ]);
