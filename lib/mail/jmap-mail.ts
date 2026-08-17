@@ -175,20 +175,12 @@ export type MessagePage = {
 
 type Condition = Record<string, unknown>;
 
-const TERM = /(?:(\w+):)?(?:"([^"]*)"|(\S+))/g;
+const TERM = /(?:(\w{1,32}):)?(?:"([^"]{0,1024})"|(\S+))/g;
 
-const FIELDS: Record<string, (value: string) => Condition | undefined> = {
-  from: (value) => ({ from: value }),
-  to: (value) => ({ to: value }),
-  subject: (value) => ({ subject: value }),
-  has: (value) =>
-    value.toLowerCase() === "attachment" ? { hasAttachment: true } : undefined,
-  is: (value) =>
-    ({
-      unread: { notKeyword: "$seen" },
-      starred: { hasKeyword: "$flagged" },
-    })[value.toLowerCase()],
-};
+const STATES = new Map<string, Condition>([
+  ["unread", { notKeyword: "$seen" }],
+  ["starred", { hasKeyword: "$flagged" }],
+]);
 
 const inFolder = (value: string, boxes: Mailbox[]) => {
   const wanted = value.toLowerCase();
@@ -196,6 +188,31 @@ const inFolder = (value: string, boxes: Mailbox[]) => {
     (item) => item.name.toLowerCase() === wanted || item.role === wanted,
   );
   return box ? { inMailbox: box.id } : undefined;
+};
+
+const operator = (
+  key: string,
+  value: string,
+  boxes: Mailbox[],
+): Condition | undefined => {
+  switch (key) {
+    case "from":
+      return { from: value };
+    case "to":
+      return { to: value };
+    case "subject":
+      return { subject: value };
+    case "in":
+      return inFolder(value, boxes);
+    case "has":
+      return value.toLowerCase() === "attachment"
+        ? { hasAttachment: true }
+        : undefined;
+    case "is":
+      return STATES.get(value.toLowerCase());
+    default:
+      return undefined;
+  }
 };
 
 const searchConditions = (search: string, boxes: Mailbox[]): Condition[] => {
@@ -206,8 +223,7 @@ const searchConditions = (search: string, boxes: Mailbox[]): Condition[] => {
     const value = quoted ?? bare;
     if (!value) continue;
     const key = field?.toLowerCase();
-    const made =
-      key === "in" ? inFolder(value, boxes) : key ? FIELDS[key]?.(value) : null;
+    const made = key ? operator(key, value, boxes) : null;
     if (made) conditions.push(made);
     else text.push(field ? `${field}:${value}` : value);
   }

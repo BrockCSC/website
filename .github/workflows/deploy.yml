@@ -12,6 +12,8 @@ concurrency:
 jobs:
   checks:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -26,6 +28,7 @@ jobs:
   context:
     needs: checks
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       env_name: ${{ steps.ctx.outputs.env_name }}
       url: ${{ steps.ctx.outputs.url }}
@@ -48,6 +51,8 @@ jobs:
   deploy:
     needs: context
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     environment:
       name: ${{ needs.context.outputs.env_name }}
       url: ${{ needs.context.outputs.url }}

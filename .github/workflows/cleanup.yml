@@ -11,6 +11,8 @@ jobs:
   cleanup:
     if: github.event.ref_type == 'branch' && github.event.ref != 'main'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v5
 
