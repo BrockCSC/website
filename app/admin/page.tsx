@@ -8,7 +8,7 @@ import { SECTION_ICONS } from "./icons";
 
 export default function AdminMenu() {
   const { user } = useSession();
-  const [hasMailbox, setHasMailbox] = useState(true);
+  const [hasMailbox, setHasMailbox] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!user?.isExecutive) return;
@@ -24,7 +24,7 @@ export default function AdminMenu() {
     (section) =>
       (!section.approverOnly || user?.isApprover) &&
       (!section.execOnly || user?.isExecutive) &&
-      (!section.mailboxOnly || hasMailbox),
+      (!section.mailboxOnly || hasMailbox !== false),
   );
 
   return (

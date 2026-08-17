@@ -13,6 +13,8 @@ import {
   getRecurrenceLabel,
 } from "@/lib/events/schedule";
 import { useHandoff } from "../palette";
+import { useSession } from "../session";
+import { Note } from "../users/ui";
 import EventModal from "./event-modal";
 import { Sheet, btn, errorText } from "./ui";
 
@@ -99,6 +101,7 @@ function EventRow({
 }
 
 export default function EventsManagementPage() {
+  const { user } = useSession();
   const [showModal, setShowModal] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<EventItem | null>(null);
   const [deleting, setDeleting] = useState<EventItem | null>(null);
@@ -159,6 +162,14 @@ export default function EventsManagementPage() {
   const openNew = useCallback(() => openModal(null), [openModal]);
   useHandoff("newEvent", openNew);
   useHandoff("event", openModal);
+
+  if (user && !user.isExecutive) {
+    return (
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <Note>Only a current executive can manage events.</Note>
+      </div>
+    );
+  }
 
   const empty = {
     upcoming: "Nothing on the calendar yet. Create the club's next event.",

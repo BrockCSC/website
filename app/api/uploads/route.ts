@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { NextResponse, type NextRequest } from "next/server";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireMember } from "@/lib/auth/session";
 import { rateLimit } from "@/lib/rate-limit";
 import {
   isAllowedImageType,
@@ -18,7 +18,7 @@ const tooLarge = () =>
   );
 
 export const POST = async (req: NextRequest) => {
-  if (!(await requireAdmin(req))) {
+  if (!(await requireMember(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
   const limited = rateLimit(req, "upload", 60, 60 * 60 * 1000);

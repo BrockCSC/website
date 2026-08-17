@@ -26,6 +26,12 @@ export const POST = async (
   if (!person) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
+  if (person.signup?.keycloakUserId === approver.sub) {
+    return NextResponse.json(
+      { error: "Another co-president has to review your own record." },
+      { status: 409 },
+    );
+  }
 
   return NextResponse.json(await applyConsequences(person, apply));
 };
