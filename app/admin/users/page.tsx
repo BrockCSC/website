@@ -71,6 +71,7 @@ export default function UsersPage() {
   const [rejecting, setRejecting] = useState<Signup | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -118,37 +119,50 @@ export default function UsersPage() {
   );
   const person = people.find((p) => p.id === selected) ?? null;
 
-  const review = async (signup: Signup, action: "approve" | "reject") => {
+  const run = async (
+    key: string,
+    work: () => Promise<void>,
+    failure: string,
+  ) => {
+    setBusy(key);
+    setError(null);
     try {
-      await reviewSignup(signup.$key, action);
-      setRejecting(null);
+      await work();
       await load();
     } catch {
-      setError(`Could not ${action} ${fullName(signup)}.`);
+      setError(failure);
+    } finally {
+      setBusy(null);
     }
   };
 
-  const reviewLimit = async (signup: Signup, action: "approve" | "decline") => {
-    try {
-      await reviewMailLimit(signup.$key, action);
-      await load();
-    } catch {
-      setError(`Could not ${action} the request from ${fullName(signup)}.`);
-    }
-  };
+  const review = (signup: Signup, action: "approve" | "reject") =>
+    run(
+      `${signup.$key}:${action}`,
+      async () => {
+        await reviewSignup(signup.$key, action);
+        setRejecting(null);
+      },
+      `Could not ${action} ${fullName(signup)}.`,
+    );
 
-  const reviewDeletion = async (
+  const reviewLimit = (signup: Signup, action: "approve" | "decline") =>
+    run(
+      `limit:${signup.$key}:${action}`,
+      () => reviewMailLimit(signup.$key, action),
+      `Could not ${action} the request from ${fullName(signup)}.`,
+    );
+
+  const reviewDeletion = (
     signup: Signup,
     requestId: string,
     action: "approve" | "decline",
-  ) => {
-    try {
-      await reviewMailDeletion(signup.$key, requestId, action);
-      await load();
-    } catch {
-      setError(`Could not ${action} the deletion from ${fullName(signup)}.`);
-    }
-  };
+  ) =>
+    run(
+      `deletion:${requestId}:${action}`,
+      () => reviewMailDeletion(signup.$key, requestId, action),
+      `Could not ${action} the deletion from ${fullName(signup)}.`,
+    );
 
   if (!user?.isApprover) {
     return (
@@ -320,6 +334,14 @@ export default function UsersPage() {
               {!pending.length && (
                 <p className="text-subtle">No sign-ups are waiting.</p>
               )}
+              {!!pending.length && user.identitiesEditable === false && (
+                <Note>
+                  This environment shares the live Keycloak realm and mail
+                  server, so approving here rehearses the login, role and
+                  mailbox changes rather than writing them. The sign-up record
+                  itself is really updated.
+                </Note>
+              )}
               {pending.map((signup) => {
                 const match = signup.matchedExec;
                 return (
@@ -388,14 +410,18 @@ export default function UsersPage() {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           <Button
+                            disabled={!!busy}
                             onClick={() => void review(signup, "approve")}
                             size="sm"
                             type="button"
                             variant="primary"
                           >
-                            Approve
+                            {busy === `${signup.$key}:approve`
+                              ? "Approving..."
+                              : "Approve"}
                           </Button>
                           <Button
+                            disabled={!!busy}
                             onClick={() => setRejecting(signup)}
                             size="sm"
                             type="button"
@@ -450,20 +476,26 @@ export default function UsersPage() {
                       ) : (
                         <div className="flex flex-wrap gap-2">
                           <Button
+                            disabled={!!busy}
                             onClick={() => void reviewLimit(signup, "approve")}
                             size="sm"
                             type="button"
                             variant="primary"
                           >
-                            Approve
+                            {busy === `limit:${signup.$key}:approve`
+                              ? "Approving..."
+                              : "Approve"}
                           </Button>
                           <Button
+                            disabled={!!busy}
                             onClick={() => void reviewLimit(signup, "decline")}
                             size="sm"
                             type="button"
                             variant="destructive"
                           >
-                            Decline
+                            {busy === `limit:${signup.$key}:decline`
+                              ? "Declining..."
+                              : "Decline"}
                           </Button>
                         </div>
                       )}
@@ -507,6 +539,7 @@ export default function UsersPage() {
                     ) : (
                       <div className="flex flex-wrap gap-2">
                         <Button
+                          disabled={!!busy}
                           onClick={() =>
                             void reviewDeletion(signup, request.id, "approve")
                           }
@@ -514,9 +547,12 @@ export default function UsersPage() {
                           type="button"
                           variant="primary"
                         >
-                          Approve
+                          {busy === `deletion:${request.id}:approve`
+                            ? "Approving..."
+                            : "Approve"}
                         </Button>
                         <Button
+                          disabled={!!busy}
                           onClick={() =>
                             void reviewDeletion(signup, request.id, "decline")
                           }
@@ -524,7 +560,9 @@ export default function UsersPage() {
                           type="button"
                           variant="destructive"
                         >
-                          Decline
+                          {busy === `deletion:${request.id}:decline`
+                            ? "Declining..."
+                            : "Decline"}
                         </Button>
                       </div>
                     )}

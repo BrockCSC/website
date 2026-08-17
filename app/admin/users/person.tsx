@@ -11,6 +11,7 @@ import {
   type PersonDetail,
 } from "./api";
 import { Button } from "@/components/ui/button";
+import { useSession } from "../session";
 import Confirm, { type ConfirmItem } from "./confirm";
 import ProfileForm from "./profile-form";
 import { Note, Panel, Pill, Rows } from "./ui";
@@ -45,6 +46,8 @@ export default function PersonView({
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplyResult | null>(null);
   const [open, setOpen] = useState<"transition" | "delete" | null>(null);
+  const [working, setWorking] = useState<string | null>(null);
+  const { user } = useSession();
 
   const load = useCallback(async () => {
     try {
@@ -63,6 +66,7 @@ export default function PersonView({
 
   const apply = async (ids: string[]) => {
     setResult(null);
+    setWorking(ids.join(" "));
     try {
       const applied = await applyToPerson(person.id, ids);
       setResult(applied);
@@ -71,6 +75,8 @@ export default function PersonView({
       await onChanged();
     } catch {
       setError("That change could not be made.");
+    } finally {
+      setWorking(null);
     }
   };
 
@@ -89,6 +95,8 @@ export default function PersonView({
   };
 
   const signup = detail?.signup;
+  const isSelf =
+    !!signup?.keycloakUserId && signup.keycloakUserId === user?.sub;
   const roleItems =
     detail?.consequences.filter((c) => c.group === "role") ?? [];
   const mailItems =
@@ -228,13 +236,17 @@ export default function PersonView({
                       </div>
                       {item && (
                         <Button
-                          disabled={!!item.blocked}
+                          disabled={!!item.blocked || !!working}
                           onClick={() => void apply([item.id])}
                           size="sm"
                           type="button"
                           variant="secondary"
                         >
-                          {held ? "Revoke" : "Grant"}
+                          {working === item.id
+                            ? "Working..."
+                            : held
+                              ? "Revoke"
+                              : "Grant"}
                         </Button>
                       )}
                     </div>
@@ -286,19 +298,25 @@ export default function PersonView({
                     deprovisioned from here.
                   </Note>
                 )}
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-col gap-2">
                   {mailItems.map((item) => (
-                    <Button
-                      disabled={!!item.blocked}
+                    <div
+                      className="flex flex-wrap items-center gap-3"
                       key={item.id}
-                      onClick={() => void apply([item.id])}
-                      size="sm"
-                      title={item.blocked ?? item.detail}
-                      type="button"
-                      variant="secondary"
                     >
-                      {item.title}
-                    </Button>
+                      <Button
+                        disabled={!!item.blocked || !!working}
+                        onClick={() => void apply([item.id])}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        {working === item.id ? "Working..." : item.title}
+                      </Button>
+                      <span className="min-w-0 flex-1 text-sm text-subtle">
+                        {item.blocked ?? item.detail}
+                      </span>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -349,6 +367,7 @@ export default function PersonView({
                 />
               ) : (
                 <Button
+                  disabled={!!working}
                   onClick={() => setOpen("transition")}
                   size="sm"
                   type="button"
@@ -366,6 +385,11 @@ export default function PersonView({
                 <Note>
                   {detail.mailbox.address} is a protected service account, so
                   this person cannot be deleted.
+                </Note>
+              ) : isSelf ? (
+                <Note>
+                  This is your own account. Another co-president has to delete
+                  it.
                 </Note>
               ) : open === "delete" ? (
                 <Confirm

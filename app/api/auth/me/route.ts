@@ -6,6 +6,7 @@ import {
   requireApprover,
   requireMember,
 } from "@/lib/auth/session";
+import { ownsIdentities } from "@/lib/env";
 
 /** Reads Keycloak fresh, repopulating the cache the gated routes share. */
 export const GET = async (req: NextRequest) => {
@@ -27,5 +28,6 @@ export const GET = async (req: NextRequest) => {
     isExecutive: !!isExecutive,
     isApprover: !!isApprover,
     isMember: !!member,
+    identitiesEditable: ownsIdentities(),
   });
 };

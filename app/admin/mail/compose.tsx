@@ -5,6 +5,7 @@ import { Paperclip, X } from "lucide-react";
 import { Editor } from "./editor";
 import { toPlainText } from "./html";
 import { RecipientInput, type Contact } from "./recipient-input";
+import { ask } from "../ask";
 
 export type Draft = {
   to?: string[];
@@ -35,8 +36,23 @@ export function Compose({
   const [files, setFiles] = useState<Upload[]>([]);
   const [uploading, setUploading] = useState(0);
   const [sending, setSending] = useState(false);
+  const [touched, setTouched] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const body = useRef<HTMLDivElement>(null);
+
+  const discard = async () => {
+    if (touched || files.length > 0) {
+      const confirmed = await ask({
+        title: "Discard this message?",
+        detail:
+          "Everything you have written and attached is lost. There is no draft to come back to.",
+        confirmLabel: "Discard",
+        destructive: true,
+      });
+      if (confirmed === null) return;
+    }
+    onClose();
+  };
 
   const attach = async (list: FileList | null) => {
     for (const file of Array.from(list ?? [])) {
@@ -109,15 +125,19 @@ export function Compose({
           <h2 className="text-base font-extrabold text-brand">New message</h2>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => void discard()}
+            disabled={sending}
             aria-label="Close"
-            className="px-2 text-xl leading-none text-subtle hover:text-ink"
+            className="px-2 text-xl leading-none text-subtle hover:text-ink disabled:opacity-50"
           >
             ×
           </button>
         </header>
 
-        <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-5 py-4">
+        <div
+          className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-5 py-4"
+          onInput={() => setTouched(true)}
+        >
           {from && (
             <div className="flex items-center gap-2 px-1 text-sm">
               <span className="font-bold text-subtle">From</span>
@@ -219,8 +239,9 @@ export function Compose({
           <div className="ml-auto flex gap-3">
             <button
               type="button"
-              onClick={onClose}
-              className="rounded-[10px] border-2 border-line px-4 py-2 font-bold text-ink hover:bg-tint"
+              onClick={() => void discard()}
+              disabled={sending}
+              className="rounded-[10px] border-2 border-line px-4 py-2 font-bold text-ink hover:bg-tint disabled:opacity-50"
             >
               Discard
             </button>

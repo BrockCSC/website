@@ -210,6 +210,7 @@ export default function ProfileForm({
         </Button>
         {onCancel && (
           <Button
+            disabled={saving}
             onClick={onCancel}
             size="sm"
             type="button"

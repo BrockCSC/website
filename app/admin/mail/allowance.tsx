@@ -9,6 +9,7 @@ export function Allowance({ refresh }: { refresh: number }) {
   const [wanted, setWanted] = useState("");
   const [reason, setReason] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [asked, setAsked] = useState(false);
 
   const load = useCallback(() => {
     fetch("/api/mail/limit")
@@ -24,14 +25,18 @@ export function Allowance({ refresh }: { refresh: number }) {
   const pending = state.request?.status === "pending";
   const low = state.remaining <= Math.max(5, Math.ceil(state.limit / 10));
 
+  const tooSmall = !(Number(wanted) > state.limit);
+
   const submit = async () => {
     setError(null);
+    setAsked(true);
     const res = await fetch("/api/mail/limit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ requested: Number(wanted), reason }),
     }).catch(() => null);
     const body = (await res?.json().catch(() => ({}))) as { error?: string };
+    setAsked(false);
     if (!res?.ok) {
       setError(body.error ?? "Could not send that request.");
       return;
@@ -81,15 +86,20 @@ export function Allowance({ refresh }: { refresh: number }) {
             <div className="flex gap-2">
               <button
                 type="button"
+                disabled={asked || tooSmall}
+                title={
+                  tooSmall ? `Ask for more than ${state.limit}.` : undefined
+                }
                 onClick={() => void submit()}
-                className="flex-1 rounded-[8px] border-2 border-line bg-brand px-2 py-1 text-xs font-bold text-brand-ink shadow-brut-sm hover:opacity-90"
+                className="flex-1 rounded-[8px] border-2 border-line bg-brand px-2 py-1 text-xs font-bold text-brand-ink shadow-brut-sm hover:opacity-90 disabled:opacity-50"
               >
-                Ask
+                {asked ? "Asking…" : "Ask"}
               </button>
               <button
                 type="button"
+                disabled={asked}
                 onClick={() => setAsking(false)}
-                className="rounded-[8px] border-2 border-line px-2 py-1 text-xs font-bold text-ink hover:bg-tint"
+                className="rounded-[8px] border-2 border-line px-2 py-1 text-xs font-bold text-ink hover:bg-tint disabled:opacity-50"
               >
                 Cancel
               </button>

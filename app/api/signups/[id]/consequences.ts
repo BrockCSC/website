@@ -118,6 +118,7 @@ const mailboxItems = (
   signup: Entity<SignupRecord>,
   address: string,
   provisioned: boolean | null,
+  readOnly: boolean,
 ): Item[] => {
   const username = signup.username!;
   const shielded = isProtectedMailbox(username)
@@ -130,7 +131,13 @@ const mailboxItems = (
       group: "mailbox",
       title: `Make ${address} read-only`,
       detail: "They keep the inbox and everything in it, but cannot send.",
-      blocked: provisioned === false ? "There is no mailbox yet." : shielded,
+      blocked:
+        shielded ??
+        (provisioned === false
+          ? "There is no mailbox yet."
+          : readOnly
+            ? `${address} is already read-only.`
+            : undefined),
       run: () => makeMailboxReadOnly(username),
     },
     {
@@ -139,7 +146,11 @@ const mailboxItems = (
       title: `Provision ${address}`,
       detail:
         "Creates the mailbox if it is missing, lifts any read-only block and approves it for sending.",
-      blocked: shielded,
+      blocked:
+        shielded ??
+        (provisioned && !readOnly
+          ? `${address} already exists and may send.`
+          : undefined),
       run: () =>
         provisionMailbox({
           username,
@@ -207,7 +218,14 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
   return {
     items: [
       ...(held ? roleItems(signup, held, coPresidents) : []),
-      ...(address ? mailboxItems(signup, address, provisioned) : []),
+      ...(address
+        ? mailboxItems(
+            signup,
+            address,
+            provisioned,
+            exec?.isCurrentExec === false,
+          )
+        : []),
       ...tileItems(exec),
     ],
     held,

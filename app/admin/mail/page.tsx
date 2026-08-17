@@ -58,6 +58,9 @@ export default function MailPage() {
   const [found, setFound] = useState<MessageSummary | null>(null);
   const [deletions, setDeletions] = useState<MailDeletionRequest[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ id: string; text: string } | null>(
+    null,
+  );
   const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -247,6 +250,7 @@ export default function MailPage() {
         required: true,
       });
       if (reason === null) return;
+      setNotice(null);
       setBusy(true);
       const res = await fetch(
         `/api/mail/messages/${encodeURIComponent(id)}/purge`,
@@ -263,7 +267,10 @@ export default function MailPage() {
       } | null;
 
       if (!res?.ok) {
-        window.alert(data?.error ?? "Could not ask for that deletion.");
+        setNotice({
+          id,
+          text: data?.error ?? "Could not ask for that deletion.",
+        });
         return;
       }
       if (data?.purged !== undefined) {
@@ -272,7 +279,10 @@ export default function MailPage() {
         void loadMailboxes().catch(() => {});
         return;
       }
-      window.alert("Asked a co-president to approve it. Nothing is gone yet.");
+      setNotice({
+        id,
+        text: "Asked a co-president to approve it. Nothing is gone yet.",
+      });
       void settleDeletions();
     },
     [loadMailboxes, settleDeletions],
@@ -507,6 +517,11 @@ export default function MailPage() {
                 )}
                 onPurge={() => void requestPurge(message.id)}
               />
+              {notice?.id === message.id && (
+                <p className="shrink-0 animate-rise-in border-b-2 border-line bg-tint px-5 py-2 text-sm font-bold text-ink">
+                  {notice.text}
+                </p>
+              )}
               <h2 className="shrink-0 border-b-2 border-line px-5 py-3 text-lg font-extrabold text-brand">
                 {message.subject || "(no subject)"}
               </h2>
@@ -583,6 +598,10 @@ function MessageActions({
   onPurge: () => void;
 }) {
   const flagged = Boolean(message.keywords?.$flagged);
+  const unread = !message.keywords?.$seen;
+  const inArchive = mailboxes.some(
+    (box) => box.role === "archive" && message.mailboxIds?.[box.id],
+  );
 
   return (
     <div className="flex flex-wrap items-center gap-1.5 border-b-2 border-line px-3 py-2.5 md:px-5">
@@ -623,7 +642,8 @@ function MessageActions({
         <button
           type="button"
           aria-label="Mark unread"
-          title="Mark unread"
+          disabled={unread}
+          title={unread ? "Already unread" : "Mark unread"}
           className={ACTION}
           onClick={onUnread}
         >
@@ -649,7 +669,8 @@ function MessageActions({
         </select>
         <button
           type="button"
-          disabled={busy}
+          disabled={busy || inArchive}
+          title={inArchive ? "Already in the archive" : undefined}
           className={ACTION}
           onClick={() => onMove({ to: "archive" })}
         >

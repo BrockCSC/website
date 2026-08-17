@@ -11,6 +11,8 @@ export type SessionUser = {
   isApprover?: boolean;
   /** Current exec or alumnus. False once every role is revoked. */
   isMember?: boolean;
+  /** False outside production, where identity changes are only rehearsed. */
+  identitiesEditable?: boolean;
 };
 
 export type ExecSocialLinks = {

@@ -20,6 +20,7 @@ import {
 } from "@/lib/execs/socials";
 import { academicTerms } from "@/lib/execs/terms";
 import { useSession } from "../session";
+import { ask } from "../ask";
 import { useEffect, useMemo, useState } from "react";
 
 type TeamMember = WithKey<ExecRecord>;
@@ -87,6 +88,7 @@ export default function ProfilePage() {
   const [stepDownNote, setStepDownNote] = useState<string | null>(null);
   const { user, refresh } = useSession();
   const isApprover = !!user?.isApprover;
+  const canStepDown = user?.identitiesEditable !== false;
 
   useEffect(() => {
     void (async () => {
@@ -355,8 +357,16 @@ export default function ProfilePage() {
               </p>
               <div className="flex flex-wrap items-center gap-3">
                 <Button
-                  disabled={steppingDown}
+                  disabled={steppingDown || !canStepDown}
                   onClick={async () => {
+                    const confirmed = await ask({
+                      title: "Step down as co-president?",
+                      detail:
+                        "Your approval rights end immediately and you lose your seat on admin@. Another co-president has to give the role back.",
+                      confirmLabel: "Step down",
+                      destructive: true,
+                    });
+                    if (confirmed === null) return;
                     setSteppingDown(true);
                     setStepDownNote(null);
                     try {
@@ -378,6 +388,12 @@ export default function ProfilePage() {
                 >
                   {steppingDown ? "Stepping down..." : "Step down"}
                 </Button>
+                {!canStepDown && (
+                  <span className="text-sm font-bold text-subtle">
+                    This environment shares the live Keycloak realm, so role
+                    changes are only made from production.
+                  </span>
+                )}
                 {stepDownNote && (
                   <span className="animate-rise-in text-sm font-bold text-destructive">
                     {stepDownNote}
