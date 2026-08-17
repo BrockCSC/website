@@ -415,6 +415,53 @@ export const getMessage = async (
   return message;
 };
 
+export const destroyMessages = async (
+  token: string,
+  ids: string[],
+): Promise<number> => {
+  if (ids.length === 0) return 0;
+  const accountId = await mailAccountId(token);
+  const [res] = (await jmap(token, [
+    ["Email/set", { accountId, destroy: ids }, "d0"],
+  ])) as [{ destroyed?: string[]; notDestroyed?: Record<string, unknown> }];
+
+  if (res.notDestroyed && Object.keys(res.notDestroyed).length > 0) {
+    throw new Error(
+      `Stalwart kept some messages: ${JSON.stringify(res.notDestroyed)}`,
+    );
+  }
+  return res.destroyed?.length ?? 0;
+};
+
+export const purgeTrash = async (
+  token: string,
+  days: number,
+): Promise<number> => {
+  const accountId = await mailAccountId(token);
+  const trash = (await listMailboxes(token)).find(
+    (box) => box.role === "trash",
+  );
+  if (!trash) return 0;
+
+  const before = new Date(Date.now() - days * 86_400_000).toISOString();
+  const [found] = (await jmap(token, [
+    [
+      "Email/query",
+      {
+        accountId,
+        filter: {
+          operator: "AND",
+          conditions: [{ inMailbox: trash.id }, { before }],
+        },
+        limit: 500,
+      },
+      "q0",
+    ],
+  ])) as [{ ids: string[] }];
+
+  return destroyMessages(token, found.ids ?? []);
+};
+
 export const moveMessages = async (
   token: string,
   ids: string[],

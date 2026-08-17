@@ -91,6 +91,13 @@ export default function MailPage() {
       .then((res) => (res.ok ? res.json() : []))
       .then(setContacts)
       .catch(() => setContacts([]));
+
+    fetch("/api/mail/trash", { method: "POST" })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data: { purged: number } | null) => {
+        if (data?.purged) void loadMailboxes().catch(() => {});
+      })
+      .catch(() => {});
   }, [loadMailboxes]);
 
   const load = useCallback(
@@ -186,6 +193,26 @@ export default function MailPage() {
   );
 
   const closePalette = useCallback(() => setPalette(false), []);
+
+  const purge = useCallback(
+    async (id: string) => {
+      if (
+        !window.confirm("Delete this message forever? This cannot be undone.")
+      )
+        return;
+      setBusy(true);
+      const res = await fetch(
+        `/api/mail/messages/${encodeURIComponent(id)}/purge`,
+        { method: "POST" },
+      ).catch(() => null);
+      setBusy(false);
+      if (!res?.ok) return;
+      setSelected(null);
+      setReload((count) => count + 1);
+      void loadMailboxes().catch(() => {});
+    },
+    [loadMailboxes],
+  );
 
   const quoteInto = useCallback((target: MessageSummary, base: Draft) => {
     void buildQuote(target).then((html) => setDraft({ ...base, html }));
@@ -399,6 +426,10 @@ export default function MailPage() {
                   setSelected(null);
                 }}
                 onMove={(to) => void move(message.id, to)}
+                inTrash={
+                  mailboxes.find((box) => box.id === mailbox)?.role === "trash"
+                }
+                onPurge={() => void purge(message.id)}
               />
               <h2 className="shrink-0 border-b-2 border-line px-5 py-3 text-lg font-extrabold text-brand">
                 {message.subject || "(no subject)"}
@@ -471,6 +502,8 @@ function MessageActions({
   onFlag,
   onUnread,
   onMove,
+  inTrash,
+  onPurge,
 }: {
   message: MessageSummary;
   mailboxes: Mailbox[];
@@ -482,6 +515,8 @@ function MessageActions({
   onFlag: (flags: Flags) => void;
   onUnread: () => void;
   onMove: (to: { to?: string; mailboxId?: string }) => void;
+  inTrash: boolean;
+  onPurge: () => void;
 }) {
   const flagged = Boolean(message.keywords?.$flagged);
 
@@ -556,14 +591,25 @@ function MessageActions({
         >
           Archive
         </button>
-        <button
-          type="button"
-          disabled={busy}
-          className={`${ACTION} text-brand`}
-          onClick={() => onMove({ to: "trash" })}
-        >
-          Delete
-        </button>
+        {inTrash ? (
+          <button
+            type="button"
+            disabled={busy}
+            className={`${ACTION} text-destructive`}
+            onClick={onPurge}
+          >
+            Delete forever
+          </button>
+        ) : (
+          <button
+            type="button"
+            disabled={busy}
+            className={`${ACTION} text-brand`}
+            onClick={() => onMove({ to: "trash" })}
+          >
+            Delete
+          </button>
+        )}
       </div>
     </div>
   );
