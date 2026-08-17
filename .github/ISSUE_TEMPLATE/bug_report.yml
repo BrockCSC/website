@@ -1,0 +1,71 @@
+name: Bug report
+description: Something on the site or in the admin portal is broken.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. **Never paste a password, a client secret, an invite code or a
+        confirmation code into an issue** — this repo is public.
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is it?
+      options:
+        - Public site — home / events / team / CS guide / links
+        - Admin portal — menu or ⌘K search
+        - Admin portal — email
+        - Admin portal — analytics
+        - Admin portal — events
+        - Admin portal — users and roles
+        - Admin portal — profile
+        - Sign-up or login
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you saw, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to …
+        2. Click …
+        3. See …
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and device
+      placeholder: Chrome 141 on macOS / Safari on iPhone
+    validations:
+      required: true
+
+  - type: dropdown
+    id: theme
+    attributes:
+      label: Theme
+      options:
+        - Light
+        - Dark
+        - Both
+        - Not relevant
+    validations:
+      required: true
+
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or console errors
+      description: Optional. Redact any email addresses that are not yours.

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 76" width="76" height="76" role="img" aria-label="People and roles">
+  <title>People and roles</title>
+  <style>
+    .approved { animation: pop 2.6s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes pop { 0%, 70%, 100% { transform: scale(1); } 82% { transform: scale(1.18); } }
+    @media (prefers-reduced-motion: reduce) { .approved { animation: none; } }
+  </style>
+  <rect x="10" y="10" width="60" height="60" rx="16" fill="#000000" />
+  <rect x="6" y="6" width="60" height="60" rx="16" fill="#9A4440" stroke="#000000" stroke-width="2.5" />
+  <!-- person behind -->
+  <circle cx="45" cy="27" r="6" fill="none" stroke="#ffffff" stroke-width="2.5" opacity="0.6" />
+  <path d="M35 47 a10 10 0 0 1 20 0" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.6" />
+  <!-- person in front -->
+  <circle cx="29" cy="29" r="8" fill="none" stroke="#ffffff" stroke-width="3" />
+  <path d="M17 52 a12 12 0 0 1 24 0" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" />
+  <!-- approval tick -->
+  <g class="approved">
+    <circle cx="52" cy="50" r="9" fill="#ffd84d" stroke="#000000" stroke-width="2.5" />
+    <path d="M47.5 50 L51 53.5 L57 46.5" fill="none" stroke="#000000" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+</svg>

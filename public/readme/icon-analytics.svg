@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 76" width="76" height="76" role="img" aria-label="Analytics">
+  <title>Analytics</title>
+  <style>
+    .bar { transform-box: fill-box; transform-origin: bottom; animation: grow 2.4s ease-in-out infinite; }
+    .bar-2 { animation-delay: 0.25s; }
+    .bar-3 { animation-delay: 0.5s; }
+    @keyframes grow { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.55); } }
+    @media (prefers-reduced-motion: reduce) { .bar { animation: none; transform: none; } }
+  </style>
+  <rect x="10" y="10" width="60" height="60" rx="16" fill="#000000" />
+  <rect x="6" y="6" width="60" height="60" rx="16" fill="#9A4440" stroke="#000000" stroke-width="2.5" />
+  <!-- axes -->
+  <path d="M19 19 L19 53 L53 53" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+  <!-- bars -->
+  <rect class="bar bar-1" x="25" y="35" width="7" height="16" rx="1.5" fill="#ffffff" />
+  <rect class="bar bar-2" x="36" y="27" width="7" height="24" rx="1.5" fill="#ffd84d" />
+  <rect class="bar bar-3" x="47" y="31" width="7" height="20" rx="1.5" fill="#ffffff" />
+</svg>

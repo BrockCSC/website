@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security issue
+    url: https://discord.com/invite/qsctEK2
+    about: Do not open a public issue. Message a co-president on Discord instead.
+  - name: Ask the club
+    url: https://discord.com/invite/qsctEK2
+    about: Questions about events, joining, or getting an exec account.
+  - name: Contributing guide
+    url: https://github.com/BrockCSC/website/blob/main/CONTRIBUTING.md
+    about: Local setup, architecture, environment variables and the deploy pipeline.

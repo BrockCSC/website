@@ -1,0 +1,36 @@
+name: Feature request
+description: Suggest something the site or the portal should do.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the situation you keep running into, not the solution you have in mind.
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like to happen?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is this for?
+      options:
+        - Anyone visiting brockcsc.ca
+        - Club members
+        - The exec team
+        - Co-presidents only
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Anything you have already tried or considered
+      description: Optional.

@@ -3,21 +3,17 @@
 
   <style>
     /* CSS animation rather than SMIL: SMIL cannot be switched off by a media
-       query, and this banner has to sit still for prefers-reduced-motion. */
-    .reveal { animation: reveal 1.9s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both; }
-    .caret  { animation: caret 1.9s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both,
-                         blink 1s step-end 2.3s infinite; }
-    .badge  { animation: bob 3.2s ease-in-out infinite; }
+       query, and this banner has to sit still for prefers-reduced-motion.
+       Every animated part is an accent whose resting state is invisible or
+       neutral, so nothing here is load-bearing if animation never runs. */
+    .caret { opacity: 0; animation: caret 2.2s cubic-bezier(0.4, 0, 0.2, 1) 0.3s; }
+    .badge { animation: bob 3.2s ease-in-out infinite; }
 
-    @keyframes reveal { from { transform: translateX(-392px); } to { transform: translateX(0); } }
-    @keyframes caret  { from { transform: translateX(0); }      to { transform: translateX(372px); } }
-    @keyframes blink  { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
-    @keyframes bob    { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+    @keyframes caret { 0% { transform: translateX(0); opacity: 1; } 86% { opacity: 1; } 100% { transform: translateX(366px); opacity: 0; } }
+    @keyframes bob   { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
     @media (prefers-reduced-motion: reduce) {
-      .reveal { animation: none; transform: translateX(0); }
-      .caret  { animation: none; opacity: 0; }
-      .badge  { animation: none; }
+      .caret, .badge { animation: none; }
     }
   </style>
 
@@ -41,28 +37,23 @@
   </g>
 
   <!-- wordmark -->
-  <text x="48" y="150" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="66" font-weight="900" letter-spacing="-1" fill="#111111">BROCK</text>
-  <text x="300" y="150" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="66" font-weight="900" letter-spacing="-1" fill="#9A4440">CSC</text>
-  <rect x="300" y="159" width="134" height="9" rx="1" fill="#9A4440" />
+  <text x="48" y="146" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="66" font-weight="900" letter-spacing="-1" fill="#111111">BROCK</text>
+  <text x="300" y="146" font-family="'Arial Black', 'Helvetica Neue', Arial, sans-serif" font-size="66" font-weight="900" letter-spacing="-1" fill="#9A4440">CSC</text>
+  <rect x="300" y="155" width="134" height="9" rx="1" fill="#9A4440" />
 
-  <!-- tagline: typewriter reveal via a sliding clip, with a caret that runs ahead of it -->
-  <clipPath id="typewriter">
-    <rect class="reveal" x="44" y="178" width="392" height="42" />
-  </clipPath>
-  <g clip-path="url(#typewriter)">
-    <text x="48" y="206" font-family="'Courier New', ui-monospace, monospace" font-size="28" font-weight="700" fill="#333333">Code. Connect. Create.</text>
-  </g>
-  <rect class="caret" x="48" y="180" width="4" height="34" fill="#9A4440" />
+  <!-- tagline, with a caret that types its way across it once and then clears -->
+  <text x="48" y="196" font-family="'Courier New', ui-monospace, monospace" font-size="27" font-weight="700" fill="#333333">Code. Connect. Create.</text>
+  <rect class="caret" x="48" y="172" width="4" height="30" fill="#9A4440" />
 
   <!-- what lives in this one repo -->
   <g font-family="'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="700" letter-spacing="1.5" fill="#9A4440">
-    <rect x="48"  y="228" width="132" height="28" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
-    <text x="114" y="246" text-anchor="middle">PUBLIC SITE</text>
+    <rect x="48"  y="214" width="132" height="28" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+    <text x="114" y="232" text-anchor="middle">PUBLIC SITE</text>
 
-    <rect x="192" y="228" width="146" height="28" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
-    <text x="265" y="246" text-anchor="middle">ADMIN PORTAL</text>
+    <rect x="192" y="214" width="146" height="28" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+    <text x="265" y="232" text-anchor="middle">ADMIN PORTAL</text>
 
-    <rect x="350" y="228" width="146" height="28" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
-    <text x="423" y="246" text-anchor="middle">CLUB WEBMAIL</text>
+    <rect x="350" y="214" width="146" height="28" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+    <text x="423" y="232" text-anchor="middle">CLUB WEBMAIL</text>
   </g>
 </svg>
