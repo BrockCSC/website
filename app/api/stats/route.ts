@@ -67,7 +67,7 @@ const topPaths = async (fromMs: number) => {
 };
 
 const viewsByDay = async (fromMs: number): Promise<Map<string, number>> => {
-  const day = sql<string>`to_char(${pageViewsTable.createdAt} AT TIME ZONE ${CLUB_TZ}::text, 'YYYY-MM-DD')`;
+  const day = sql<string>`to_char("page_views"."created_at" AT TIME ZONE ${CLUB_TZ}::text, 'YYYY-MM-DD')`;
   const rows = await db
     .select({ day, views: count() })
     .from(pageViewsTable)
