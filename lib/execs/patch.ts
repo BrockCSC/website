@@ -20,6 +20,7 @@ export const asBool = (value: unknown) =>
  */
 export const cleanExec = (
   body: ExecRecord,
+  currentImageUrl?: string,
 ): { error: string } | { patch: Partial<ExecRecord> } => {
   if (
     !isText(body.name) ||
@@ -39,7 +40,9 @@ export const cleanExec = (
   }
 
   const url = body.image?.url?.trim() ?? "";
-  if (url && !UPLOAD_URL.test(url)) {
+  // Tiles that predate uploads still hold a remote URL. Keeping one is fine -
+  // it is already on the team page; introducing a new one is what this stops.
+  if (url && url !== currentImageUrl && !UPLOAD_URL.test(url)) {
     return { error: "Photos must be uploaded here rather than linked." };
   }
   const position = body.image?.position ?? "";

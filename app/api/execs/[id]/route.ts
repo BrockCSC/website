@@ -33,11 +33,11 @@ export const PATCH = async (
   const { id } = await params;
   const body = await jsonObject<ExecRecord>(req);
   if (!body) return badJson();
-  const cleaned = cleanExec(body);
+  const before = await findById<ExecRecord>(execsTable, id);
+  const cleaned = cleanExec(body, before?.image?.url);
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
-  const before = await findById<ExecRecord>(execsTable, id);
   const stillCurrent = asBool(body.isCurrentExec);
 
   const entity = await update<ExecRecord>(execsTable, id, {
