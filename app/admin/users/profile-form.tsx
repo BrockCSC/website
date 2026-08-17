@@ -14,6 +14,7 @@ import {
 import { academicTerms } from "@/lib/execs/terms";
 import { ACTIVE_TITLES, isDeprecatedTitle } from "@/lib/execs/titles";
 import { createTile, updateTile, type Exec } from "./api";
+import { ApiError } from "@/lib/api/client";
 import { Label, field } from "./ui";
 
 export default function ProfileForm({
@@ -71,8 +72,11 @@ export default function ProfileForm({
           ? await updateTile(exec.$key, body)
           : await createTile({ ...body, isCurrentExec: true }),
       );
-    } catch {
-      setError("Could not save this profile. Try again in a moment.");
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not save this profile. Try again in a moment.",
+      );
     } finally {
       setSaving(false);
     }

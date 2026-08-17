@@ -23,6 +23,7 @@ import { useSession } from "../session";
 import { Panel, fieldOn, labelClass, type PanelProps } from "../users/ui";
 import { ask } from "../ask";
 import { useEffect, useMemo, useState } from "react";
+import { ApiError } from "@/lib/api/client";
 
 type TeamMember = WithKey<ExecRecord>;
 
@@ -117,8 +118,11 @@ export default function ProfilePage() {
         socials,
       });
       setSaved(form);
-    } catch {
-      setError("Couldn't save. Try again in a moment.");
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Couldn't save. Try again in a moment.",
+      );
     } finally {
       setSaving(false);
     }

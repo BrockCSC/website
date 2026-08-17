@@ -1,8 +1,10 @@
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  detail?: string;
+  constructor(status: number, message: string, detail?: string) {
     super(message);
     this.status = status;
+    this.detail = detail;
   }
 }
 
@@ -17,9 +19,13 @@ export const apiFetch = async <T>(
   });
 
   if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as {
+      error?: unknown;
+    } | null;
     throw new ApiError(
       response.status,
       `${init.method ?? "GET"} ${path} failed`,
+      typeof body?.error === "string" ? body.error : undefined,
     );
   }
 

@@ -6,6 +6,8 @@ export const UPLOAD_ROOT = process.env.UPLOAD_DIR ?? "/data/uploads";
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
+export const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
+
 const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/jpeg": ".jpg",
   "image/png": ".png",
@@ -13,8 +15,6 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/gif": ".gif",
   "image/avif": ".avif",
 };
-
-export const isAllowedImageType = (type: string) => type in EXTENSION_BY_TYPE;
 
 const extensionForType = (type: string) => EXTENSION_BY_TYPE[type] ?? "";
 
