@@ -6,6 +6,9 @@ export const UPLOAD_ROOT = process.env.UPLOAD_DIR ?? "/data/uploads";
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
+/** What we accept in order to convert it; only the result has to be small. */
+export const MAX_SOURCE_BYTES = 25 * 1024 * 1024;
+
 const EXTENSION_BY_TYPE: Record<string, string> = {
   "image/jpeg": ".jpg",
   "image/png": ".png",

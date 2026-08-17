@@ -23,7 +23,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   output: "standalone",
   agentRules: false,
-  serverExternalPackages: ["pg", "drizzle-orm"],
+  serverExternalPackages: ["pg", "drizzle-orm", "sharp", "heic-decode"],
   headers: async () => [{ source: "/:path*", headers: securityHeaders }],
 };
 

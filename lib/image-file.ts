@@ -35,11 +35,13 @@ const encode = (canvas: HTMLCanvasElement, quality: number) =>
 export const toUploadableImage = async (file: File): Promise<File> => {
   if (ACCEPTED.has(file.type) && file.size <= MAX_BYTES) return file;
 
+  // Anything this browser cannot decode - a HEIC outside Safari, say - goes up
+  // untouched for the server to convert instead.
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    throw new Error("That file is not an image this browser can read.");
+    return file;
   }
 
   const canvas = draw(bitmap);
@@ -51,5 +53,5 @@ export const toUploadableImage = async (file: File): Promise<File> => {
       return new File([blob], "upload.webp", { type: OUTPUT });
     }
   }
-  throw new Error("That image is too detailed to shrink. Try another.");
+  return file;
 };
