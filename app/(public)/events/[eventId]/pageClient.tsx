@@ -2,13 +2,14 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
+import { CalendarPlus, ChevronLeft, Link2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { fetchEventById, type EventRecord, type WithKey } from "@/lib/api";
+import { downloadEventIcs } from "@/lib/events/ics";
 import {
   formatEventDateLabel,
   formatEventTimeLabel,
@@ -20,6 +21,7 @@ import {
 type EventItem = WithKey<EventRecord>;
 
 const EMPTY_IMAGE = "/logo-black.svg";
+const NOT_FOUND_MESSAGE = "Event not found.";
 
 const getAction = (
   event: EventItem,
@@ -48,6 +50,8 @@ export default function EventDetailPageClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [now] = useState(() => Date.now());
+  const [reloadCount, setReloadCount] = useState(0);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -61,7 +65,7 @@ export default function EventDetailPageClient() {
           return;
         }
         if (!data) {
-          setError("Event not found.");
+          setError(NOT_FOUND_MESSAGE);
           setEvent(null);
           return;
         }
@@ -85,24 +89,35 @@ export default function EventDetailPageClient() {
     return () => {
       active = false;
     };
-  }, [eventId]);
+  }, [eventId, reloadCount]);
 
   const recurrenceLabel = useMemo(
     () => (event ? getRecurrenceLabel(event) : null),
     [event],
   );
-  const isPastEvent = useMemo(() => {
-    if (!event) {
-      return false;
-    }
-
-    const timing = getEventTiming(event, now);
-    return !timing.isOngoing && timing.nextStartTimestamp === null;
-  }, [event, now]);
+  const timing = useMemo(
+    () => (event ? getEventTiming(event, now) : null),
+    [event, now],
+  );
+  const isPastEvent = timing
+    ? !timing.isOngoing && timing.nextStartTimestamp === null
+    : false;
   const eventStartTimestamp = useMemo(
     () => (event ? getEventStartTimestamp(event) : null),
     [event],
   );
+  const calendarStartTimestamp =
+    timing?.nextStartTimestamp ?? eventStartTimestamp;
+
+  const copyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setLinkCopied(false);
+    }
+  };
   const action = useMemo(
     () => (event ? getAction(event, isPastEvent) : null),
     [event, isPastEvent],
@@ -153,8 +168,46 @@ export default function EventDetailPageClient() {
           </Link>
         </Button>
 
-        {loading && <p className="mt-4 text-subtle">Loading event...</p>}
-        {error && <p className="mt-4 text-subtle">{error}</p>}
+        {loading && (
+          <div
+            aria-busy="true"
+            aria-label="Loading event"
+            className="mt-4 grid items-start gap-8 min-[901px]:grid-cols-[320px_1fr]"
+            role="status"
+          >
+            <div className="mx-auto aspect-[3/4] w-full max-w-[320px] animate-pulse rounded-[18px] border-2 border-line bg-raised min-[901px]:max-w-none" />
+            <div className="space-y-4">
+              <div className="h-10 w-3/4 animate-pulse rounded-[10px] bg-raised" />
+              <div className="h-20 animate-pulse rounded-[10px] bg-raised" />
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
+                {[0, 1, 2, 3].map((index) => (
+                  <div
+                    className="h-20 animate-pulse rounded-[10px] bg-raised"
+                    key={index}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+        {error && (
+          <div className="mt-6 rounded-[16px] border-2 border-dashed border-line/25 px-4 py-8 text-center">
+            <p className="m-0 text-subtle">{error}</p>
+            <div className="mt-4 flex flex-wrap justify-center gap-3">
+              {error !== NOT_FOUND_MESSAGE && (
+                <Button
+                  onClick={() => setReloadCount((count) => count + 1)}
+                  variant="outline"
+                >
+                  Try again
+                </Button>
+              )}
+              <Button asChild variant="primary">
+                <Link href="/events">Browse all events</Link>
+              </Button>
+            </div>
+          </div>
+        )}
 
         {!loading && !error && event && (
           <section className="mt-4 grid items-start gap-8 min-[901px]:grid-cols-[320px_1fr]">
@@ -189,7 +242,7 @@ export default function EventDetailPageClient() {
                 {event.title ?? "Untitled Event"}
               </h1>
 
-              <p className="mt-4 hidden max-w-[62ch] border-l-4 border-line/25 pl-4 leading-[1.55] text-subtle min-[641px]:block">
+              <p className="mt-4 max-w-[62ch] border-l-4 border-line/25 pl-4 leading-[1.55] text-subtle">
                 {event.description ?? "More details coming soon."}
               </p>
 
@@ -206,8 +259,8 @@ export default function EventDetailPageClient() {
                 ))}
               </div>
 
-              {action ? (
-                <div className="mt-6">
+              <div className="mt-6 flex flex-wrap gap-3">
+                {action ? (
                   <Button
                     asChild
                     className="max-w-full"
@@ -222,11 +275,9 @@ export default function EventDetailPageClient() {
                       {action.label}
                     </Link>
                   </Button>
-                </div>
-              ) : null}
+                ) : null}
 
-              {isPastEvent && !action && hasRegistrationLink ? (
-                <div className="mt-6">
+                {isPastEvent && !action && hasRegistrationLink ? (
                   <Button
                     className="max-w-full"
                     disabled
@@ -235,8 +286,25 @@ export default function EventDetailPageClient() {
                   >
                     Event Ended
                   </Button>
-                </div>
-              ) : null}
+                ) : null}
+
+                {!isPastEvent && calendarStartTimestamp !== null ? (
+                  <Button
+                    onClick={() =>
+                      downloadEventIcs(event, calendarStartTimestamp)
+                    }
+                    variant={action ? "outline" : "primary"}
+                  >
+                    <CalendarPlus aria-hidden="true" />
+                    Add to Calendar
+                  </Button>
+                ) : null}
+
+                <Button onClick={copyLink} variant="outline">
+                  <Link2 aria-hidden="true" />
+                  {linkCopied ? "Link copied" : "Copy link"}
+                </Button>
+              </div>
 
               <p className="mt-4 text-center text-[0.88rem] text-subtle">
                 Questions?{" "}

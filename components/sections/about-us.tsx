@@ -60,9 +60,9 @@ export function AboutUsSection() {
             />
             <InfoCardButton
               icon={FileText}
-              title="Club Charter"
-              subtitle="Read our constitution"
-              href="#"
+              title="CS Student Guide"
+              subtitle="Courses, programs and advice"
+              href="/cs-guide"
             />
           </div>
         </div>

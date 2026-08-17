@@ -71,11 +71,29 @@ export function UpcomingEventsSection() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div
+          aria-busy={loadingEvents}
+          className="grid grid-cols-1 md:grid-cols-2 gap-8"
+        >
           {loadingEvents ? (
-            <div className="col-span-1 md:col-span-2 py-12 text-center text-subtle font-bold">
-              Loading events...
-            </div>
+            <>
+              <span className="sr-only">Loading events</span>
+              {[0, 1].map((key) => (
+                <div
+                  key={key}
+                  aria-hidden="true"
+                  className="w-full animate-pulse rounded-[24px] border-2 border-line bg-surface p-2 shadow-[4px_4px_0_0_var(--brand)]"
+                >
+                  <div className="aspect-[4/3] w-full rounded-[16px] border-2 border-line bg-tint sm:aspect-video" />
+                  <div className="flex flex-col gap-4 p-4 pt-5">
+                    <div className="h-7 w-2/3 rounded-[6px] bg-tint" />
+                    <div className="h-4 w-full rounded-[6px] bg-tint" />
+                    <div className="h-4 w-5/6 rounded-[6px] bg-tint" />
+                    <div className="mt-2 h-12 w-full rounded-[14px] bg-tint" />
+                  </div>
+                </div>
+              ))}
+            </>
           ) : events.length > 0 ? (
             events.map((event) => {
               const ts = getEventStartTimestamp(event);

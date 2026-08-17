@@ -10,12 +10,12 @@ const socials = [
 
 export default function Footer() {
   return (
-    <div className="flex flex-col items-center justify-around gap-4 bg-slab p-8 text-slab-ink shadow-[0_-4px_0_0_var(--brand)] sm:flex-row sm:p-12">
-      <Link href="/">
-        <Image src={logo} alt="Brock CSC Logo" width={80} height={80} />
+    <footer className="flex flex-col items-center justify-around gap-4 bg-slab p-8 text-slab-ink shadow-[0_-4px_0_0_var(--brand)] [&_a:focus-visible]:outline-slab-brand sm:flex-row sm:p-12">
+      <Link href="/" aria-label="BrockCSC home">
+        <Image src={logo} alt="" width={80} height={80} />
       </Link>
       <div className="flex flex-col gap-1 text-center sm:text-left">
-        <h1 className="text-xl font-extrabold text-slab-brand">BROCK CSC</h1>
+        <p className="text-xl font-extrabold text-slab-brand">BROCK CSC</p>
         <p className="text-sm text-slab-ink/70">
           © {new Date().getFullYear()} Brock Computer Science - All Rights
           Reserved
@@ -34,6 +34,6 @@ export default function Footer() {
           </Link>
         ))}
       </div>
-    </div>
+    </footer>
   );
 }

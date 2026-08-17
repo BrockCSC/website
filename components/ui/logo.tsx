@@ -7,7 +7,7 @@ export function Logo() {
       <div className="flex items-center justify-center w-10 h-10 bg-[#9A4440] border-[2px] border-line rounded-[5px] shadow-brut-sm">
         <Image
           src="/logo-light.svg"
-          alt="Badger Logo"
+          alt=""
           width={36}
           height={34}
           className="object-contain"

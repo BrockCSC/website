@@ -1,18 +1,37 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { login } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
 
 const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none";
+
+/** Never says whether the account exists: only a caller who already passed the
+ * password check can reach 403, and everyone else gets the same sentence. */
+const reason = (err: unknown): string => {
+  const status = err instanceof ApiError ? err.status : 0;
+  if (status === 429) {
+    return "Too many attempts from here. Wait a few minutes, then try again.";
+  }
+  if (status === 403) {
+    return "Those details are right, but this account cannot use the admin area. Ask a co-president to restore your access.";
+  }
+  return "We could not sign you in. Check your username and password. If you have just requested an account, you cannot sign in until a co-president approves it.";
+};
 
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
+  useEffect(() => {
+    if (error) errorRef.current?.focus();
+  }, [error]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,8 +40,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
     try {
       await login(username, password);
       onSuccess();
-    } catch {
-      setError("Invalid username or password");
+    } catch (err) {
+      setError(reason(err));
     } finally {
       setSubmitting(false);
     }
@@ -47,6 +66,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             Username
           </label>
           <input
+            aria-invalid={error ? true : undefined}
+            autoComplete="username"
             autoFocus
             className={field}
             id="username"
@@ -62,6 +83,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             Password
           </label>
           <input
+            aria-invalid={error ? true : undefined}
+            autoComplete="current-password"
             className={field}
             id="password"
             onChange={(e) => setPassword(e.target.value)}
@@ -71,7 +94,14 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
           />
 
           {error && (
-            <p className="mt-4 text-sm font-bold text-destructive">{error}</p>
+            <p
+              className="mt-4 rounded-[10px] border-2 border-destructive p-3 text-sm font-bold text-destructive"
+              ref={errorRef}
+              role="alert"
+              tabIndex={-1}
+            >
+              {error}
+            </p>
           )}
 
           <Button className="mt-6 w-full" disabled={submitting} type="submit">

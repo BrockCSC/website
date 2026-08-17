@@ -374,6 +374,9 @@ export const getEventStartTimestamp = (event: EventRecord): number | null => {
   return getBaseStartTimestamp(schedule);
 };
 
+export const getEventDurationMs = (event: EventRecord): number | null =>
+  event.schedule ? getSessionDurationMs(event.schedule) : null;
+
 export const getRecurringScheduleText = (event: EventRecord): string | null => {
   const schedule = event.schedule;
   if (!schedule) {

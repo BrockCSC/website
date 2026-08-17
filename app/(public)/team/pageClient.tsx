@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { Search } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { useRevealedGroups } from "@/lib/use-revealed-groups";
 
@@ -52,11 +54,18 @@ const groupPreviousExecsByTerm = (
   );
 };
 
+const matchesQuery = (member: TeamMember, query: string): boolean =>
+  [member.name, member.title, member.term, member.description].some((field) =>
+    field?.toLowerCase().includes(query),
+  );
+
 export default function TeamPageClient() {
   const [currentExecs, setCurrentExecs] = useState<TeamMember[]>([]);
   const [previousExecs, setPreviousExecs] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [query, setQuery] = useState("");
+  const [reloadCount, setReloadCount] = useState(0);
 
   useEffect(() => {
     let active = true;
@@ -98,21 +107,50 @@ export default function TeamPageClient() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadCount]);
 
-  const hasCurrentExecs = currentExecs.length > 0;
-  const hasPreviousExecs = previousExecs.length > 0;
+  const normalizedQuery = query.trim().toLowerCase();
+  const isSearching = normalizedQuery.length > 0;
+  const visibleCurrentExecs = useMemo(
+    () =>
+      normalizedQuery
+        ? currentExecs.filter((member) => matchesQuery(member, normalizedQuery))
+        : currentExecs,
+    [currentExecs, normalizedQuery],
+  );
+  const visiblePreviousExecs = useMemo(
+    () =>
+      normalizedQuery
+        ? previousExecs.filter((member) =>
+            matchesQuery(member, normalizedQuery),
+          )
+        : previousExecs,
+    [previousExecs, normalizedQuery],
+  );
+  const hasCurrentExecs = visibleCurrentExecs.length > 0;
+  const hasPreviousExecs = visiblePreviousExecs.length > 0;
   const previousExecGroups = useMemo(
     () =>
-      groupPreviousExecsByTerm(previousExecs).map((group) => ({
+      groupPreviousExecsByTerm(visiblePreviousExecs).map((group) => ({
         ...group,
         items: group.members,
       })),
-    [previousExecs],
+    [visiblePreviousExecs],
   );
-  const alumni = useRevealedGroups(previousExecGroups);
+  const alumni = useRevealedGroups(previousExecGroups, 10, isSearching);
+  const totalPeople = currentExecs.length + previousExecs.length;
+  const matchCount = visibleCurrentExecs.length + visiblePreviousExecs.length;
   const errorMessage = error ? (
-    <p className="mb-4 text-subtle">{error}</p>
+    <div className="mb-4 flex flex-wrap items-center gap-3">
+      <p className="m-0 text-subtle">{error}</p>
+      <Button
+        onClick={() => setReloadCount((count) => count + 1)}
+        size="sm"
+        variant="outline"
+      >
+        Try again
+      </Button>
+    </div>
   ) : null;
 
   return (
@@ -127,7 +165,55 @@ export default function TeamPageClient() {
         </p>
       </section>
 
-      <section className="mt-4 rounded-[16px] bg-surface px-0 py-4 sm:px-4">
+      {!loading && !error && totalPeople > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle"
+            />
+            <input
+              aria-label="Search team members"
+              className="w-full rounded-[10px] border-2 border-line bg-surface py-2 pr-3 pl-9 text-ink"
+              onChange={(changeEvent) => setQuery(changeEvent.target.value)}
+              placeholder="Search by name, role or term"
+              type="search"
+              value={query}
+            />
+          </div>
+          {isSearching && (
+            <>
+              <span aria-live="polite" className="text-sm text-subtle">
+                {matchCount} of {totalPeople} people
+              </span>
+              <Button onClick={() => setQuery("")} size="sm" variant="outline">
+                Clear
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {isSearching && matchCount === 0 && (
+        <section className="mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
+          <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
+            Nobody matches &ldquo;{query.trim()}&rdquo;
+          </h2>
+          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
+            Try a first name on its own, a role like &ldquo;President&rdquo;, or
+            a term like &ldquo;2019&rdquo;.
+          </p>
+          <Button onClick={() => setQuery("")} variant="primary">
+            Clear search
+          </Button>
+        </section>
+      )}
+
+      <section
+        className={`mt-4 rounded-[16px] bg-surface px-0 py-4 sm:px-4 ${
+          isSearching && !hasCurrentExecs ? "hidden" : ""
+        }`}
+      >
         <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
           Current Executives
         </h2>
@@ -136,21 +222,39 @@ export default function TeamPageClient() {
         </p>
 
         {errorMessage}
-        {loading && <p className="mb-4 text-subtle">Loading current team...</p>}
-        {!loading && !error && !hasCurrentExecs && (
+        {loading && (
+          <div
+            aria-busy="true"
+            aria-label="Loading current team"
+            className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+            role="status"
+          >
+            {[0, 1, 2, 3].map((index) => (
+              <div
+                className="h-64 animate-pulse rounded-[16px] border-2 border-line/25 bg-raised"
+                key={index}
+              />
+            ))}
+          </div>
+        )}
+        {!loading && !error && !hasCurrentExecs && !isSearching && (
           <p className="mb-4 text-subtle">No current team members found.</p>
         )}
 
         {hasCurrentExecs && (
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            {currentExecs.map((member) => (
+            {visibleCurrentExecs.map((member) => (
               <TeamMemberCard key={member.$key} member={member} />
             ))}
           </div>
         )}
       </section>
 
-      <section className="mt-3 bg-surface px-0 py-5 sm:px-4">
+      <section
+        className={`mt-3 bg-surface px-0 py-5 sm:px-4 ${
+          error || (isSearching && !hasPreviousExecs) ? "hidden" : ""
+        }`}
+      >
         <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
           Club Alumni
         </h2>
@@ -158,9 +262,8 @@ export default function TeamPageClient() {
           Past executives who helped shape the club.
         </p>
 
-        {errorMessage}
         {loading && <p className="mb-4 text-subtle">Loading alumni...</p>}
-        {!loading && !error && !hasPreviousExecs && (
+        {!loading && !error && !hasPreviousExecs && !isSearching && (
           <p className="mb-4 text-subtle">No alumni records found.</p>
         )}
 
@@ -188,9 +291,9 @@ export default function TeamPageClient() {
                 <Button onClick={alumni.revealMore} variant="outline">
                   Show earlier executives
                 </Button>
-                <span className="text-sm text-subtle">
-                  {alumni.hidden} more
-                </span>
+                <Button onClick={alumni.revealAll} size="sm" variant="ghost">
+                  Show all {alumni.hidden}
+                </Button>
               </div>
             )}
           </div>

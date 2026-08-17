@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { useRevealedGroups } from "@/lib/use-revealed-groups";
@@ -37,11 +38,22 @@ const getPastTermLabel = (event: EventItem): string => {
   return `Spring/Summer ${year}`;
 };
 
-export default function EventsPageClient() {
+const matchesQuery = (event: EventItem, query: string): boolean =>
+  [event.title, event.description, event.presenter, event.location].some(
+    (field) => field?.toLowerCase().includes(query),
+  );
+
+export default function EventsPageClient({
+  initialQuery,
+}: {
+  initialQuery: string;
+}) {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [nowTimestamp, setNowTimestamp] = useState(() => Date.now());
+  const [query, setQuery] = useState(initialQuery);
+  const [reloadCount, setReloadCount] = useState(0);
   const hasRestoredScrollRef = useRef(false);
 
   useEffect(() => {
@@ -53,6 +65,18 @@ export default function EventsPageClient() {
       window.clearInterval(intervalId);
     };
   }, []);
+
+  const updateQuery = (value: string) => {
+    setQuery(value);
+    const trimmed = value.trim();
+    window.history.replaceState(
+      null,
+      "",
+      trimmed
+        ? `${window.location.pathname}?q=${encodeURIComponent(trimmed)}`
+        : window.location.pathname,
+    );
+  };
 
   useEffect(() => {
     let active = true;
@@ -82,7 +106,7 @@ export default function EventsPageClient() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [reloadCount]);
 
   useEffect(() => {
     if (loading || hasRestoredScrollRef.current) {
@@ -106,10 +130,20 @@ export default function EventsPageClient() {
     });
   }, [loading]);
 
+  const normalizedQuery = query.trim().toLowerCase();
+  const isSearching = normalizedQuery.length > 0;
+
   const { ongoing, upcoming, past } = useMemo(
-    () => classifyEventsByTiming(events, nowTimestamp),
-    [events, nowTimestamp],
+    () =>
+      classifyEventsByTiming(
+        normalizedQuery
+          ? events.filter((event) => matchesQuery(event, normalizedQuery))
+          : events,
+        nowTimestamp,
+      ),
+    [events, normalizedQuery, nowTimestamp],
   );
+  const matchCount = ongoing.length + upcoming.length + past.length;
 
   const pastGroups = useMemo(() => {
     const groups = new Map<string, EventItem[]>();
@@ -131,7 +165,7 @@ export default function EventsPageClient() {
     }));
   }, [past]);
 
-  const archive = useRevealedGroups(pastGroups);
+  const archive = useRevealedGroups(pastGroups, 10, isSearching);
 
   return (
     <main className="min-h-screen bg-surface pb-10">
@@ -144,6 +178,53 @@ export default function EventsPageClient() {
           what&apos;s happening in the Brock CS community.
         </p>
       </section>
+
+      {!loading && !error && events.length > 0 && (
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="relative min-w-[220px] flex-1">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-subtle"
+            />
+            <input
+              aria-label="Search events"
+              className="w-full rounded-[10px] border-2 border-line bg-surface py-2 pr-3 pl-9 text-ink"
+              onChange={(changeEvent) => updateQuery(changeEvent.target.value)}
+              placeholder="Search by title, presenter or location"
+              type="search"
+              value={query}
+            />
+          </div>
+          {isSearching && (
+            <>
+              <span aria-live="polite" className="text-sm text-subtle">
+                {matchCount} of {events.length} events
+              </span>
+              <Button
+                onClick={() => updateQuery("")}
+                size="sm"
+                variant="outline"
+              >
+                Clear
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
+      {isSearching && matchCount === 0 && (
+        <section className="mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
+          <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
+            No events match &ldquo;{query.trim()}&rdquo;
+          </h2>
+          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
+            Try a shorter search, or browse everything we&apos;ve hosted.
+          </p>
+          <Button onClick={() => updateQuery("")} variant="primary">
+            Clear search
+          </Button>
+        </section>
+      )}
 
       {ongoing.length > 0 && (
         <section className="mt-3 rounded-[16px] bg-linear-to-b from-brand/10 to-brand/5 px-3 py-3.5 sm:px-4">
@@ -166,25 +247,29 @@ export default function EventsPageClient() {
         </section>
       )}
 
-      {!loading && !error && ongoing.length === 0 && upcoming.length === 0 && (
-        <section className="mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
-          <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
-            Nothing on the calendar right now
-          </h2>
-          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
-            We run workshops, socials and talks through the school year. Join
-            the Discord and you&apos;ll hear about the next one first.
-          </p>
-          <a
-            className="inline-flex items-center gap-2 rounded-[16px] border-2 border-line bg-brand px-4 py-2.5 text-sm font-semibold text-brand-ink shadow-brut-sm"
-            href="https://discord.gg/dsxEASYgRd"
-            rel="noreferrer"
-            target="_blank"
-          >
-            Join the Discord
-          </a>
-        </section>
-      )}
+      {!loading &&
+        !error &&
+        !isSearching &&
+        ongoing.length === 0 &&
+        upcoming.length === 0 && (
+          <section className="mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
+            <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
+              Nothing on the calendar right now
+            </h2>
+            <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
+              We run workshops, socials and talks through the school year. Join
+              the Discord and you&apos;ll hear about the next one first.
+            </p>
+            <a
+              className="inline-flex items-center gap-2 rounded-[16px] border-2 border-line bg-brand px-4 py-2.5 text-sm font-semibold text-brand-ink shadow-brut-sm"
+              href="https://discord.gg/dsxEASYgRd"
+              rel="noreferrer"
+              target="_blank"
+            >
+              Join the Discord
+            </a>
+          </section>
+        )}
 
       {upcoming.length > 0 && (
         <section className="mt-3 rounded-[16px] bg-surface px-0 py-4 sm:px-4">
@@ -208,7 +293,11 @@ export default function EventsPageClient() {
         </section>
       )}
 
-      <section className="mt-3 rounded-[16px] bg-surface px-0 py-4 sm:px-4">
+      <section
+        className={`mt-3 rounded-[16px] bg-surface px-0 py-4 sm:px-4 ${
+          isSearching && pastGroups.length === 0 ? "hidden" : ""
+        }`}
+      >
         <h2 className="m-0 mb-3 font-semibold text-[1.75rem] leading-[1.1]">
           Past Events
         </h2>
@@ -216,8 +305,34 @@ export default function EventsPageClient() {
           What we&apos;ve hosted.
         </p>
 
-        {error && <p className="mb-4 text-subtle">{error}</p>}
-        {loading && <p className="mb-4 text-subtle">Loading past events...</p>}
+        {error && (
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <p className="m-0 text-subtle">{error}</p>
+            <Button
+              onClick={() => setReloadCount((count) => count + 1)}
+              size="sm"
+              variant="outline"
+            >
+              Try again
+            </Button>
+          </div>
+        )}
+        {loading && (
+          <div
+            aria-label="Loading past events"
+            aria-busy="true"
+            className="mb-4 grid grid-cols-3 gap-3 max-[980px]:grid-cols-2 max-[700px]:grid-cols-1"
+            role="status"
+          >
+            {[0, 1, 2].map((index) => (
+              <div
+                aria-hidden="true"
+                className="h-64 animate-pulse rounded-2xl border border-line/25 bg-raised"
+                key={index}
+              />
+            ))}
+          </div>
+        )}
         {!loading && !error && pastGroups.length === 0 && (
           <p className="mb-4 text-subtle">No past events found.</p>
         )}
@@ -245,7 +360,9 @@ export default function EventsPageClient() {
               <Button onClick={archive.revealMore} variant="outline">
                 Show earlier events
               </Button>
-              <span className="text-sm text-subtle">{archive.hidden} more</span>
+              <Button onClick={archive.revealAll} size="sm" variant="ghost">
+                Show all {archive.hidden}
+              </Button>
             </div>
           )}
         </div>

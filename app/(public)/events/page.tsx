@@ -6,6 +6,11 @@ export const metadata: Metadata = {
   title: "Events",
 };
 
-export default function EventsPage() {
-  return <EventsPageClient />;
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string }>;
+}) {
+  const { q } = await searchParams;
+  return <EventsPageClient initialQuery={q ?? ""} />;
 }

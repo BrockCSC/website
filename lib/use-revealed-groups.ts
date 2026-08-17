@@ -12,6 +12,7 @@ type Group<T> = { items: T[] };
 export const useRevealedGroups = <T, G extends Group<T>>(
   groups: G[],
   step = 10,
+  showAll = false,
 ) => {
   const [revealed, setRevealed] = useState(1);
 
@@ -28,8 +29,9 @@ export const useRevealedGroups = <T, G extends Group<T>>(
     return marks.length ? marks : [groups.length];
   }, [groups, step]);
 
-  const shownGroups =
-    boundaries[Math.min(revealed, boundaries.length) - 1] ?? 0;
+  const shownGroups = showAll
+    ? groups.length
+    : (boundaries[Math.min(revealed, boundaries.length) - 1] ?? 0);
   const visible = groups.slice(0, shownGroups);
   const hidden = groups
     .slice(shownGroups)

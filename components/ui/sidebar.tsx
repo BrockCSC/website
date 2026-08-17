@@ -106,9 +106,9 @@ export default function Sidebar() {
         <nav
           id="guide-nav"
           className={`
-          space-y-2 p-6 lg:p-0
-          flex flex-col h-full overflow-y-auto lg:overflow-visible
-          ${isOpen ? "justify-center items-center" : "justify-start"} lg:justify-start
+          space-y-2 p-6 pt-20 lg:p-0 lg:pt-0
+          flex flex-col h-full overflow-y-auto overscroll-contain lg:overflow-visible
+          ${isOpen ? "items-center" : ""} justify-start
         `}
         >
           {navItems.map((item) => (

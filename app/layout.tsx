@@ -12,15 +12,27 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const DESCRIPTION =
+  "Brock Computer Science Club events, resources, and community updates.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL("https://brockcsc.ca"),
   title: {
     default: "BrockCSC",
     template: "%s | BrockCSC",
   },
-  description:
-    "Brock Computer Science Club events, resources, and community updates.",
+  description: DESCRIPTION,
   applicationName: "BrockCSC",
   keywords: ["BrockCSC", "Brock University", "Computer Science", "Club"],
+  openGraph: {
+    type: "website",
+    siteName: "BrockCSC",
+    title: "BrockCSC",
+    description: DESCRIPTION,
+    url: "/",
+    locale: "en_CA",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({

@@ -9,7 +9,7 @@ import { AboutUsSection } from "@/components/sections/about-us";
 
 export default function Home() {
   return (
-    <div className="flex flex-col w-full font-sans bg-surface overflow-x-hidden">
+    <main className="flex flex-col w-full font-sans bg-surface overflow-x-hidden">
       <section className="relative w-full border-b-2 border-line">
         <div className="max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col items-start gap-6 z-10">
@@ -43,14 +43,14 @@ export default function Home() {
                 variant="outline"
                 className="bg-surface"
               >
-                <Link href="#about">Learn More</Link>
+                <Link href="/events">See upcoming events</Link>
               </Button>
             </div>
           </div>
 
           <div className="relative w-full aspect-square md:aspect-[4/3] max-w-lg mx-auto lg:ml-auto">
             <PhotoFrame
-              src="./hero_image.jpg"
+              src="/hero_image.jpg"
               alt="Group picture of people from the Computer Science Club"
               className="w-full h-full"
             />
@@ -64,6 +64,6 @@ export default function Home() {
 
       <UpcomingEventsSection />
       <AboutUsSection />
-    </div>
+    </main>
   );
 }

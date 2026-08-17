@@ -9,7 +9,7 @@ import {
   deleteUser,
 } from "@/lib/auth/keycloak-admin";
 import { fold, usernameFor } from "@/lib/auth/username";
-import { create } from "@/lib/db/repository";
+import { create, findAll } from "@/lib/db/repository";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import { signupsTable } from "@/lib/db/schema";
@@ -23,6 +23,9 @@ const MAX_PHONE = 30;
 
 const badRequest = (error: string) =>
   NextResponse.json({ error }, { status: 400 });
+
+const conflict = (error: string) =>
+  NextResponse.json({ error }, { status: 409 });
 
 /** No vowels or look-alike characters, so it survives being read aloud. */
 const CONFIRMATION_ALPHABET = "23456789BCDFGHJKLMNPQRSTVWXZ";
@@ -91,6 +94,20 @@ export const POST = async (req: NextRequest) => {
     return badRequest("Passwords do not match.");
   }
 
+  // A second request would strand a second account; say what to do instead.
+  const existing = (await findAll<SignupRecord>(signupsTable)).find(
+    (record) =>
+      record.status !== "rejected" &&
+      record.email?.toLowerCase() === email.toLowerCase(),
+  );
+  if (existing) {
+    return conflict(
+      existing.status === "pending"
+        ? "A request from that email is already waiting for a co-president. You do not need to send another one — ask them to approve it."
+        : "That email already has an account. Sign in with it, or ask a co-president for help.",
+    );
+  }
+
   const base =
     usernameFor(firstName, lastName) ||
     fold(anyAscii(`${firstName}${lastName}`));
@@ -99,14 +116,24 @@ export const POST = async (req: NextRequest) => {
   }
   const username = await allocateUsername(base);
 
-  const keycloakUserId = await createDisabledUser({
-    username,
-    email,
-    firstName,
-    lastName,
-    password,
-    attributes: phone ? { phone: [phone] } : undefined,
-  });
+  let keycloakUserId: string;
+  try {
+    keycloakUserId = await createDisabledUser({
+      username,
+      email,
+      firstName,
+      lastName,
+      password,
+      attributes: phone ? { phone: [phone] } : undefined,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("already taken")) {
+      return conflict(
+        "An account already exists for that name or email. Sign in if it is yours, or ask a co-president to check.",
+      );
+    }
+    throw err;
+  }
 
   const confirmation = confirmationCode();
 
@@ -131,7 +158,14 @@ export const POST = async (req: NextRequest) => {
   }
 
   return NextResponse.json(
-    { confirmationCode: confirmation, username },
+    {
+      confirmationCode: confirmation,
+      username,
+      // Alumni are approved without a mailbox, so promise one only to execs.
+      mailbox: isFormerExec
+        ? undefined
+        : `${username}@${process.env.MAIL_DOMAIN ?? "brockcsc.ca"}`,
+    },
     { status: 201 },
   );
 };
