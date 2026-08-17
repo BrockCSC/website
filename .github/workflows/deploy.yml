@@ -163,13 +163,14 @@ jobs:
           KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
           KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
           STACK_NAME: ${{ steps.deploy-context.outputs.stack-name }}
+          KOMODO_SERVER: ${{ vars.KOMODO_SERVER }}
           BRANCH: ${{ steps.deploy-context.outputs.branch }}
           ENVIRONMENT: ${{ steps.deploy-context.outputs.environment }}
         run: |
           source .github/scripts/komodo.sh
 
           config=$(jq -n --arg branch "$BRANCH" --arg environment "$ENVIRONMENT" '{
-            server: "wayfarerbx-vps",
+            server: env.KOMODO_SERVER,
             repo: "BrockCSC/website",
             branch: $branch,
             git_provider: "github.com",

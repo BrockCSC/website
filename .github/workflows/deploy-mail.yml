@@ -57,13 +57,14 @@ jobs:
           KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
           KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
           STACK_NAME: brockcsc-mail
+          KOMODO_SERVER: ${{ vars.KOMODO_SERVER }}
         run: |
           source .github/scripts/komodo.sh
 
           # auto_pull, unlike the app stack: these are upstream images, not ones
           # this repo builds, so a redeploy is how they pick up a new tag.
           config=$(jq -n '{
-            server: "wayfarerbx-vps",
+            server: env.KOMODO_SERVER,
             repo: "BrockCSC/website",
             branch: "main",
             git_provider: "github.com",
