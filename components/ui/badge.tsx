@@ -8,14 +8,18 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "border-[#f3c5c5] bg-[#fff1f1] text-[#9a4440]",
-        secondary: "border-transparent bg-slate-200 text-slate-900",
-        destructive: "border-transparent bg-red-50 text-red-700",
-        blue: "border-transparent bg-blue-50 text-blue-700",
-        green: "border-transparent bg-emerald-50 text-emerald-700",
-        yellow: "border-transparent bg-amber-50 text-amber-800",
-        purple: "border-transparent bg-purple-50 text-purple-700",
-        outline: "border-slate-300 bg-transparent text-slate-900",
+        default: "border-brand/35 bg-tint text-brand",
+        secondary: "border-transparent bg-line/10 text-ink",
+        destructive:
+          "border-transparent bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-200",
+        blue: "border-transparent bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200",
+        green:
+          "border-transparent bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-200",
+        yellow:
+          "border-transparent bg-amber-50 text-amber-800 dark:bg-amber-950 dark:text-amber-200",
+        purple:
+          "border-transparent bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-200",
+        outline: "border-line/30 bg-transparent text-ink",
       },
       size: {
         default: "",

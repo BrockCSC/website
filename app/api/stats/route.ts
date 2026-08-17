@@ -2,6 +2,7 @@ import { and, count, desc, gte, lt, sql } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import type {
   DashboardStats,
+  DayCount,
   EventRecord,
   ExecRecord,
   SignupRecord,
@@ -18,7 +19,27 @@ import {
 import { classifyEventsByTiming } from "@/lib/events/classify";
 import { getEventTiming } from "@/lib/events/schedule";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
+const THIRTY_DAYS_MS = 30 * DAY_MS;
+
+/** Buckets follow the club's own calendar day, not the server's. */
+const CLUB_TZ = "America/Toronto";
+const DAY_FORMAT = new Intl.DateTimeFormat("en-CA", { timeZone: CLUB_TZ });
+
+const dayOf = (value: string | number | Date): string | null => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : DAY_FORMAT.format(date);
+};
+
+const zeroFilled = (
+  days: number,
+  now: number,
+  counts: Map<string, number>,
+): DayCount[] =>
+  Array.from({ length: days }, (_, index) => {
+    const day = DAY_FORMAT.format(new Date(now - (days - 1 - index) * DAY_MS));
+    return { day, count: counts.get(day) ?? 0 };
+  });
 
 const countViews = async (fromMs: number, toMs: number): Promise<number> => {
   const [row] = await db
@@ -46,21 +67,53 @@ const topPaths = async (fromMs: number) => {
   return rows.map((row) => ({ path: row.path ?? "/", views: row.views }));
 };
 
+const viewsByDay = async (fromMs: number): Promise<Map<string, number>> => {
+  const day = sql<string>`to_char(${pageViewsTable.createdAt} AT TIME ZONE ${CLUB_TZ}::text, 'YYYY-MM-DD')`;
+  const rows = await db
+    .select({ day, views: count() })
+    .from(pageViewsTable)
+    .where(gte(pageViewsTable.createdAt, new Date(fromMs)))
+    .groupBy(day);
+  return new Map(rows.map((row) => [row.day, row.views]));
+};
+
+/** Distinguishes "nobody visited" from "nothing has ever been recorded". */
+const firstRecordedDay = async (): Promise<string | null> => {
+  const [row] = await db
+    .select({
+      day: sql<
+        string | null
+      >`to_char(min(${pageViewsTable.createdAt}) AT TIME ZONE ${CLUB_TZ}::text, 'YYYY-MM-DD')`,
+    })
+    .from(pageViewsTable);
+  return row?.day ?? null;
+};
+
 export const GET = async (req: NextRequest) => {
   if (!(await requireMember(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });
   }
 
   const now = Date.now();
-  const [execs, events, last30Days, previous30Days, paths, approver] =
-    await Promise.all([
-      findAll<ExecRecord>(execsTable),
-      findAll<EventRecord>(eventsTable),
-      countViews(now - THIRTY_DAYS_MS, now),
-      countViews(now - 2 * THIRTY_DAYS_MS, now - THIRTY_DAYS_MS),
-      topPaths(now - THIRTY_DAYS_MS),
-      requireApprover(req),
-    ]);
+  const [
+    execs,
+    events,
+    last30Days,
+    previous30Days,
+    paths,
+    daily,
+    firstDay,
+    approver,
+  ] = await Promise.all([
+    findAll<ExecRecord>(execsTable),
+    findAll<EventRecord>(eventsTable),
+    countViews(now - THIRTY_DAYS_MS, now),
+    countViews(now - 2 * THIRTY_DAYS_MS, now - THIRTY_DAYS_MS),
+    topPaths(now - THIRTY_DAYS_MS),
+    viewsByDay(now - THIRTY_DAYS_MS),
+    firstRecordedDay(),
+    requireApprover(req),
+  ]);
 
   const timing = classifyEventsByTiming(events.map(toWireRecord), now);
   const currentExecs = execs.filter((exec) => exec.isCurrentExec === true);
@@ -79,8 +132,22 @@ export const GET = async (req: NextRequest) => {
   const signups = approver ? await findAll<SignupRecord>(signupsTable) : [];
   const linkedKeys = new Set(signups.map((signup) => signup.execKey));
 
+  const signupsByDay = new Map<string, number>();
+  for (const signup of signups) {
+    const day = signup.submittedAt ? dayOf(signup.submittedAt) : null;
+    if (day) signupsByDay.set(day, (signupsByDay.get(day) ?? 0) + 1);
+  }
+  const countStatus = (status: SignupRecord["status"]) =>
+    signups.filter((signup) => signup.status === status).length;
+
   const stats: DashboardStats = {
-    pageViews: { last30Days, previous30Days, topPaths: paths },
+    pageViews: {
+      last30Days,
+      previous30Days,
+      topPaths: paths,
+      daily: zeroFilled(30, now, daily),
+      firstRecordedDay: firstDay,
+    },
     execs: {
       current: currentExecs.length,
       past: execs.filter((exec) => exec.isCurrentExec === false).length,
@@ -101,8 +168,13 @@ export const GET = async (req: NextRequest) => {
           }
         : null,
     },
-    pendingSignups: approver
-      ? signups.filter((signup) => signup.status === "pending").length
+    signups: approver
+      ? {
+          pending: countStatus("pending"),
+          approved: countStatus("approved"),
+          rejected: countStatus("rejected"),
+          daily: zeroFilled(30, now, signupsByDay),
+        }
       : null,
     unclaimedTiles: approver
       ? currentExecs.filter((exec) => !linkedKeys.has(exec.id)).length

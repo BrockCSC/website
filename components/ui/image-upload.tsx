@@ -44,7 +44,7 @@ export function ImageUpload({
     <div>
       <label className="mb-1 block text-sm font-bold">{label}</label>
       <div className="flex items-center gap-4">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-[12px] border-2 border-black bg-neutral-100">
+        <div className="relative size-20 shrink-0 overflow-hidden rounded-[12px] border-2 border-line bg-raised">
           {value ? (
             <Image
               alt=""
@@ -54,7 +54,7 @@ export function ImageUpload({
               unoptimized
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-xs text-neutral-400">
+            <div className="flex h-full items-center justify-center text-xs text-subtle">
               None
             </div>
           )}
@@ -93,13 +93,13 @@ export function ImageUpload({
               </Button>
             )}
           </div>
-          <span className="text-xs text-neutral-500">
+          <span className="text-xs text-subtle">
             JPEG, PNG, WebP, GIF or AVIF. Max 5MB.
           </span>
         </div>
       </div>
       {error && (
-        <p className="mt-2 text-sm font-semibold text-[#d44b4b]">{error}</p>
+        <p className="mt-2 text-sm font-semibold text-destructive">{error}</p>
       )}
     </div>
   );

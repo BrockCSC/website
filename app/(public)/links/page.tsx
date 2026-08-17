@@ -64,7 +64,7 @@ const quickLinks: QuickLink[] = [
 
 function LinkIcon({ link }: { link: QuickLink }): ReactElement {
   if ("kind" in link) {
-    return <School className="size-7 text-primary" aria-hidden="true" />;
+    return <School className="size-7 text-brand" aria-hidden="true" />;
   }
 
   return (
@@ -73,15 +73,15 @@ function LinkIcon({ link }: { link: QuickLink }): ReactElement {
       alt={link.iconAlt}
       width={36}
       height={36}
-      className="size-9 object-contain"
+      className="size-9 object-contain dark:brightness-[1.4]"
     />
   );
 }
 
 export default function LinksPage(): ReactElement {
   return (
-    <main className="bg-white pb-10">
-      <section className="border-b border-border pt-4 pb-4">
+    <main className="bg-surface pb-10">
+      <section className="border-b border-line/25 pt-4 pb-4">
         <h1 className="m-0 text-[clamp(2.1rem,3.5vw,2.9rem)] font-semibold leading-[1.05]">
           Links
         </h1>
@@ -98,9 +98,9 @@ export default function LinksPage(): ReactElement {
             asChild
             variant="outline"
             className={cn(
-              "h-auto w-full justify-start rounded-[20px] bg-white px-0 py-0 text-left shadow-[4px_4px_0_0_#000] hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-[#fff7f6] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
+              "h-auto w-full justify-start rounded-[20px] bg-surface px-0 py-0 text-left shadow-[4px_4px_0_0_var(--line)] hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-tint hover:shadow-[2px_2px_0_0_var(--line)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
               link.featured &&
-                "bg-[#fff3f2] shadow-[4px_4px_0_0_#9A4440] hover:bg-[#ffefed] hover:shadow-[2px_2px_0_0_#9A4440]",
+                "bg-tint shadow-[4px_4px_0_0_var(--brand)] hover:shadow-[2px_2px_0_0_var(--brand)]",
             )}
           >
             <a href={link.href} target="_blank" rel="noopener noreferrer">
@@ -110,18 +110,18 @@ export default function LinksPage(): ReactElement {
                 </span>
 
                 <span className="flex min-w-0 items-center gap-2">
-                  <span className="min-w-0 text-base font-black leading-tight text-foreground sm:text-[1.12rem]">
+                  <span className="min-w-0 text-base font-black leading-tight text-ink sm:text-[1.12rem]">
                     {link.title}
                   </span>
                   {link.badge ? (
-                    <span className="shrink-0 rounded-full border border-primary/30 bg-white px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-primary">
+                    <span className="shrink-0 rounded-full border border-brand/30 bg-surface px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-brand">
                       {link.badge}
                     </span>
                   ) : null}
                 </span>
 
                 <ArrowUpRight
-                  className="size-5 shrink-0 text-primary sm:size-6"
+                  className="size-5 shrink-0 text-brand sm:size-6"
                   aria-hidden="true"
                 />
               </span>

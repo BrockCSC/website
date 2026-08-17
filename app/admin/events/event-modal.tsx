@@ -1,8 +1,23 @@
-import { Button } from "@/components/ui/button";
-import { ImageUpload } from "@/components/ui/image-upload";
-import Modal from "@/components/ui/modal";
+"use client";
+
 import { useState } from "react";
 import { EventRecord, WithKey, createEvent, editEvent } from "@/lib/api";
+import { Label, PosterField, Sheet, btn, errorText, field } from "./ui";
+
+type Errors = Partial<
+  Record<"title" | "start" | "end" | "signupUrl" | "form", string>
+>;
+
+const joinDatetime = (date?: string, time?: string) =>
+  date && time ? `${date}T${time}` : "";
+
+const isHttpUrl = (value: string) => {
+  try {
+    return ["http:", "https:"].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+};
 
 export default function EventModal({
   showModal,
@@ -17,16 +32,7 @@ export default function EventModal({
   selectedEvent?: WithKey<EventRecord> | null;
   onSave: () => void;
 }) {
-  const parseDatetimeLocal = (dateStr?: string, timeStr?: string) => {
-    if (!dateStr || !timeStr) return "";
-    return `${dateStr}T${timeStr}`;
-  };
-
-  const extractDatePart = (datetime?: string) =>
-    datetime?.split("T")[0] || selectedEvent?.schedule?.startDate || "";
-  const extractTimePart = (datetime?: string) =>
-    datetime?.split("T")[1] || selectedEvent?.schedule?.startTime || "";
-
+  const schedule = selectedEvent?.schedule;
   const [title, setTitle] = useState(selectedEvent?.title ?? "");
   const [presenter, setPresenter] = useState(selectedEvent?.presenter ?? "");
   const [location, setLocation] = useState(selectedEvent?.location ?? "");
@@ -34,67 +40,81 @@ export default function EventModal({
     selectedEvent?.description ?? "",
   );
   const [posterUrl, setPosterUrl] = useState(selectedEvent?.image?.url ?? "");
-
   const [startDatetime, setStartDatetime] = useState(
-    parseDatetimeLocal(
-      selectedEvent?.schedule?.startDate,
-      selectedEvent?.schedule?.startTime,
-    ),
+    joinDatetime(schedule?.startDate, schedule?.startTime),
   );
   const [endDatetime, setEndDatetime] = useState(
-    parseDatetimeLocal(
-      selectedEvent?.schedule?.endDate,
-      selectedEvent?.schedule?.endTime,
-    ),
+    joinDatetime(schedule?.endDate, schedule?.endTime),
   );
-
   const [recurrenceUnit, setRecurrenceUnit] = useState(
-    selectedEvent?.schedule?.recurrence?.unit ?? "none",
+    schedule?.recurrence?.unit ?? "none",
+  );
+  const [recurrenceInterval, setRecurrenceInterval] = useState(
+    String(schedule?.recurrence?.interval ?? 1),
   );
   const [signupUrl, setSignupUrl] = useState(selectedEvent?.signupUrl ?? "");
-
   const [isSaving, setIsSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Errors>({});
+
+  if (!showModal) return null;
+
+  const clear = (key: keyof Errors) =>
+    setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+
+  const validate = (): Errors => {
+    const next: Errors = {};
+    if (!title.trim()) next.title = "Give the event a title.";
+    if (endDatetime && !startDatetime) {
+      next.start = "Add a start before an end.";
+    }
+    if (startDatetime && endDatetime && endDatetime <= startDatetime) {
+      next.end = "The end has to come after the start.";
+    }
+    if (recurrenceUnit !== "none" && !startDatetime) {
+      next.start = "A repeating event needs a first date and time.";
+    }
+    if (signupUrl.trim() && !isHttpUrl(signupUrl.trim())) {
+      next.signupUrl = "Use a full link, starting with https://";
+    }
+    return next;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSaving(true);
-    setSaveError(null);
+    const found = validate();
+    setErrors(found);
+    if (Object.keys(found).length > 0) return;
 
+    setIsSaving(true);
     try {
-      const startDate = extractDatePart(startDatetime);
-      const startTime = extractTimePart(startDatetime);
-      const endDate = extractDatePart(endDatetime);
-      const endTime = extractTimePart(endDatetime);
+      const [startDate, startTime] = startDatetime.split("T");
+      const [endDate, endTime] = endDatetime.split("T");
+
+      const nextSchedule: NonNullable<EventRecord["schedule"]> = {};
+      if (startDate) nextSchedule.startDate = startDate;
+      if (startTime) nextSchedule.startTime = startTime;
+      if (endDate) nextSchedule.endDate = endDate;
+      if (endTime) nextSchedule.endTime = endTime;
+      if (recurrenceUnit !== "none") {
+        nextSchedule.recurrence = {
+          interval: Math.max(1, Number(recurrenceInterval) || 1),
+          unit: recurrenceUnit as "day" | "week" | "month",
+          ...(schedule?.recurrence?.unit === recurrenceUnit &&
+          schedule.recurrence.byWeekday
+            ? { byWeekday: schedule.recurrence.byWeekday }
+            : {}),
+        };
+      }
 
       const eventData: EventRecord = {
-        title,
+        title: title.trim(),
         presenter,
         location,
         description,
-        signupUrl,
+        signupUrl: signupUrl.trim(),
+        image: posterUrl ? { url: posterUrl } : {},
+        schedule: nextSchedule,
       };
-
-      if (posterUrl) {
-        eventData.image = { url: posterUrl };
-      }
-
-      eventData.schedule = {
-        startDate,
-        startTime,
-      };
-      if (endDate) {
-        eventData.schedule.endDate = endDate;
-      }
-      if (endTime) {
-        eventData.schedule.endTime = endTime;
-      }
-      if (recurrenceUnit !== "none") {
-        eventData.schedule.recurrence = {
-          interval: 1,
-          unit: recurrenceUnit as "day" | "week" | "month",
-        };
-      }
 
       if (variant === "edit" && selectedEvent?.$key) {
         await editEvent(selectedEvent.$key, eventData);
@@ -106,145 +126,194 @@ export default function EventModal({
       setShowModal(false);
     } catch (error) {
       console.error("Failed to save event:", error);
-      setSaveError("Couldn't save this event. Please try again in a moment.");
+      setErrors({
+        form: "Couldn't save this event. Please try again in a moment.",
+      });
     } finally {
       setIsSaving(false);
     }
   };
 
+  const close = () => setShowModal(false);
+
   return (
-    <Modal
-      open={showModal}
-      onClose={() => setShowModal(false)}
-      title={variant === "create" ? "Add New Event" : "Edit Event"}
+    <Sheet
+      onClose={close}
+      title={variant === "create" ? "New event" : "Edit event"}
     >
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1">
-            Event Title
-          </label>
-          <input
-            type="text"
-            required
-            className="w-full rounded border px-3 py-2"
-            placeholder="e.g. Intro to Python Workshop"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+      <form className="flex min-h-0 flex-1 flex-col" onSubmit={handleSubmit}>
+        <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+          <div>
+            <Label htmlFor="title">Title</Label>
+            <input
+              aria-invalid={!!errors.title}
+              className={`${field} ${errors.title ? "border-red-600 dark:border-red-400" : ""}`}
+              id="title"
+              onChange={(e) => {
+                setTitle(e.target.value);
+                clear("title");
+              }}
+              placeholder="e.g. Intro to Python Workshop"
+              type="text"
+              value={title}
+            />
+            {errors.title && <p className={errorText}>{errors.title}</p>}
+          </div>
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="presenter">Presenter</Label>
+              <input
+                className={field}
+                id="presenter"
+                onChange={(e) => setPresenter(e.target.value)}
+                placeholder="e.g. Jay Shah"
+                type="text"
+                value={presenter}
+              />
+            </div>
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <input
+                className={field}
+                id="location"
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="e.g. MC 402 or a Zoom link"
+                type="text"
+                value={location}
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
+            <textarea
+              className={`${field} min-h-[110px]`}
+              id="description"
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="What the event covers, who it's for, anything to bring."
+              value={description}
+            />
+          </div>
+
+          <PosterField onChange={setPosterUrl} value={posterUrl} />
+
+          <div className="grid gap-5 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="start">Starts</Label>
+              <input
+                aria-invalid={!!errors.start}
+                className={`${field} ${errors.start ? "border-red-600 dark:border-red-400" : ""}`}
+                id="start"
+                onChange={(e) => {
+                  setStartDatetime(e.target.value);
+                  clear("start");
+                }}
+                type="datetime-local"
+                value={startDatetime}
+              />
+              {errors.start ? (
+                <p className={errorText}>{errors.start}</p>
+              ) : (
+                <p className="mt-1 text-xs text-subtle">
+                  Leave empty for a date to be announced.
+                </p>
+              )}
+            </div>
+            <div>
+              <Label htmlFor="end">Ends</Label>
+              <input
+                aria-invalid={!!errors.end}
+                className={`${field} ${errors.end ? "border-red-600 dark:border-red-400" : ""}`}
+                id="end"
+                onChange={(e) => {
+                  setEndDatetime(e.target.value);
+                  clear("end");
+                }}
+                type="datetime-local"
+                value={endDatetime}
+              />
+              {errors.end && <p className={errorText}>{errors.end}</p>}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="recurrence">Repeats</Label>
+            <div className="flex gap-3">
+              {recurrenceUnit !== "none" && (
+                <input
+                  aria-label="Repeat interval"
+                  className={`${field} w-20`}
+                  min={1}
+                  onChange={(e) => setRecurrenceInterval(e.target.value)}
+                  type="number"
+                  value={recurrenceInterval}
+                />
+              )}
+              <select
+                className={field}
+                id="recurrence"
+                onChange={(e) => {
+                  setRecurrenceUnit(e.target.value);
+                  clear("start");
+                }}
+                value={recurrenceUnit}
+              >
+                <option value="none">Doesn&apos;t repeat</option>
+                <option value="day">Days</option>
+                <option value="week">Weeks</option>
+                <option value="month">Months</option>
+              </select>
+            </div>
+            {recurrenceUnit !== "none" && (
+              <p className="mt-1 text-xs text-subtle">
+                The start above is the first occurrence. Set an end date to stop
+                the series.
+              </p>
+            )}
+          </div>
+
+          <div>
+            <Label htmlFor="signupUrl">Sign-up link</Label>
+            <input
+              aria-invalid={!!errors.signupUrl}
+              className={`${field} ${errors.signupUrl ? "border-red-600 dark:border-red-400" : ""}`}
+              id="signupUrl"
+              onChange={(e) => {
+                setSignupUrl(e.target.value);
+                clear("signupUrl");
+              }}
+              placeholder="https://forms.gle/..."
+              type="url"
+              value={signupUrl}
+            />
+            {errors.signupUrl && (
+              <p className={errorText}>{errors.signupUrl}</p>
+            )}
+          </div>
         </div>
 
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">
-              Presenter
-            </label>
-            <input
-              type="text"
-              className="w-full rounded border px-3 py-2"
-              placeholder="e.g. Jay Shah"
-              value={presenter}
-              onChange={(e) => setPresenter(e.target.value)}
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">Location</label>
-            <input
-              type="text"
-              className="w-full rounded border px-3 py-2"
-              placeholder="e.g. MC 402 or Zoom Link"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1">
-            Description
-          </label>
-          <textarea
-            className="w-full rounded border px-3 py-2"
-            placeholder="Describe the event goals and requirements..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
-        <div className="mb-4">
-          <ImageUpload
-            label="Poster image"
-            onChange={setPosterUrl}
-            value={posterUrl}
-          />
-        </div>
-        <div className="flex gap-4 mb-4">
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">
-              Start Date & Time
-            </label>
-            <input
-              type="datetime-local"
-              className="w-full rounded border px-3 py-2"
-              value={startDatetime}
-              onChange={(e) => setStartDatetime(e.target.value)}
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block text-sm font-semibold mb-1">
-              End Date & Time
-            </label>
-            <input
-              type="datetime-local"
-              className="w-full rounded border px-3 py-2"
-              value={endDatetime}
-              onChange={(e) => setEndDatetime(e.target.value)}
-            />
-          </div>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1">Recurring</label>
-          <select
-            className="w-full rounded border px-3 py-2"
-            value={recurrenceUnit}
-            onChange={(e) => setRecurrenceUnit(e.target.value)}
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t-2 border-line px-5 py-4">
+          {errors.form && (
+            <p className={`mr-auto ${errorText} mt-0`}>{errors.form}</p>
+          )}
+          <button
+            className={btn.secondary}
+            disabled={isSaving}
+            onClick={close}
+            type="button"
           >
-            <option value="none">none</option>
-            <option value="day">day</option>
-            <option value="week">week</option>
-            <option value="month">month</option>
-          </select>
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-semibold mb-1">
-            Sign Up URL
-          </label>
-          <input
-            type="url"
-            className="w-full rounded border px-3 py-2"
-            placeholder="https://github.com/BrockCSC/images.brockcsc.ca/filepath"
-            value={signupUrl}
-            onChange={(e) => setSignupUrl(e.target.value)}
-          />
-        </div>
-        {saveError && (
-          <p className="mb-4 text-sm font-semibold text-red-600">{saveError}</p>
-        )}
-        <div className="flex gap-4">
-          <Button variant="primary" type="submit" disabled={isSaving}>
+            Cancel
+          </button>
+          <button className={btn.primary} disabled={isSaving} type="submit">
             {isSaving
               ? "Saving..."
               : variant === "create"
-                ? "Create Event"
-                : "Save Changes"}
-          </Button>
-          <Button
-            variant="secondary"
-            type="button"
-            onClick={() => setShowModal(false)}
-            disabled={isSaving}
-          >
-            Cancel
-          </Button>
+                ? "Create event"
+                : "Save changes"}
+          </button>
         </div>
       </form>
-    </Modal>
+    </Sheet>
   );
 }

@@ -44,7 +44,7 @@ export function ImageFocus({
     <div>
       <div className="flex flex-wrap items-start gap-4">
         <button
-          className="relative h-40 w-32 shrink-0 touch-none cursor-crosshair overflow-hidden rounded-[12px] border-2 border-black active:cursor-grabbing"
+          className="relative h-40 w-32 shrink-0 touch-none cursor-crosshair overflow-hidden rounded-[12px] border-2 border-line active:cursor-grabbing"
           onLostPointerCapture={() => {
             dragging.current = false;
           }}
@@ -87,20 +87,20 @@ export function ImageFocus({
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-[#9A4440]/70 shadow-[0_0_0_2px_rgba(0,0,0,0.6)]"
+            className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-brand/70 shadow-[0_0_0_2px_rgba(0,0,0,0.6)]"
             style={{ left: `${x}%`, top: `${y}%` }}
           />
         </button>
 
         <div className="text-sm">
           <p className="font-semibold">Framing</p>
-          <p className="mt-1 max-w-[22rem] text-neutral-500">
+          <p className="mt-1 max-w-[22rem] text-subtle">
             Cards crop to a fixed shape. Click or drag on the photo to choose
             what stays in frame — for a portrait, aim at the face. Arrow keys
             nudge it.
           </p>
           <div className="mt-2 flex items-center gap-3">
-            <span className="font-mono text-xs text-neutral-500">
+            <span className="font-mono text-xs text-subtle">
               {x}% {y}%
             </span>
             <button

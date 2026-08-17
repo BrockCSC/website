@@ -47,20 +47,31 @@ const formFor = (exec: TeamMember | null): Form => ({
   },
 });
 
-const field = "w-full rounded-[10px] border-2 border-black px-3 py-2 text-sm";
+const page = "mx-auto w-full max-w-[1060px] px-5 py-10";
+const label = "mb-1 block text-sm font-bold text-ink";
+const field =
+  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle";
 
 const Section = ({
   title,
   note,
+  tone,
   children,
 }: {
   title: string;
   note?: string;
+  tone?: "danger";
   children: React.ReactNode;
 }) => (
-  <section className="rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0px_#9A4440]">
-    <h2 className="text-sm font-bold uppercase tracking-wide">{title}</h2>
-    {note && <p className="mt-1 text-sm text-neutral-500">{note}</p>}
+  <section
+    className={`rounded-[20px] border-2 border-line p-5 shadow-brut ${
+      tone ? "bg-tint" : "bg-surface"
+    }`}
+  >
+    <h2 className="text-sm font-extrabold uppercase tracking-wide text-brand">
+      {title}
+    </h2>
+    {note && <p className="mt-1 text-sm text-subtle">{note}</p>}
     <div className="mt-4">{children}</div>
   </section>
 );
@@ -135,16 +146,20 @@ export default function ProfilePage() {
   };
 
   if (loading) {
-    return <p className="text-neutral-500">Loading your profile...</p>;
+    return (
+      <div className={page}>
+        <p className="font-bold text-subtle">Loading your profile...</p>
+      </div>
+    );
   }
 
   if (!profile) {
     return (
-      <div>
-        <h1 className="mb-2 text-2xl font-bold">My Profile</h1>
-        <p className="text-neutral-500">
-          Your account isn&apos;t linked to a team page tile. Ask a co-president
-          to link it — that happens when an account is approved.
+      <div className={page}>
+        <h1 className="text-3xl font-extrabold text-ink">Your profile</h1>
+        <p className="mt-3 max-w-prose text-subtle">
+          {error ??
+            "Your account isn't linked to a team page tile. Ask a co-president to link it — that happens when an account is approved."}
         </p>
       </div>
     );
@@ -159,24 +174,23 @@ export default function ProfilePage() {
   };
 
   return (
-    <div>
-      <h1 className="mb-1 text-2xl font-bold">My Profile</h1>
-      <p className="mb-8 text-neutral-500">
-        Everything here is public. The card on the left is exactly what visitors
-        see.
+    <div className={page}>
+      <h1 className="text-3xl font-extrabold text-ink">Your profile</h1>
+      <p className="mt-2 text-subtle">
+        Everything here is public. The card is exactly what visitors see.
       </p>
 
       <form
-        className="grid gap-8 lg:grid-cols-[320px_1fr] lg:items-start"
+        className="mt-9 grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8"
         onSubmit={save}
       >
         <div className="lg:sticky lg:top-6">
           <div className="mb-3 flex items-center gap-2">
-            <span className="text-xs font-bold uppercase tracking-wide">
+            <span className="text-xs font-extrabold uppercase tracking-wide text-subtle">
               Live preview
             </span>
             {form.hidden && (
-              <span className="rounded-full border-2 border-black bg-neutral-200 px-2 py-0.5 text-[10px] font-bold uppercase">
+              <span className="rounded-full border-2 border-line bg-tint px-2 py-0.5 text-[10px] font-extrabold uppercase text-ink">
                 Hidden
               </span>
             )}
@@ -185,7 +199,7 @@ export default function ProfilePage() {
             <TeamMemberCard member={preview} />
           </div>
           {form.hidden && (
-            <p className="mt-3 text-xs text-neutral-500">
+            <p className="mt-3 text-xs text-subtle">
               You&apos;re hidden, so this card isn&apos;t on the team page right
               now.
             </p>
@@ -198,10 +212,10 @@ export default function ProfilePage() {
             title="Identity"
           >
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-              <dt className="font-semibold text-neutral-500">Name</dt>
-              <dd className="font-bold">{profile.name}</dd>
-              <dt className="font-semibold text-neutral-500">Role</dt>
-              <dd className="font-bold">{profile.title ?? "—"}</dd>
+              <dt className="font-semibold text-subtle">Name</dt>
+              <dd className="font-bold text-ink">{profile.name}</dd>
+              <dt className="font-semibold text-subtle">Role</dt>
+              <dd className="font-bold text-ink">{profile.title ?? "—"}</dd>
             </dl>
           </Section>
 
@@ -215,7 +229,7 @@ export default function ProfilePage() {
               value={form.photoUrl}
             />
             {form.photoUrl && (
-              <div className="mt-5 border-t-2 border-neutral-200 pt-5">
+              <div className="mt-5 border-t-2 border-line pt-5">
                 <ImageFocus
                   onChange={(position) => set("photoPosition", position)}
                   position={form.photoPosition}
@@ -226,7 +240,7 @@ export default function ProfilePage() {
           </Section>
 
           <Section title="About you">
-            <label className="mb-1 block text-sm font-semibold" htmlFor="about">
+            <label className={label} htmlFor="about">
               Short bio
             </label>
             <textarea
@@ -237,14 +251,11 @@ export default function ProfilePage() {
               placeholder="What you work on, what you're into, what you'd help someone with."
               value={form.description}
             />
-            <div className="mt-1 text-right text-xs text-neutral-400">
+            <div className="mt-1 text-right text-xs text-subtle">
               {form.description.length}/400
             </div>
 
-            <label
-              className="mb-1 mt-3 block text-sm font-semibold"
-              htmlFor="term"
-            >
+            <label className={`${label} mt-3`} htmlFor="term">
               Term
             </label>
             <select
@@ -264,28 +275,25 @@ export default function ProfilePage() {
 
           <Section note="Enter your username, not the full link." title="Links">
             <div className="grid gap-4 sm:grid-cols-2">
-              {SOCIAL_PLATFORMS.map(({ key, label, prefix, hint }) => {
+              {SOCIAL_PLATFORMS.map(({ key, label: name, prefix, hint }) => {
                 const value = form.handles[key];
                 const bad = !!value.trim() && !isValidHandle(key, value.trim());
                 return (
                   <div key={key}>
-                    <label
-                      className="mb-1 block text-sm font-semibold"
-                      htmlFor={key}
-                    >
-                      {label}
+                    <label className={label} htmlFor={key}>
+                      {name}
                     </label>
                     <div
-                      className={`flex items-center overflow-hidden rounded-[10px] border-2 ${
-                        bad ? "border-[#d44b4b]" : "border-black"
+                      className={`flex items-center overflow-hidden rounded-[10px] border-2 bg-surface ${
+                        bad ? "border-destructive" : "border-line"
                       }`}
                     >
-                      <span className="shrink-0 bg-neutral-100 px-2 py-2 text-xs text-neutral-500">
+                      <span className="shrink-0 bg-raised px-2 py-2 text-xs text-subtle">
                         {prefix}
                       </span>
                       <input
                         aria-invalid={bad}
-                        className="w-full px-2 py-2 text-sm outline-none"
+                        className="w-full bg-transparent px-2 py-2 text-sm text-ink outline-none"
                         id={key}
                         onChange={(e) =>
                           set("handles", {
@@ -299,12 +307,10 @@ export default function ProfilePage() {
                     </div>
                     <p
                       className={`mt-1 text-xs ${
-                        bad
-                          ? "font-semibold text-[#d44b4b]"
-                          : "text-neutral-500"
+                        bad ? "font-bold text-destructive" : "text-subtle"
                       }`}
                     >
-                      {bad ? `Not a valid ${label} username. ${hint}` : hint}
+                      {bad ? `Not a valid ${name} username. ${hint}` : hint}
                     </p>
                   </div>
                 );
@@ -312,12 +318,33 @@ export default function ProfilePage() {
             </div>
           </Section>
 
+          <Section title="Visibility">
+            <label className="flex items-start gap-3 text-sm">
+              <input
+                checked={form.hidden}
+                className="mt-1 size-4 accent-brand"
+                onChange={(e) => set("hidden", e.target.checked)}
+                type="checkbox"
+              />
+              <span>
+                <span className="font-bold text-ink">
+                  Hide me from the team page
+                </span>
+                <span className="block text-subtle">
+                  Your tile and login stay exactly as they are — the website
+                  just doesn&apos;t show you.
+                </span>
+              </span>
+            </label>
+          </Section>
+
           {isApprover && (
             <Section
               note="Approving sign-ups and managing the executive team."
               title="Co-president"
+              tone="danger"
             >
-              <p className="mb-3 text-sm text-neutral-600">
+              <p className="mb-4 max-w-prose text-sm text-ink">
                 Stepping down removes your approval rights immediately. There
                 must always be at least one co-president, so this is refused if
                 you are the last.
@@ -348,33 +375,13 @@ export default function ProfilePage() {
                   {steppingDown ? "Stepping down..." : "Step down"}
                 </Button>
                 {stepDownNote && (
-                  <span className="text-sm font-semibold text-[#d44b4b]">
+                  <span className="text-sm font-bold text-destructive">
                     {stepDownNote}
                   </span>
                 )}
               </div>
             </Section>
           )}
-
-          <Section title="Visibility">
-            <label className="flex items-start gap-3 text-sm">
-              <input
-                checked={form.hidden}
-                className="mt-1 size-4"
-                onChange={(e) => set("hidden", e.target.checked)}
-                type="checkbox"
-              />
-              <span>
-                <span className="font-semibold">
-                  Hide me from the team page
-                </span>
-                <span className="block text-neutral-500">
-                  Your tile and login stay exactly as they are — the website
-                  just doesn&apos;t show you.
-                </span>
-              </span>
-            </label>
-          </Section>
 
           <div className="flex min-h-[42px] flex-wrap items-center gap-3">
             {dirty ? (
@@ -398,13 +405,13 @@ export default function ProfilePage() {
                   Discard
                 </Button>
                 {invalid.length > 0 && (
-                  <span className="text-sm font-semibold text-[#d44b4b]">
+                  <span className="text-sm font-bold text-destructive">
                     Fix {invalid.map((p) => p.label).join(" and ")} first.
                   </span>
                 )}
               </>
             ) : (
-              <span className="flex items-center gap-2 text-sm font-semibold text-green-700">
+              <span className="flex items-center gap-2 text-sm font-bold text-brand">
                 <svg
                   aria-hidden
                   className="size-5"
@@ -423,7 +430,7 @@ export default function ProfilePage() {
               </span>
             )}
             {error && (
-              <span className="text-sm font-semibold text-[#d44b4b]">
+              <span className="text-sm font-bold text-destructive">
                 {error}
               </span>
             )}

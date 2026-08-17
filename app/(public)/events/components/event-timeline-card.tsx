@@ -101,24 +101,24 @@ export function EventTimelineCard({
     window.sessionStorage.setItem("events:scrollY", String(window.scrollY));
   };
   const wideCardBase =
-    "grid h-full gap-2.5 overflow-hidden border-2 border-primary bg-white md:grid-cols-[260px_1fr]";
+    "grid h-full gap-2.5 overflow-hidden border-2 border-brand bg-surface md:grid-cols-[260px_1fr]";
   const cardClass =
     variant === "past"
-      ? "flex h-full flex-col gap-2.5 overflow-hidden border border-border bg-card"
+      ? "flex h-full flex-col gap-2.5 overflow-hidden border border-line/25 bg-raised"
       : wideCardBase;
 
   const widePosterBase =
-    "relative h-full overflow-hidden rounded-l-[10px] rounded-r-none bg-muted";
+    "relative h-full overflow-hidden rounded-t-[10px] md:rounded-l-[10px] md:rounded-tr-none bg-raised";
   const posterClass =
     variant === "ongoing"
       ? `${widePosterBase} min-h-[182px]`
       : variant === "upcoming"
         ? `${widePosterBase} min-h-[190px]`
-        : "relative h-[146px] overflow-hidden rounded-t-[10px] rounded-b-none bg-muted";
+        : "relative h-[146px] overflow-hidden rounded-t-[10px] rounded-b-none bg-raised";
 
   return (
     <article className={`${cardClass} rounded-2xl`}>
-      <div className={`${posterClass} ${!hasImage ? "bg-primary" : ""}`}>
+      <div className={`${posterClass} ${!hasImage ? "bg-brand" : ""}`}>
         {hasImage && (
           <div
             className={`absolute -inset-2 bg-cover bg-center blur-[10px] ${
@@ -185,7 +185,7 @@ export function EventTimelineCard({
               ? "text-[1.45rem]"
               : variant === "upcoming"
                 ? "text-[1.45rem]"
-                : "text-[1.18rem] text-foreground/80"
+                : "text-[1.18rem] text-ink/80"
           }`}
         >
           {event.title ?? "Untitled Event"}
@@ -193,7 +193,7 @@ export function EventTimelineCard({
 
         {event.description && (
           <p
-            className={`mt-1 hidden overflow-hidden text-[0.92rem] leading-[1.45] text-muted-foreground min-[701px]:[display:-webkit-box] [-webkit-box-orient:vertical] ${
+            className={`mt-1 hidden overflow-hidden text-[0.92rem] leading-[1.45] text-subtle min-[701px]:[display:-webkit-box] [-webkit-box-orient:vertical] ${
               variant === "past"
                 ? "[-webkit-line-clamp:2]"
                 : "[-webkit-line-clamp:3]"

@@ -1,16 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { accessTokenFor } from "@/lib/auth/mail-token";
-import { requireMember } from "@/lib/auth/session";
 import { sendingAddress } from "@/lib/mail/jmap-mail";
+import { mailToken, unauthorized } from "../auth";
 
 export const GET = async (req: NextRequest) => {
-  if (!(await requireMember(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
-  const token = await accessTokenFor(req);
-  if (!token) {
-    return NextResponse.json({ error: "Sign in again" }, { status: 401 });
-  }
+  const token = await mailToken(req);
+  if (!token) return unauthorized();
 
   // A null email means "this account has no mailbox" and hides Mail, so a
   // server that simply could not be reached must not answer with one.

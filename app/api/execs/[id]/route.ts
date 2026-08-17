@@ -55,7 +55,13 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (ownsIdentities() && before?.isCurrentExec !== false && !stillCurrent) {
+  // Only an explicit demotion: an omitted flag leaves the tile alone, so it
+  // must not retire the mailbox either.
+  if (
+    ownsIdentities() &&
+    before?.isCurrentExec !== false &&
+    stillCurrent === false
+  ) {
     const signup = await findSignupByExecKey(id);
     if (signup?.username) await makeMailboxReadOnly(signup.username);
   }

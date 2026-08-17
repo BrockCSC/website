@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Logo } from "./logo";
 import { DiscordButton } from "./discord-button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
@@ -19,16 +20,16 @@ export function Navbar() {
   ];
 
   return (
-    <nav className="relative h-20 w-full border-b-2 border-black bg-white">
-      <div className="mx-auto flex h-full w-full max-w-[1060px] items-center justify-between px-5">
+    <nav className="relative h-20 w-full border-b-2 border-line bg-surface">
+      <div className="mx-auto flex h-full w-full max-w-[1060px] items-center justify-between gap-3 px-5">
         <Link href="/" className="flex cursor-pointer items-center gap-3">
           <Logo />
-          <span className="text-[22px] font-bold tracking-wide text-[#9A4440]">
+          <span className="text-[19px] font-bold tracking-wide text-brand sm:text-[22px]">
             BROCK CSC
           </span>
         </Link>
 
-        <div className="hidden items-center gap-8 text-[15px] font-bold text-[#1a1a1a] md:flex">
+        <div className="hidden items-center gap-8 text-[15px] font-bold text-ink md:flex">
           {navLinks.map((link) => {
             const isActive =
               link.href === "/"
@@ -41,8 +42,8 @@ export function Navbar() {
                 key={link.name}
                 href={link.href}
                 className={cn(
-                  "border-b-2 border-transparent pb-1 transition-colors hover:text-[#9A4440]",
-                  isActive && "border-[#9A4440] text-[#9A4440]",
+                  "border-b-2 border-transparent pb-1 transition-colors hover:text-brand",
+                  isActive && "border-brand text-brand",
                 )}
               >
                 {link.name}
@@ -50,7 +51,10 @@ export function Navbar() {
             );
           })}
 
-          <DiscordButton className="ml-2" />
+          <div className="ml-2 flex items-center gap-3">
+            <ThemeToggle />
+            <DiscordButton />
+          </div>
         </div>
 
         <button
@@ -59,7 +63,7 @@ export function Navbar() {
           aria-label={
             isMenuOpen ? "Close navigation menu" : "Open navigation menu"
           }
-          className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border-2 border-black bg-white text-[#1a1a1a] md:hidden"
+          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border-2 border-line bg-surface text-ink md:hidden"
           onClick={() => setIsMenuOpen((prev) => !prev)}
           type="button"
         >
@@ -88,7 +92,7 @@ export function Navbar() {
 
       <div
         className={cn(
-          "absolute inset-x-0 top-full z-50 border-b-2 border-black bg-white md:hidden",
+          "absolute inset-x-0 top-full z-50 border-b-2 border-line bg-surface md:hidden",
           isMenuOpen ? "block" : "hidden",
         )}
         id="mobile-nav-menu"
@@ -107,18 +111,21 @@ export function Navbar() {
                 href={link.href}
                 onClick={() => setIsMenuOpen(false)}
                 className={cn(
-                  "rounded-[10px] border-2 border-transparent px-3 py-2 text-base font-semibold text-[#1a1a1a] transition-colors",
+                  "rounded-[10px] border-2 border-transparent px-3 py-2.5 text-base font-semibold text-ink transition-colors",
                   isActive
-                    ? "border-[#9A4440] bg-[#fff1f0] text-[#9A4440]"
-                    : "hover:bg-muted",
+                    ? "border-brand bg-tint text-brand"
+                    : "hover:bg-tint",
                 )}
               >
                 {link.name}
               </Link>
             );
           })}
-          <div className="mt-2 w-full" onClick={() => setIsMenuOpen(false)}>
-            <DiscordButton className="w-full" />
+          <div className="mt-2 flex items-center gap-3">
+            <ThemeToggle className="shrink-0" />
+            <div className="flex-1" onClick={() => setIsMenuOpen(false)}>
+              <DiscordButton className="w-full" />
+            </div>
           </div>
         </div>
       </div>

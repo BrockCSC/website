@@ -19,13 +19,11 @@ const Field = ({
   <div>
     <label className="mb-1 block text-sm font-bold" htmlFor={id}>
       {label}
-      {optional && (
-        <span className="font-normal text-muted-foreground"> (optional)</span>
-      )}
+      {optional && <span className="font-normal text-subtle"> (optional)</span>}
     </label>
     <input
       id={id}
-      className="w-full rounded-[10px] border-2 border-black px-3 py-2"
+      className="w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink"
       {...props}
     />
   </div>
@@ -78,29 +76,29 @@ export default function SignupPage() {
   return (
     <div className="flex min-h-[70vh] items-center justify-center px-4 py-10">
       {confirmation !== null ? (
-        <div className="w-full max-w-md rounded-[20px] border-2 border-black bg-white p-8 text-center shadow-[6px_6px_0_0_#000]">
-          <h1 className="mb-2 text-2xl font-extrabold text-[#9A4440]">
+        <div className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 text-center shadow-brut sm:p-8">
+          <h1 className="mb-2 text-2xl font-extrabold text-brand">
             Request submitted
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-subtle">
             Your account <span className="font-bold">{assigned}</span> is
             waiting for a co-president to approve it.
           </p>
 
-          <div className="my-6 rounded-[12px] border-2 border-black bg-[#fff1f0] p-4">
-            <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+          <div className="my-6 rounded-[12px] border-2 border-line bg-tint p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-subtle">
               Your confirmation code
             </div>
-            <div className="my-1 text-3xl font-extrabold tracking-[0.25em] text-[#9A4440]">
+            <div className="my-1 break-all text-3xl font-extrabold tracking-[0.25em] text-brand">
               {confirmation}
             </div>
-            <p className="text-xs text-neutral-600">
+            <p className="text-xs text-subtle">
               Send this to the co-president approving you, so they can check
               it&apos;s really you. It is shown once — screenshot it now.
             </p>
           </div>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-subtle">
             You can{" "}
             <Link href="/admin" className="underline">
               sign in
@@ -111,12 +109,12 @@ export default function SignupPage() {
       ) : (
         <form
           onSubmit={handleSubmit}
-          className="w-full max-w-md rounded-[20px] border-2 border-black bg-white p-8 shadow-[6px_6px_0_0_#000]"
+          className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8"
         >
-          <h1 className="mb-1 text-center text-2xl font-extrabold text-[#9A4440]">
+          <h1 className="mb-1 text-center text-2xl font-extrabold text-brand">
             Request an exec account
           </h1>
-          <p className="mb-6 text-center text-sm text-muted-foreground">
+          <p className="mb-6 text-center text-sm text-subtle">
             An admin approves your account before you can sign in.
           </p>
 
@@ -148,16 +146,16 @@ export default function SignupPage() {
             </div>
 
             {username && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-subtle">
                 Your username will be{" "}
-                <span className="font-bold text-[#9A4440]">{username}</span>
+                <span className="font-bold text-brand">{username}</span>
               </p>
             )}
 
             <label className="mb-4 flex items-start gap-2 text-sm">
               <input
                 checked={former}
-                className="mt-1"
+                className="mt-1 accent-[#9A4440]"
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
@@ -168,7 +166,7 @@ export default function SignupPage() {
               />
               <span>
                 I&apos;m a former executive
-                <span className="block text-neutral-500">
+                <span className="block text-subtle">
                   Alumni no longer have a Brock email or student number, so
                   those become optional.
                 </span>
@@ -222,7 +220,9 @@ export default function SignupPage() {
           </div>
 
           {error && (
-            <p className="mt-4 text-sm font-semibold text-red-600">{error}</p>
+            <p className="mt-4 text-sm font-semibold text-red-600 dark:text-red-400">
+              {error}
+            </p>
           )}
 
           <Button type="submit" className="mt-6 w-full" disabled={submitting}>

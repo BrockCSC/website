@@ -46,17 +46,17 @@ export function UpcomingEventsSection() {
   }, []);
 
   return (
-    <section className="w-full border-b-2 border-black bg-neutral-50/50">
-      <div className="max-w-7xl mx-auto px-8 py-20">
+    <section className="w-full border-b-2 border-line bg-raised">
+      <div className="max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-20">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
           <div>
             <div className="flex items-center gap-3 mb-3">
-              <div className="size-5 rounded-full border-2 border-[#9A4440] bg-transparent" />
-              <h2 className="text-4xl text-black font-bold tracking-tight m-0">
+              <div className="size-5 rounded-full border-2 border-brand bg-transparent" />
+              <h2 className="text-3xl sm:text-4xl text-ink font-bold tracking-tight m-0">
                 Upcoming Events
               </h2>
             </div>
-            <p className="text-neutral-500 font-medium max-w-lg">
+            <p className="text-subtle font-medium max-w-lg">
               From game nights to workshops. High contrast events for high
               impact learning.
             </p>
@@ -64,7 +64,7 @@ export function UpcomingEventsSection() {
 
           <Link
             href="/events"
-            className="text-[#9A4440] font-bold flex items-center gap-2 hover:underline group shrink-0"
+            className="text-brand font-bold flex items-center gap-2 hover:underline group shrink-0"
           >
             View Calendar{" "}
             <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
@@ -73,7 +73,7 @@ export function UpcomingEventsSection() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {loadingEvents ? (
-            <div className="col-span-1 md:col-span-2 py-12 text-center text-neutral-500 font-bold">
+            <div className="col-span-1 md:col-span-2 py-12 text-center text-subtle font-bold">
               Loading events...
             </div>
           ) : events.length > 0 ? (
@@ -112,7 +112,7 @@ export function UpcomingEventsSection() {
               );
             })
           ) : (
-            <div className="col-span-1 md:col-span-2 py-12 text-center text-neutral-500 font-bold border-2 border-dashed border-neutral-300 rounded-2xl">
+            <div className="col-span-1 md:col-span-2 py-12 text-center text-subtle font-bold border-2 border-dashed border-line/40 rounded-2xl">
               No upcoming events at the moment. Check back soon!
             </div>
           )}

@@ -1,38 +1,81 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { ArrowLeft, MailOpen, Star } from "lucide-react";
 import { logout } from "@/lib/api";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { useSession } from "../session";
 import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
-import { MessageView } from "./message-view";
+import { Conversation } from "./message-view";
 import { Compose, type Draft } from "./compose";
 import { buildQuote } from "./html";
 import type { Contact } from "./recipient-input";
 
+const PAGE = 50;
+
+type Page = {
+  messages: MessageSummary[];
+  total: number;
+  threadCounts: Record<string, number>;
+};
+
+/** Everyone on the message bar the reader and the sender: a reply-all's Cc. */
+const otherRecipients = (message: MessageSummary, self: string | null) =>
+  (message.to ?? [])
+    .map((address) => address.email)
+    .filter((email) => email !== self && email !== message.from?.[0]?.email);
+
+const KEYWORDS = { seen: "$seen", flagged: "$flagged" } as const;
+
+type Flags = Partial<Record<keyof typeof KEYWORDS, boolean>>;
+
+const withKeywords = (message: MessageSummary, flags: Flags) => {
+  const next = { ...message.keywords };
+  for (const [name, on] of Object.entries(flags)) {
+    const keyword = KEYWORDS[name as keyof typeof KEYWORDS];
+    if (on) next[keyword] = true;
+    else delete next[keyword];
+  }
+  return { ...message, keywords: next };
+};
+
 export default function MailPage() {
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
   const [mailbox, setMailbox] = useState<string | null>(null);
-  const [messages, setMessages] = useState<MessageSummary[]>([]);
+  const [page, setPage] = useState<Page>({
+    messages: [],
+    total: 0,
+    threadCounts: {},
+  });
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [search, setSearch] = useState("");
+  const [query, setQuery] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
+  const searchBox = useRef<HTMLInputElement>(null);
+  const request = useRef(0);
   const { refresh } = useSession();
 
+  const loadMailboxes = useCallback(
+    () =>
+      fetch("/api/mail/mailboxes")
+        .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
+        .then((boxes: Mailbox[]) => {
+          setMailboxes(boxes);
+          setMailbox((current) => current ?? boxes[0]?.id ?? null);
+        }),
+    [],
+  );
+
   useEffect(() => {
-    fetch("/api/mail/mailboxes")
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((boxes: Mailbox[]) => {
-        setMailboxes(boxes);
-        setMailbox((current) => current ?? boxes[0]?.id ?? null);
-      })
+    loadMailboxes()
       .catch((status) =>
         status === 401
           ? setExpired(true)
@@ -49,40 +92,188 @@ export default function MailPage() {
       .then((res) => (res.ok ? res.json() : []))
       .then(setContacts)
       .catch(() => setContacts([]));
-  }, []);
+  }, [loadMailboxes]);
+
+  /** Searching and paging both happen on the server, over the whole folder. */
+  const load = useCallback(
+    async (position: number) => {
+      if (!mailbox) return;
+      const ticket = ++request.current;
+      setBusy(true);
+      const params = new URLSearchParams({
+        mailbox,
+        limit: String(PAGE),
+        position: String(position),
+        threaded: "1",
+      });
+      if (query) params.set("search", query);
+
+      try {
+        const res = await fetch(`/api/mail/messages?${params}`);
+        if (!res.ok) throw new Error(String(res.status));
+        const data = (await res.json()) as Page;
+        if (ticket !== request.current) return;
+        setError(null);
+        setPage((prev) =>
+          position === 0
+            ? data
+            : {
+                messages: [...prev.messages, ...data.messages],
+                total: data.total,
+                threadCounts: {
+                  ...prev.threadCounts,
+                  ...data.threadCounts,
+                },
+              },
+        );
+      } catch {
+        if (ticket === request.current) setError("Could not load messages.");
+      } finally {
+        if (ticket === request.current) setBusy(false);
+      }
+    },
+    [mailbox, query],
+  );
 
   useEffect(() => {
-    if (!mailbox) return;
-    fetch(`/api/mail/messages?mailbox=${encodeURIComponent(mailbox)}`)
-      .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
-      .then((data) => setMessages(data.messages ?? []))
-      .catch(() => setError("Could not load messages."));
-  }, [mailbox, reload]);
+    const timer = setTimeout(() => void load(0));
+    return () => clearTimeout(timer);
+  }, [load, reload]);
 
-  const visible = useMemo(() => {
-    const query = search.trim().toLowerCase();
-    if (!query) return messages;
-    const haystack = (message: MessageSummary) =>
-      [
-        message.subject,
-        message.preview,
-        ...(message.from ?? []).map((a) => `${a.name ?? ""} ${a.email}`),
-      ]
-        .join(" ")
-        .toLowerCase();
-    return messages.filter((message) => haystack(message).includes(query));
-  }, [messages, search]);
+  const { messages, total, threadCounts } = page;
+  const message = messages.find((item) => item.id === selected) ?? null;
+  // One pane at a time on a phone; all three side by side from md up.
+  const open = Boolean(message);
+
+  const mark = useCallback((id: string, flags: Flags) => {
+    setPage((prev) => ({
+      ...prev,
+      messages: prev.messages.map((item) =>
+        item.id === id ? withKeywords(item, flags) : item,
+      ),
+    }));
+  }, []);
+
+  const flag = useCallback(
+    async (id: string, flags: Flags) => {
+      mark(id, flags);
+      await fetch(`/api/mail/messages/${encodeURIComponent(id)}/flags`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(flags),
+      }).catch(() => null);
+      if ("seen" in flags) void loadMailboxes().catch(() => {});
+    },
+    [mark, loadMailboxes],
+  );
+
+  const move = useCallback(
+    async (id: string, to: { to?: string; mailboxId?: string }) => {
+      setBusy(true);
+      const res = await fetch(
+        `/api/mail/messages/${encodeURIComponent(id)}/move`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(to),
+        },
+      ).catch(() => null);
+      setBusy(false);
+      if (!res?.ok) return;
+      setSelected(null);
+      setReload((count) => count + 1);
+      void loadMailboxes().catch(() => {});
+    },
+    [loadMailboxes],
+  );
+
+  const quoteInto = useCallback((target: MessageSummary, base: Draft) => {
+    void buildQuote(target).then((html) => setDraft({ ...base, html }));
+  }, []);
+
+  const replyTo = useCallback(
+    (target: MessageSummary, all: boolean) => {
+      const sender = target.from?.[0]?.email;
+      const others = otherRecipients(target, from);
+      quoteInto(target, {
+        to: sender ? [sender] : [],
+        ...(all && others.length ? { cc: others } : {}),
+        subject: prefixed(target.subject, "Re:"),
+      });
+    },
+    [from, quoteInto],
+  );
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (draft || event.metaKey || event.ctrlKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target?.isContentEditable ||
+        ["INPUT", "TEXTAREA", "SELECT"].includes(target?.tagName ?? "")
+      ) {
+        return;
+      }
+
+      const step = (delta: number) => {
+        const index = messages.findIndex((item) => item.id === selected);
+        const next =
+          messages[
+            index === -1
+              ? 0
+              : Math.min(Math.max(index + delta, 0), messages.length - 1)
+          ];
+        if (!next) return;
+        setSelected(next.id);
+        document
+          .querySelector(`[data-message="${CSS.escape(next.id)}"]`)
+          ?.scrollIntoView({ block: "nearest" });
+      };
+
+      switch (event.key) {
+        case "j":
+          step(1);
+          break;
+        case "k":
+          step(-1);
+          break;
+        case "/":
+          event.preventDefault();
+          searchBox.current?.focus();
+          break;
+        case "e":
+          if (selected) void move(selected, { to: "archive" });
+          break;
+        case "#":
+          if (selected) void move(selected, { to: "trash" });
+          break;
+        case "r":
+          if (message) replyTo(message, false);
+          break;
+        case "s":
+          if (message)
+            void flag(message.id, { flagged: !message.keywords?.$flagged });
+          break;
+        case "u":
+        case "Escape":
+          setSelected(null);
+          break;
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [draft, messages, selected, message, move, flag, replyTo]);
 
   if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading mail…</p>;
+    return <p className="p-6 text-sm text-subtle">Loading mail…</p>;
   }
   // The dashboard cookie outlives the Keycloak session mail borrows tokens
   // from, so mail alone can go stale while the rest of the admin still works.
   if (expired) {
     return (
-      <div className="rounded-[20px] border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
-        <p className="font-bold text-[#9A4440]">Your mail session expired.</p>
-        <p className="mt-2 max-w-prose text-sm text-neutral-600">
+      <div className="m-4 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut">
+        <p className="font-bold text-brand">Your mail session expired.</p>
+        <p className="mt-2 max-w-prose text-sm text-subtle">
           Mail signs in to the mail server on your behalf, and that sign-in
           lapses after 30 minutes of inactivity. Signing in again reconnects it.
         </p>
@@ -92,31 +283,25 @@ export default function MailPage() {
             await logout();
             await refresh();
           }}
-          className="mt-5 rounded-[10px] border-2 border-black bg-[#9A4440] px-4 py-2 font-bold text-white shadow-[3px_3px_0_0_#000] transition hover:bg-[#863a37]"
+          className="mt-5 rounded-[10px] border-2 border-line bg-brand px-4 py-2 font-bold text-brand-ink shadow-brut-sm transition hover:opacity-90"
         >
           Sign in again
         </button>
       </div>
     );
   }
-  if (error) {
-    return (
-      <div className="rounded-[20px] border-2 border-black bg-white p-6 shadow-[6px_6px_0_0_#000]">
-        <p className="font-bold text-[#9A4440]">{error}</p>
-      </div>
-    );
-  }
 
   const current = mailboxes.find((box) => box.id === mailbox);
-  const message = visible.find((item) => item.id === selected) ?? null;
 
   return (
-    <div className="flex h-[calc(100vh-11rem)] gap-4">
-      <aside className="flex w-52 shrink-0 flex-col gap-3">
+    <div className="flex h-[calc(100dvh-3.625rem)] gap-3 p-3 md:gap-4 md:p-4">
+      <aside
+        className={`min-h-0 shrink-0 flex-col gap-3 md:flex md:w-52 ${open ? "hidden" : "flex"}`}
+      >
         <button
           type="button"
           onClick={() => setDraft({})}
-          className="rounded-[10px] border-2 border-black bg-[#9A4440] px-4 py-2.5 font-bold text-white shadow-[3px_3px_0_0_#000] transition hover:translate-x-[1px] hover:translate-y-[1px] hover:bg-[#863a37] hover:shadow-[2px_2px_0_0_#000]"
+          className="shrink-0 rounded-[10px] border-2 border-line bg-brand px-4 py-2.5 font-bold text-brand-ink shadow-brut-sm transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
         >
           Compose
         </button>
@@ -125,55 +310,126 @@ export default function MailPage() {
           selected={mailbox}
           onSelect={(id) => {
             setSelected(null);
+            setQuery("");
+            setSearch("");
             setMailbox(id);
           }}
         />
       </aside>
 
-      <div className="flex min-w-0 flex-1 overflow-hidden rounded-[20px] border-2 border-black bg-white shadow-[6px_6px_0_0_#000]">
-        <div className="flex w-80 shrink-0 flex-col border-r-2 border-black">
-          <header className="space-y-2 border-b-2 border-black px-4 py-2.5">
-            <div>
-              <h2 className="text-sm font-extrabold">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut">
+        <div
+          className={`min-h-0 w-full flex-col md:flex md:w-80 md:shrink-0 md:border-r-2 md:border-line ${open ? "hidden" : "flex"}`}
+        >
+          <header className="shrink-0 space-y-2 border-b-2 border-line px-4 py-2.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <h2 className="truncate text-sm font-extrabold text-ink">
                 {current?.name ?? "Mail"}
               </h2>
-              <p className="text-xs text-muted-foreground">
-                {visible.length} message{visible.length === 1 ? "" : "s"}
+              <p className="shrink-0 text-xs text-subtle">
+                {messages.length} of {total}
               </p>
             </div>
-            <input
-              className="w-full rounded-[8px] border-2 border-black px-2 py-1 text-sm focus:border-[#9A4440] focus:outline-none"
-              placeholder="Search this folder"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                setSelected(null);
+                setQuery(search.trim());
+              }}
+              className="flex gap-1.5"
+            >
+              <input
+                ref={searchBox}
+                className="min-w-0 flex-1 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-ink focus:border-brand focus:outline-none"
+                placeholder="Search this folder"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearch("");
+                    setQuery("");
+                  }}
+                  className="rounded-[8px] border-2 border-line px-2 text-sm font-bold text-ink transition hover:bg-tint"
+                >
+                  Clear
+                </button>
+              )}
+            </form>
           </header>
+
           <div className="min-h-0 flex-1 overflow-y-auto">
-            <MessageList
-              messages={visible}
-              selected={selected}
-              onSelect={setSelected}
-            />
+            {error ? (
+              <p className="px-4 py-10 text-center text-sm font-bold text-brand">
+                {error}
+              </p>
+            ) : (
+              <MessageList
+                messages={messages}
+                selected={selected}
+                threadCounts={threadCounts}
+                onSelect={setSelected}
+                onFlag={(item, flagged) => void flag(item.id, { flagged })}
+              />
+            )}
+            {messages.length < total && (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={() => void load(messages.length)}
+                className="w-full border-t-2 border-line px-4 py-3 text-sm font-bold text-brand transition hover:bg-tint disabled:opacity-50"
+              >
+                {busy
+                  ? "Loading…"
+                  : `Load ${Math.min(PAGE, total - messages.length)} more`}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          {message && (
-            <MessageActions
-              message={message}
-              from={from}
-              onDraft={setDraft}
-              onMoved={() => {
-                setSelected(null);
-                setReload((count) => count + 1);
-              }}
-            />
-          )}
-          {selected ? (
-            <MessageView key={selected} id={selected} />
+        <div
+          className={`min-h-0 min-w-0 flex-1 flex-col ${open ? "flex" : "hidden md:flex"}`}
+        >
+          {message ? (
+            <>
+              <MessageActions
+                message={message}
+                mailboxes={mailboxes}
+                busy={busy}
+                replyAll={otherRecipients(message, from).length > 0}
+                onBack={() => setSelected(null)}
+                onReply={(all) => replyTo(message, all)}
+                onForward={() =>
+                  quoteInto(message, {
+                    subject: prefixed(message.subject, "Fwd:"),
+                  })
+                }
+                onFlag={(flags) => void flag(message.id, flags)}
+                onUnread={() => {
+                  void flag(message.id, { seen: false });
+                  setSelected(null);
+                }}
+                onMove={(to) => void move(message.id, to)}
+              />
+              <h2 className="shrink-0 border-b-2 border-line px-5 py-3 text-lg font-extrabold text-brand">
+                {message.subject || "(no subject)"}
+              </h2>
+              <Conversation
+                key={message.id}
+                message={message}
+                count={threadCounts[message.threadId] ?? 1}
+                onRead={(id) => {
+                  mark(id, { seen: true });
+                  void loadMailboxes().catch(() => {});
+                }}
+              />
+            </>
           ) : (
-            <p className="p-6 text-sm text-muted-foreground">
-              Select a message to read it.
+            <p className="p-6 text-sm text-subtle">
+              Select a message to read it. Shortcuts: j/k move, r reply, e
+              archive, # delete, / search.
             </p>
           )}
         </div>
@@ -200,96 +456,110 @@ const prefixed = (subject: string | null, prefix: string) =>
     ? subject
     : `${prefix} ${subject ?? ""}`.trim();
 
+const ACTION =
+  "rounded-[8px] border-2 border-line px-2.5 py-1.5 text-sm font-bold text-ink transition hover:bg-tint disabled:opacity-50";
+
 function MessageActions({
   message,
-  from,
-  onDraft,
-  onMoved,
+  mailboxes,
+  busy,
+  replyAll,
+  onBack,
+  onReply,
+  onForward,
+  onFlag,
+  onUnread,
+  onMove,
 }: {
   message: MessageSummary;
-  from: string | null;
-  onDraft: (draft: Draft) => void;
-  onMoved: () => void;
+  mailboxes: Mailbox[];
+  busy: boolean;
+  replyAll: boolean;
+  onBack: () => void;
+  onReply: (all: boolean) => void;
+  onForward: () => void;
+  onFlag: (flags: Flags) => void;
+  onUnread: () => void;
+  onMove: (to: { to?: string; mailboxId?: string }) => void;
 }) {
-  const [moving, setMoving] = useState(false);
-
-  const move = async (to: "trash" | "archive") => {
-    setMoving(true);
-    const res = await fetch(
-      `/api/mail/messages/${encodeURIComponent(message.id)}/move`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ to }),
-      },
-    ).catch(() => null);
-    setMoving(false);
-    if (res?.ok) onMoved();
-  };
-
-  const sender = message.from?.[0]?.email;
-  const others = (message.to ?? [])
-    .map((address) => address.email)
-    .filter((email) => email !== from && email !== sender);
-
-  const action =
-    "rounded-[8px] border-2 border-black px-3 py-1.5 text-sm font-bold transition hover:bg-[#fff1f0]";
-
-  const open = (draft: Draft) => {
-    void buildQuote(message).then((html) => onDraft({ ...draft, html }));
-  };
+  const flagged = Boolean(message.keywords?.$flagged);
 
   return (
-    <div className="flex gap-2 border-b-2 border-black px-5 py-2.5">
+    <div className="flex flex-wrap items-center gap-1.5 border-b-2 border-line px-3 py-2.5 md:px-5">
       <button
         type="button"
-        className={action}
-        onClick={() =>
-          open({
-            to: sender ? [sender] : [],
-            subject: prefixed(message.subject, "Re:"),
-          })
-        }
+        onClick={onBack}
+        aria-label="Back to the list"
+        className={`${ACTION} md:hidden`}
       >
+        <ArrowLeft size={15} aria-hidden />
+      </button>
+      <button type="button" className={ACTION} onClick={() => onReply(false)}>
         Reply
       </button>
-      {others.length > 0 && (
-        <button
-          type="button"
-          className={action}
-          onClick={() =>
-            open({
-              to: sender ? [sender] : [],
-              cc: others,
-              subject: prefixed(message.subject, "Re:"),
-            })
-          }
-        >
+      {replyAll && (
+        <button type="button" className={ACTION} onClick={() => onReply(true)}>
           Reply all
         </button>
       )}
-      <button
-        type="button"
-        className={action}
-        onClick={() => open({ subject: prefixed(message.subject, "Fwd:") })}
-      >
+      <button type="button" className={ACTION} onClick={onForward}>
         Forward
       </button>
 
-      <div className="ml-auto flex gap-2">
+      <div className="ml-auto flex flex-wrap items-center gap-1.5">
         <button
           type="button"
-          disabled={moving}
-          className={`${action} disabled:opacity-50`}
-          onClick={() => void move("archive")}
+          aria-label={flagged ? "Remove star" : "Star"}
+          aria-pressed={flagged}
+          className={ACTION}
+          onClick={() => onFlag({ flagged: !flagged })}
+        >
+          <Star
+            size={15}
+            className={flagged ? "fill-brand text-brand" : ""}
+            aria-hidden
+          />
+        </button>
+        <button
+          type="button"
+          aria-label="Mark unread"
+          title="Mark unread"
+          className={ACTION}
+          onClick={onUnread}
+        >
+          <MailOpen size={15} aria-hidden />
+        </button>
+        <select
+          aria-label="Move to folder"
+          value=""
+          disabled={busy}
+          onChange={(event) =>
+            event.target.value && onMove({ mailboxId: event.target.value })
+          }
+          className={`${ACTION} max-w-32 bg-surface`}
+        >
+          <option value="">Move to…</option>
+          {mailboxes
+            .filter((box) => !message.mailboxIds?.[box.id])
+            .map((box) => (
+              <option key={box.id} value={box.id}>
+                {box.name}
+              </option>
+            ))}
+        </select>
+        <button
+          type="button"
+          disabled={busy}
+          className={ACTION}
+          onClick={() => onMove({ to: "archive" })}
         >
           Archive
         </button>
         <button
           type="button"
-          disabled={moving}
-          className={`${action} text-[#9A4440] disabled:opacity-50`}
-          onClick={() => void move("trash")}
+          disabled={busy}
+          className={`${ACTION} text-brand`}
+          onClick={() => onMove({ to: "trash" })}
         >
           Delete
         </button>

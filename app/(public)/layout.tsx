@@ -7,7 +7,7 @@ export default function PublicLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <>
-      <div className="flex-1 bg-background text-[#1b1d1f]">
+      <div className="flex-1 bg-surface text-ink">
         <Navbar />
         <div className="mx-auto w-full max-w-[1060px] px-5">{children}</div>
       </div>

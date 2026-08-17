@@ -23,6 +23,7 @@ export {
 export { fetchCurrentUser, login, logout, signup } from "./auth";
 export type {
   DashboardStats,
+  DayCount,
   EventRecord,
   ExecRecord,
   SessionUser,

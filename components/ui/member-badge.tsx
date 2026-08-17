@@ -9,7 +9,7 @@ export function MemberBadge({ count = "200+", className }: MemberBadgeProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 rounded-[24px] border-[3px] border-black bg-[#9A4440] px-6 py-2.5 text-white shadow-[4px_4px_0_0_#000] transition-transform hover:translate-y-[-2px] hover:shadow-[6px_6px_0_0_#000] duration-300",
+        "flex items-center gap-2 rounded-[24px] border-[3px] border-line bg-brand px-4 py-2 text-brand-ink shadow-brut-sm transition-transform hover:translate-y-[-2px] hover:shadow-[6px_6px_0_0_var(--line)] duration-300 sm:px-6 sm:py-2.5",
         className,
       )}
     >

@@ -69,9 +69,9 @@ export default function Sidebar() {
 
   const [isOpen, setIsOpen] = useState(false);
 
-  const activeStyle = "bg-[#9A4440] text-white font-semibold";
+  const activeStyle = "bg-brand text-brand-ink font-semibold";
   const defaultStyle =
-    "bg-white text-black hover:translate-x-1 hover:translate-y-[1px]";
+    "bg-surface text-ink hover:translate-x-1 hover:translate-y-[1px]";
 
   const toggleMenu = () => setIsOpen(!isOpen);
 
@@ -87,7 +87,7 @@ export default function Sidebar() {
         aria-label={isOpen ? "Close guide navigation" : "Open guide navigation"}
         aria-expanded={isOpen}
         aria-controls="guide-nav"
-        className={`lg:hidden fixed right-4 z-50 p-2 bg-white border-2 border-black shadow-[3px_3px_0_#000] rounded-xl ${
+        className={`lg:hidden fixed right-4 z-50 p-2.5 bg-surface text-ink border-2 border-line shadow-brut-sm rounded-xl ${
           isOpen ? "top-5" : "top-25"
         }`}
       >
@@ -97,7 +97,7 @@ export default function Sidebar() {
       <aside
         className={`
         lg:block lg:sticky lg:top-24 lg:w-64 lg:h-fit shrink-0
-        fixed inset-0 z-40 bg-white transition-transform duration-300 ease-in-out
+        fixed inset-0 z-40 bg-surface transition-transform duration-300 ease-in-out
         ${isOpen ? "translate-x-0" : "translate-x-full"}
         lg:translate-x-0 lg:static lg:bg-transparent
         w-full md:w-80 ml-auto lg:ml-0
@@ -106,8 +106,8 @@ export default function Sidebar() {
         <nav
           id="guide-nav"
           className={`
-          space-y-2 p-6 lg:p-0 
-          flex flex-col h-full 
+          space-y-2 p-6 lg:p-0
+          flex flex-col h-full overflow-y-auto lg:overflow-visible
           ${isOpen ? "justify-center items-center" : "justify-start"} lg:justify-start
         `}
         >
@@ -117,7 +117,7 @@ export default function Sidebar() {
               href={`#${item.id}`}
               onClick={() => handleNavClick(item.id)}
               className={`
-                    block rounded-xl border-2 border-black shadow-[3px_3px_0_#000] transition duration-200 text-center lg:text-left
+                    block rounded-xl border-2 border-line shadow-brut-sm transition duration-200 text-center lg:text-left
                     ${
                       item.indent
                         ? "ml-6 w-[calc(100%-1.5rem)] text-sm px-2 py-1 my-1"

@@ -1,12 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { accessTokenFor } from "@/lib/auth/mail-token";
-import { requireMember } from "@/lib/auth/session";
 import { getMessage } from "@/lib/mail/jmap-mail";
 import {
   EMAIL_IFRAME_CSP,
   emailBodyToText,
   sanitizeEmailHtml,
 } from "@/lib/mail/sanitize";
+import { mailToken } from "../../../auth";
 
 /**
  * Serves one message body as a standalone document for a sandboxed iframe.
@@ -17,10 +16,7 @@ export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  if (!(await requireMember(req))) {
-    return new NextResponse("Not authorized", { status: 401 });
-  }
-  const token = await accessTokenFor(req);
+  const token = await mailToken(req);
   if (!token) return new NextResponse("Sign in again", { status: 401 });
 
   const { id } = await params;
@@ -33,10 +29,16 @@ export const GET = async (
     ? sanitizeEmailHtml(raw ?? "")
     : emailBodyToText(raw ?? "");
 
+  // Sender markup assumes a light page, so only plain text follows the theme.
+  const dark = !isHtml && new URL(req.url).searchParams.get("theme") === "dark";
+  const palette = dark
+    ? { fg: "#f4f1ee", bg: "#1a181b", link: "#d98079" }
+    : { fg: "#111", bg: "#fff", link: "#9a4440" };
+
   const doc = `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${EMAIL_IFRAME_CSP}">
-<style>body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;color:#111;word-wrap:break-word}
-img{max-width:100%;height:auto}table{max-width:100%}a{color:#9a4440}</style>
+<style>body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;color:${palette.fg};background:${palette.bg};word-wrap:break-word}
+img{max-width:100%;height:auto}table{max-width:100%}a{color:${palette.link}}</style>
 </head><body>${body}</body></html>`;
 
   return new NextResponse(doc, {

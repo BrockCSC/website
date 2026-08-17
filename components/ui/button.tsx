@@ -4,24 +4,21 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+const hard =
+  "border-2 border-line rounded-[16px] shadow-brut-sm text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_var(--line)] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_var(--line)]";
+
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-semibold transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
   {
     variants: {
       variant: {
-        primary:
-          "bg-[#9A4440] text-white border-2 border-black rounded-[16px] shadow-[3px_3px_0_0_#000] text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_#000]",
-        default:
-          "bg-[#9A4440] text-white border-2 border-black rounded-[16px] shadow-[3px_3px_0_0_#000] text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_#000]",
-        destructive:
-          "bg-[#d44b4b] text-white border-2 border-black rounded-[16px] shadow-[3px_3px_0_0_#000] text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_#000]",
-        outline:
-          "bg-transparent text-black border-2 border-black rounded-[16px] shadow-[3px_3px_0_0_#000] text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_#000]",
-        secondary:
-          "bg-[#f2f2f2] text-black border-2 border-black rounded-[16px] shadow-[3px_3px_0_0_#000] text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_#000]",
-        ghost:
-          "bg-transparent text-black border-2 border-black rounded-[16px] shadow-[3px_3px_0_0_#000] text-sm font-semibold hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#000] active:translate-x-[3px] active:translate-y-[3px] active:shadow-[1px_1px_0_0_#000]",
-        link: "bg-transparent text-black border-0 !h-auto !rounded-none !px-0 !py-0 shadow-none text-sm font-semibold underline underline-offset-4 hover:opacity-80",
+        primary: `bg-brand text-brand-ink ${hard}`,
+        default: `bg-brand text-brand-ink ${hard}`,
+        destructive: `bg-destructive text-white ${hard}`,
+        outline: `bg-transparent text-ink ${hard}`,
+        secondary: `bg-raised text-ink ${hard}`,
+        ghost: `bg-transparent text-ink ${hard}`,
+        link: "bg-transparent text-ink border-0 !h-auto !rounded-none !px-0 !py-0 shadow-none text-sm font-semibold underline underline-offset-4 hover:opacity-80",
       },
       size: {
         default: "h-10 rounded-[16px] px-6 has-[>svg]:px-5",

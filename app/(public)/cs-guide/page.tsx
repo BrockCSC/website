@@ -9,8 +9,8 @@ import courses from "@/data/courses.json";
 
 const Guide: React.FC = () => {
   return (
-    <main className="min-h-screen py-16">
-      <div className="max-w-6xl mx-auto flex gap-16 px-6">
+    <main className="min-h-screen py-10 sm:py-16">
+      <div className="max-w-6xl mx-auto flex gap-16 px-1 sm:px-6">
         {/* LEFT SIDEBAR */}
         <Sidebar />
 
@@ -18,7 +18,9 @@ const Guide: React.FC = () => {
         <div className="flex-1 max-w-full md:max-w-3xl">
           {/* HERO */}
           <section id="introduction" className="mb-16">
-            <h1 className="text-4xl font-bold mb-6">Brock CS Student Guide</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+              Brock CS Student Guide
+            </h1>
 
             <Prose>
               <p>
@@ -46,7 +48,9 @@ const Guide: React.FC = () => {
 
           {/* COURSE REGISTRATION */}
           <section id="registration" className="mb-12">
-            <h1 className="text-4xl font-bold mb-6">Course Registration</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+              Course Registration
+            </h1>
 
             <Prose>
               <p>
@@ -69,7 +73,7 @@ const Guide: React.FC = () => {
           {/* COURSE CODES  */}
           <section id="course-codes" className="mb-20">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Course Codes
             </h2>
 
@@ -111,14 +115,14 @@ const Guide: React.FC = () => {
           {/* CREDIT BREAKDOWN */}
           <section id="common-course-types" className="mb-20">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Common Course Types
             </h2>
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* FULL CREDIT */}
-              <div className="relative bg-white border-2 border-black rounded-2xl p-8 shadow-[4px_4px_0_#000]">
-                <div className="absolute -top-4 left-6 bg-white border-2 border-black px-3 py-1 rounded-full shadow-[2px_2px_0_#000] font-semibold">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+                <div className="absolute -top-4 left-6 bg-surface border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   F
                 </div>
 
@@ -126,7 +130,7 @@ const Guide: React.FC = () => {
                   Full-Credit Course
                 </h3>
 
-                <p className="text-neutral-600">
+                <p className="text-subtle">
                   Full-credit courses run through both Fall and Winter semesters
                   (D1 duration). Some intensive thesis or project courses are
                   weighted as 1.0 credits.
@@ -134,8 +138,8 @@ const Guide: React.FC = () => {
               </div>
 
               {/* HALF CREDIT */}
-              <div className="relative bg-white border-2 border-black rounded-2xl p-8 shadow-[4px_4px_0_#000]">
-                <div className="absolute -top-4 left-6 bg-[#9A4440] text-white border-2 border-black px-3 py-1 rounded-full shadow-[2px_2px_0_#000] font-semibold">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+                <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   P/Q
                 </div>
 
@@ -143,7 +147,7 @@ const Guide: React.FC = () => {
                   Half-Credit Course
                 </h3>
 
-                <p className="text-neutral-600">
+                <p className="text-subtle">
                   Most courses at Brock are 0.5 credits. These typically run for
                   one semester (12 weeks). You need 20.0 credits total to
                   graduate with an Honours degree.Q is the same thing, it is
@@ -152,8 +156,8 @@ const Guide: React.FC = () => {
               </div>
 
               {/* COOP CREDIT */}
-              <div className="relative bg-white border-2 border-black rounded-2xl p-8 shadow-[4px_4px_0_#000]">
-                <div className="absolute -top-4 left-6 bg-[#9A4440] text-white border-2 border-black px-3 py-1 rounded-full shadow-[2px_2px_0_#000] font-semibold">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+                <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   C
                 </div>
 
@@ -161,14 +165,14 @@ const Guide: React.FC = () => {
                   Coop-Credit Course
                 </h3>
 
-                <p className="text-neutral-600">
+                <p className="text-subtle">
                   Only required for co-op, and the credit is only weighted for
                   OSAP but does not apply to your graduation requirement
                 </p>
               </div>
               {/* COOP CREDIT */}
-              <div className="relative bg-white border-2 border-black rounded-2xl p-8 shadow-[4px_4px_0_#000]">
-                <div className="absolute -top-4 left-6 bg-[#9A4440] text-white border-2 border-black px-3 py-1 rounded-full shadow-[2px_2px_0_#000] font-semibold">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+                <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   N
                 </div>
 
@@ -176,7 +180,7 @@ const Guide: React.FC = () => {
                   No-Credit Course
                 </h3>
 
-                <p className="text-neutral-600">Only required for co-op</p>
+                <p className="text-subtle">Only required for co-op</p>
               </div>
             </div>
             <div className="mt-6">
@@ -189,7 +193,7 @@ const Guide: React.FC = () => {
           {/* Course Durations*/}
           <section id="course-duration" className="mb-20">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Course Durations
             </h2>
             <Prose className="mb-8">
@@ -205,7 +209,7 @@ const Guide: React.FC = () => {
           {/* Sections*/}
           <section id="course-sections" className="mb-8">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Sections
             </h2>
             <Prose className="mb-8">
@@ -222,7 +226,7 @@ const Guide: React.FC = () => {
           {/* Context Credits*/}
           <section id="context-credits" className="mb-20">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Context Credits
             </h2>
             <Prose className="mb-8">
@@ -290,11 +294,13 @@ const Guide: React.FC = () => {
 
           {/* Program Requirements*/}
           <section id="requirements" className="mb-20">
-            <h1 className="text-4xl font-bold mb-6">Program Requirements</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+              Program Requirements
+            </h1>
 
             <section id="bachelor">
               <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-                <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+                <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
                 Credit Requirements for Bachelor of Science, Computer Science
               </h2>
 
@@ -317,7 +323,7 @@ const Guide: React.FC = () => {
           {/* Minor in Applied Computing*/}
           <section id="minor-computing" className="mb-8">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Minor in Applied Computing
             </h2>
             <Prose className="mb-8">
@@ -342,7 +348,7 @@ const Guide: React.FC = () => {
           {/* Double Major*/}
           <section id="double-major" className="mb-8">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Double Major
             </h2>
 
@@ -380,7 +386,7 @@ const Guide: React.FC = () => {
           {/* Courses*/}
           <section id="courses" className="mb-20">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Courses
             </h2>
 
@@ -453,7 +459,7 @@ const Guide: React.FC = () => {
 
           {/* ADDITIONAL RESOURCES AND OPPORTUNITIES (PARENT INTRO ONLY) */}
           <section id="resources-opportunities" className="mb-16">
-            <h1 className="text-4xl font-bold mb-6">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
               Additional Resources and Opportunities
             </h1>
           </section>
@@ -461,13 +467,13 @@ const Guide: React.FC = () => {
           {/* RESOURCES */}
           <section id="resources" className="mb-10">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Resources
             </h2>
 
             <Prose className="mb-8">
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">
+                <h3 className="font-semibold text-ink mb-2">
                   Computer Science Club
                 </h3>
                 <p>
@@ -489,7 +495,7 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">
+                <h3 className="font-semibold text-ink mb-2">
                   Computer Science Help Desk
                 </h3>
                 <p>
@@ -507,7 +513,7 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">
+                <h3 className="font-semibold text-ink mb-2">
                   Learning Services
                 </h3>
                 <p>
@@ -523,16 +529,14 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">
-                  Professors
-                </h3>
+                <h3 className="font-semibold text-ink mb-2">Professors</h3>
                 <p>
                   One of the most underrated resources. Don’t hesitate to reach
                   out, attend office hours, and ask questions.
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">Goodies</h3>
+                <h3 className="font-semibold text-ink mb-2">Goodies</h3>
                 <p className="mb-2">
                   Many free trials and tools are available to you as a CS
                   student:
@@ -604,15 +608,13 @@ const Guide: React.FC = () => {
           {/* OPPORTUNITIES */}
           <section id="opportunities" className="mb-16">
             <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
-              <span className="w-4 h-4 rounded-full border-2 border-[#9A4440]" />
+              <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
               Opportunities
             </h2>
 
             <Prose className="mb-8">
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">
-                  Experience BU
-                </h3>
+                <h3 className="font-semibold text-ink mb-2">Experience BU</h3>
                 <p>
                   Find events, volunteering, and workshops.{" "}
                   <a
@@ -625,9 +627,7 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-neutral-900 mb-2">
-                  CareerZone
-                </h3>
+                <h3 className="font-semibold text-ink mb-2">CareerZone</h3>
                 <p>
                   Apply for on-campus jobs and build transferable skills.{" "}
                   <a
@@ -671,7 +671,7 @@ function Prose({
 }) {
   return (
     <div
-      className={`border-l-4 border-[#9A4440] pl-6 text-neutral-600 text-lg space-y-4 ${className}`}
+      className={`border-l-4 border-brand pl-4 sm:pl-6 text-subtle text-lg space-y-4 ${className}`}
     >
       {children}
     </div>
@@ -686,17 +686,20 @@ function Callout({
   children: React.ReactNode;
 }) {
   const tones = {
-    warning: "border-yellow-400 bg-yellow-50 text-yellow-800",
-    tip: "border-blue-400 bg-blue-50 text-blue-800",
+    warning:
+      "border-yellow-400 bg-yellow-50 text-yellow-800 dark:border-yellow-700 dark:bg-yellow-950 dark:text-yellow-100",
+    tip: "border-blue-400 bg-blue-50 text-blue-800 dark:border-blue-700 dark:bg-blue-950 dark:text-blue-100",
   };
   return (
-    <div className={`border rounded-xl px-6 py-4 text-sm ${tones[tone]}`}>
+    <div
+      className={`border rounded-xl px-4 py-4 text-sm sm:px-6 ${tones[tone]}`}
+    >
       {children}
     </div>
   );
 }
 
-const linkStyle = "underline text-red-800 hover:decoration-2";
+const linkStyle = "underline text-brand hover:decoration-2";
 
 /* ---------- SMALL COURSE ROW COMPONENT ---------- */
 
@@ -711,9 +714,9 @@ type CourseRowProps = {
 
 function CourseRow({ code, title, badges }: CourseRowProps) {
   return (
-    <div className="flex items-center justify-between bg-white border-2 border-black rounded-xl px-6 py-4 shadow-[3px_3px_0_#000]">
+    <div className="flex items-center justify-between gap-3 bg-surface border-2 border-line rounded-xl px-4 py-4 shadow-brut-sm sm:px-6">
       <div className="flex items-center gap-4">
-        <div className="border-black bg-red-900 border-1 text-white text-xs font-bold px-3 py-1 rounded-md">
+        <div className="border-line bg-brand border-1 text-brand-ink text-xs font-bold px-3 py-1 rounded-md shrink-0">
           {code}
         </div>
         <span className="font-medium">{title}</span>

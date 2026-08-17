@@ -52,6 +52,9 @@
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-tint: var(--tint);
+  --color-slab: var(--slab);
+  --color-slab-ink: var(--slab-ink);
+  --color-slab-brand: var(--slab-brand);
   --shadow-brut: var(--brut);
   --shadow-brut-sm: var(--brut-sm);
 }
@@ -72,6 +75,11 @@
   --tint: #fff1f0;
   --brut: 6px 6px 0 0 var(--line);
   --brut-sm: 3px 3px 0 0 var(--line);
+  /* Deliberately dark in both themes: the footer is a band, not a surface, and
+     inverting it would put a near-white slab under every page. */
+  --slab: #101012;
+  --slab-ink: #f4f1ee;
+  --slab-brand: #d98079;
 }
 
 .dark {
@@ -170,15 +178,15 @@
 
 @layer components {
   .section-lead {
-    @apply border-l-4 border-foreground pl-3.5 text-muted-foreground;
+    @apply border-l-4 border-line pl-3.5 text-subtle;
   }
 
   .brand-shadow-lg {
-    box-shadow: 4px 4px 0 var(--primary);
+    box-shadow: 4px 4px 0 var(--brand);
   }
 
   .detail-info-card {
-    @apply rounded-[14px] border-2 border-foreground bg-card p-3;
-    box-shadow: 4px 4px 0 var(--primary);
+    @apply rounded-[14px] border-2 border-line bg-surface p-3;
+    box-shadow: 4px 4px 0 var(--brand);
   }
 }

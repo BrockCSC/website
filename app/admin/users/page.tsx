@@ -1,34 +1,37 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import {
-  deleteExec,
-  deleteSignup,
-  ExecRecord,
-  fetchCurrentExecs,
-  fetchInviteCode,
-  fetchPreviousExecs,
-  fetchSignups,
-  reviewSignup,
-  SignupRecord,
-  WithKey,
-} from "@/lib/api";
-import { sortExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
-import ExecModal from "./exec-modal";
-import Modal, { ConfirmationModal } from "@/components/ui/modal";
-import { AdminTable, ColumnDef } from "@/components/ui/admin-table";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { fetchInviteCode, reviewSignup } from "@/lib/api";
 import { grantsApproval } from "@/lib/execs/titles";
+import { Button } from "@/components/ui/button";
 import { useSession } from "../session";
+import {
+  buildPeople,
+  fetchExecs,
+  fetchPeopleSignups,
+  searchPeople,
+  type Exec,
+  type Person,
+  type Signup,
+} from "./api";
+import Confirm from "./confirm";
+import PersonView from "./person";
+import ProfileForm from "./profile-form";
+import { Note, Panel, Pill, field } from "./ui";
 
-type TeamMember = WithKey<ExecRecord>;
-type ExecMatch = {
-  execKey: string;
-  name: string;
-  title?: string;
-  claimed: boolean;
-};
-type Signup = WithKey<SignupRecord> & { matchedExec?: ExecMatch | null };
+type Scope = "all" | "current" | "past" | "pending" | "unlinked";
+
+const SCOPES: { id: Scope; label: string; match: (p: Person) => boolean }[] = [
+  { id: "all", label: "Everyone", match: () => true },
+  {
+    id: "current",
+    label: "Current",
+    match: (p) => !!p.execKey && p.isCurrentExec !== false,
+  },
+  { id: "past", label: "Past", match: (p) => p.isCurrentExec === false },
+  { id: "pending", label: "Pending", match: (p) => p.status === "pending" },
+  { id: "unlinked", label: "No account", match: (p) => !p.signupKey },
+];
 
 const humanise = (ms: number): string => {
   const units = [
@@ -44,376 +47,315 @@ const humanise = (ms: number): string => {
 };
 
 const fullName = (signup: Signup) =>
-  [signup.firstName, signup.lastName].filter(Boolean).join(" ");
+  [signup.firstName, signup.lastName].filter(Boolean).join(" ") ||
+  (signup.username ?? "Unnamed");
 
-export default function ExecutivesManagementPage() {
-  const [currentExecs, setCurrentExecs] = useState<TeamMember[]>([]);
-  const [previousExecs, setPreviousExecs] = useState<TeamMember[]>([]);
-  const [signups, setSignups] = useState<Signup[] | null>(null);
+export default function UsersPage() {
+  const { user } = useSession();
+  const [execs, setExecs] = useState<Exec[]>([]);
+  const [signups, setSignups] = useState<Signup[]>([]);
   const [invite, setInvite] = useState<{
     code: string;
     expiresInMs: number;
   } | null>(null);
-  const [showModal, setShowModal] = useState(false);
-  const [selectedExec, setSelectedExec] = useState<TeamMember | null>(null);
-  const [showPast, setShowPast] = useState(false);
-  const [deleting, setDeleting] = useState<TeamMember | null>(null);
+  const [tab, setTab] = useState<"directory" | "pending">("directory");
+  const [query, setQuery] = useState("");
+  const [scope, setScope] = useState<Scope>("all");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
   const [rejecting, setRejecting] = useState<Signup | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  /** Only approvers can read sign-ups; plain admins just see the tiles. */
-  const { user } = useSession();
-  const isApprover = signups !== null;
-  const accountFor = (exec: TeamMember) =>
-    signups?.find((signup) => signup.execKey === exec.$key) ?? null;
-
-  const load = async () => {
-    const [current, previous] = await Promise.all([
-      fetchCurrentExecs(),
-      fetchPreviousExecs(),
-    ]);
-    setCurrentExecs(sortExecsByRoleThenDatabaseOrder(current));
-    setPreviousExecs(previous);
+  const load = useCallback(async () => {
     try {
-      setSignups(await fetchSignups());
+      const [nextExecs, nextSignups] = await Promise.all([
+        fetchExecs(),
+        fetchPeopleSignups(),
+      ]);
+      setExecs(nextExecs);
+      setSignups(nextSignups);
+      setError(null);
     } catch {
-      setSignups(null);
+      setError("Could not load people right now.");
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     void (async () => {
-      try {
-        await load();
-      } catch {
-        setError("Could not load the executive team right now.");
-      }
-      try {
-        setInvite(await fetchInviteCode());
-      } catch {
-        setInvite(null);
-      }
+      await load();
+      setInvite(await fetchInviteCode().catch(() => null));
     })();
-  }, [user?.isApprover, user?.isExecutive]);
+  }, [load]);
+
+  const people = useMemo(() => buildPeople(execs, signups), [execs, signups]);
+  const shown = useMemo(() => {
+    const matcher = SCOPES.find((s) => s.id === scope)!.match;
+    return searchPeople(people.filter(matcher), query);
+  }, [people, scope, query]);
+
+  const pending = signups.filter((signup) => signup.status === "pending");
+  const person = people.find((p) => p.id === selected) ?? null;
 
   const review = async (signup: Signup, action: "approve" | "reject") => {
-    setError(null);
     try {
       await reviewSignup(signup.$key, action);
+      setRejecting(null);
       await load();
     } catch {
-      setError(`Could not ${action} ${fullName(signup)}. Please try again.`);
+      setError(`Could not ${action} ${fullName(signup)}.`);
     }
   };
 
-  const confirmDelete = async () => {
-    if (!deleting) return;
-    const tile = deleting;
-    const account = accountFor(tile);
-    setDeleting(null);
-    setError(null);
-    try {
-      if (account) {
-        await deleteSignup(account.$key, true);
-      } else {
-        await deleteExec(tile.$key);
-      }
-      await load();
-    } catch {
-      setError(`Could not delete ${tile.name ?? "that executive"}.`);
-    }
-  };
-
-  const accountColumn: ColumnDef<TeamMember> = {
-    header: "Account",
-    cell: (exec) => {
-      const account = accountFor(exec);
-      if (!account) {
-        return <span className="text-neutral-400">No login</span>;
-      }
-      return (
-        <span>
-          <span className="font-mono text-xs">{account.username}</span>
-          {account.status !== "approved" && (
-            <span className="ml-2 text-xs font-semibold text-[#d44b4b]">
-              {account.status}
-            </span>
-          )}
-        </span>
-      );
-    },
-  };
-
-  const actionsColumn: ColumnDef<TeamMember> = {
-    header: "Actions",
-    headerClassName: "text-center",
-    cellClassName: "flex justify-around gap-[15px]",
-    cell: (exec) => (
-      <>
-        <Button
-          variant="link"
-          size="sm"
-          onClick={() => {
-            setSelectedExec(exec);
-            setShowModal(true);
-          }}
-        >
-          EDIT
-        </Button>
-        <Button
-          variant="link"
-          className="text-red-600"
-          size="sm"
-          onClick={() => {
-            setDeleting(exec);
-          }}
-        >
-          Delete
-        </Button>
-      </>
-    ),
-  };
-
-  const standardColumns: ColumnDef<TeamMember>[] = [
-    {
-      header: "Name",
-      accessorKey: "name",
-      cellClassName: "max-w-[12rem] truncate",
-    },
-    { header: "Role", accessorKey: "title" },
-    ...(isApprover ? [accountColumn] : []),
-    actionsColumn,
-  ];
-
-  const pendingCard = (signup: Signup) => {
-    const match = signup.matchedExec;
+  if (!user?.isApprover) {
     return (
-      <div
-        className="rounded-2xl border-2 border-black bg-white p-5 shadow-[4px_4px_0px_#9A4440]"
-        key={signup.$key}
-      >
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="min-w-0">
-            <div className="text-lg font-bold">{fullName(signup)}</div>
-            <div className="font-mono text-xs text-neutral-500">
-              {signup.username}
-            </div>
-          </div>
-          <div className="flex shrink-0 gap-3">
-            <Button size="xs" onClick={() => review(signup, "approve")}>
-              Approve
-            </Button>
-            <Button
-              size="xs"
-              variant="destructive"
-              onClick={() => setRejecting(signup)}
-            >
-              Reject
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-600">
-          {signup.email && <span className="break-all">{signup.email}</span>}
-          {signup.studentId && <span>#{signup.studentId}</span>}
-          {signup.isFormerExec && (
-            <span className="font-semibold text-neutral-500">
-              Former executive
-            </span>
-          )}
-          {signup.phone && <span>{signup.phone}</span>}
-          {signup.submittedAt && (
-            <span>{new Date(signup.submittedAt).toLocaleDateString()}</span>
-          )}
-        </div>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div className="rounded-[12px] bg-neutral-100 px-4 py-3 text-sm">
-            {!match && (
-              <span className="text-neutral-600">
-                No matching tile — a new one will be created on approval.
-              </span>
-            )}
-            {match && match.claimed && (
-              <span className="font-semibold text-[#d44b4b]">
-                Claims {match.name}, already held by another account. Approving
-                creates a separate tile.
-              </span>
-            )}
-            {match && !match.claimed && (
-              <span>
-                Claims existing{" "}
-                <strong>
-                  {match.name}
-                  {match.title ? ` — ${match.title}` : ""}
-                </strong>
-                {grantsApproval(match.title) && (
-                  <span className="mt-1 block font-semibold text-[#d44b4b]">
-                    Approving also grants approval rights. Check the
-                    confirmation code with them first.
-                  </span>
-                )}
-              </span>
-            )}
-          </div>
-
-          {signup.confirmationCode && (
-            <div className="rounded-[12px] border-2 border-black bg-[#fff1f0] px-4 py-2 text-center">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-neutral-500">
-                Confirm code
-              </div>
-              <div className="font-mono text-lg font-bold tracking-[0.2em] text-[#9A4440]">
-                {signup.confirmationCode}
-              </div>
-            </div>
-          )}
-        </div>
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <Note>Only a co-president can manage people.</Note>
       </div>
     );
-  };
-
-  const pending = (signups ?? []).filter((s) => s.status === "pending");
-  const deletingAccount = deleting ? accountFor(deleting) : null;
+  }
 
   return (
-    <>
-      <div>
-        <h1 className="text-2xl font-bold mb-2">Executive Management</h1>
-        <p className="text-neutral-500 mb-6">
-          The executive team, their team page tiles, and the login accounts
-          attached to them.
-        </p>
+    <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+      {person ? (
+        <PersonView
+          key={person.id}
+          onBack={() => setSelected(null)}
+          onChanged={load}
+          person={person}
+        />
+      ) : (
+        <div className="flex flex-col gap-5">
+          <div>
+            <h1 className="text-2xl font-extrabold text-ink">People</h1>
+            <p className="mt-1 text-subtle">
+              Accounts, roles, public profiles and mailboxes.
+            </p>
+          </div>
 
-        {error && (
-          <div className="mb-6 rounded-[12px] border-2 border-[#d44b4b] px-4 py-2 font-semibold text-[#d44b4b]">
-            {error}
-          </div>
-        )}
-
-        <div className="mb-8 rounded-2xl border-2 border-black bg-[#fff1f0] shadow-[4px_4px_0px_#9A4440] p-6">
-          <div className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-            Current invite code
-          </div>
-          <div className="text-3xl font-bold tracking-[0.2em] text-[#9A4440] my-1">
-            {invite?.code ?? "————————"}
-          </div>
-          <div className="text-sm text-neutral-600">
-            {invite
-              ? `Rotates in ${humanise(invite.expiresInMs)} — share it with execs who need an account`
-              : "Unavailable"}
-          </div>
-        </div>
-
-        {isApprover && pending.length > 0 && (
-          <div className="mb-10">
-            <h2 className="text-lg font-bold mb-4">
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => setTab("directory")}
+              size="sm"
+              type="button"
+              variant={tab === "directory" ? "primary" : "secondary"}
+            >
+              Directory ({people.length})
+            </Button>
+            <Button
+              onClick={() => setTab("pending")}
+              size="sm"
+              type="button"
+              variant={tab === "pending" ? "primary" : "secondary"}
+            >
               Pending sign-ups ({pending.length})
-            </h2>
-            <div className="flex flex-col gap-4">
-              {pending.map(pendingCard)}
-            </div>
+            </Button>
           </div>
-        )}
 
-        <div className="flex items-center gap-4 mb-6">
-          <Button
-            variant="primary"
-            onClick={() => {
-              setSelectedExec(null);
-              setShowModal(true);
-            }}
-          >
-            Add Executive
-          </Button>
-        </div>
+          {error && <Note>{error}</Note>}
 
-        <div className="mb-10">
-          <h2 className="text-lg font-bold mb-4">Current Executive</h2>
-          <AdminTable
-            columns={standardColumns}
-            data={currentExecs}
-            keyExtractor={(e) => e.$key}
-          />
-          <div className="mt-2 text-right text-xs text-neutral-500 font-semibold">
-            {currentExecs.length} active members
-          </div>
-        </div>
+          {tab === "directory" ? (
+            <>
+              <Panel
+                action={
+                  <Button
+                    onClick={() => setAdding(!adding)}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {adding ? "Cancel" : "Add a tile"}
+                  </Button>
+                }
+                note="Search by name, username, email, role or status."
+                title="Find someone"
+              >
+                <input
+                  aria-label="Search people"
+                  className={field}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="e.g. treasurer, pending, @brocku"
+                  type="search"
+                  value={query}
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {SCOPES.map((option) => (
+                    <Button
+                      key={option.id}
+                      onClick={() => setScope(option.id)}
+                      size="xs"
+                      type="button"
+                      variant={scope === option.id ? "primary" : "secondary"}
+                    >
+                      {option.label} ({people.filter(option.match).length})
+                    </Button>
+                  ))}
+                </div>
+                {adding && (
+                  <div className="mt-4 rounded-[10px] border-2 border-line bg-raised p-4">
+                    <ProfileForm
+                      onCancel={() => setAdding(false)}
+                      onSaved={async (saved) => {
+                        setAdding(false);
+                        await load();
+                        setSelected(saved.$key);
+                      }}
+                    />
+                  </div>
+                )}
+              </Panel>
 
-        <div className="mb-10 border-t-2 border-black pt-6">
-          <button
-            className="flex items-center gap-2 text-xl font-bold mb-4 hover:opacity-80 transition-opacity"
-            onClick={() => setShowPast(!showPast)}
-          >
-            {showPast ? "Hide" : "Show"} Past Executives {showPast ? "▲" : "▼"}
-          </button>
-          {showPast && (
-            <div className="mt-4">
-              <h2 className="text-lg font-bold mb-4">Past Executives</h2>
-              <AdminTable
-                columns={standardColumns}
-                data={previousExecs}
-                keyExtractor={(e) => e.$key}
-              />
-              <div className="mt-2 text-right text-xs text-neutral-500 font-semibold">
-                {previousExecs.length} past members
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+              {loading && <p className="text-subtle">Loading...</p>}
+              {!loading && !shown.length && (
+                <p className="text-subtle">Nobody matches that.</p>
+              )}
 
-      {deleting && (
-        <Modal
-          open={!!deleting}
-          title="Delete executive"
-          onClose={() => setDeleting(null)}
-        >
-          <p className="mb-4 mt-[-15px]">
-            Removes <strong>{deleting.name}</strong> from the team page. This
-            cannot be undone.
-          </p>
+              <ul className="flex flex-col gap-2">
+                {shown.map((entry) => (
+                  <li key={entry.id}>
+                    <button
+                      className="w-full rounded-[10px] border-2 border-line bg-surface px-4 py-3 text-left shadow-brut-sm transition hover:bg-tint"
+                      onClick={() => setSelected(entry.id)}
+                    >
+                      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="font-extrabold text-ink">
+                          {entry.name}
+                        </span>
+                        {entry.title && (
+                          <span className="text-sm font-semibold text-subtle">
+                            {entry.title}
+                          </span>
+                        )}
+                        {entry.isCurrentExec === false && <Pill>Past</Pill>}
+                        {entry.status && entry.status !== "approved" && (
+                          <Pill tone="accent">{entry.status}</Pill>
+                        )}
+                        {!entry.signupKey && <Pill>No account</Pill>}
+                      </span>
+                      <span className="mt-1 block truncate text-sm text-subtle">
+                        <span className="font-mono">
+                          {entry.username ?? "—"}
+                        </span>
+                        {entry.email ? ` · ${entry.email}` : ""}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
 
-          {deletingAccount ? (
-            <p className="mb-6 rounded-[12px] border-2 border-[#d44b4b] px-4 py-3 text-sm font-semibold text-[#d44b4b]">
-              Their login account (
-              <span className="font-mono">{deletingAccount.username}</span>)
-              will be deleted too. They will no longer be able to sign in.
-            </p>
+              <Panel
+                note={
+                  invite
+                    ? `Rotates in ${humanise(invite.expiresInMs)}. Share it with execs who need an account.`
+                    : "Unavailable right now."
+                }
+                title="Invite code"
+              >
+                <span className="font-mono text-3xl font-extrabold tracking-[0.2em] text-brand">
+                  {invite?.code ?? "————"}
+                </span>
+              </Panel>
+            </>
           ) : (
-            <p className="mb-6 text-sm text-neutral-500">
-              No login account is attached to this tile.
-            </p>
+            <>
+              {!pending.length && (
+                <p className="text-subtle">No sign-ups are waiting.</p>
+              )}
+              {pending.map((signup) => {
+                const match = signup.matchedExec;
+                return (
+                  <Panel
+                    key={signup.$key}
+                    note={[signup.email, signup.phone, signup.studentId]
+                      .filter(Boolean)
+                      .join(" · ")}
+                    title={fullName(signup)}
+                  >
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="font-mono text-sm text-ink">
+                          {signup.username}
+                        </span>
+                        {signup.isFormerExec && <Pill>Former exec</Pill>}
+                        {signup.confirmationCode && (
+                          <span className="font-mono text-lg font-extrabold tracking-[0.2em] text-brand">
+                            {signup.confirmationCode}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="text-sm text-subtle">
+                        {!match &&
+                          "No matching tile — approving creates a new one."}
+                        {match?.claimed &&
+                          `Claims ${match.name}, already held by another account. Approving creates a separate tile.`}
+                        {match && !match.claimed && (
+                          <>
+                            Claims the existing tile for{" "}
+                            <strong className="text-ink">
+                              {match.name}
+                              {match.title ? ` — ${match.title}` : ""}
+                            </strong>
+                            . Approving enables their login, grants the
+                            executive role and provisions their mailbox.
+                          </>
+                        )}
+                      </p>
+
+                      {grantsApproval(match?.title) && !match?.claimed && (
+                        <Note>
+                          This also grants approval rights over everyone else.
+                          Check the confirmation code with them first.
+                        </Note>
+                      )}
+
+                      {rejecting?.$key === signup.$key ? (
+                        <Confirm
+                          confirmLabel="Reject"
+                          intro={`Rejecting ${fullName(signup)} cannot be undone.`}
+                          items={[
+                            {
+                              id: "keycloak",
+                              title: "Delete their Keycloak account",
+                              detail:
+                                "The username is freed up and they would have to sign up again.",
+                              fixed: true,
+                            },
+                          ]}
+                          onApply={() => review(signup, "reject")}
+                          onCancel={() => setRejecting(null)}
+                          title="Reject this sign-up"
+                        />
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            onClick={() => void review(signup, "approve")}
+                            size="sm"
+                            type="button"
+                            variant="primary"
+                          >
+                            Approve
+                          </Button>
+                          <Button
+                            onClick={() => setRejecting(signup)}
+                            size="sm"
+                            type="button"
+                            variant="destructive"
+                          >
+                            Reject...
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </Panel>
+                );
+              })}
+            </>
           )}
-
-          <div className="flex justify-end gap-4">
-            <Button onClick={() => setDeleting(null)} variant="secondary">
-              Cancel
-            </Button>
-            <Button onClick={confirmDelete} variant="destructive">
-              Delete
-            </Button>
-          </div>
-        </Modal>
+        </div>
       )}
-
-      {rejecting && (
-        <ConfirmationModal
-          open={!!rejecting}
-          title="Confirm Rejection"
-          message={`Rejecting ${fullName(rejecting)} permanently deletes their Keycloak account. This cannot be undone.`}
-          onConfirm={() => review(rejecting, "reject")}
-          onClose={() => setRejecting(null)}
-        />
-      )}
-
-      {showModal && (
-        <ExecModal
-          showModal={showModal}
-          setShowModal={setShowModal}
-          selectedExec={selectedExec}
-          onSave={() => void load()}
-        />
-      )}
-    </>
+    </div>
   );
 }

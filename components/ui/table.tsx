@@ -41,16 +41,16 @@ function renderCell(value: TableCellValue): React.ReactNode {
 }
 
 const tableDefaults = {
-  "--table-border": "#000000",
-  "--table-head-bg": "#f2f2f2",
-  "--table-divider": "#000000",
-  "--table-hover": "#f2f2f2",
-  "--table-shadow": "4px 4px 0 #000",
+  "--table-border": "var(--line)",
+  "--table-head-bg": "var(--raised)",
+  "--table-divider": "var(--line)",
+  "--table-hover": "var(--tint)",
+  "--table-shadow": "4px 4px 0 var(--line)",
   "--table-radius": "20px",
-  "--table-text": "#111111",
-  "--table-head-text": "#111111",
-  "--table-caption": "#111111",
-  "--table-bg": "#ffffff",
+  "--table-text": "var(--ink)",
+  "--table-head-text": "var(--ink)",
+  "--table-caption": "var(--ink)",
+  "--table-bg": "var(--surface)",
 } as React.CSSProperties;
 
 const Table = React.forwardRef<HTMLTableElement, TableProps>(
@@ -82,12 +82,17 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
             {data.rows.map((row, i) => (
               <div
                 key={i}
-                className="border-2 border-[color:var(--table-border)] rounded-xl p-4 shadow-[2px_2px_0_#000]"
+                className="border-2 border-[color:var(--table-border)] rounded-xl p-4 shadow-brut-sm"
               >
                 {data.columns.map((col) => (
-                  <div key={col.key} className="flex justify-between py-1">
+                  <div
+                    key={col.key}
+                    className="flex justify-between gap-3 py-1"
+                  >
                     <span className="font-semibold">{col.label}</span>
-                    <span>{renderCell(row[col.key])}</span>
+                    <span className="min-w-0 text-right">
+                      {renderCell(row[col.key])}
+                    </span>
                   </div>
                 ))}
               </div>

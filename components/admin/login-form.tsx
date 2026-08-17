@@ -5,6 +5,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { login } from "@/lib/api";
 
+const field =
+  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none";
+
 export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -26,58 +29,66 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="flex min-h-[70vh] items-center justify-center px-4">
-      <form
-        onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-[20px] border-2 border-black bg-white p-8 shadow-[6px_6px_0_0_#000]"
-      >
-        <h1 className="mb-6 text-center text-2xl font-extrabold text-[#9A4440]">
-          Sign in to BrockCSC
-        </h1>
+    <div className="flex min-h-screen items-center justify-center px-5 py-12">
+      <div className="w-full max-w-[380px]">
+        <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-subtle">
+          BrockCSC
+        </p>
+        <h1 className="mt-1 text-3xl font-extrabold text-ink">Admin sign in</h1>
 
-        <div className="mb-4">
-          <label className="mb-1 block text-sm font-bold" htmlFor="username">
+        <form
+          className="mt-6 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut"
+          onSubmit={handleSubmit}
+        >
+          <label
+            className="mb-1 block text-sm font-bold text-ink"
+            htmlFor="username"
+          >
             Username
           </label>
           <input
-            id="username"
-            className="w-full rounded-[10px] border-2 border-black px-3 py-2"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
             autoFocus
+            className={field}
+            id="username"
+            onChange={(e) => setUsername(e.target.value)}
             required
+            value={username}
           />
-        </div>
 
-        <div className="mb-6">
-          <label className="mb-1 block text-sm font-bold" htmlFor="password">
+          <label
+            className="mb-1 mt-4 block text-sm font-bold text-ink"
+            htmlFor="password"
+          >
             Password
           </label>
           <input
+            className={field}
             id="password"
-            type="password"
-            className="w-full rounded-[10px] border-2 border-black px-3 py-2"
-            value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            type="password"
+            value={password}
           />
-        </div>
 
-        {error && (
-          <p className="mb-4 text-sm font-semibold text-red-600">{error}</p>
-        )}
+          {error && (
+            <p className="mt-4 text-sm font-bold text-destructive">{error}</p>
+          )}
 
-        <Button type="submit" className="w-full" disabled={submitting}>
-          {submitting ? "Signing in..." : "Sign In"}
-        </Button>
+          <Button className="mt-6 w-full" disabled={submitting} type="submit">
+            {submitting ? "Signing in..." : "Sign in"}
+          </Button>
+        </form>
 
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        <p className="mt-5 text-center text-sm text-subtle">
           New executive?{" "}
-          <Link className="underline" href="/signup">
+          <Link
+            className="font-bold text-ink underline underline-offset-4 hover:text-brand"
+            href="/signup"
+          >
             Request an account
           </Link>
         </p>
-      </form>
+      </div>
     </div>
   );
 }

@@ -134,6 +134,33 @@ export const setGroupMembers = async (
   await jmap([["x:Account/set", { update }, "c0"]]);
 };
 
+/** The inverse of makeReadOnly: clears the block so sending is inherited again. */
+export const clearReadOnly = async (localPart: string): Promise<void> => {
+  const account = (await accounts()).find((a) => a.name === localPart);
+  if (!account) return;
+
+  await jmap([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [account.id]: {
+            permissions: {
+              "@type": "Merge",
+              enabledPermissions: {},
+              disabledPermissions: {
+                emailSend: null,
+                jmapEmailSubmissionCreate: null,
+              },
+            },
+          },
+        },
+      },
+      "c0",
+    ],
+  ]);
+};
+
 /** disabledPermissions wins over anything inherited from roles or groups. */
 export const makeReadOnly = async (localPart: string): Promise<void> => {
   const account = (await accounts()).find((a) => a.name === localPart);

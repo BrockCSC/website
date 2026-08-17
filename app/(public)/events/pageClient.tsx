@@ -134,8 +134,8 @@ export default function EventsPageClient() {
   const archive = useRevealedGroups(pastGroups);
 
   return (
-    <main className="min-h-screen bg-white pb-10">
-      <section className="border-b border-border pt-4 pb-4">
+    <main className="min-h-screen bg-surface pb-10">
+      <section className="border-b border-line/25 pt-4 pb-4">
         <h1 className="m-0 font-semibold text-[clamp(2.1rem,3.5vw,2.9rem)] leading-[1.05]">
           Events
         </h1>
@@ -146,11 +146,11 @@ export default function EventsPageClient() {
       </section>
 
       {ongoing.length > 0 && (
-        <section className="mt-3 rounded-[16px] bg-linear-to-b from-primary/10 to-primary/5 px-4 py-3.5">
+        <section className="mt-3 rounded-[16px] bg-linear-to-b from-brand/10 to-brand/5 px-3 py-3.5 sm:px-4">
           <h2 className="m-0 font-semibold text-[1.55rem] leading-[1.1]">
             Ongoing Events
           </h2>
-          <p className="mt-0 mb-2.5 text-[0.86rem] font-semibold text-muted-foreground">
+          <p className="mt-0 mb-2.5 text-[0.86rem] font-semibold text-subtle">
             Happening right now.
           </p>
 
@@ -167,16 +167,16 @@ export default function EventsPageClient() {
       )}
 
       {!loading && !error && ongoing.length === 0 && upcoming.length === 0 && (
-        <section className="mt-3 rounded-[16px] border-2 border-dashed border-border bg-white px-4 py-8 text-center">
+        <section className="mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
           <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
             Nothing on the calendar right now
           </h2>
-          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-muted-foreground">
+          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
             We run workshops, socials and talks through the school year. Join
             the Discord and you&apos;ll hear about the next one first.
           </p>
           <a
-            className="inline-flex items-center gap-2 rounded-[16px] border-2 border-black bg-[#9A4440] px-4 py-2 text-sm font-semibold text-white shadow-[3px_3px_0_0_#000]"
+            className="inline-flex items-center gap-2 rounded-[16px] border-2 border-line bg-brand px-4 py-2.5 text-sm font-semibold text-brand-ink shadow-brut-sm"
             href="https://discord.gg/dsxEASYgRd"
             rel="noreferrer"
             target="_blank"
@@ -187,11 +187,11 @@ export default function EventsPageClient() {
       )}
 
       {upcoming.length > 0 && (
-        <section className="mt-3 rounded-[16px] bg-white px-4 py-4">
+        <section className="mt-3 rounded-[16px] bg-surface px-0 py-4 sm:px-4">
           <h2 className="m-0 font-semibold text-[1.75rem] leading-[1.1]">
             Upcoming Events
           </h2>
-          <p className="mt-[-0.1rem] mb-3 text-[0.9rem] font-semibold text-muted-foreground">
+          <p className="mt-[-0.1rem] mb-3 text-[0.9rem] font-semibold text-subtle">
             What&apos;s coming next.
           </p>
 
@@ -208,26 +208,24 @@ export default function EventsPageClient() {
         </section>
       )}
 
-      <section className="mt-3 rounded-[16px] bg-white px-4 py-4">
+      <section className="mt-3 rounded-[16px] bg-surface px-0 py-4 sm:px-4">
         <h2 className="m-0 mb-3 font-semibold text-[1.75rem] leading-[1.1]">
           Past Events
         </h2>
-        <p className="mt-[-0.1rem] mb-3 text-[0.9rem] font-semibold text-muted-foreground">
+        <p className="mt-[-0.1rem] mb-3 text-[0.9rem] font-semibold text-subtle">
           What we&apos;ve hosted.
         </p>
 
-        {error && <p className="mb-4 text-muted-foreground">{error}</p>}
-        {loading && (
-          <p className="mb-4 text-muted-foreground">Loading past events...</p>
-        )}
+        {error && <p className="mb-4 text-subtle">{error}</p>}
+        {loading && <p className="mb-4 text-subtle">Loading past events...</p>}
         {!loading && !error && pastGroups.length === 0 && (
-          <p className="mb-4 text-muted-foreground">No past events found.</p>
+          <p className="mb-4 text-subtle">No past events found.</p>
         )}
 
         <div className="flex flex-col gap-4">
           {archive.visible.map((group) => (
             <section key={group.term}>
-              <h3 className="mb-2 text-base font-semibold text-foreground/80">
+              <h3 className="mb-2 text-base font-semibold text-ink/80">
                 {group.term}
               </h3>
               <div className="grid grid-cols-3 gap-3 max-[980px]:grid-cols-2 max-[700px]:grid-cols-1">
@@ -247,9 +245,7 @@ export default function EventsPageClient() {
               <Button onClick={archive.revealMore} variant="outline">
                 Show earlier events
               </Button>
-              <span className="text-sm text-muted-foreground">
-                {archive.hidden} more
-              </span>
+              <span className="text-sm text-subtle">{archive.hidden} more</span>
             </div>
           )}
         </div>

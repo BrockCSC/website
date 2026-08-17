@@ -72,11 +72,18 @@ export type SignupRecord = {
   reviewedAt?: string;
 };
 
+/** One bucket per calendar day, `day` as YYYY-MM-DD in the club's timezone. */
+export type DayCount = { day: string; count: number };
+
 export type DashboardStats = {
   pageViews: {
     last30Days: number;
     previous30Days: number;
     topPaths: { path: string; views: number }[];
+    /** 30 buckets, oldest first, zero-filled. */
+    daily: DayCount[];
+    /** Null while nothing has ever been recorded, so a zero can be explained. */
+    firstRecordedDay: string | null;
   };
   execs: {
     current: number;
@@ -90,7 +97,12 @@ export type DashboardStats = {
     next: { title: string; inDays: number } | null;
   };
   /** Null when the admin may not approve sign-ups. */
-  pendingSignups: number | null;
+  signups: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    daily: DayCount[];
+  } | null;
   /** Current execs with no login account. Null for non-approvers. */
   unclaimedTiles: number | null;
 };

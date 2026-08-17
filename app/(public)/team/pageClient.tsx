@@ -112,12 +112,12 @@ export default function TeamPageClient() {
   );
   const alumni = useRevealedGroups(previousExecGroups);
   const errorMessage = error ? (
-    <p className="mb-4 text-muted-foreground">{error}</p>
+    <p className="mb-4 text-subtle">{error}</p>
   ) : null;
 
   return (
-    <main className="min-h-screen bg-white pb-10">
-      <section className="border-b border-border pb-5 pt-4">
+    <main className="min-h-screen bg-surface pb-10">
+      <section className="border-b border-line/25 pb-5 pt-4">
         <h1 className="m-0 font-semibold leading-[1.05] text-[clamp(2.1rem,3.5vw,2.9rem)]">
           Our Team
         </h1>
@@ -127,22 +127,18 @@ export default function TeamPageClient() {
         </p>
       </section>
 
-      <section className="mt-4 rounded-[16px] bg-white px-4 py-4">
+      <section className="mt-4 rounded-[16px] bg-surface px-0 py-4 sm:px-4">
         <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
           Current Executives
         </h2>
-        <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-muted-foreground">
+        <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-subtle">
           The current leadership team.
         </p>
 
         {errorMessage}
-        {loading && (
-          <p className="mb-4 text-muted-foreground">Loading current team...</p>
-        )}
+        {loading && <p className="mb-4 text-subtle">Loading current team...</p>}
         {!loading && !error && !hasCurrentExecs && (
-          <p className="mb-4 text-muted-foreground">
-            No current team members found.
-          </p>
+          <p className="mb-4 text-subtle">No current team members found.</p>
         )}
 
         {hasCurrentExecs && (
@@ -154,27 +150,25 @@ export default function TeamPageClient() {
         )}
       </section>
 
-      <section className="mt-3 bg-white px-4 py-5">
+      <section className="mt-3 bg-surface px-0 py-5 sm:px-4">
         <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
           Club Alumni
         </h2>
-        <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-muted-foreground">
+        <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-subtle">
           Past executives who helped shape the club.
         </p>
 
         {errorMessage}
-        {loading && (
-          <p className="mb-4 text-muted-foreground">Loading alumni...</p>
-        )}
+        {loading && <p className="mb-4 text-subtle">Loading alumni...</p>}
         {!loading && !error && !hasPreviousExecs && (
-          <p className="mb-4 text-muted-foreground">No alumni records found.</p>
+          <p className="mb-4 text-subtle">No alumni records found.</p>
         )}
 
         {hasPreviousExecs && (
           <div className="flex flex-col gap-4">
             {alumni.visible.map((group) => (
               <section key={group.term}>
-                <h3 className="mb-2 text-base font-semibold text-foreground/80">
+                <h3 className="mb-2 text-base font-semibold text-ink/80">
                   {group.term}
                 </h3>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
@@ -194,7 +188,7 @@ export default function TeamPageClient() {
                 <Button onClick={alumni.revealMore} variant="outline">
                   Show earlier executives
                 </Button>
-                <span className="text-sm text-muted-foreground">
+                <span className="text-sm text-subtle">
                   {alumni.hidden} more
                 </span>
               </div>
@@ -203,7 +197,7 @@ export default function TeamPageClient() {
         )}
       </section>
 
-      <p className="px-4 text-[0.85rem] text-muted-foreground">
+      <p className="px-0 text-[0.85rem] text-subtle sm:px-4">
         Are you an exec?{" "}
         <Link href="/signup" className="underline">
           Request an account

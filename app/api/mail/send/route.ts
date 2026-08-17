@@ -1,9 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { accessTokenFor } from "@/lib/auth/mail-token";
-import { requireMember } from "@/lib/auth/session";
-import { sendMessage } from "@/lib/mail/jmap-mail";
+import { sendMessage, type Attachment } from "@/lib/mail/jmap-mail";
+import { mailToken, unauthorized } from "../auth";
 
 const MAX_RECIPIENTS = 50;
+const MAX_ATTACHMENTS = 20;
 const MAX_TEXT_BYTES = 100_000;
 const MAX_HTML_BYTES = 400_000;
 const ADDRESS = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -18,14 +18,22 @@ const addresses = (value: unknown): string[] | null =>
 
 const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
 
+/** Blob ids come back from this app's own upload route, so only their shape is
+ * checked here; Stalwart rejects any the account cannot read. */
+const attachments = (value: unknown): Attachment[] | null => {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.length > MAX_ATTACHMENTS) return null;
+  const list = value.map((entry: Record<string, unknown>) => ({
+    blobId: typeof entry?.blobId === "string" ? entry.blobId : "",
+    type: typeof entry?.type === "string" ? entry.type : "",
+    name: typeof entry?.name === "string" ? entry.name.slice(0, 200) : "file",
+  }));
+  return list.every((file) => file.blobId) ? list : null;
+};
+
 export const POST = async (req: NextRequest) => {
-  if (!(await requireMember(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
-  const token = await accessTokenFor(req);
-  if (!token) {
-    return NextResponse.json({ error: "Sign in again" }, { status: 401 });
-  }
+  const token = await mailToken(req);
+  if (!token) return unauthorized();
 
   // from is deliberately ignored: the sender comes from the session identity.
   const body = (await req.json().catch(() => null)) as {
@@ -34,6 +42,7 @@ export const POST = async (req: NextRequest) => {
     subject?: unknown;
     text?: unknown;
     html?: unknown;
+    attachments?: unknown;
   } | null;
   if (!body) return bad("Body must be JSON");
 
@@ -56,12 +65,16 @@ export const POST = async (req: NextRequest) => {
     return bad(`html must be under ${MAX_HTML_BYTES} bytes`);
   }
 
+  const files = attachments(body.attachments);
+  if (!files) return bad("attachments must each carry a blobId");
+
   const id = await sendMessage(token, {
     to,
     cc,
     subject: body.subject,
     text: body.text,
     html: body.html || undefined,
+    attachments: files,
   });
   return NextResponse.json({ id });
 };

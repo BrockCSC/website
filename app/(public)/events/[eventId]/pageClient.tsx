@@ -137,11 +137,11 @@ export default function EventDetailPageClient() {
   );
 
   return (
-    <main className="min-h-screen bg-white pt-6 pb-16 text-foreground">
+    <main className="min-h-screen bg-surface pt-6 pb-16 text-ink">
       <div>
         <Button
           asChild
-          className="h-auto p-0 text-[0.92rem] font-semibold text-muted-foreground"
+          className="h-auto p-0 text-[0.92rem] font-semibold text-subtle"
           variant="link"
         >
           <Link href="/events">
@@ -153,14 +153,12 @@ export default function EventDetailPageClient() {
           </Link>
         </Button>
 
-        {loading && (
-          <p className="mt-4 text-muted-foreground">Loading event...</p>
-        )}
-        {error && <p className="mt-4 text-muted-foreground">{error}</p>}
+        {loading && <p className="mt-4 text-subtle">Loading event...</p>}
+        {error && <p className="mt-4 text-subtle">{error}</p>}
 
         {!loading && !error && event && (
           <section className="mt-4 grid items-start gap-8 min-[901px]:grid-cols-[320px_1fr]">
-            <div className="brand-shadow-lg relative aspect-[3/4] overflow-hidden rounded-[18px] border-2 border-foreground bg-muted">
+            <div className="brand-shadow-lg relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-[18px] border-2 border-line bg-raised min-[901px]:max-w-none">
               {hasImage && (
                 <div
                   className="absolute -inset-4 bg-cover bg-center blur-[14px] brightness-75"
@@ -169,7 +167,7 @@ export default function EventDetailPageClient() {
               )}
               <Image
                 alt={event.title ?? "Event poster"}
-                className={`relative z-[1] object-contain ${hasImage ? "p-3" : "bg-primary p-7"}`}
+                className={`relative z-[1] object-contain ${hasImage ? "p-3" : "bg-brand p-7"}`}
                 fill
                 sizes="(min-width: 901px) 320px, 100vw"
                 src={imageSrc}
@@ -191,17 +189,17 @@ export default function EventDetailPageClient() {
                 {event.title ?? "Untitled Event"}
               </h1>
 
-              <p className="mt-4 hidden max-w-[62ch] border-l-4 border-border pl-4 leading-[1.55] text-muted-foreground min-[641px]:block">
+              <p className="mt-4 hidden max-w-[62ch] border-l-4 border-line/25 pl-4 leading-[1.55] text-subtle min-[641px]:block">
                 {event.description ?? "More details coming soon."}
               </p>
 
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="mt-6 grid grid-cols-1 gap-3 min-[420px]:grid-cols-2">
                 {infoCards.map((card) => (
                   <article className="detail-info-card" key={card.label}>
-                    <h3 className="m-0 text-[0.8rem] uppercase tracking-[0.08em] text-muted-foreground">
+                    <h3 className="m-0 text-[0.8rem] uppercase tracking-[0.08em] text-subtle">
                       {card.label}
                     </h3>
-                    <p className="mt-1.5 text-base font-bold text-foreground">
+                    <p className="mt-1.5 text-base font-bold text-ink">
                       {card.value}
                     </p>
                   </article>
@@ -240,7 +238,7 @@ export default function EventDetailPageClient() {
                 </div>
               ) : null}
 
-              <p className="mt-4 text-center text-[0.88rem] text-muted-foreground">
+              <p className="mt-4 text-center text-[0.88rem] text-subtle">
                 Questions?{" "}
                 <a
                   className="underline underline-offset-2"

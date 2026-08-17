@@ -2,6 +2,7 @@ import { usersWithRealmRole } from "@/lib/auth/keycloak-admin";
 import { dottedAliasFor } from "@/lib/auth/username";
 import { createApprovedSender, deleteApprovedSender } from "./oci-senders";
 import {
+  clearReadOnly,
   createMailbox,
   localPartTaken,
   makeReadOnly,
@@ -48,6 +49,9 @@ export const provisionMailbox = async (exec: {
       domain: domain(),
     });
   }
+  // Also the way back for a returning alumnus: the mailbox already exists, but
+  // it is still blocked from sending until that block is lifted.
+  await clearReadOnly(exec.username);
   await createApprovedSender(`${exec.username}@${domain()}`);
 };
 

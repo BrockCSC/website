@@ -71,19 +71,19 @@ export function RecipientInput({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-black px-2 py-1.5 focus-within:border-[#9A4440]">
-        <span className="px-1 text-sm font-bold text-neutral-500">{label}</span>
+      <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-line px-2 py-1.5 focus-within:border-brand">
+        <span className="px-1 text-sm font-bold text-subtle">{label}</span>
         {value.map((email) => (
           <span
             key={email}
-            className="flex items-center gap-1 rounded-full bg-[#fff1f0] px-2.5 py-0.5 text-sm font-semibold text-[#9A4440]"
+            className="flex items-center gap-1 rounded-full bg-tint px-2.5 py-0.5 text-sm font-semibold text-brand"
           >
             {email}
             <button
               type="button"
               aria-label={`Remove ${email}`}
               onClick={() => onChange(value.filter((item) => item !== email))}
-              className="text-[#9A4440]/70 hover:text-[#9A4440]"
+              className="text-brand/70 hover:text-brand"
             >
               ×
             </button>
@@ -103,7 +103,7 @@ export function RecipientInput({
       </div>
 
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-[10px] border-2 border-black bg-white shadow-[4px_4px_0_0_#000]">
+        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-[10px] border-2 border-line bg-surface shadow-brut-sm">
           {suggestions.map((contact, index) => (
             <li key={contact.email}>
               <button
@@ -114,13 +114,11 @@ export function RecipientInput({
                 }}
                 onMouseEnter={() => setHighlight(index)}
                 className={`flex w-full items-baseline justify-between gap-3 px-3 py-2 text-left text-sm ${
-                  index === highlight ? "bg-[#fff1f0]" : "hover:bg-neutral-50"
+                  index === highlight ? "bg-tint" : "hover:bg-raised"
                 }`}
               >
                 <span className="font-bold">{contact.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {contact.email}
-                </span>
+                <span className="text-xs text-subtle">{contact.email}</span>
               </button>
             </li>
           ))}

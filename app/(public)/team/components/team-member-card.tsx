@@ -53,7 +53,7 @@ function DescriptionToggle({
         <button
           aria-controls={panelId}
           aria-expanded={isOpen}
-          className="flex min-w-0 items-center gap-2 text-left text-[#9A4440]"
+          className="flex min-w-0 items-center gap-2 py-1 text-left text-brand"
           onClick={() => setIsOpen((prev) => !prev)}
           type="button"
         >
@@ -79,9 +79,7 @@ function DescriptionToggle({
       >
         <div ref={contentRef}>
           {description && (
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {description}
-            </p>
+            <p className="text-sm leading-relaxed text-subtle">{description}</p>
           )}
         </div>
       </div>
@@ -137,7 +135,7 @@ export function TeamMemberCard({
   const explicitDescription = member.description?.trim();
   const socialLinks = getExecSocialLinks(member);
   const titleLabel = isAlumni ? (
-    <p className="text-sm font-semibold text-[#9A4440]">{title}</p>
+    <p className="text-sm font-semibold text-brand">{title}</p>
   ) : (
     <Badge size="sm" variant="default">
       {title}
@@ -149,7 +147,7 @@ export function TeamMemberCard({
         {socialLinks.map((social) => (
           <a
             aria-label={`${name} ${social.platform}`}
-            className="inline-flex h-5 w-5 items-center justify-center text-[#9A4440] transition-opacity hover:opacity-75"
+            className="inline-flex size-9 items-center justify-center text-brand transition-opacity hover:opacity-75"
             href={social.url}
             key={social.platform}
             rel="noopener noreferrer"
@@ -158,7 +156,7 @@ export function TeamMemberCard({
             <Image
               alt=""
               aria-hidden="true"
-              className="size-[18px]"
+              className="size-[18px] dark:brightness-[1.4]"
               height={18}
               src={SOCIAL_ICON_SRC[social.platform]}
               width={18}
@@ -169,11 +167,11 @@ export function TeamMemberCard({
     ) : null;
 
   const cardClass = isAlumni
-    ? "overflow-hidden rounded-2xl border border-border bg-card"
-    : "overflow-hidden rounded-[16px] border-2 border-primary bg-white";
+    ? "overflow-hidden rounded-2xl border border-line/25 bg-raised"
+    : "overflow-hidden rounded-[16px] border-2 border-brand bg-surface";
   const mediaClass = isAlumni
-    ? "relative aspect-[4/3] border-b border-border bg-muted"
-    : "relative aspect-[4/3] bg-[#f7ecec]";
+    ? "relative aspect-[4/3] border-b border-line/25 bg-raised"
+    : "relative aspect-[4/3] bg-tint";
 
   return (
     <article className={cardClass}>
@@ -190,8 +188,8 @@ export function TeamMemberCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <div className="flex size-16 items-center justify-center rounded-full border-2 border-[#9A4440]/35 bg-white/80">
-              <UserRound className="size-8 text-[#9A4440]" strokeWidth={2.25} />
+            <div className="flex size-16 items-center justify-center rounded-full border-2 border-brand/35 bg-surface/80">
+              <UserRound className="size-8 text-brand" strokeWidth={2.25} />
             </div>
           </div>
         )}
@@ -202,8 +200,8 @@ export function TeamMemberCard({
           <h3
             className={
               isAlumni
-                ? "text-lg font-semibold leading-tight text-foreground/85"
-                : "text-xl font-semibold leading-tight text-foreground"
+                ? "text-lg font-semibold leading-tight text-ink/85"
+                : "text-xl font-semibold leading-tight text-ink"
             }
           >
             {name}

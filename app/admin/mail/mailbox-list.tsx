@@ -2,8 +2,6 @@
 
 import type { Mailbox } from "@/lib/mail/jmap-mail";
 
-const label = (box: Mailbox) => box.name;
-
 export function MailboxList({
   mailboxes,
   selected,
@@ -14,7 +12,7 @@ export function MailboxList({
   onSelect: (id: string) => void;
 }) {
   return (
-    <nav className="flex gap-2 overflow-x-auto pb-1 md:flex-col md:overflow-visible md:pb-0">
+    <nav className="flex gap-2 overflow-x-auto pb-1 md:min-h-0 md:flex-col md:overflow-x-visible md:overflow-y-auto md:pb-0">
       {mailboxes.map((box) => {
         const active = box.id === selected;
         return (
@@ -22,17 +20,17 @@ export function MailboxList({
             key={box.id}
             type="button"
             onClick={() => onSelect(box.id)}
-            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-black px-3 py-2 text-left text-sm font-bold transition md:shrink ${
+            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold transition md:shrink ${
               active
-                ? "bg-[#9A4440] text-white shadow-[3px_3px_0_0_#000]"
-                : "bg-white hover:bg-[#fff1f0]"
+                ? "bg-brand text-brand-ink shadow-brut-sm"
+                : "bg-surface text-ink hover:bg-tint"
             }`}
           >
-            <span>{label(box)}</span>
+            <span className="truncate">{box.name}</span>
             {box.unreadEmails > 0 && (
               <span
-                className={`rounded-full px-2 py-0.5 text-xs ${
-                  active ? "bg-white text-[#9A4440]" : "bg-[#9A4440] text-white"
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                  active ? "bg-surface text-brand" : "bg-brand text-brand-ink"
                 }`}
               >
                 {box.unreadEmails}

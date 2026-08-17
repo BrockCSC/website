@@ -1,0 +1,36 @@
+import { NextResponse, type NextRequest } from "next/server";
+import { requireApprover } from "@/lib/auth/session";
+import { badJson, jsonObject } from "@/lib/json";
+import { applyConsequences, findPerson } from "../consequences";
+
+/**
+ * Applies the consequences the approver actually ticked. The plan is rebuilt
+ * server side, so an id that is stale or blocked comes back as skipped rather
+ * than being run because it arrived in the list.
+ */
+export const POST = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  const approver = await requireApprover(req);
+  if (!approver) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+  }
+
+  const body = await jsonObject<{ apply?: unknown }>(req);
+  if (!body) return badJson();
+  const apply = Array.isArray(body.apply)
+    ? body.apply.filter((id): id is string => typeof id === "string")
+    : null;
+  if (!apply?.length) {
+    return NextResponse.json({ error: "Nothing to apply." }, { status: 400 });
+  }
+
+  const { id } = await params;
+  const person = await findPerson(id);
+  if (!person) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  return NextResponse.json(await applyConsequences(person, apply));
+};

@@ -6,6 +6,7 @@ import {
   setUserEnabled,
 } from "@/lib/auth/keycloak-admin";
 import { requireApprover } from "@/lib/auth/session";
+import { describePerson, findPerson } from "./consequences";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
@@ -24,6 +25,22 @@ import {
   update,
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
+
+/** Everything the person detail view shows, including what changing them costs. */
+export const GET = async (
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) => {
+  if (!(await requireApprover(req))) {
+    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
+  }
+  const { id } = await params;
+  const person = await findPerson(id);
+  if (!person) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+  return NextResponse.json(await describePerson(person));
+};
 
 export const PATCH = async (
   req: NextRequest,

@@ -17,7 +17,7 @@ const COMMANDS: [
 ];
 
 const BUTTON =
-  "min-w-8 rounded-[8px] border-2 border-black bg-white px-2 py-0.5 text-sm font-bold transition hover:bg-[#fff1f0] active:translate-y-[1px]";
+  "min-w-8 rounded-[8px] border-2 border-line bg-surface px-2 py-0.5 text-sm font-bold transition hover:bg-tint active:translate-y-[1px]";
 
 export function Editor({
   editorRef,
@@ -54,8 +54,8 @@ export function Editor({
   };
 
   return (
-    <div className="overflow-hidden rounded-[10px] border-2 border-black focus-within:border-[#9A4440]">
-      <div className="flex flex-wrap items-center gap-1.5 border-b-2 border-black bg-[#fff1f0] px-2 py-1.5">
+    <div className="overflow-hidden rounded-[10px] border-2 border-line focus-within:border-brand">
+      <div className="flex flex-wrap items-center gap-1.5 border-b-2 border-line bg-tint px-2 py-1.5">
         {COMMANDS.map(([command, label, title, style]) => (
           <button
             key={command}
@@ -87,7 +87,7 @@ export function Editor({
         aria-multiline="true"
         aria-label="Message body"
         dangerouslySetInnerHTML={{ __html: initialHtml }}
-        className="max-h-[45vh] min-h-64 overflow-y-auto px-3 py-2 focus:outline-none empty:before:text-neutral-400 empty:before:content-['Write_your_message…'] [&_a]:text-[#9A4440] [&_a]:underline [&_blockquote]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
+        className="max-h-[45vh] min-h-64 overflow-y-auto px-3 py-2 focus:outline-none empty:before:text-subtle empty:before:content-['Write_your_message…'] [&_a]:text-brand [&_a]:underline [&_blockquote]:my-2 [&_ol]:list-decimal [&_ol]:pl-6 [&_ul]:list-disc [&_ul]:pl-6"
       />
     </div>
   );

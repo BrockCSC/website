@@ -20,9 +20,9 @@ export function EventCard({
   tags,
 }: EventCardProps) {
   return (
-    <div className="w-full flex flex-col rounded-[24px] border-2 border-black bg-white p-2 shadow-[4px_4px_0_0_#9A4440] overflow-hidden h-full transform transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0_0_#9A4440] duration-300 group/card">
+    <div className="w-full flex flex-col rounded-[24px] border-2 border-line bg-surface p-2 shadow-[4px_4px_0_0_var(--brand)] overflow-hidden h-full transform transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0_0_var(--brand)] duration-300 group/card">
       <div
-        className={`relative w-full aspect-[4/3] sm:aspect-video rounded-[16px] border-2 border-black overflow-hidden flex items-center justify-center bg-neutral-900`}
+        className={`relative w-full aspect-[4/3] sm:aspect-video rounded-[16px] border-2 border-line overflow-hidden flex items-center justify-center bg-neutral-900`}
       >
         {imageUrl ? (
           <>
@@ -56,10 +56,10 @@ export function EventCard({
       {/* Content */}
       <div className="flex flex-col flex-1 p-4 pt-5 gap-4">
         <div className="flex flex-col gap-2">
-          <h3 className="text-2xl font-bold tracking-tight text-black line-clamp-1">
+          <h3 className="text-2xl font-bold tracking-tight text-ink line-clamp-1">
             {title}
           </h3>
-          <p className="text-sm text-neutral-600 line-clamp-3 font-medium leading-relaxed">
+          <p className="text-sm text-subtle line-clamp-3 font-medium leading-relaxed">
             {description}
           </p>
         </div>
@@ -68,8 +68,8 @@ export function EventCard({
           {tags.map((tag, index) => (
             <Badge
               key={index}
-              variant="outline"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] border border-[#f5d5d5] bg-[#fff1f1] hover:bg-[#ffeaea] text-[#9A4440] text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+              variant="default"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[10px] sm:text-xs font-bold uppercase tracking-wider"
             >
               {tag.icon && (
                 <span className="[&>svg]:size-3.5 opacity-80 shrink-0">
@@ -82,7 +82,7 @@ export function EventCard({
         </div>
 
         {/* Action Button */}
-        <div className="mt-2 w-full rounded-[14px] bg-[#9A4440] text-white py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-black shadow-[2px_2px_0_0_#000] group-hover/card:bg-[#803835] transition-colors">
+        <div className="mt-2 w-full rounded-[14px] bg-brand text-brand-ink py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-line shadow-[2px_2px_0_0_var(--line)] group-hover/card:opacity-90 transition-opacity">
           More Info
           <ArrowUpRight className="size-4 opacity-80 shrink-0" />
         </div>
