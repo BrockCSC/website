@@ -6,6 +6,7 @@ import {
   createMailbox,
   localPartTaken,
   makeReadOnly,
+  revokeAppPasswords,
   setExpungeAllowed,
   setGroupMembers,
 } from "./stalwart";
@@ -65,5 +66,6 @@ export const provisionMailbox = async (exec: {
 export const makeMailboxReadOnly = async (username: string): Promise<void> => {
   if (isProtectedMailbox(username)) return;
   await makeReadOnly(username);
+  await revokeAppPasswords(username);
   await deleteApprovedSender(`${username}@${domain()}`);
 };
