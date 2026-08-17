@@ -17,13 +17,16 @@ export const DISCLAIMER =
 
 export type Signer = { name: string; title?: string };
 
+/** Shared mailboxes speak for the club, not a person. */
+const GENERIC: Signer = { name: "BrockCSC" };
+
 /** Read from the exec tile rather than copied at provisioning time, so a title
  * change follows through to the signature. */
-export const signerFor = async (localPart: string): Promise<Signer | null> => {
+export const signerFor = async (localPart: string): Promise<Signer> => {
   const signup = (await findAll<SignupRecord>(signupsTable)).find(
     (record) => record.username === localPart,
   );
-  if (!signup) return null;
+  if (!signup) return GENERIC;
 
   const exec = signup.execKey
     ? await findById<ExecRecord>(execsTable, signup.execKey)
@@ -31,7 +34,7 @@ export const signerFor = async (localPart: string): Promise<Signer | null> => {
   const name =
     exec?.name ||
     [signup.firstName, signup.lastName].filter(Boolean).join(" ").trim();
-  return name ? { name, title: exec?.title } : null;
+  return name ? { name, title: exec?.title } : GENERIC;
 };
 
 const lines = ({ name, title }: Signer): string[] =>
@@ -48,7 +51,7 @@ export const htmlSignature = (signer: Signer): string =>
 
 /** Matched against the end of the body, not anywhere in it: a reply quoting an
  * earlier club message must still get its own signature. */
-export const withFooter = (text: string, signer: Signer | null): string => {
-  const footer = `\n\n-- \n${signer ? textSignature(signer) : DISCLAIMER}\n`;
+export const withFooter = (text: string, signer: Signer): string => {
+  const footer = `\n\n-- \n${textSignature(signer)}\n`;
   return text.endsWith(footer) ? text : `${text.replace(/\s+$/, "")}${footer}`;
 };

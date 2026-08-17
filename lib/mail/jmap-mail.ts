@@ -294,9 +294,8 @@ const refreshSignature = async (
   token: string,
   accountId: string,
   identity: Identity,
-  signer: Signer | null,
+  signer: Signer,
 ): Promise<void> => {
-  if (!signer) return;
   const wanted = {
     textSignature: textSignature(signer),
     htmlSignature: htmlSignature(signer),
@@ -355,7 +354,7 @@ export const sendMessage = async (
           draft: {
             mailboxIds: { [drafts.id]: true },
             keywords: { $draft: true },
-            from: [{ email: identity.email }],
+            from: [{ name: signer.name, email: identity.email }],
             to: msg.to.map((email) => ({ email })),
             ...(msg.cc?.length
               ? { cc: msg.cc.map((email) => ({ email })) }
