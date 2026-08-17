@@ -238,6 +238,59 @@ export const getMessage = async (
   return message;
 };
 
+/**
+ * Moves a message wholesale, replacing its mailboxes rather than adding one.
+ * Stalwart ships no Archive folder, so it is created on first use; Trash always
+ * exists. Nothing is erased here: both are reversible from the folder itself.
+ */
+export const moveMessage = async (
+  token: string,
+  id: string,
+  role: "trash" | "archive",
+): Promise<void> => {
+  const accountId = await mailAccountId(token);
+  const [boxes] = (await jmap(token, [
+    ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
+  ])) as [{ list: { id: string; role: string | null }[] }];
+
+  let target = boxes.list.find((box) => box.role === role)?.id;
+  if (!target) {
+    const [made] = (await jmap(token, [
+      [
+        "Mailbox/set",
+        {
+          accountId,
+          create: {
+            box: { name: role === "trash" ? "Trash" : "Archive", role },
+          },
+        },
+        "b0",
+      ],
+    ])) as [{ created?: Record<string, { id: string }>; notCreated?: unknown }];
+
+    target = made.created?.box?.id;
+    if (!target) {
+      throw new Error(
+        `No ${role} mailbox and none could be made: ${JSON.stringify(made.notCreated)}`,
+      );
+    }
+  }
+
+  const [res] = (await jmap(token, [
+    [
+      "Email/set",
+      { accountId, update: { [id]: { mailboxIds: { [target]: true } } } },
+      "e0",
+    ],
+  ])) as [{ updated?: Record<string, unknown>; notUpdated?: unknown }];
+
+  if (!res.updated || !(id in res.updated)) {
+    throw new Error(
+      `Stalwart refused to move ${id}: ${JSON.stringify(res.notUpdated)}`,
+    );
+  }
+};
+
 /** The address this account sends from, or null when it has no mailbox. */
 export const sendingAddress = async (token: string): Promise<string | null> => {
   const { session, accountId } = await mailSession(token);

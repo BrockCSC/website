@@ -159,7 +159,15 @@ export default function MailPage() {
 
         <div className="flex min-w-0 flex-1 flex-col">
           {message && (
-            <MessageActions message={message} from={from} onDraft={setDraft} />
+            <MessageActions
+              message={message}
+              from={from}
+              onDraft={setDraft}
+              onMoved={() => {
+                setSelected(null);
+                setReload((count) => count + 1);
+              }}
+            />
           )}
           {selected ? (
             <MessageView key={selected} id={selected} />
@@ -196,11 +204,29 @@ function MessageActions({
   message,
   from,
   onDraft,
+  onMoved,
 }: {
   message: MessageSummary;
   from: string | null;
   onDraft: (draft: Draft) => void;
+  onMoved: () => void;
 }) {
+  const [moving, setMoving] = useState(false);
+
+  const move = async (to: "trash" | "archive") => {
+    setMoving(true);
+    const res = await fetch(
+      `/api/mail/messages/${encodeURIComponent(message.id)}/move`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ to }),
+      },
+    ).catch(() => null);
+    setMoving(false);
+    if (res?.ok) onMoved();
+  };
+
   const sender = message.from?.[0]?.email;
   const others = (message.to ?? [])
     .map((address) => address.email)
@@ -249,6 +275,25 @@ function MessageActions({
       >
         Forward
       </button>
+
+      <div className="ml-auto flex gap-2">
+        <button
+          type="button"
+          disabled={moving}
+          className={`${action} disabled:opacity-50`}
+          onClick={() => void move("archive")}
+        >
+          Archive
+        </button>
+        <button
+          type="button"
+          disabled={moving}
+          className={`${action} text-[#9A4440] disabled:opacity-50`}
+          onClick={() => void move("trash")}
+        >
+          Delete
+        </button>
+      </div>
     </div>
   );
 }

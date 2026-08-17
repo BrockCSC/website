@@ -24,6 +24,23 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   // unreachable server must not, or the tab vanishes with nothing to click.
   const [hasMailbox, setHasMailbox] = useState(true);
 
+  // Well inside Keycloak's 30 minute idle window, and again on returning to the
+  // tab, which is what a closed laptop looks like from here.
+  useEffect(() => {
+    if (!user?.isExecutive) return;
+    const beat = () => {
+      if (document.visibilityState === "visible") {
+        void fetch("/api/mail/keepalive", { method: "POST" });
+      }
+    };
+    const timer = setInterval(beat, 10 * 60 * 1000);
+    document.addEventListener("visibilitychange", beat);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener("visibilitychange", beat);
+    };
+  }, [user?.isExecutive]);
+
   useEffect(() => {
     if (!user?.isExecutive) return;
     fetch("/api/mail/me")

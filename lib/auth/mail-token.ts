@@ -29,9 +29,13 @@ const config = () => {
   };
 };
 
-export const accessTokenFor = async (
+/**
+ * Each exchange also resets Keycloak's session idle timer and hands back a
+ * fresh refresh token, so callers that can set a cookie should store it.
+ */
+export const exchangeRefreshToken = async (
   req: NextRequest,
-): Promise<string | null> => {
+): Promise<{ accessToken: string; refreshToken?: string } | null> => {
   const refresh = req.cookies.get(REFRESH_COOKIE)?.value;
   if (!refresh) return null;
 
@@ -48,6 +52,16 @@ export const accessTokenFor = async (
   });
   if (!res.ok) return null;
 
-  const { access_token } = (await res.json()) as { access_token?: string };
-  return access_token ?? null;
+  const body = (await res.json()) as {
+    access_token?: string;
+    refresh_token?: string;
+  };
+  return body.access_token
+    ? { accessToken: body.access_token, refreshToken: body.refresh_token }
+    : null;
 };
+
+export const accessTokenFor = async (
+  req: NextRequest,
+): Promise<string | null> =>
+  (await exchangeRefreshToken(req))?.accessToken ?? null;
