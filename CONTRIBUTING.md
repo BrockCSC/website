@@ -209,7 +209,7 @@ production for them.
 
 | Workflow                                              | Trigger                                             | What it does                                                                                           |
 | ----------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `.github/workflows/ci.yml` — **CI**                   | every pull request, push to `main`, tags `v*`       | lint + typecheck + `format:check`, CodeQL, `npm audit`, dependency review — the merge gate             |
+| `.github/workflows/ci.yml` — **CI**                   | every pull request, push to `main`, tags `v*`       | lint + typecheck + `format:check`, `npm audit`, dependency review — the merge gate                     |
 | `.github/workflows/deploy.yml` — **Build & Deploy**   | push to any branch, tags `v*`                       | builds and pushes the image, scans it with Trivy, syncs secrets into Komodo Variables, deploys a Stack |
 | `.github/workflows/deploy-mail.yml` — **Deploy Mail** | push to `main` touching `deploy/mail/**`, or manual | deploys the single long-lived `brockcsc-mail` Stack                                                    |
 | `.github/workflows/cleanup.yml` — **Cleanup**         | branch deleted                                      | deletes that branch's Komodo Stack and drops its `preview_*` schema                                    |
@@ -257,8 +257,9 @@ Before opening a PR:
 npm run lint && npm run typecheck && npm run format:check && npm run build
 ```
 
-CI runs the first three, plus CodeQL and a dependency review, and `main` will not take a pull request
-until they pass. `npm audit` runs too but does not block: an advisory in a transitive dependency is
+CI runs the first three plus a dependency review, and `main` will not take a pull request until they
+pass — along with CodeQL, which runs from the repository's code scanning default setup rather than
+from a workflow here. `npm audit` runs too but does not block: an advisory in a transitive dependency is
 not the fault of whichever PR is open when it lands.
 
 ## Opening a pull request

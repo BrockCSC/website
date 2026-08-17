@@ -13,7 +13,7 @@ env:
   IMAGE: ghcr.io/brockcsc/brockcsc-ca
 
 jobs:
-  build:
+  build-image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -40,8 +40,8 @@ jobs:
 
   # Deliberately not a gate on deploy: a new base-image CVE should shout, not
   # stop a hotfix. It lands in the Security tab either way.
-  scan:
-    needs: build
+  scan-image:
+    needs: build-image
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -72,8 +72,9 @@ jobs:
           ignore-unfixed: true
           severity: CRITICAL
           exit-code: "1"
+          trivyignores: .trivyignore
 
-  context:
+  resolve-target:
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
@@ -100,14 +101,14 @@ jobs:
             echo "url=https://$SLUG.$VPS_HOST" >> "$GITHUB_OUTPUT"
           fi
 
-  deploy:
-    needs: [build, context]
+  deploy-stack:
+    needs: [build-image, resolve-target]
     runs-on: ubuntu-latest
     permissions:
       contents: read
     environment:
-      name: ${{ needs.context.outputs.env_name }}
-      url: ${{ needs.context.outputs.url }}
+      name: ${{ needs.resolve-target.outputs.env_name }}
+      url: ${{ needs.resolve-target.outputs.url }}
     steps:
       - uses: actions/checkout@v5
 
