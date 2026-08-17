@@ -39,7 +39,6 @@ export const POST = async (req: NextRequest) => {
     );
   }
 
-  // The bytes decide, never the name or the type the client claims.
   const bytes = new Uint8Array(await file.arrayBuffer());
   const sniffed = sniffImageType(bytes);
   const storeAsIs = sniffed !== null && bytes.byteLength <= MAX_UPLOAD_BYTES;

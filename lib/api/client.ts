@@ -1,6 +1,5 @@
 export class ApiError extends Error {
   status: number;
-  /** What the route said, when it said anything worth showing a person. */
   detail?: string;
   constructor(status: number, message: string, detail?: string) {
     super(message);

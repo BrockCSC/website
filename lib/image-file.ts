@@ -1,4 +1,3 @@
-/** Mirrors the server's limits in app/api/uploads/route.ts. */
 const MAX_BYTES = 5 * 1024 * 1024;
 const ACCEPTED = new Set([
   "image/jpeg",
@@ -26,17 +25,10 @@ const encode = (canvas: HTMLCanvasElement, quality: number) =>
     canvas.toBlob(resolve, OUTPUT, quality),
   );
 
-/**
- * A phone photo is routinely larger than the 5MB the server takes, and an
- * iPhone one is HEIC, which it does not take at all. Re-encoding whatever the
- * browser can decode means picking the wrong kind of file is not the person's
- * problem to solve. WebP keeps transparency, so a logo survives the trip.
- */
+/** Falls back to the original file for the server to convert. */
 export const toUploadableImage = async (file: File): Promise<File> => {
   if (ACCEPTED.has(file.type) && file.size <= MAX_BYTES) return file;
 
-  // Anything this browser cannot decode - a HEIC outside Safari, say - goes up
-  // untouched for the server to convert instead.
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
