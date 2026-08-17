@@ -23,7 +23,7 @@ jobs:
       name: mail
       url: https://mail.brockcsc.ca
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
       - name: Sync mail secrets to Komodo Variables
         env:
