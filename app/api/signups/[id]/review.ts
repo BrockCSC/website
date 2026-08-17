@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import type { SessionUser } from "@/lib/api/types";
 
-/**
- * Four eyes. This is the only thing between a co-president and approving
- * their own request, so every review route has to run it - which is why it
- * lives here rather than being written out again in each one.
- */
+/** Four eyes: an approver may not review their own request. */
 export const isSelfReview = (
   approver: SessionUser,
   ownerId: string | null | undefined,
