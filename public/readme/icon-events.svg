@@ -1,5 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 76 76" width="76" height="76" role="img" aria-label="Events">
   <title>Events</title>
+  <style>
+    @keyframes dot { 50% { fill: #ffd84d; } }
+    .dot { animation: dot 1.6s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+    }
+  </style>
+
   <rect x="10" y="10" width="60" height="60" rx="16" fill="#000000" />
   <rect x="6" y="6" width="60" height="60" rx="16" fill="#9A4440" stroke="#000000" stroke-width="2.5" />
   <!-- binding rings -->
@@ -14,7 +22,5 @@
   <circle cx="28" cy="50" r="2" fill="#cf9d9b" />
   <circle cx="37" cy="50" r="2" fill="#cf9d9b" />
   <!-- highlighted date -->
-  <rect x="43" y="47" width="7" height="6" rx="1.5" fill="#cf9d9b">
-    <animate attributeName="fill" values="#cf9d9b;#ffd84d;#cf9d9b" dur="1.6s" repeatCount="indefinite" />
-  </rect>
+  <rect class="dot" x="43" y="47" width="7" height="6" rx="1.5" fill="#cf9d9b" />
 </svg>

@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 560" width="880" height="560" role="img" aria-label="System architecture: the browser reaches Traefik, which routes to the Next.js app container on a private Docker network alongside Postgres and Stalwart; Keycloak handles OIDC and Stalwart relays outbound mail through Oracle Cloud Email Delivery">
+  <title>System architecture</title>
+
+  <defs>
+    <marker id="ink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#101012" />
+    </marker>
+    <marker id="brand" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9A4440" />
+    </marker>
+  </defs>
+
+  <style>
+    /* CSS keyframes only — SMIL cannot be disabled by a media query. The moving
+       lines are dashed at rest, so every connection reads with animation off. */
+    .wire { stroke-dasharray: 10 7; animation: crawl 1.6s linear infinite; }
+    @keyframes crawl { to { stroke-dashoffset: -34; } }
+    @media (prefers-reduced-motion: reduce) { .wire { animation: none; } }
+
+    .h { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 1.1px; fill: #101012; }
+    .b { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11.5px; fill: #55525a; }
+    .t { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; fill: #9A4440; }
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .m { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 11.5px; fill: #101012; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="520" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="520" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <rect x="48" y="44" width="220" height="30" rx="15" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text class="lbl" x="158" y="64" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.6" fill="#9A4440">SYSTEM ARCHITECTURE</text>
+  <text class="lbl" x="814" y="64" text-anchor="end" font-size="13" fill="#6b6870">one VPS · one Next.js app · no separate backend</text>
+
+  <!-- private network boundary -->
+  <rect x="404" y="104" width="440" height="266" rx="18" fill="#faf8f6" stroke="#9A4440" stroke-width="2" stroke-dasharray="8 6" />
+  <rect x="428" y="92" width="212" height="24" rx="12" fill="#ffffff" stroke="#9A4440" stroke-width="2" />
+  <text class="t" x="534" y="108" text-anchor="middle">PRIVATE DOCKER NETWORK</text>
+
+  <!-- browser -->
+  <rect x="44" y="132" width="150" height="108" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+  <rect x="44" y="132" width="150" height="26" rx="14" fill="#101012" />
+  <rect x="44" y="146" width="150" height="12" fill="#101012" />
+  <circle cx="60" cy="145" r="4" fill="#ffffff" />
+  <circle cx="74" cy="145" r="4" fill="#ffffff" />
+  <text class="h" x="60" y="184">BROWSER</text>
+  <text class="b" x="60" y="204">public site</text>
+  <text class="b" x="60" y="220">admin portal host</text>
+
+  <!-- traefik -->
+  <rect x="238" y="150" width="130" height="72" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+  <text class="h" x="256" y="180">TRAEFIK</text>
+  <text class="b" x="256" y="200">TLS · host routing</text>
+
+  <path d="M194 186 H232" stroke="#101012" stroke-width="2.5" marker-end="url(#ink)" />
+  <path class="wire" d="M368 186 H422" stroke="#9A4440" stroke-width="2.5" marker-end="url(#brand)" />
+
+  <!-- the app -->
+  <rect x="434" y="146" width="196" height="204" rx="16" fill="#9A4440" />
+  <rect x="428" y="140" width="196" height="204" rx="16" fill="#ffffff" stroke="#101012" stroke-width="3" />
+  <text class="h" x="446" y="170">NEXT.JS 16 APP</text>
+  <text class="b" x="446" y="188">App Router, standalone</text>
+  <g>
+    <rect x="446" y="200" width="160" height="28" rx="9" fill="#fff1f1" stroke="#9A4440" stroke-width="1.8" />
+    <text class="m" x="458" y="218">app/(public)</text>
+    <rect x="446" y="234" width="160" height="28" rx="9" fill="#fff1f1" stroke="#9A4440" stroke-width="1.8" />
+    <text class="m" x="458" y="252">app/admin</text>
+    <rect x="446" y="268" width="160" height="28" rx="9" fill="#fff1f1" stroke="#9A4440" stroke-width="1.8" />
+    <text class="m" x="458" y="286">app/api</text>
+    <rect x="446" y="302" width="160" height="28" rx="9" fill="#f4f1ee" stroke="#c9c2bb" stroke-width="1.8" />
+    <text class="m" x="458" y="320" style="fill:#55525a">middleware.ts</text>
+  </g>
+
+  <!-- postgres -->
+  <rect x="658" y="146" width="164" height="86" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+  <text class="h" x="676" y="174">POSTGRES</text>
+  <text class="b" x="676" y="194">Drizzle · jsonb tables</text>
+  <text class="b" x="676" y="210">a schema per environment</text>
+
+  <!-- stalwart -->
+  <rect x="658" y="258" width="164" height="86" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+  <text class="h" x="676" y="286">STALWART</text>
+  <text class="b" x="676" y="306">JMAP · IMAP · SMTP</text>
+  <text class="b" x="676" y="322">admin API never exposed</text>
+
+  <path d="M624 190 H652" stroke="#101012" stroke-width="2.5" marker-end="url(#ink)" />
+  <path d="M624 300 H652" stroke="#101012" stroke-width="2.5" marker-end="url(#ink)" />
+
+  <!-- outside the network -->
+  <text class="t" x="48" y="404" style="fill:#6b6870">SHARED SERVICES — NOT IN THIS REPO</text>
+  <path d="M48 414 H832" stroke="#e2dcd6" stroke-width="2" />
+
+  <rect x="238" y="432" width="240" height="88" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2.5" stroke-dasharray="7 5" />
+  <text class="h" x="256" y="460">KEYCLOAK</text>
+  <text class="b" x="256" y="480">brockcsc realm · password grant</text>
+  <text class="b" x="256" y="496">roles re-read on every request</text>
+
+  <rect x="590" y="432" width="242" height="88" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2.5" stroke-dasharray="7 5" />
+  <text class="h" x="608" y="460">OCI EMAIL DELIVERY</text>
+  <text class="b" x="608" y="480">outbound relay for the domain</text>
+  <text class="b" x="608" y="496">approved senders per mailbox</text>
+
+  <path d="M526 344 V386 H358 V426" fill="none" stroke="#101012" stroke-width="2.5" marker-end="url(#ink)" />
+  <text class="b" x="380" y="380">tokens + role checks</text>
+
+  <path class="wire" d="M740 344 V426" fill="none" stroke="#9A4440" stroke-width="2.5" marker-end="url(#brand)" />
+  <text class="b" x="752" y="382" style="fill:#9A4440">SMTP relay</text>
+</svg>

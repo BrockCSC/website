@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 320" width="880" height="320" role="img" aria-label="Getting an exec account in four steps: ask an exec for the weekly invite code, sign up, write down the six-character code shown once, then a co-president approves and your mailbox is created">
+  <title>Getting an account — four steps</title>
+
+  <style>
+    /* CSS keyframes only; SMIL ignores prefers-reduced-motion. The chevrons
+       rest fully opaque, so nothing is hidden when the animation never runs. */
+    .flow { animation: travel 3s ease-in-out infinite; }
+    .flow2 { animation-delay: 0.35s; }
+    .flow3 { animation-delay: 0.7s; }
+    @keyframes travel { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    @media (prefers-reduced-motion: reduce) { .flow { animation: none; opacity: 1; } }
+
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .ttl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 800; letter-spacing: 1.1px; fill: #101012; }
+    .bdy { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11.5px; fill: #55525a; }
+    .num { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 16px; font-weight: 700; fill: #ffffff; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="280" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="280" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <rect x="48" y="44" width="212" height="30" rx="15" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text class="lbl" x="154" y="64" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.6" fill="#9A4440">GETTING AN ACCOUNT</text>
+  <text class="lbl" x="814" y="64" text-anchor="end" font-size="13" fill="#6b6870">exec accounts are not self-serve</text>
+
+  <!-- 1 -->
+  <g>
+    <rect x="48" y="96" width="178" height="176" rx="16" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <circle cx="78" cy="126" r="17" fill="#101012" />
+    <text class="num" x="78" y="132" text-anchor="middle">1</text>
+    <text class="ttl" x="62" y="172">ASK AN EXEC</text>
+    <text class="bdy" x="62" y="196">Invite codes rotate</text>
+    <text class="bdy" x="62" y="212">every week, so ask</text>
+    <text class="bdy" x="62" y="228">for a fresh one.</text>
+  </g>
+
+  <path class="flow" d="M232 176 l10 10 l-10 10" fill="none" stroke="#9A4440" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- 2 -->
+  <g>
+    <rect x="250" y="96" width="178" height="176" rx="16" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <circle cx="280" cy="126" r="17" fill="#101012" />
+    <text class="num" x="280" y="132" text-anchor="middle">2</text>
+    <text class="ttl" x="264" y="172">SIGN UP</text>
+    <text class="bdy" x="264" y="196">brockcsc.ca/signup,</text>
+    <text class="bdy" x="264" y="212">with that code and</text>
+    <text class="bdy" x="264" y="228">your Brock email.</text>
+  </g>
+
+  <path class="flow flow2" d="M434 176 l10 10 l-10 10" fill="none" stroke="#9A4440" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- 3 — the one people get wrong -->
+  <g>
+    <rect x="452" y="96" width="178" height="176" rx="16" fill="#fff1f1" stroke="#9A4440" stroke-width="2.5" />
+    <circle cx="482" cy="126" r="17" fill="#9A4440" />
+    <text class="num" x="482" y="132" text-anchor="middle">3</text>
+    <rect x="512" y="112" width="102" height="26" rx="13" fill="#ffffff" stroke="#9A4440" stroke-width="2" />
+    <text class="lbl" x="563" y="129" text-anchor="middle" font-size="10.5" font-weight="800" letter-spacing="1.1" fill="#9A4440">SHOWN ONCE</text>
+    <text class="ttl" x="466" y="172" style="fill:#9A4440">WRITE IT DOWN</text>
+    <text class="bdy" x="466" y="196">A six-character</text>
+    <text class="bdy" x="466" y="212">confirmation code. It</text>
+    <text class="bdy" x="466" y="228">cannot be re-sent.</text>
+  </g>
+
+  <path class="flow flow3" d="M636 176 l10 10 l-10 10" fill="none" stroke="#9A4440" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- 4 -->
+  <g>
+    <rect x="654" y="96" width="178" height="176" rx="16" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <circle cx="684" cy="126" r="17" fill="#101012" />
+    <text class="num" x="684" y="132" text-anchor="middle">4</text>
+    <text class="ttl" x="668" y="172">GET APPROVED</text>
+    <text class="bdy" x="668" y="196">Give the code to a</text>
+    <text class="bdy" x="668" y="212">co-president: login on,</text>
+    <text class="bdy" x="668" y="228">mailbox created.</text>
+    <text class="bdy" x="668" y="244" style="fill:#9A4440">Nothing is emailed.</text>
+  </g>
+</svg>

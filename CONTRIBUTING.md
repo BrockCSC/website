@@ -107,29 +107,14 @@ saying so. The apply result reports `applied / rehearsed / skipped / failed`.
 
 ## Architecture
 
-One Next.js 16 App Router application, no separate backend.
+One Next.js 16 App Router application, no separate backend. Everything below runs as a container on
+one VPS behind Traefik, deployed by Komodo.
 
-```
-app/
-  (public)/            route group: /, /events, /events/[eventId], /team, /cs-guide, /links
-  signup/              public exec sign-up form
-  admin/               the portal — page.tsx is the tile menu
-    mail/ analytics/ events/ users/ profile/
-    sections.ts        SECTIONS — the tile list, and the source of the header title
-    palette.tsx        the ⌘K command palette
-  api/                 route handlers (auth, events, execs, profile, signups, stats, mail/*, …)
-  uploads/[...path]/   streams uploaded images off the uploads volume
-components/            shared UI + sections used by the public pages
-lib/
-  auth/                session cookie, Keycloak password grant, admin client, invite codes
-  db/                  drizzle pool, schema, generic repository helpers
-  events/              recurrence, classification, .ics generation
-  execs/               role ordering, social-link validation
-  mail/                JMAP client, sanitising, signatures, provisioning, send limits
-deploy/                docker-compose for prod (and dev Postgres, and the mail stack)
-komodo/                deploy-context.mjs + the scheduled preview-sweep Komodo Action
-drizzle/               generated migrations — commit them
-```
+<img src="public/readme/arch-system.svg" alt="The browser reaches Traefik, which routes to the Next.js app container on a private Docker network alongside Postgres and Stalwart. Keycloak issues tokens and answers role checks, and Stalwart relays outbound mail through OCI Email Delivery" width="850" />
+
+### What lives where
+
+<img src="public/readme/arch-tree.svg" alt="Repository structure: app holds the public routes, the admin portal and the API handlers; components holds shared UI; lib holds auth, db, events, execs, mail and api; alongside drizzle, deploy, komodo, scripts, data, the GitHub workflows and middleware.ts" width="850" />
 
 **Host split.** `middleware.ts` gives the portal its own hostname. When `ADMIN_SUBDOMAIN` is set,
 requests to that host rewrite `/` to `/admin`, and public paths 308-redirect to `PUBLIC_SUBDOMAIN`.
@@ -206,6 +191,10 @@ exists. So preview and uat data is temporary — and anything you write to prod 
 
 ## Mail
 
+Sending is the least obvious path in the system, so here it is end to end.
+
+<img src="public/readme/arch-mail-send.svg" alt="Sending a message: the portal posts to /api/mail/send, which validates the payload and counts today's sends, the refresh cookie is swapped with Keycloak for a short-lived token, Stalwart is called over JMAP with Email/set and EmailSubmission/set, and Stalwart relays out through OCI. The from: address is chosen on the server by Identity/get" width="850" />
+
 Two separate JMAP clients, for two separate jobs.
 
 **As the signed-in user** — `lib/mail/jmap-mail.ts`, used by everything under `app/api/mail/`.
@@ -237,6 +226,8 @@ that website commits never bounce IMAP — see below.
 
 Self-hosted, orchestrated by [Komodo](https://komo.do) through the reusable actions in
 [`BrockCSC/komodo-deploy`](https://github.com/BrockCSC/komodo-deploy).
+
+<img src="public/readme/arch-deploy.svg" alt="Deploy pipeline: a push or tag runs lint, typecheck and format checks, then deploy-context reads the ref, then the job waits on its GitHub Environment before Komodo builds the image and deploys the Stack. A tag lands on production, main on uat, and any other branch on its own preview" width="850" />
 
 | Workflow                                              | Trigger                                             | What it does                                                                                                   |
 | ----------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |

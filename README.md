@@ -147,25 +147,14 @@ Press <kbd>⌘K</kbd> (or <kbd>Ctrl</kbd> <kbd>K</kbd>) anywhere in the portal. 
 mail, people and events at once, and doubles as a command bar — compose a message, create an event,
 jump to pending sign-ups, toggle dark mode, log out. Your last few picks are remembered.
 
-Mail search understands operators, and <kbd>Tab</kbd> completes them for you:
+<img src="public/readme/palette.svg" alt="The command palette: one search box over mail, people and events, with the mail search operators from:, to:, subject:, in:, has:attachment, is:unread and is:starred" width="850" />
 
-```
-from:  to:  subject:  in:  has:attachment  is:unread  is:starred
-```
-
-`in:` suggests your actual folders. Searches skip the bin and junk unless you ask for them.
+Mail search understands those operators and <kbd>Tab</kbd> completes them for you. `in:` suggests
+your actual folders, and searches skip the bin and junk unless you ask for them.
 
 ### Keyboard shortcuts in mail
 
-|                                |                         |
-| ------------------------------ | ----------------------- |
-| <kbd>j</kbd> / <kbd>k</kbd>    | Next / previous message |
-| <kbd>r</kbd>                   | Reply                   |
-| <kbd>e</kbd>                   | Archive                 |
-| <kbd>#</kbd>                   | Delete                  |
-| <kbd>s</kbd>                   | Star                    |
-| <kbd>u</kbd> or <kbd>Esc</kbd> | Close the message       |
-| <kbd>/</kbd>                   | Open search             |
+<img src="public/readme/keys-mail.svg" alt="Mail keyboard shortcuts: j and k move to the next and previous message, r replies, e archives, # deletes, s stars, / opens search, u or Esc closes the message, and ⌘K searches everything" width="850" />
 
 ### Sending limits
 
@@ -179,6 +168,8 @@ co-president approves it. The count resets at midnight.
 
 Exec accounts aren't self-serve. You'll need an **invite code** from a current exec — it rotates
 every week, so ask for a fresh one.
+
+<img src="public/readme/getting-started.svg" alt="Four steps: ask an exec for the weekly invite code, sign up with it and your Brock email, write down the six-character code shown once, then a co-president approves and your mailbox is created" width="850" />
 
 1. Go to **[brockcsc.ca/signup](https://brockcsc.ca/signup)** and fill in the form with your invite
    code and your Brock email. Former execs can tick the box to say so.

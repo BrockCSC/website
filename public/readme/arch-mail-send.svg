@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 480" width="880" height="480" role="img" aria-label="How a message is sent: the portal posts to the API route, which validates and checks the daily allowance, exchanges the refresh cookie with Keycloak for a short-lived token, calls Stalwart over JMAP, and Stalwart relays through Oracle Cloud Email Delivery">
+  <title>The mail send path</title>
+
+  <defs>
+    <marker id="mbrand" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9A4440" />
+    </marker>
+    <marker id="mink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#101012" />
+    </marker>
+  </defs>
+
+  <style>
+    /* CSS keyframes only — SMIL ignores prefers-reduced-motion. Every hop is a
+       dashed line at rest, so the path is complete with animation switched off. */
+    .hop { stroke-dasharray: 8 6; animation: crawl 1.4s linear infinite; }
+    @keyframes crawl { to { stroke-dashoffset: -28; } }
+    @media (prefers-reduced-motion: reduce) { .hop { animation: none; } }
+
+    .h { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12.5px; font-weight: 800; letter-spacing: 1px; fill: #101012; }
+    .b { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 10.5px; fill: #55525a; }
+    .m { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 11.5px; fill: #101012; }
+    .num { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 13px; font-weight: 700; fill: #ffffff; }
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="440" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="440" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <rect x="48" y="44" width="200" height="30" rx="15" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text class="lbl" x="148" y="64" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.6" fill="#9A4440">SENDING A MESSAGE</text>
+  <text class="lbl" x="814" y="64" text-anchor="end" font-size="13" fill="#6b6870">app/api/mail/send → lib/mail/jmap-mail.ts</text>
+
+  <!-- 1 browser -->
+  <rect x="48" y="100" width="140" height="84" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+  <circle cx="66" cy="100" r="14" fill="#101012" />
+  <text class="num" x="66" y="105" text-anchor="middle">1</text>
+  <text class="h" x="62" y="136">COMPOSE</text>
+  <text class="b" x="62" y="154">rich text, attachments</text>
+  <text class="m" x="62" y="172" style="font-size:10.5">POST /api/mail/send</text>
+
+  <path class="hop" d="M192 142 H205" stroke="#9A4440" stroke-width="2.5" marker-end="url(#mbrand)" />
+
+  <!-- 2 api route -->
+  <rect x="215" y="106" width="140" height="84" rx="14" fill="#9A4440" />
+  <rect x="209" y="100" width="140" height="84" rx="14" fill="#ffffff" stroke="#101012" stroke-width="3" />
+  <circle cx="227" cy="100" r="14" fill="#101012" />
+  <text class="num" x="227" y="105" text-anchor="middle">2</text>
+  <text class="h" x="223" y="136">API ROUTE</text>
+  <text class="b" x="223" y="154">validates every field</text>
+  <text class="b" x="223" y="170">counts today's sends</text>
+
+  <path class="hop" d="M353 142 H366" stroke="#9A4440" stroke-width="2.5" marker-end="url(#mbrand)" />
+
+  <!-- 3 keycloak -->
+  <rect x="370" y="100" width="140" height="84" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2.5" stroke-dasharray="7 5" />
+  <circle cx="388" cy="100" r="14" fill="#101012" />
+  <text class="num" x="388" y="105" text-anchor="middle">3</text>
+  <text class="h" x="384" y="136">KEYCLOAK</text>
+  <text class="b" x="384" y="154">the refresh cookie is</text>
+  <text class="b" x="384" y="170">swapped for a token</text>
+
+  <path class="hop" d="M514 142 H527" stroke="#9A4440" stroke-width="2.5" marker-end="url(#mbrand)" />
+
+  <!-- 4 stalwart -->
+  <rect x="531" y="100" width="140" height="84" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+  <circle cx="549" cy="100" r="14" fill="#101012" />
+  <text class="num" x="549" y="105" text-anchor="middle">4</text>
+  <text class="h" x="545" y="136">STALWART</text>
+  <text class="b" x="545" y="154">JMAP with that token</text>
+  <text class="b" x="545" y="170">on the private network</text>
+
+  <path class="hop" d="M675 142 H688" stroke="#9A4440" stroke-width="2.5" marker-end="url(#mbrand)" />
+
+  <!-- 5 oci -->
+  <rect x="692" y="100" width="140" height="84" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2.5" stroke-dasharray="7 5" />
+  <circle cx="710" cy="100" r="14" fill="#101012" />
+  <text class="num" x="710" y="105" text-anchor="middle">5</text>
+  <text class="h" x="706" y="136">OCI RELAY</text>
+  <text class="b" x="706" y="154">SMTP to the recipient,</text>
+  <text class="b" x="706" y="170">approved sender only</text>
+
+  <!-- what can go sideways / what happens after -->
+  <path d="M279 184 V216" stroke="#9A4440" stroke-width="2.5" marker-end="url(#mbrand)" />
+  <rect x="209" y="222" width="220" height="48" rx="12" fill="#fff1f1" stroke="#9A4440" stroke-width="2.5" />
+  <text class="m" x="223" y="242" style="fill:#9A4440;font-weight:700">429 over the allowance</text>
+  <text class="b" x="223" y="259" style="fill:#9A4440">counted from Sent, since local midnight</text>
+
+  <path d="M601 184 V216" stroke="#101012" stroke-width="2.5" marker-end="url(#mink)" />
+  <rect x="531" y="222" width="301" height="48" rx="12" fill="#f4f1ee" stroke="#c9c2bb" stroke-width="2" />
+  <text class="m" x="545" y="242">Email/set + EmailSubmission/set</text>
+  <text class="b" x="545" y="259">on success the draft flag clears and it moves to Sent</text>
+
+  <!-- the rule that matters -->
+  <rect x="54" y="302" width="784" height="76" rx="16" fill="#9A4440" />
+  <rect x="48" y="296" width="784" height="76" rx="16" fill="#fff1f1" stroke="#9A4440" stroke-width="2.5" />
+  <text class="h" x="70" y="324" style="fill:#9A4440">THE SENDER IS DECIDED ON THE SERVER</text>
+  <text class="b" x="70" y="345" style="fill:#6d4340">Identity/get picks the from: address for the signed-in account, and the club signature is refreshed onto that identity first.</text>
+  <text class="b" x="70" y="362" style="fill:#6d4340">Nothing the browser sends can change who a message is from — and Stalwart, not this app, is what keeps mailboxes apart.</text>
+
+  <!-- caps -->
+  <text class="lbl" x="66" y="416" font-size="11" font-weight="800" letter-spacing="1.1" fill="#9A4440">PER-MESSAGE CAPS</text>
+  <g>
+    <rect x="210" y="399" width="113" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="266.5" y="417" text-anchor="middle">50 recipients</text>
+    <rect x="333" y="399" width="120" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="393" y="417" text-anchor="middle">20 attachments</text>
+    <rect x="463" y="399" width="99" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="512.5" y="417" text-anchor="middle">100 KB text</text>
+    <rect x="572" y="399" width="106" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="625" y="417" text-anchor="middle">400 KB HTML</text>
+    <rect x="688" y="399" width="120" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="748" y="417" text-anchor="middle">15 MB per file</text>
+  </g>
+</svg>

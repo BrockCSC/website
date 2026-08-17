@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" width="880" height="340" role="img" aria-label="Mail keyboard shortcuts: j and k move, r replies, e archives, hash deletes, s stars, slash searches, u or Escape closes, Command K searches everything">
+  <title>Keyboard shortcuts in mail</title>
+
+  <style>
+    /* CSS keyframes only — SMIL cannot be stopped by prefers-reduced-motion.
+       The press is decoration: every keycap is fully drawn at rest. */
+    .press { animation: press 2.8s ease-in-out infinite; }
+    @keyframes press { 0%, 66%, 100% { transform: translate(0, 0); } 76%, 84% { transform: translate(4px, 4px); } }
+    @media (prefers-reduced-motion: reduce) { .press { animation: none; } }
+
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+    .cap { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 22px; font-weight: 700; fill: #101012; }
+    .cue { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 13.5px; font-weight: 600; fill: #3a3840; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="300" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="300" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <rect x="48" y="44" width="216" height="30" rx="15" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text class="lbl" x="156" y="64" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.6" fill="#9A4440">SHORTCUTS IN MAIL</text>
+  <text class="lbl" x="814" y="64" text-anchor="end" font-size="13" fill="#6b6870">no modifier — just press the key</text>
+
+  <!-- row 1 -->
+  <g>
+    <rect x="84" y="100" width="52" height="52" rx="11" fill="#9A4440" />
+    <g class="press"><rect x="80" y="96" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" /><text class="cap" x="106" y="130" text-anchor="middle">j</text></g>
+    <rect x="148" y="100" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="144" y="96" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="170" y="130" text-anchor="middle">k</text>
+    <text class="cue" x="138" y="180" text-anchor="middle">Next / previous message</text>
+  </g>
+
+  <g>
+    <rect x="308" y="100" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="304" y="96" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="330" y="130" text-anchor="middle">r</text>
+    <text class="cue" x="330" y="180" text-anchor="middle">Reply</text>
+  </g>
+
+  <g>
+    <rect x="500" y="100" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="496" y="96" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="522" y="130" text-anchor="middle">e</text>
+    <text class="cue" x="522" y="180" text-anchor="middle">Archive</text>
+  </g>
+
+  <g>
+    <rect x="692" y="100" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="688" y="96" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="714" y="130" text-anchor="middle">#</text>
+    <text class="cue" x="714" y="180" text-anchor="middle">Delete</text>
+  </g>
+
+  <!-- row 2 -->
+  <g>
+    <rect x="116" y="214" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="112" y="210" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="138" y="244" text-anchor="middle">s</text>
+    <text class="cue" x="138" y="294" text-anchor="middle">Star</text>
+  </g>
+
+  <g>
+    <rect x="308" y="214" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="304" y="210" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="330" y="244" text-anchor="middle">/</text>
+    <text class="cue" x="330" y="294" text-anchor="middle">Open search</text>
+  </g>
+
+  <g>
+    <rect x="466" y="214" width="52" height="52" rx="11" fill="#9A4440" />
+    <rect x="462" y="210" width="52" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="488" y="244" text-anchor="middle">u</text>
+    <text class="lbl" x="528" y="243" text-anchor="middle" font-size="12" font-weight="700" fill="#6b6870">or</text>
+    <rect x="546" y="214" width="62" height="52" rx="11" fill="#9A4440" />
+    <rect x="542" y="210" width="62" height="52" rx="11" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="573" y="243" text-anchor="middle" style="font-size:17">Esc</text>
+    <text class="cue" x="522" y="294" text-anchor="middle">Close the message</text>
+  </g>
+
+  <g>
+    <rect x="660" y="214" width="52" height="52" rx="11" fill="#101012" />
+    <rect x="656" y="210" width="52" height="52" rx="11" fill="#9A4440" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="682" y="244" text-anchor="middle" style="fill:#ffffff">⌘</text>
+    <rect x="724" y="214" width="52" height="52" rx="11" fill="#101012" />
+    <rect x="720" y="210" width="52" height="52" rx="11" fill="#9A4440" stroke="#101012" stroke-width="2.5" />
+    <text class="cap" x="746" y="244" text-anchor="middle" style="fill:#ffffff">K</text>
+    <text class="cue" x="714" y="294" text-anchor="middle" style="fill:#9A4440">Search everything</text>
+  </g>
+</svg>

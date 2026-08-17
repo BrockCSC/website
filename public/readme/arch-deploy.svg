@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 520" width="880" height="520" role="img" aria-label="Deploy pipeline: a push or tag runs checks, then deploy-context, then a GitHub Environment approval, then Komodo builds and deploys a Stack — tags go to production, main goes to UAT, any other branch gets its own preview">
+  <title>Deploy pipeline</title>
+
+  <defs>
+    <marker id="dink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#101012" />
+    </marker>
+    <marker id="dbrand" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#9A4440" />
+    </marker>
+  </defs>
+
+  <style>
+    /* CSS keyframes only — SMIL cannot be turned off for reduced motion. The
+       spine is a dashed line at rest, so the fan-out reads without animation. */
+    .spine { stroke-dasharray: 9 6; animation: crawl 1.5s linear infinite; }
+    @keyframes crawl { to { stroke-dashoffset: -30; } }
+    @media (prefers-reduced-motion: reduce) { .spine { animation: none; } }
+
+    .h { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12.5px; font-weight: 800; letter-spacing: 1px; fill: #101012; }
+    .b { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11px; fill: #55525a; }
+    .m { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 12px; fill: #101012; }
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="480" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="480" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <rect x="48" y="44" width="180" height="30" rx="15" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text class="lbl" x="138" y="64" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.6" fill="#9A4440">DEPLOY PIPELINE</text>
+  <text class="lbl" x="814" y="64" text-anchor="end" font-size="13" fill="#6b6870">.github/workflows/deploy.yml — self-hosted, via Komodo</text>
+
+  <!-- stages -->
+  <g>
+    <rect x="48" y="96" width="132" height="76" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="64" y="124">PUSH OR TAG</text>
+    <text class="b" x="64" y="144">any branch, plus</text>
+    <text class="b" x="64" y="158">v* tags</text>
+  </g>
+  <path d="M184 134 H207" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
+
+  <g>
+    <rect x="211" y="96" width="132" height="76" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="227" y="124">CHECKS</text>
+    <text class="b" x="227" y="144">lint · typecheck</text>
+    <text class="b" x="227" y="158">format:check</text>
+  </g>
+  <path d="M347 134 H370" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
+
+  <g>
+    <rect x="374" y="96" width="132" height="76" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="390" y="124">CONTEXT</text>
+    <text class="b" x="390" y="144">deploy-context.mjs</text>
+    <text class="b" x="390" y="158">reads the ref</text>
+  </g>
+  <path d="M510 134 H533" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
+
+  <g>
+    <rect x="543" y="102" width="132" height="76" rx="14" fill="#9A4440" />
+    <rect x="537" y="96" width="132" height="76" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2.5" />
+    <path d="M556 118 v-6 a7 7 0 0 1 14 0 v6" fill="none" stroke="#9A4440" stroke-width="2.4" />
+    <rect x="552" y="118" width="22" height="16" rx="3" fill="#9A4440" />
+    <text class="h" x="582" y="132" style="fill:#9A4440">GATE</text>
+    <text class="b" x="553" y="152" style="fill:#9A4440">GitHub Environment</text>
+    <text class="b" x="553" y="166" style="fill:#9A4440">waits for a reviewer</text>
+  </g>
+  <path d="M673 134 H696" stroke="#9A4440" stroke-width="2.5" marker-end="url(#dbrand)" />
+
+  <g>
+    <rect x="700" y="96" width="132" height="76" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="716" y="124">KOMODO</text>
+    <text class="b" x="716" y="144">builds the image,</text>
+    <text class="b" x="716" y="158">deploys the Stack</text>
+  </g>
+
+  <!-- fan out -->
+  <path class="spine" d="M766 172 V202 H173" fill="none" stroke="#101012" stroke-width="2.5" />
+  <path d="M173 202 V226" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
+  <path d="M440 202 V226" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
+  <path d="M707 202 V226" stroke="#101012" stroke-width="2.5" marker-end="url(#dink)" />
+
+  <!-- destinations -->
+  <g>
+    <rect x="54" y="238" width="250" height="112" rx="16" fill="#9A4440" />
+    <rect x="48" y="232" width="250" height="112" rx="16" fill="#ffffff" stroke="#101012" stroke-width="3" />
+    <rect x="64" y="246" width="112" height="26" rx="13" fill="#9A4440" />
+    <text class="m" x="120" y="264" text-anchor="middle" style="fill:#ffffff">git tag v*</text>
+    <text class="lbl" x="196" y="264" font-size="11" font-weight="800" letter-spacing="1.1" fill="#9A4440">PRODUCTION</text>
+    <text class="m" x="64" y="294">brockcsc-prod</text>
+    <text class="b" x="64" y="312">schema prod</text>
+    <text class="b" x="64" y="330">brockcsc.ca</text>
+  </g>
+
+  <g>
+    <rect x="315" y="232" width="250" height="112" rx="16" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <rect x="331" y="246" width="112" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="387" y="264" text-anchor="middle">push main</text>
+    <text class="lbl" x="463" y="264" font-size="11" font-weight="800" letter-spacing="1.1" fill="#6b6870">UAT</text>
+    <text class="m" x="331" y="294">brockcsc-uat</text>
+    <text class="b" x="331" y="312">schema uat</text>
+    <text class="b" x="331" y="330">an internal host, not under brockcsc.ca</text>
+  </g>
+
+  <g>
+    <rect x="582" y="232" width="250" height="112" rx="16" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <rect x="598" y="246" width="128" height="26" rx="13" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="m" x="662" y="264" text-anchor="middle">any branch</text>
+    <text class="lbl" x="746" y="264" font-size="11" font-weight="800" letter-spacing="1.1" fill="#6b6870">PREVIEW</text>
+    <text class="m" x="598" y="294">brockcsc-pr-&lt;slug&gt;</text>
+    <text class="b" x="598" y="312">schema preview_&lt;slug&gt;</text>
+    <text class="b" x="598" y="330">its own host, copied from prod data</text>
+  </g>
+
+  <!-- footnotes -->
+  <g>
+    <rect x="48" y="372" width="380" height="100" rx="16" fill="#f4f1ee" stroke="#c9c2bb" stroke-width="2" />
+    <text class="h" x="66" y="400" style="fill:#9A4440">WHEN THE BRANCH GOES AWAY</text>
+    <text class="b" x="66" y="422">cleanup.yml deletes that Stack and drops its</text>
+    <text class="b" x="66" y="440">preview_ schema. A scheduled Komodo Action sweeps</text>
+    <text class="b" x="66" y="458">daily for stacks whose branch has been gone 3 days.</text>
+  </g>
+
+  <g>
+    <rect x="452" y="372" width="380" height="100" rx="16" fill="#f4f1ee" stroke="#c9c2bb" stroke-width="2" />
+    <text class="h" x="470" y="400" style="fill:#9A4440">MAIL DEPLOYS ON ITS OWN</text>
+    <text class="b" x="470" y="422">deploy/mail/** on main runs Deploy Mail, which owns</text>
+    <text class="b" x="470" y="440">the single long-lived brockcsc-mail Stack — so a</text>
+    <text class="b" x="470" y="458">website commit can never bounce anyone's IMAP.</text>
+  </g>
+</svg>

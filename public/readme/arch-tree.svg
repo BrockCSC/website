@@ -1,0 +1,129 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 770" width="880" height="770" role="img" aria-label="Repository structure: app with public routes, admin portal and API handlers; components; lib with auth, db, events, execs and mail; plus drizzle, deploy, komodo, scripts, data, GitHub workflows and middleware">
+  <title>Repository structure</title>
+
+  <style>
+    .n { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 13px; font-weight: 600; fill: #101012; }
+    .d { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11.5px; fill: #55525a; }
+    .a { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11.5px; fill: #9A4440; font-weight: 600; }
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="725" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="725" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <!-- window chrome -->
+  <path d="M16 42 a26 26 0 0 1 26 -26 h768 a26 26 0 0 1 26 26 v46 H16 z" fill="#101012" />
+  <circle cx="48" cy="52" r="6" fill="#9A4440" />
+  <circle cx="70" cy="52" r="6" fill="#5b5760" />
+  <circle cx="92" cy="52" r="6" fill="#5b5760" />
+  <text class="lbl" x="120" y="57" font-size="13" font-weight="700" letter-spacing="0.6" fill="#ffffff">BrockCSC/website</text>
+  <text class="lbl" x="814" y="57" text-anchor="end" font-size="12" fill="#a8a2ad">what lives where</text>
+
+  <!-- guides -->
+  <g stroke="#e2dcd6" stroke-width="1.8" fill="none">
+    <path d="M43 141 V306.5" />
+    <path d="M43 156.5 H64 M43 181.5 H64 M43 281.5 H64 M43 306.5 H64" />
+    <path d="M73 191 V256.5" />
+    <path d="M73 206.5 H94 M73 231.5 H94 M73 256.5 H94" />
+    <path d="M43 366 V531.5" />
+    <path d="M43 381.5 H64 M43 406.5 H64 M43 431.5 H64 M43 456.5 H64 M43 481.5 H64 M43 506.5 H64 M43 531.5 H64" />
+  </g>
+
+  <!-- app -->
+  <rect x="36" y="126" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="56" y="136">app/</text>
+  <text class="d" x="420" y="136">the whole application — routes, pages and handlers</text>
+
+  <rect x="66" y="151" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="161">(public)/</text>
+  <text class="d" x="420" y="161">/ · /events · /team · /cs-guide · /links · /signup</text>
+
+  <rect x="66" y="176" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="186">admin/</text>
+  <text class="d" x="420" y="186">the portal — page.tsx is the tile menu</text>
+
+  <rect x="96" y="201" width="14" height="11" rx="2" fill="#c9a5a2" />
+  <text class="n" x="116" y="211" style="fill:#3a3840;font-size:11.5px">mail/ analytics/ events/ users/ profile/</text>
+  <text class="d" x="420" y="211">one folder per tile</text>
+
+  <rect x="96" y="226" width="10" height="12" rx="2" fill="#c9c2bb" />
+  <text class="n" x="116" y="236" style="fill:#3a3840">sections.ts</text>
+  <text class="d" x="420" y="236">SECTIONS — the tile list and the header title</text>
+
+  <rect x="96" y="251" width="10" height="12" rx="2" fill="#c9c2bb" />
+  <text class="n" x="116" y="261" style="fill:#3a3840">palette.tsx</text>
+  <text class="d" x="420" y="261">the ⌘K command palette</text>
+
+  <rect x="66" y="276" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="286">api/</text>
+  <text class="d" x="420" y="286">route handlers — auth, mail/*, events, execs, signups, stats</text>
+
+  <rect x="66" y="301" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="311">uploads/[...path]/</text>
+  <text class="d" x="420" y="311">streams uploaded images off the uploads volume</text>
+
+  <!-- components -->
+  <rect x="36" y="326" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="56" y="336">components/</text>
+  <text class="d" x="420" y="336">shared UI, plus the sections the public pages are built from</text>
+
+  <!-- lib -->
+  <rect x="36" y="351" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="56" y="361">lib/</text>
+  <text class="d" x="420" y="361">everything that is not a route</text>
+
+  <rect x="66" y="376" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="386">auth/</text>
+  <text class="d" x="420" y="386">session cookie, Keycloak grant, admin client, invite codes</text>
+
+  <rect x="66" y="401" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="411">db/</text>
+  <text class="d" x="420" y="411">Drizzle pool, schema, generic repository helpers</text>
+
+  <rect x="66" y="426" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="436">events/</text>
+  <text class="d" x="420" y="436">recurrence, classification, .ics generation</text>
+
+  <rect x="66" y="451" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="461">execs/</text>
+  <text class="d" x="420" y="461">role ordering, social-link validation</text>
+
+  <rect x="66" y="476" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="486">mail/</text>
+  <text class="a" x="420" y="486">two JMAP clients, sanitising, signatures, provisioning, limits</text>
+
+  <rect x="66" y="501" width="14" height="11" rx="2" fill="#9A4440" />
+  <text class="n" x="86" y="511">api/</text>
+  <text class="d" x="420" y="511">request and response types shared with the client</text>
+
+  <rect x="66" y="526" width="10" height="12" rx="2" fill="#c9c2bb" />
+  <text class="n" x="86" y="536" style="fill:#3a3840">env.ts</text>
+  <text class="d" x="420" y="536">ownsIdentities() — identity writes are real only in prod</text>
+
+  <!-- infrastructure -->
+  <path d="M36 556 H832" stroke="#e2dcd6" stroke-width="2" />
+
+  <rect x="36" y="576" width="14" height="11" rx="2" fill="#101012" />
+  <text class="n" x="56" y="586">drizzle/</text>
+  <text class="a" x="420" y="586">generated migrations — commit them</text>
+
+  <rect x="36" y="601" width="14" height="11" rx="2" fill="#101012" />
+  <text class="n" x="56" y="611">deploy/</text>
+  <text class="d" x="420" y="611">compose files: prod app, dev Postgres, the mail stack</text>
+
+  <rect x="36" y="626" width="14" height="11" rx="2" fill="#101012" />
+  <text class="n" x="56" y="636">komodo/</text>
+  <text class="d" x="420" y="636">deploy-context.mjs and the scheduled preview-sweep Action</text>
+
+  <rect x="36" y="651" width="14" height="11" rx="2" fill="#101012" />
+  <text class="n" x="56" y="661">scripts/</text>
+  <text class="d" x="420" y="661">migrate and sync-from-prod, run on container start</text>
+
+  <rect x="36" y="676" width="14" height="11" rx="2" fill="#101012" />
+  <text class="n" x="56" y="686">.github/workflows/</text>
+  <text class="d" x="420" y="686">Build &amp; Deploy · Deploy Mail · Cleanup</text>
+
+  <rect x="36" y="701" width="10" height="12" rx="2" fill="#c9c2bb" />
+  <text class="n" x="56" y="711">middleware.ts</text>
+  <text class="d" x="420" y="711">the host split — public site on one host, portal on another</text>
+</svg>
