@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, MailOpen, Star } from "lucide-react";
+import { ArrowLeft, MailOpen, Search, Star } from "lucide-react";
 import { logout } from "@/lib/api";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { useSession } from "../session";
@@ -9,6 +9,7 @@ import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { Conversation } from "./message-view";
 import { Compose, type Draft } from "./compose";
+import { SearchPalette } from "./search-palette";
 import { buildQuote } from "./html";
 import type { Contact } from "./recipient-input";
 
@@ -52,14 +53,14 @@ export default function MailPage() {
   const [draft, setDraft] = useState<Draft | null>(null);
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [search, setSearch] = useState("");
-  const [query, setQuery] = useState("");
+  const [palette, setPalette] = useState(false);
+  /** A hit from global search, so it can be read before its folder loads. */
+  const [found, setFound] = useState<MessageSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
-  const searchBox = useRef<HTMLInputElement>(null);
   const request = useRef(0);
   const { refresh } = useSession();
 
@@ -94,7 +95,7 @@ export default function MailPage() {
       .catch(() => setContacts([]));
   }, [loadMailboxes]);
 
-  /** Searching and paging both happen on the server, over the whole folder. */
+  /** Paging happens on the server, over the whole folder. */
   const load = useCallback(
     async (position: number) => {
       if (!mailbox) return;
@@ -106,7 +107,6 @@ export default function MailPage() {
         position: String(position),
         threaded: "1",
       });
-      if (query) params.set("search", query);
 
       try {
         const res = await fetch(`/api/mail/messages?${params}`);
@@ -132,7 +132,7 @@ export default function MailPage() {
         if (ticket === request.current) setBusy(false);
       }
     },
-    [mailbox, query],
+    [mailbox],
   );
 
   useEffect(() => {
@@ -141,7 +141,9 @@ export default function MailPage() {
   }, [load, reload]);
 
   const { messages, total, threadCounts } = page;
-  const message = messages.find((item) => item.id === selected) ?? null;
+  const message =
+    messages.find((item) => item.id === selected) ??
+    (found?.id === selected ? found : null);
   // One pane at a time on a phone; all three side by side from md up.
   const open = Boolean(message);
 
@@ -187,6 +189,8 @@ export default function MailPage() {
     [loadMailboxes],
   );
 
+  const closePalette = useCallback(() => setPalette(false), []);
+
   const quoteInto = useCallback((target: MessageSummary, base: Draft) => {
     void buildQuote(target).then((html) => setDraft({ ...base, html }));
   }, []);
@@ -206,7 +210,14 @@ export default function MailPage() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (draft || event.metaKey || event.ctrlKey || event.altKey) return;
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPalette(true);
+        return;
+      }
+      if (palette || draft || event.metaKey || event.ctrlKey || event.altKey) {
+        return;
+      }
       const target = event.target as HTMLElement | null;
       if (
         target?.isContentEditable ||
@@ -239,7 +250,7 @@ export default function MailPage() {
           break;
         case "/":
           event.preventDefault();
-          searchBox.current?.focus();
+          setPalette(true);
           break;
         case "e":
           if (selected) void move(selected, { to: "archive" });
@@ -262,7 +273,7 @@ export default function MailPage() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [draft, messages, selected, message, move, flag, replyTo]);
+  }, [draft, palette, messages, selected, message, move, flag, replyTo]);
 
   if (loading) {
     return <p className="p-6 text-sm text-subtle">Loading mail…</p>;
@@ -310,8 +321,6 @@ export default function MailPage() {
           selected={mailbox}
           onSelect={(id) => {
             setSelected(null);
-            setQuery("");
-            setSearch("");
             setMailbox(id);
           }}
         />
@@ -330,34 +339,17 @@ export default function MailPage() {
                 {messages.length} of {total}
               </p>
             </div>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                setSelected(null);
-                setQuery(search.trim());
-              }}
-              className="flex gap-1.5"
+            <button
+              type="button"
+              onClick={() => setPalette(true)}
+              className="flex w-full items-center gap-2 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-subtle transition hover:bg-tint"
             >
-              <input
-                ref={searchBox}
-                className="min-w-0 flex-1 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-ink focus:border-brand focus:outline-none"
-                placeholder="Search this folder"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
-              {query && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSearch("");
-                    setQuery("");
-                  }}
-                  className="rounded-[8px] border-2 border-line px-2 text-sm font-bold text-ink transition hover:bg-tint"
-                >
-                  Clear
-                </button>
-              )}
-            </form>
+              <Search size={14} aria-hidden />
+              <span className="flex-1 text-left">Search all mail</span>
+              <kbd className="rounded-[6px] border-2 border-line px-1 text-[10px] font-bold text-ink">
+                ⌘K
+              </kbd>
+            </button>
           </header>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -434,6 +426,20 @@ export default function MailPage() {
           )}
         </div>
       </div>
+
+      {palette && (
+        <SearchPalette
+          mailboxes={mailboxes}
+          contacts={contacts}
+          onClose={closePalette}
+          onOpen={(hit) => {
+            const box = mailboxes.find((item) => hit.mailboxIds?.[item.id]);
+            if (box) setMailbox(box.id);
+            setFound(hit);
+            setSelected(hit.id);
+          }}
+        />
+      )}
 
       {draft && (
         <Compose

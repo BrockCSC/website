@@ -21,6 +21,9 @@ const date = (value?: string) =>
 const summary = (result: ApplyResult) =>
   [
     result.applied.length ? `${result.applied.length} applied` : "",
+    result.rehearsed.length
+      ? `${result.rehearsed.length} rehearsed, not written`
+      : "",
     result.skipped.length ? `${result.skipped.length} skipped` : "",
     result.failed.length
       ? `failed: ${result.failed.map((f) => f.error).join("; ")}`
@@ -146,9 +149,10 @@ export default function PersonView({
       {result && <Note>{summary(result) || "Nothing changed."}</Note>}
       {detail && !detail.identitiesEditable && (
         <Note>
-          Identity changes are disabled here: this environment shares the live
-          Keycloak realm and mail server, so roles and mailboxes can only be
-          changed from production. Tile changes still work.
+          This environment shares the live Keycloak realm and mail server, so
+          role and mailbox changes are rehearsed here, not written: you see
+          exactly what would happen, and nothing reaches a real account. Tile
+          changes are real.
         </Note>
       )}
 

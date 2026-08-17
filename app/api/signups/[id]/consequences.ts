@@ -65,10 +65,13 @@ const managedRoles = () => [
   },
 ];
 
-const notInProd = () =>
-  ownsIdentities()
-    ? undefined
-    : "Identity changes are disabled outside production.";
+/**
+ * Outside production these are rehearsed rather than refused: the plan, the
+ * ticking and the ordering are all real, and only the write is withheld. The
+ * shared realm and the one mail server are why the write cannot happen.
+ */
+const rehearsed = (group: Consequence["group"]) =>
+  !ownsIdentities() && group !== "tile";
 
 /** id is a sign-up id, or an exec id for a tile that has no account. */
 export const findPerson = async (id: string): Promise<Person | null> => {
@@ -118,7 +121,7 @@ const roleItems = (
       group: "role" as const,
       title: `${has ? "Remove" : "Add"} the ${label} role`,
       detail: has ? revokes : grants,
-      blocked: last ?? notInProd(),
+      blocked: last,
       run,
     };
   });
@@ -132,7 +135,7 @@ const mailboxItems = (
   const username = signup.username!;
   const shielded = isProtectedMailbox(username)
     ? `${address} is a service account and cannot be changed.`
-    : notInProd();
+    : undefined;
 
   return [
     {
@@ -234,7 +237,7 @@ const mailAddress = (signup: SignupRecord) =>
     : null;
 
 const mailboxProvisioned = async (signup: SignupRecord) =>
-  signup.username && ownsIdentities()
+  signup.username
     ? await localPartTaken(signup.username).catch(() => null)
     : null;
 
@@ -304,6 +307,8 @@ export const describePerson = async (person: Person): Promise<PersonDetail> => {
 
 export type ApplyResult = {
   applied: string[];
+  /** Ticked and ordered as usual, but the write was withheld outside production. */
+  rehearsed: string[];
   /** Requested but no longer offered, or blocked. Never silently treated as done. */
   skipped: string[];
   failed: { id: string; error: string }[];
@@ -316,7 +321,12 @@ export const applyConsequences = async (
 ): Promise<ApplyResult> => {
   const wanted = new Set(requested);
   const { items } = await plan(person);
-  const result: ApplyResult = { applied: [], skipped: [], failed: [] };
+  const result: ApplyResult = {
+    applied: [],
+    rehearsed: [],
+    skipped: [],
+    failed: [],
+  };
 
   for (const id of wanted) {
     if (!items.some((item) => item.id === id && !item.blocked)) {
@@ -325,6 +335,10 @@ export const applyConsequences = async (
   }
   for (const item of items) {
     if (!wanted.has(item.id) || item.blocked) continue;
+    if (rehearsed(item.group)) {
+      result.rehearsed.push(item.id);
+      continue;
+    }
     try {
       await item.run();
       result.applied.push(item.id);

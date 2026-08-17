@@ -3,12 +3,12 @@
 import { Paperclip, Star } from "lucide-react";
 import type { MessageSummary } from "@/lib/mail/jmap-mail";
 
-const sender = (message: MessageSummary) => {
+export const sender = (message: MessageSummary) => {
   const from = message.from?.[0];
   return from?.name || from?.email || "Unknown sender";
 };
 
-const when = (iso: string) => {
+export const when = (iso: string) => {
   const date = new Date(iso);
   const today = new Date();
   const sameDay = date.toDateString() === today.toDateString();

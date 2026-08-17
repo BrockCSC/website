@@ -175,11 +175,67 @@ export type MessagePage = {
   threadCounts: Record<string, number>;
 };
 
-/** Text search is handed to the server so it covers the folder, not the page. */
-const messageFilter = (opts: MessageQuery) => {
+type Condition = Record<string, unknown>;
+
+/** One search term: `field:value`, `"a quoted phrase"`, or a bare word. */
+const TERM = /(?:(\w+):)?(?:"([^"]*)"|(\S+))/g;
+
+const FIELDS: Record<string, (value: string) => Condition | undefined> = {
+  from: (value) => ({ from: value }),
+  to: (value) => ({ to: value }),
+  subject: (value) => ({ subject: value }),
+  has: (value) =>
+    value.toLowerCase() === "attachment" ? { hasAttachment: true } : undefined,
+  is: (value) =>
+    ({
+      unread: { notKeyword: "$seen" },
+      starred: { hasKeyword: "$flagged" },
+    })[value.toLowerCase()],
+};
+
+const inFolder = (value: string, boxes: Mailbox[]) => {
+  const wanted = value.toLowerCase();
+  const box = boxes.find(
+    (item) => item.name.toLowerCase() === wanted || item.role === wanted,
+  );
+  return box ? { inMailbox: box.id } : undefined;
+};
+
+/** Anything unrecognised stays free text, so a stray colon still finds mail. */
+const searchConditions = (search: string, boxes: Mailbox[]): Condition[] => {
+  const conditions: Condition[] = [];
+  const text: string[] = [];
+
+  for (const [, field, quoted, bare] of search.matchAll(TERM)) {
+    const value = quoted ?? bare;
+    if (!value) continue;
+    const key = field?.toLowerCase();
+    const made =
+      key === "in" ? inFolder(value, boxes) : key ? FIELDS[key]?.(value) : null;
+    if (made) conditions.push(made);
+    else text.push(field ? `${field}:${value}` : value);
+  }
+
+  if (text.length > 0) conditions.push({ text: text.join(" ") });
+  return conditions;
+};
+
+/** Search runs on the server, and spans every folder unless one is named. */
+/** Nobody searching their mail means "and also the bin". */
+const BURIED = ["trash", "junk"];
+
+const messageFilter = async (token: string, opts: MessageQuery) => {
+  const search = opts.search?.trim() ?? "";
+  const scoped = Boolean(opts.mailboxId) || /(?:^|\s)in:/i.test(search);
+  const boxes = search && !opts.mailboxId ? await listMailboxes(token) : [];
+  const buried = scoped
+    ? []
+    : boxes.filter((box) => BURIED.includes(box.role ?? "")).map((b) => b.id);
+
   const conditions = [
     ...(opts.mailboxId ? [{ inMailbox: opts.mailboxId }] : []),
-    ...(opts.search?.trim() ? [{ text: opts.search.trim() }] : []),
+    ...(search ? searchConditions(search, boxes) : []),
+    ...(buried.length ? [{ inMailboxOtherThan: buried }] : []),
   ];
   if (conditions.length === 0) return undefined;
   return conditions.length === 1
@@ -192,13 +248,14 @@ const queryMessages = async (
   accountId: string,
   opts: MessageQuery,
   threaded: boolean,
+  filter: Condition | undefined,
 ): Promise<MessagePage> => {
   const calls: Call[] = [
     [
       "Email/query",
       {
         accountId,
-        filter: messageFilter(opts),
+        filter,
         sort: [{ property: "receivedAt", isAscending: false }],
         position: opts.position ?? 0,
         limit: opts.limit ?? 50,
@@ -259,12 +316,15 @@ export const listMessages = async (
   token: string,
   opts: MessageQuery,
 ): Promise<MessagePage> => {
-  const accountId = await mailAccountId(token);
-  if (!opts.threaded) return queryMessages(token, accountId, opts, false);
+  const [accountId, filter] = await Promise.all([
+    mailAccountId(token),
+    messageFilter(token, opts),
+  ]);
+  const run = (threaded: boolean) =>
+    queryMessages(token, accountId, opts, threaded, filter);
+  if (!opts.threaded) return run(false);
   // collapseThreads is optional in RFC 8621; fall back to a flat list.
-  return queryMessages(token, accountId, opts, true).catch(() =>
-    queryMessages(token, accountId, opts, false),
-  );
+  return run(true).catch(() => run(false));
 };
 
 export const getThread = async (
