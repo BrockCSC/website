@@ -1,4 +1,2 @@
-# CVE-2026-59873 - node-tar gzip bomb DoS, in the copy of tar that npm bundles
-# inside the node:22-alpine base image. The runtime never invokes npm; the image
-# starts `node server.js`. Drop this line once the base image ships tar 7.5.19.
+# npm's bundled tar in node:22-alpine; the runtime never invokes npm.
 CVE-2026-59873

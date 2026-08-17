@@ -1,12 +1,5 @@
 name: CI
 
-# The merge gate. Runs on every pull request - including from forks, which
-# never fire the push-triggered deploy - and on what lands on main or a tag.
-#
-# CodeQL is absent on purpose: this repository has code scanning default setup
-# enabled, and code scanning rejects SARIF from an advanced configuration for a
-# language default setup already covers, so a second analysis here could only
-# ever fail. Its "Analyze (javascript-typescript)" check is the required one.
 on:
   pull_request:
   push:
@@ -33,8 +26,6 @@ jobs:
       - run: npm run typecheck
       - run: npm run format:check
 
-  # Advisory, not a merge gate: an advisory landing in a transitive dependency
-  # is not the fault of the pull request that happens to be open.
   dependency-audit:
     runs-on: ubuntu-latest
     permissions:

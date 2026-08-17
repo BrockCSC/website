@@ -14,8 +14,6 @@ env:
 
 jobs:
   build-image:
-    # The VPS is an Oracle Ampere box, so the image has to be arm64. GitHub's
-    # arm runners are free on a public repo, which beats emulating it.
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
@@ -28,8 +26,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      # Cache in the registry, not the Actions cache: that one is scoped per
-      # branch, so every preview would start from cold.
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -40,8 +36,6 @@ jobs:
           cache-to: type=registry,ref=${{ env.IMAGE }}:buildcache,mode=max
           provenance: false
 
-  # Deliberately not a gate on deploy: a new base-image CVE should shout, not
-  # stop a hotfix. It lands in the Security tab either way.
   scan-image:
     needs: build-image
     runs-on: ubuntu-latest
@@ -174,8 +168,6 @@ jobs:
         run: |
           source .github/scripts/komodo.sh
 
-          # The repo is still cloned on the VPS, but only for the compose file -
-          # the image itself already exists, built and pushed by the build job.
           config=$(jq -n --arg branch "$BRANCH" --arg environment "$ENVIRONMENT" '{
             server: "wayfarerbx-vps",
             repo: "BrockCSC/website",
