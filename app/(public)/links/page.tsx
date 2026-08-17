@@ -98,7 +98,7 @@ export default function LinksPage(): ReactElement {
             asChild
             variant="outline"
             className={cn(
-              "h-auto w-full justify-start rounded-[20px] bg-surface px-0 py-0 text-left shadow-[4px_4px_0_0_var(--line)] hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-tint hover:shadow-[2px_2px_0_0_var(--line)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
+              "h-auto w-full justify-start rounded-[20px] bg-surface px-0 py-0 text-left shadow-[4px_4px_0_0_var(--shade)] hover:translate-x-[2px] hover:translate-y-[2px] hover:bg-tint hover:shadow-[2px_2px_0_0_var(--shade)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
               link.featured &&
                 "bg-tint shadow-[4px_4px_0_0_var(--brand)] hover:shadow-[2px_2px_0_0_var(--brand)]",
             )}

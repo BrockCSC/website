@@ -82,8 +82,8 @@ export default function Sidebar() {
         aria-label={isOpen ? "Close guide navigation" : "Open guide navigation"}
         aria-expanded={isOpen}
         aria-controls="guide-nav"
-        className={`lg:hidden fixed right-4 z-50 p-2.5 bg-surface text-ink border-2 border-line shadow-brut-sm rounded-xl ${
-          isOpen ? "top-5" : "top-25"
+        className={`lg:hidden fixed right-4 top-25 z-50 p-2.5 bg-surface text-ink border-2 border-line shadow-brut-sm rounded-xl ${
+          isOpen ? "-translate-y-20" : ""
         }`}
       >
         {isOpen ? <X size={24} /> : <Menu size={24} />}
@@ -92,9 +92,9 @@ export default function Sidebar() {
       <aside
         className={`
         lg:block lg:sticky lg:top-24 lg:w-64 lg:h-fit shrink-0
-        fixed inset-0 z-40 bg-surface transition-transform duration-300 ease-in-out
-        ${isOpen ? "translate-x-0" : "translate-x-full"}
-        lg:translate-x-0 lg:static lg:bg-transparent
+        fixed inset-0 z-40 bg-surface transition-[transform,opacity,visibility] duration-[var(--dur-slow)] ease-smooth
+        ${isOpen ? "visible translate-x-0 opacity-100" : "invisible translate-x-full opacity-0"}
+        lg:visible lg:translate-x-0 lg:static lg:bg-transparent lg:opacity-100
         w-full md:w-80 ml-auto lg:ml-0
       `}
       >
@@ -112,7 +112,7 @@ export default function Sidebar() {
               href={`#${item.id}`}
               onClick={() => handleNavClick(item.id)}
               className={`
-                    block rounded-xl border-2 border-line shadow-brut-sm transition duration-200 text-center lg:text-left
+                    block rounded-xl border-2 border-line shadow-brut-sm text-center lg:text-left
                     ${
                       item.indent
                         ? "ml-6 w-[calc(100%-1.5rem)] text-sm px-2 py-1 my-1"
@@ -127,12 +127,13 @@ export default function Sidebar() {
         </nav>
       </aside>
 
-      {isOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
-          onClick={toggleMenu}
-        />
-      )}
+      <div
+        aria-hidden="true"
+        className={`fixed inset-0 z-30 bg-black/50 transition-opacity duration-[var(--dur-slow)] ease-smooth lg:hidden ${
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        onClick={toggleMenu}
+      />
     </>
   );
 }

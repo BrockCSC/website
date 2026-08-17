@@ -147,7 +147,7 @@ export default function EventModal({
             <Label htmlFor="title">Title</Label>
             <input
               aria-invalid={!!errors.title}
-              className={`${field} ${errors.title ? "border-red-600 dark:border-red-400" : ""}`}
+              className={`${field} ${errors.title ? "border-destructive" : ""}`}
               id="title"
               onChange={(e) => {
                 setTitle(e.target.value);
@@ -203,7 +203,7 @@ export default function EventModal({
               <Label htmlFor="start">Starts</Label>
               <input
                 aria-invalid={!!errors.start}
-                className={`${field} ${errors.start ? "border-red-600 dark:border-red-400" : ""}`}
+                className={`${field} ${errors.start ? "border-destructive" : ""}`}
                 id="start"
                 onChange={(e) => {
                   setStartDatetime(e.target.value);
@@ -224,7 +224,7 @@ export default function EventModal({
               <Label htmlFor="end">Ends</Label>
               <input
                 aria-invalid={!!errors.end}
-                className={`${field} ${errors.end ? "border-red-600 dark:border-red-400" : ""}`}
+                className={`${field} ${errors.end ? "border-destructive" : ""}`}
                 id="end"
                 onChange={(e) => {
                   setEndDatetime(e.target.value);
@@ -277,7 +277,7 @@ export default function EventModal({
             <Label htmlFor="signupUrl">Sign-up link</Label>
             <input
               aria-invalid={!!errors.signupUrl}
-              className={`${field} ${errors.signupUrl ? "border-red-600 dark:border-red-400" : ""}`}
+              className={`${field} ${errors.signupUrl ? "border-destructive" : ""}`}
               id="signupUrl"
               onChange={(e) => {
                 setSignupUrl(e.target.value);

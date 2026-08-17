@@ -57,17 +57,45 @@
   --color-slab-brand: var(--slab-brand);
   --shadow-brut: var(--brut);
   --shadow-brut-sm: var(--brut-sm);
+  --ease-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
+  --animate-fade-in: fade-in var(--dur) var(--ease-smooth) both;
+  --animate-rise-in: rise-in var(--dur) var(--ease-smooth) both;
+  --animate-pop-in: pop-in var(--dur) var(--ease-smooth) both;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
 }
 
 :root {
   --surface: #ffffff;
-  --raised: #fafafa;
-  --ink: #0a0a0a;
-  --subtle: #6b7280;
-  --line: #000000;
+  --raised: #f4f1ef;
+  --ink: #191619;
+  --subtle: #6a656c;
+  --line: #2b262c;
   --brand: #9a4440;
   --brand-ink: #ffffff;
-  --tint: #fff1f0;
+  --tint: #fdf0ee;
+  --dur-fast: 110ms;
+  --dur: 190ms;
+  --dur-slow: 320ms;
   --shade: var(--line);
   --brut: 6px 6px 0 0 var(--shade);
   --brut-sm: 3px 3px 0 0 var(--shade);
@@ -79,8 +107,8 @@
 .dark {
   --surface: #1b181d;
   --raised: #241f26;
-  --ink: #ece6e3;
-  --subtle: #a09aa3;
+  --ink: #e4ded9;
+  --subtle: #9c959d;
   --line: #4a424e;
   --brand: #e08a82;
   --brand-ink: #17141a;
@@ -91,8 +119,8 @@
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: #f7f4f2;
+  --foreground: #191619;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
@@ -126,11 +154,11 @@
 
 .dark {
   --background: #131114;
-  --foreground: #ece6e3;
+  --foreground: #e4ded9;
   --card: #1b181d;
-  --card-foreground: #ece6e3;
+  --card-foreground: #e4ded9;
   --popover: #1b181d;
-  --popover-foreground: #ece6e3;
+  --popover-foreground: #e4ded9;
   --primary: #e08a82;
   --primary-foreground: #17141a;
   --secondary: #241f26;
@@ -169,6 +197,36 @@
   button:not(:disabled),
   [role="button"]:not(:disabled) {
     cursor: pointer;
+  }
+  a,
+  button,
+  [role="button"],
+  input,
+  select,
+  textarea,
+  summary,
+  label {
+    transition:
+      color var(--dur-fast) var(--ease-smooth),
+      background-color var(--dur-fast) var(--ease-smooth),
+      border-color var(--dur-fast) var(--ease-smooth),
+      box-shadow var(--dur) var(--ease-smooth),
+      transform var(--dur) var(--ease-smooth),
+      opacity var(--dur-fast) var(--ease-smooth);
+  }
+  button:not(:disabled):active,
+  [role="button"]:not(:disabled):active {
+    transform: translateY(1px);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
   :where(
     a,

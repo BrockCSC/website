@@ -98,8 +98,13 @@ export function Compose({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/40 px-4 dark:bg-surface/80">
-      <div className="flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut">
+    <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-ink/40 px-4 dark:bg-surface/80">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="New message"
+        className="flex max-h-[90vh] w-full max-w-3xl animate-pop-in flex-col overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut"
+      >
         <header className="flex items-center justify-between border-b-2 border-line px-5 py-3">
           <h2 className="text-base font-extrabold text-brand">New message</h2>
           <button
@@ -167,7 +172,7 @@ export function Compose({
               {files.map((file) => (
                 <li
                   key={file.blobId}
-                  className="flex items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink"
+                  className="flex animate-pop-in items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink"
                 >
                   <Paperclip size={12} aria-hidden />
                   <span className="max-w-48 truncate">{file.name}</span>
@@ -188,11 +193,15 @@ export function Compose({
             </ul>
           )}
 
-          {error && <p className="text-sm font-bold text-brand">{error}</p>}
+          {error && (
+            <p className="animate-rise-in text-sm font-bold text-brand">
+              {error}
+            </p>
+          )}
         </div>
 
         <footer className="flex items-center gap-3 border-t-2 border-line px-5 py-3">
-          <label className="cursor-pointer rounded-[10px] border-2 border-line px-3 py-2 text-sm font-bold text-ink transition hover:bg-tint">
+          <label className="cursor-pointer rounded-[10px] border-2 border-line px-3 py-2 text-sm font-bold text-ink hover:bg-tint">
             <Paperclip size={15} className="inline" aria-hidden />
             <span className="ml-1.5">
               {uploading > 0 ? "Uploading…" : "Attach"}
@@ -219,7 +228,7 @@ export function Compose({
               type="button"
               onClick={send}
               disabled={sending || uploading > 0}
-              className="rounded-[10px] border-2 border-line bg-brand px-5 py-2 font-bold text-brand-ink shadow-brut-sm transition hover:opacity-90 disabled:opacity-60"
+              className="rounded-[10px] border-2 border-line bg-brand px-5 py-2 font-bold text-brand-ink shadow-brut-sm hover:opacity-90 disabled:opacity-60"
             >
               {sending ? "Sending…" : "Send"}
             </button>

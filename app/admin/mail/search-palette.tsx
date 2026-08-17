@@ -58,7 +58,7 @@ const replaceLast = (value: string, insert: string) =>
 const asTerm = (name: string) => (name.includes(" ") ? `"${name}"` : name);
 
 const ROW =
-  "relative z-10 block w-full rounded-[10px] px-3 py-2 text-left transition duration-200 motion-reduce:transition-none";
+  "relative z-10 block w-full rounded-[10px] px-3 py-2 text-left transition duration-200 ease-smooth motion-reduce:transition-none";
 
 export function SearchPalette({
   mailboxes,
@@ -274,7 +274,7 @@ export function SearchPalette({
   return (
     <div
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-      className={`fixed inset-0 z-50 flex justify-center bg-ink/40 transition-opacity duration-200 motion-reduce:transition-none sm:p-6 sm:pt-[11vh] ${
+      className={`fixed inset-0 z-50 flex justify-center bg-ink/40 transition-opacity duration-200 ease-smooth motion-reduce:transition-none sm:p-6 sm:pt-[11vh] ${
         shown ? "opacity-100" : "opacity-0"
       }`}
     >
@@ -282,7 +282,7 @@ export function SearchPalette({
         role="dialog"
         aria-modal="true"
         aria-label="Search all mail"
-        className={`flex h-dvh w-full flex-col overflow-hidden border-line bg-surface transition duration-200 ease-out motion-reduce:transition-none sm:h-auto sm:max-h-[70vh] sm:max-w-2xl sm:rounded-[20px] sm:border-2 sm:shadow-brut ${
+        className={`flex h-dvh w-full flex-col overflow-hidden border-line bg-surface transition duration-200 ease-smooth motion-reduce:transition-none sm:h-auto sm:max-h-[70vh] sm:max-w-2xl sm:rounded-[20px] sm:border-2 sm:shadow-brut ${
           shown
             ? "translate-y-0 scale-100 opacity-100"
             : "-translate-y-2 scale-[0.98] opacity-0"
@@ -320,7 +320,7 @@ export function SearchPalette({
         >
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-2 top-0 rounded-[10px] bg-tint transition-all duration-150 ease-out motion-reduce:transition-none"
+            className="pointer-events-none absolute inset-x-2 top-0 rounded-[10px] bg-tint transition-[transform,opacity] duration-150 ease-smooth motion-reduce:transition-none"
             style={{
               transform: `translateY(${bar?.top ?? 0}px)`,
               height: bar?.height ?? 0,

@@ -194,7 +194,7 @@ export default function UsersPage() {
                   ))}
                 </div>
                 {adding && (
-                  <div className="mt-4 rounded-[10px] border-2 border-line bg-raised p-4">
+                  <div className="mt-4 animate-rise-in rounded-[10px] border-2 border-line bg-raised p-4">
                     <ProfileForm
                       onCancel={() => setAdding(false)}
                       onSaved={async (saved) => {
@@ -212,11 +212,11 @@ export default function UsersPage() {
                 <p className="text-subtle">Nobody matches that.</p>
               )}
 
-              <ul className="flex flex-col gap-2">
+              <ul className="flex animate-fade-in flex-col gap-2" key={scope}>
                 {shown.map((entry) => (
                   <li key={entry.id}>
                     <button
-                      className="w-full rounded-[10px] border-2 border-line bg-surface px-4 py-3 text-left shadow-brut-sm transition hover:bg-tint"
+                      className="w-full rounded-[10px] border-2 border-line bg-surface px-4 py-3 text-left shadow-brut-sm hover:bg-tint"
                       onClick={() => setSelected(entry.id)}
                     >
                       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">

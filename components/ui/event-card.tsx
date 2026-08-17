@@ -20,7 +20,7 @@ export function EventCard({
   tags,
 }: EventCardProps) {
   return (
-    <div className="w-full flex flex-col rounded-[24px] border-2 border-line bg-surface p-2 shadow-[4px_4px_0_0_var(--brand)] overflow-hidden h-full transform transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0_0_var(--brand)] duration-300 group/card">
+    <div className="w-full flex flex-col rounded-[24px] border-2 border-line bg-surface p-2 shadow-[4px_4px_0_0_var(--brand)] overflow-hidden h-full transition-[transform,box-shadow] duration-[var(--dur)] ease-smooth hover:-translate-y-1 hover:shadow-[6px_6px_0_0_var(--brand)] motion-reduce:hover:translate-y-0 group/card">
       <div
         className={`relative w-full aspect-[4/3] sm:aspect-video rounded-[16px] border-2 border-line overflow-hidden flex items-center justify-center bg-slab`}
       >
@@ -32,19 +32,19 @@ export function EventCard({
               aria-hidden="true"
               fill
               unoptimized
-              className="object-cover blur-xl opacity-40 scale-110 pointer-events-none transition-transform duration-500 group-hover/card:scale-125"
+              className="object-cover blur-xl opacity-40 scale-110 pointer-events-none transition-transform duration-[var(--dur-slow)] ease-smooth group-hover/card:scale-[1.15]"
             />
             <Image
               src={imageUrl}
               alt={title}
               fill
               unoptimized
-              className="z-10 object-contain transition-transform duration-500 group-hover/card:scale-105"
+              className="z-10 object-contain transition-transform duration-[var(--dur-slow)] ease-smooth group-hover/card:scale-105"
             />
           </>
         ) : (
           <div className="flex items-center justify-center p-4">
-            <div className="relative size-24 rounded-full border-2 border-slab-ink/20 bg-slab-ink/10 flex items-center justify-center backdrop-blur-sm shadow-inner transition-transform duration-500 group-hover/card:scale-110">
+            <div className="relative size-24 rounded-full border-2 border-slab-ink/20 bg-slab-ink/10 flex items-center justify-center backdrop-blur-sm shadow-inner transition-transform duration-[var(--dur-slow)] ease-smooth group-hover/card:scale-110">
               <div className="text-center font-bold text-slab-ink/50 uppercase tracking-widest text-xs px-2 truncate w-full">
                 {title.split(" ")[0]}
               </div>
@@ -82,7 +82,7 @@ export function EventCard({
         </div>
 
         {/* Action Button */}
-        <div className="mt-2 w-full rounded-[14px] bg-brand text-brand-ink py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-line shadow-[2px_2px_0_0_var(--line)] group-hover/card:opacity-90 transition-opacity">
+        <div className="mt-2 w-full rounded-[14px] bg-brand text-brand-ink py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-line shadow-[2px_2px_0_0_var(--shade)] group-hover/card:opacity-90 transition-opacity">
           More Info
           <ArrowUpRight className="size-4 opacity-80 shrink-0" />
         </div>

@@ -37,7 +37,7 @@ const Stat = ({
   href?: string;
 }) => {
   const tile = (
-    <div className="h-full rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm">
+    <div className="h-full animate-rise-in rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm">
       <div className="text-xs font-bold uppercase tracking-wide text-subtle">
         {label}
       </div>
@@ -46,7 +46,10 @@ const Stat = ({
     </div>
   );
   return href ? (
-    <Link href={href} className="block transition hover:-translate-y-0.5">
+    <Link
+      href={href}
+      className="block hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
+    >
       {tile}
     </Link>
   ) : (
@@ -63,7 +66,7 @@ const Card = ({
   hint?: string;
   children: React.ReactNode;
 }) => (
-  <section className="rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
+  <section className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
     <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink">
       {title}
     </h2>
@@ -73,7 +76,7 @@ const Card = ({
 );
 
 const Note = ({ children }: { children: React.ReactNode }) => (
-  <p className="rounded-[14px] border-2 border-dashed border-line/40 p-4 text-sm text-subtle">
+  <p className="animate-fade-in rounded-[14px] border-2 border-dashed border-line/40 p-4 text-sm text-subtle">
     {children}
   </p>
 );
@@ -142,7 +145,7 @@ export default function AnalyticsPage() {
       </p>
 
       {statsFailed && (
-        <p className="mt-8 rounded-[20px] border-2 border-line bg-surface p-5 font-bold text-ink shadow-brut">
+        <p className="mt-8 animate-rise-in rounded-[20px] border-2 border-line bg-surface p-5 font-bold text-ink shadow-brut">
           Could not load the numbers. Reload the page to try again.
         </p>
       )}

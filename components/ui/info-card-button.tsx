@@ -19,7 +19,7 @@ export function InfoCardButton({
     <Button
       asChild
       variant="outline"
-      className="h-auto py-3 px-5 bg-surface flex items-center justify-start gap-4 rounded-[16px] border-2 border-line hover:bg-tint hover:-translate-y-1 shadow-[4px_4px_0_0_var(--brand)] hover:shadow-[6px_6px_0_0_var(--brand)] transition-all duration-300 group"
+      className="h-auto py-3 px-5 bg-surface flex items-center justify-start gap-4 rounded-[16px] border-2 border-line hover:bg-tint hover:-translate-y-1 shadow-[4px_4px_0_0_var(--brand)] hover:shadow-[6px_6px_0_0_var(--brand)] group"
     >
       <Link href={href}>
         <div className="p-3 bg-brand rounded-xl flex items-center justify-center shrink-0">

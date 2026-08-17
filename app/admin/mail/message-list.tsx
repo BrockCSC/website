@@ -39,7 +39,7 @@ export function MessageList({
   }
 
   return (
-    <ul className="divide-y-2 divide-line">
+    <ul className="animate-fade-in divide-y-2 divide-line">
       {messages.map((message) => {
         const unread = !message.keywords?.$seen;
         const flagged = Boolean(message.keywords?.$flagged);
@@ -49,7 +49,7 @@ export function MessageList({
           <li
             key={message.id}
             data-message={message.id}
-            className={`flex items-start gap-1 pl-2 transition ${
+            className={`flex items-start gap-1 pl-2 transition-colors duration-[var(--dur-fast)] ease-smooth ${
               active ? "bg-tint" : "hover:bg-raised"
             }`}
           >
@@ -58,11 +58,11 @@ export function MessageList({
               aria-label={flagged ? "Remove star" : "Star"}
               aria-pressed={flagged}
               onClick={() => onFlag(message, !flagged)}
-              className="mt-3.5 shrink-0 rounded-[6px] p-1 text-subtle transition hover:text-brand"
+              className="mt-3.5 shrink-0 rounded-[6px] p-1 text-subtle hover:text-brand"
             >
               <Star
                 size={15}
-                className={flagged ? "fill-brand text-brand" : ""}
+                className={`transition-colors duration-[var(--dur-fast)] ease-smooth ${flagged ? "fill-brand text-brand" : "fill-transparent"}`}
                 aria-hidden
               />
             </button>

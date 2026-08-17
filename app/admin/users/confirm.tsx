@@ -34,7 +34,7 @@ export default function Confirm({
     );
 
   return (
-    <div className="rounded-[10px] border-2 border-line bg-raised p-4">
+    <div className="animate-rise-in rounded-[10px] border-2 border-line bg-raised p-4">
       <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink">
         {title}
       </h3>

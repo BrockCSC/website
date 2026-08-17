@@ -69,19 +69,20 @@ export function AboutUsSection() {
 
         <div className="relative w-full max-w-[500px] mx-auto hidden md:flex items-center justify-center">
           <div className="flex flex-wrap justify-center gap-3 md:gap-4">
-            {execs.map((exec) => (
+            {execs.map((exec, index) => (
               <div
                 key={exec.$key}
-                className="relative group flex justify-center"
+                className="animate-fade-in relative group flex justify-center"
+                style={{ animationDelay: `${Math.min(index, 5) * 20}ms` }}
               >
-                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-line bg-raised flex items-center justify-center overflow-hidden shadow-[3px_3px_0_0_var(--brand)] transition-transform group-hover:-translate-y-1 duration-300">
+                <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-line bg-raised flex items-center justify-center overflow-hidden shadow-[3px_3px_0_0_var(--brand)] transition-transform duration-[var(--dur)] ease-smooth group-hover:-translate-y-1 motion-reduce:group-hover:translate-y-0">
                   {exec.image?.url ? (
                     <Image
                       src={exec.image.url}
                       alt={exec.name || "Exec Member"}
                       fill
                       unoptimized
-                      className="object-cover transition-transform duration-300 group-hover:scale-110"
+                      className="object-cover transition-transform duration-[var(--dur)] ease-smooth group-hover:scale-110"
                     />
                   ) : (
                     <User
@@ -92,7 +93,7 @@ export function AboutUsSection() {
                 </div>
 
                 {exec.name && (
-                  <div className="absolute -bottom-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-50 whitespace-nowrap bg-surface border-2 border-line text-ink text-xs font-bold px-3 py-1.5 rounded-[8px] shadow-[2px_2px_0_0_var(--brand)] pointer-events-none">
+                  <div className="absolute -bottom-10 translate-y-1 opacity-0 transition-[opacity,transform] duration-[var(--dur)] ease-smooth group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:translate-y-0 z-50 whitespace-nowrap bg-surface border-2 border-line text-ink text-xs font-bold px-3 py-1.5 rounded-[8px] shadow-[2px_2px_0_0_var(--brand)] pointer-events-none">
                     {exec.name}
                   </div>
                 )}

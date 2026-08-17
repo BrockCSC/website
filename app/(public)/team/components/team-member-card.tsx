@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useState } from "react";
 import Image from "next/image";
 import { ChevronDown, UserRound } from "lucide-react";
 
@@ -35,17 +35,7 @@ function DescriptionToggle({
   trigger,
 }: DescriptionToggleProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [contentHeight, setContentHeight] = useState(0);
-  const contentRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
-
-  useEffect(() => {
-    if (!contentRef.current) {
-      return;
-    }
-
-    setContentHeight(contentRef.current.scrollHeight);
-  }, [description, isOpen]);
 
   return (
     <div>
@@ -60,7 +50,7 @@ function DescriptionToggle({
           {trigger}
           {description ? (
             <ChevronDown
-              className={`size-4 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
+              className={`size-4 shrink-0 transition-transform duration-[var(--dur)] ease-smooth ${isOpen ? "rotate-180" : ""}`}
             />
           ) : null}
         </button>
@@ -69,17 +59,16 @@ function DescriptionToggle({
 
       <div
         aria-hidden={!isOpen}
-        className="overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-out"
+        className={`grid overflow-hidden transition-[grid-template-rows,opacity] duration-[var(--dur-slow)] ease-smooth ${
+          isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
         id={panelId}
-        style={{
-          marginTop: description && isOpen ? "0.5rem" : "0rem",
-          maxHeight: isOpen ? `${contentHeight}px` : "0px",
-          opacity: isOpen ? 1 : 0,
-        }}
       >
-        <div ref={contentRef}>
+        <div className="min-h-0">
           {description && (
-            <p className="text-sm leading-relaxed text-subtle">{description}</p>
+            <p className="pt-2 text-sm leading-relaxed text-subtle">
+              {description}
+            </p>
           )}
         </div>
       </div>
@@ -147,7 +136,7 @@ export function TeamMemberCard({
         {socialLinks.map((social) => (
           <a
             aria-label={`${name} ${social.platform}`}
-            className="inline-flex size-9 items-center justify-center text-brand transition-opacity hover:opacity-75"
+            className="inline-flex size-9 items-center justify-center text-brand hover:opacity-75"
             href={social.url}
             key={social.platform}
             rel="noopener noreferrer"

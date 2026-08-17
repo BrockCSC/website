@@ -4,20 +4,20 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 
 const base =
-  "inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-line px-4 py-2 text-sm font-bold transition disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-line px-4 py-2 text-sm font-bold disabled:pointer-events-none disabled:opacity-50";
 
 export const btn = {
-  primary: `${base} bg-brand text-brand-ink shadow-brut-sm hover:-translate-y-0.5`,
+  primary: `${base} bg-brand text-brand-ink shadow-brut-sm hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`,
   secondary: `${base} bg-surface text-ink shadow-brut-sm hover:bg-tint`,
-  danger: `${base} border-red-600 bg-red-600 text-surface shadow-brut-sm hover:-translate-y-0.5 dark:border-red-400 dark:bg-red-500`,
-  quiet: `${base} border-transparent px-2.5 py-1.5 text-red-600 hover:bg-tint dark:text-red-400`,
+  danger: `${base} border-destructive bg-destructive text-surface shadow-brut-sm hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`,
+  quiet: `${base} border-transparent px-2.5 py-1.5 text-destructive hover:bg-tint`,
 };
 
 export const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm font-medium text-ink outline-none [color-scheme:light] focus:bg-tint dark:[color-scheme:dark]";
 
 export const errorText =
-  "mt-1 text-xs font-bold text-red-600 dark:text-red-400";
+  "mt-1 animate-rise-in text-xs font-bold text-destructive";
 
 export function Label({
   children,
@@ -62,8 +62,8 @@ export function Sheet({
       className="fixed inset-0 z-50 flex sm:items-center sm:justify-center sm:p-6"
       role="dialog"
     >
-      <div className="absolute inset-0 bg-ink/40 dark:bg-surface/80" />
-      <div className="relative flex h-full w-full flex-col bg-surface sm:h-auto sm:max-h-[86vh] sm:max-w-[660px] sm:rounded-[20px] sm:border-2 sm:border-line sm:shadow-brut">
+      <div className="absolute inset-0 animate-fade-in bg-ink/40 dark:bg-surface/80" />
+      <div className="relative flex h-full w-full animate-rise-in flex-col bg-surface sm:h-auto sm:max-h-[86vh] sm:max-w-[660px] sm:animate-pop-in sm:rounded-[20px] sm:border-2 sm:border-line sm:shadow-brut">
         <div className="flex items-center gap-3 border-b-2 border-line px-5 py-4">
           <h2 className="text-lg font-extrabold text-ink">{title}</h2>
           <button

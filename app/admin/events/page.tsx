@@ -180,7 +180,7 @@ export default function EventsManagementPage() {
       </div>
 
       {error && (
-        <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[10px] border-2 border-red-600 px-4 py-3 dark:border-red-400">
+        <div className="mt-6 flex animate-rise-in flex-wrap items-center gap-3 rounded-[10px] border-2 border-destructive px-4 py-3">
           <p className={`${errorText} mt-0`}>{error}</p>
           <button
             className={`${btn.secondary} ml-auto`}
@@ -195,7 +195,7 @@ export default function EventsManagementPage() {
       <div className="mt-7 flex flex-wrap gap-2 border-b-2 border-line pb-4">
         {tabs.map(({ id, label, list }) => (
           <button
-            className={`rounded-[10px] border-2 border-line px-3.5 py-1.5 text-sm font-bold transition ${
+            className={`rounded-[10px] border-2 border-line px-3.5 py-1.5 text-sm font-bold ${
               tab === id
                 ? "bg-brand text-brand-ink shadow-brut-sm"
                 : "bg-surface text-ink hover:bg-tint"
@@ -212,7 +212,7 @@ export default function EventsManagementPage() {
       {events === null ? (
         <p className="mt-8 font-bold text-subtle">Loading events...</p>
       ) : shown.length === 0 ? (
-        <div className="mt-6 rounded-[20px] border-2 border-dashed border-line bg-raised px-6 py-12 text-center">
+        <div className="mt-6 animate-fade-in rounded-[20px] border-2 border-dashed border-line bg-raised px-6 py-12 text-center">
           <p className="font-bold text-ink">{empty}</p>
           {tab !== "past" && (
             <button
@@ -225,7 +225,7 @@ export default function EventsManagementPage() {
           )}
         </div>
       ) : (
-        <ul className="mt-6 flex flex-col gap-4">
+        <ul className="mt-6 flex animate-fade-in flex-col gap-4" key={tab}>
           {shown.map((event) => (
             <EventRow
               event={event}

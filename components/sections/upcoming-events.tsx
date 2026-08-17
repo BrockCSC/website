@@ -66,7 +66,7 @@ export function UpcomingEventsSection() {
             className="text-brand font-bold flex items-center gap-2 hover:underline group shrink-0"
           >
             View Calendar{" "}
-            <ArrowRight className="size-4 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="size-4 transition-transform duration-[var(--dur)] ease-smooth group-hover:translate-x-1" />
           </Link>
         </div>
 
@@ -115,7 +115,7 @@ export function UpcomingEventsSection() {
                 <Link
                   key={event.$key}
                   href={`/events/${event.$key}`}
-                  className="block h-full cursor-pointer"
+                  className="animate-fade-in block h-full cursor-pointer"
                 >
                   <EventCard
                     title={event.title ?? "Untitled Event"}
@@ -129,7 +129,7 @@ export function UpcomingEventsSection() {
               );
             })
           ) : (
-            <div className="col-span-1 md:col-span-2 py-12 text-center text-subtle font-bold border-2 border-dashed border-line/40 rounded-2xl">
+            <div className="animate-fade-in col-span-1 md:col-span-2 py-12 text-center text-subtle font-bold border-2 border-dashed border-line/40 rounded-2xl">
               No upcoming events at the moment. Check back soon!
             </div>
           )}

@@ -50,7 +50,7 @@ const formFor = (exec: TeamMember | null): Form => ({
 const page = "mx-auto w-full max-w-[1060px] px-5 py-10";
 const label = "mb-1 block text-sm font-bold text-ink";
 const field =
-  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle";
+  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle focus:border-brand";
 
 const Section = ({
   title,
@@ -181,7 +181,7 @@ export default function ProfilePage() {
       </p>
 
       <form
-        className="mt-9 grid gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8"
+        className="mt-9 grid animate-fade-in gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8"
         onSubmit={save}
       >
         <div className="lg:sticky lg:top-6">
@@ -195,7 +195,11 @@ export default function ProfilePage() {
               </span>
             )}
           </div>
-          <div className={form.hidden ? "opacity-40 grayscale" : undefined}>
+          <div
+            className={`transition-[opacity,filter] duration-[var(--dur)] ease-smooth ${
+              form.hidden ? "opacity-40 grayscale" : ""
+            }`}
+          >
             <TeamMemberCard member={preview} />
           </div>
           {form.hidden && (
@@ -284,7 +288,7 @@ export default function ProfilePage() {
                       {name}
                     </label>
                     <div
-                      className={`flex items-center overflow-hidden rounded-[10px] border-2 bg-surface ${
+                      className={`flex items-center overflow-hidden rounded-[10px] border-2 bg-surface transition-colors duration-[var(--dur-fast)] ease-smooth ${
                         bad ? "border-destructive" : "border-line"
                       }`}
                     >
@@ -375,7 +379,7 @@ export default function ProfilePage() {
                   {steppingDown ? "Stepping down..." : "Step down"}
                 </Button>
                 {stepDownNote && (
-                  <span className="text-sm font-bold text-destructive">
+                  <span className="animate-rise-in text-sm font-bold text-destructive">
                     {stepDownNote}
                   </span>
                 )}
@@ -411,7 +415,7 @@ export default function ProfilePage() {
                 )}
               </>
             ) : (
-              <span className="flex items-center gap-2 text-sm font-bold text-brand">
+              <span className="flex animate-fade-in items-center gap-2 text-sm font-bold text-brand">
                 <svg
                   aria-hidden
                   className="size-5"

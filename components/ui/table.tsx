@@ -43,7 +43,7 @@ const tableDefaults = {
   "--table-head-bg": "var(--raised)",
   "--table-divider": "var(--line)",
   "--table-hover": "var(--tint)",
-  "--table-shadow": "4px 4px 0 var(--line)",
+  "--table-shadow": "4px 4px 0 var(--shade)",
   "--table-radius": "20px",
   "--table-text": "var(--ink)",
   "--table-head-text": "var(--ink)",
@@ -125,7 +125,7 @@ const Table = React.forwardRef<HTMLTableElement, TableProps>(
                 {data.rows.map((row, i) => (
                   <tr
                     key={i}
-                    className="border-b border-[color:var(--table-divider)] hover:bg-[color:var(--table-hover)]"
+                    className="border-b border-[color:var(--table-divider)] transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-[color:var(--table-hover)]"
                   >
                     {data.columns.map((col) => (
                       <td key={col.key} className="p-4">
@@ -180,7 +180,7 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      "border-b border-[color:var(--table-divider)] transition-colors hover:bg-[color:var(--table-hover)]",
+      "border-b border-[color:var(--table-divider)] transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-[color:var(--table-hover)]",
       className,
     )}
     {...props}

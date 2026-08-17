@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 
 export const field =
-  "w-full rounded-[10px] border-2 border-line bg-raised px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle";
+  "w-full rounded-[10px] border-2 border-line bg-raised px-3 py-2 text-sm text-ink outline-none placeholder:text-subtle focus:border-brand";
 
 export function Pill({
   tone = "flat",
@@ -34,7 +34,7 @@ export function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
+    <section className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-sm font-extrabold uppercase tracking-wide text-ink">
@@ -66,7 +66,7 @@ export function Rows({ items }: { items: [string, React.ReactNode][] }) {
 
 export function Note({ children }: { children: React.ReactNode }) {
   return (
-    <p className="rounded-[10px] border-2 border-line bg-tint px-3 py-2 text-sm font-semibold text-ink">
+    <p className="animate-rise-in rounded-[10px] border-2 border-line bg-tint px-3 py-2 text-sm font-semibold text-ink">
       {children}
     </p>
   );

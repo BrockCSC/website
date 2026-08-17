@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { Search } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -109,8 +109,12 @@ export default function TeamPageClient() {
     };
   }, [reloadCount]);
 
-  const normalizedQuery = query.trim().toLowerCase();
+  const appliedQuery = useDeferredValue(query);
+  const normalizedQuery = appliedQuery.trim().toLowerCase();
   const isSearching = normalizedQuery.length > 0;
+  const resultsClass = `transition-opacity duration-[var(--dur)] ease-smooth ${
+    appliedQuery === query ? "opacity-100" : "opacity-60"
+  }`;
   const visibleCurrentExecs = useMemo(
     () =>
       normalizedQuery
@@ -194,111 +198,116 @@ export default function TeamPageClient() {
         </div>
       )}
 
-      {isSearching && matchCount === 0 && (
-        <section className="mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
-          <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
-            Nobody matches &ldquo;{query.trim()}&rdquo;
+      <div className={resultsClass}>
+        {isSearching && matchCount === 0 && (
+          <section className="animate-fade-in mt-3 rounded-[16px] border-2 border-dashed border-line/25 bg-surface px-4 py-8 text-center">
+            <h2 className="m-0 font-semibold text-[1.35rem] leading-[1.1]">
+              Nobody matches &ldquo;{appliedQuery.trim()}&rdquo;
+            </h2>
+            <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
+              Try a first name on its own, a role like &ldquo;President&rdquo;,
+              or a term like &ldquo;2019&rdquo;.
+            </p>
+            <Button onClick={() => setQuery("")} variant="primary">
+              Clear search
+            </Button>
+          </section>
+        )}
+
+        <section
+          className={`mt-4 rounded-[16px] bg-surface px-0 py-4 sm:px-4 ${
+            isSearching && !hasCurrentExecs ? "hidden" : ""
+          }`}
+        >
+          <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
+            Current Executives
           </h2>
-          <p className="mx-auto mt-2 mb-4 max-w-[38rem] text-[0.9rem] text-subtle">
-            Try a first name on its own, a role like &ldquo;President&rdquo;, or
-            a term like &ldquo;2019&rdquo;.
+          <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-subtle">
+            The current leadership team.
           </p>
-          <Button onClick={() => setQuery("")} variant="primary">
-            Clear search
-          </Button>
-        </section>
-      )}
 
-      <section
-        className={`mt-4 rounded-[16px] bg-surface px-0 py-4 sm:px-4 ${
-          isSearching && !hasCurrentExecs ? "hidden" : ""
-        }`}
-      >
-        <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
-          Current Executives
-        </h2>
-        <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-subtle">
-          The current leadership team.
-        </p>
-
-        {errorMessage}
-        {loading && (
-          <div
-            aria-busy="true"
-            aria-label="Loading current team"
-            className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
-            role="status"
-          >
-            {[0, 1, 2, 3].map((index) => (
-              <div
-                className="h-64 animate-pulse rounded-[16px] border-2 border-line/25 bg-raised"
-                key={index}
-              />
-            ))}
-          </div>
-        )}
-        {!loading && !error && !hasCurrentExecs && !isSearching && (
-          <p className="mb-4 text-subtle">No current team members found.</p>
-        )}
-
-        {hasCurrentExecs && (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
-            {visibleCurrentExecs.map((member) => (
-              <TeamMemberCard key={member.$key} member={member} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      <section
-        className={`mt-3 bg-surface px-0 py-5 sm:px-4 ${
-          error || (isSearching && !hasPreviousExecs) ? "hidden" : ""
-        }`}
-      >
-        <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
-          Club Alumni
-        </h2>
-        <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-subtle">
-          Past executives who helped shape the club.
-        </p>
-
-        {loading && <p className="mb-4 text-subtle">Loading alumni...</p>}
-        {!loading && !error && !hasPreviousExecs && !isSearching && (
-          <p className="mb-4 text-subtle">No alumni records found.</p>
-        )}
-
-        {hasPreviousExecs && (
-          <div className="flex flex-col gap-4">
-            {alumni.visible.map((group) => (
-              <section key={group.term}>
-                <h3 className="mb-2 text-base font-semibold text-ink/80">
-                  {group.term}
-                </h3>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
-                  {group.members.map((member) => (
-                    <TeamMemberCard
-                      isAlumni
-                      key={member.$key}
-                      member={member}
-                    />
-                  ))}
+          {errorMessage}
+          {loading && (
+            <div
+              aria-busy="true"
+              aria-label="Loading current team"
+              className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+              role="status"
+            >
+              {[0, 1, 2, 3].map((index) => (
+                <div
+                  className="animate-pulse overflow-hidden rounded-[16px] border-2 border-line/25 bg-raised"
+                  key={index}
+                >
+                  <div className="aspect-[4/3] bg-line/10" />
+                  <div className="h-[5.5rem]" />
                 </div>
-              </section>
-            ))}
+              ))}
+            </div>
+          )}
+          {!loading && !error && !hasCurrentExecs && !isSearching && (
+            <p className="mb-4 text-subtle">No current team members found.</p>
+          )}
 
-            {alumni.hasMore && (
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <Button onClick={alumni.revealMore} variant="outline">
-                  Show earlier executives
-                </Button>
-                <Button onClick={alumni.revealAll} size="sm" variant="ghost">
-                  Show all {alumni.hidden}
-                </Button>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
+          {hasCurrentExecs && (
+            <div className="animate-fade-in grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+              {visibleCurrentExecs.map((member) => (
+                <TeamMemberCard key={member.$key} member={member} />
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section
+          className={`mt-3 bg-surface px-0 py-5 sm:px-4 ${
+            error || (isSearching && !hasPreviousExecs) ? "hidden" : ""
+          }`}
+        >
+          <h2 className="m-0 text-[1.75rem] font-semibold leading-[1.1]">
+            Club Alumni
+          </h2>
+          <p className="mb-3 mt-0 text-[0.9rem] font-semibold text-subtle">
+            Past executives who helped shape the club.
+          </p>
+
+          {loading && <p className="mb-4 text-subtle">Loading alumni...</p>}
+          {!loading && !error && !hasPreviousExecs && !isSearching && (
+            <p className="mb-4 text-subtle">No alumni records found.</p>
+          )}
+
+          {hasPreviousExecs && (
+            <div className="flex flex-col gap-4">
+              {alumni.visible.map((group) => (
+                <section className="animate-rise-in" key={group.term}>
+                  <h3 className="mb-2 text-base font-semibold text-ink/80">
+                    {group.term}
+                  </h3>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                    {group.members.map((member) => (
+                      <TeamMemberCard
+                        isAlumni
+                        key={member.$key}
+                        member={member}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+              {alumni.hasMore && (
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <Button onClick={alumni.revealMore} variant="outline">
+                    Show earlier executives
+                  </Button>
+                  <Button onClick={alumni.revealAll} size="sm" variant="ghost">
+                    Show all {alumni.hidden}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      </div>
 
       <p className="px-0 text-[0.85rem] text-subtle sm:px-4">
         Are you an exec?{" "}

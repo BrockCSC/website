@@ -56,7 +56,7 @@ export function Navbar() {
               href={link.href}
               aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
-                "border-b-2 border-transparent pb-1 transition-colors hover:text-brand",
+                "border-b-2 border-transparent pb-1 hover:text-brand",
                 isActive(link.href) && "border-brand text-brand",
               )}
             >
@@ -106,8 +106,10 @@ export function Navbar() {
 
       <div
         className={cn(
-          "absolute inset-x-0 top-full z-50 border-b-2 border-line bg-surface md:hidden",
-          isMenuOpen ? "block" : "hidden",
+          "absolute inset-x-0 top-full z-50 border-b-2 border-line bg-surface transition-[opacity,transform,visibility] duration-[var(--dur-slow)] ease-smooth md:hidden",
+          isMenuOpen
+            ? "visible translate-y-0 opacity-100"
+            : "invisible -translate-y-3 opacity-0 motion-reduce:translate-y-0",
         )}
         id="mobile-nav-menu"
       >
@@ -119,7 +121,7 @@ export function Navbar() {
               aria-current={isActive(link.href) ? "page" : undefined}
               onClick={() => setIsMenuOpen(false)}
               className={cn(
-                "rounded-[10px] border-2 border-transparent px-3 py-2.5 text-base font-semibold text-ink transition-colors",
+                "rounded-[10px] border-2 border-transparent px-3 py-2.5 text-base font-semibold text-ink",
                 isActive(link.href)
                   ? "border-brand bg-tint text-brand"
                   : "hover:bg-tint",

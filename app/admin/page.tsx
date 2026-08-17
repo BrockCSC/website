@@ -33,11 +33,12 @@ export default function AdminMenu() {
       <p className="mt-2 text-subtle">Pick what you want to work on.</p>
 
       <div className="mt-9 grid gap-5 sm:grid-cols-2">
-        {open.map((section) => (
+        {open.map((section, index) => (
           <Link
             key={section.href}
             href={section.href}
-            className="group rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut transition hover:-translate-y-0.5 hover:bg-tint"
+            style={{ animationDelay: `${index * 20}ms` }}
+            className="group animate-rise-in rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut hover:-translate-y-0.5 hover:bg-tint motion-reduce:hover:translate-y-0"
           >
             <h2 className="text-xl font-extrabold text-brand">
               {section.name}
@@ -49,7 +50,7 @@ export default function AdminMenu() {
 
       <Link
         href="/admin/profile"
-        className="mt-8 inline-block font-bold text-ink underline underline-offset-4 hover:text-brand"
+        className="mt-8 inline-block animate-fade-in font-bold text-ink underline underline-offset-4 hover:text-brand"
       >
         Your profile
       </Link>

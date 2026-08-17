@@ -20,7 +20,7 @@ export function MailboxList({
             key={box.id}
             type="button"
             onClick={() => onSelect(box.id)}
-            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold transition md:shrink ${
+            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold md:shrink ${
               active
                 ? "bg-brand text-brand-ink shadow-brut-sm"
                 : "bg-surface text-ink hover:bg-tint"
@@ -29,7 +29,7 @@ export function MailboxList({
             <span className="truncate">{box.name}</span>
             {box.unreadEmails > 0 && (
               <span
-                className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
+                className={`shrink-0 rounded-full px-2 py-0.5 text-xs transition-colors duration-[var(--dur-fast)] ease-smooth ${
                   active ? "bg-surface text-brand" : "bg-brand text-brand-ink"
                 }`}
               >

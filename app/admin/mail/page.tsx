@@ -93,7 +93,6 @@ export default function MailPage() {
       .catch(() => setContacts([]));
   }, [loadMailboxes]);
 
-  /** Paging happens on the server, over the whole folder. */
   const load = useCallback(
     async (position: number) => {
       if (!mailbox) return;
@@ -277,7 +276,7 @@ export default function MailPage() {
   }
   if (expired) {
     return (
-      <div className="m-4 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut">
+      <div className="m-4 animate-rise-in rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut">
         <p className="font-bold text-brand">Your mail session expired.</p>
         <p className="mt-2 max-w-prose text-sm text-subtle">
           Mail signs in to the mail server on your behalf, and that sign-in
@@ -289,7 +288,7 @@ export default function MailPage() {
             await logout();
             await refresh();
           }}
-          className="mt-5 rounded-[10px] border-2 border-line bg-brand px-4 py-2 font-bold text-brand-ink shadow-brut-sm transition hover:opacity-90"
+          className="mt-5 rounded-[10px] border-2 border-line bg-brand px-4 py-2 font-bold text-brand-ink shadow-brut-sm hover:opacity-90"
         >
           Sign in again
         </button>
@@ -300,14 +299,14 @@ export default function MailPage() {
   const current = mailboxes.find((box) => box.id === mailbox);
 
   return (
-    <div className="flex h-[calc(100dvh-3.625rem)] gap-3 p-3 md:gap-4 md:p-4">
+    <div className="flex h-[calc(100dvh-3.625rem)] animate-fade-in gap-3 p-3 md:gap-4 md:p-4">
       <aside
         className={`min-h-0 shrink-0 flex-col gap-3 md:flex md:w-52 ${open ? "hidden" : "flex"}`}
       >
         <button
           type="button"
           onClick={() => setDraft({})}
-          className="shrink-0 rounded-[10px] border-2 border-line bg-brand px-4 py-2.5 font-bold text-brand-ink shadow-brut-sm transition hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none"
+          className="shrink-0 rounded-[10px] border-2 border-line bg-brand px-4 py-2.5 font-bold text-brand-ink shadow-brut-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0"
         >
           Compose
         </button>
@@ -337,7 +336,7 @@ export default function MailPage() {
             <button
               type="button"
               onClick={() => setPalette(true)}
-              className="flex w-full items-center gap-2 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-subtle transition hover:bg-tint"
+              className="flex w-full items-center gap-2 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-subtle hover:bg-tint"
             >
               <Search size={14} aria-hidden />
               <span className="flex-1 text-left">Search all mail</span>
@@ -354,6 +353,7 @@ export default function MailPage() {
               </p>
             ) : (
               <MessageList
+                key={mailbox}
                 messages={messages}
                 selected={selected}
                 threadCounts={threadCounts}
@@ -366,7 +366,7 @@ export default function MailPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => void load(messages.length)}
-                className="w-full border-t-2 border-line px-4 py-3 text-sm font-bold text-brand transition hover:bg-tint disabled:opacity-50"
+                className="w-full border-t-2 border-line px-4 py-3 text-sm font-bold text-brand hover:bg-tint disabled:opacity-50"
               >
                 {busy
                   ? "Loading…"
@@ -458,7 +458,7 @@ const prefixed = (subject: string | null, prefix: string) =>
     : `${prefix} ${subject ?? ""}`.trim();
 
 const ACTION =
-  "rounded-[8px] border-2 border-line px-2.5 py-1.5 text-sm font-bold text-ink transition hover:bg-tint disabled:opacity-50";
+  "rounded-[8px] border-2 border-line px-2.5 py-1.5 text-sm font-bold text-ink hover:bg-tint disabled:opacity-50";
 
 function MessageActions({
   message,
@@ -517,7 +517,7 @@ function MessageActions({
         >
           <Star
             size={15}
-            className={flagged ? "fill-brand text-brand" : ""}
+            className={`transition-colors duration-[var(--dur-fast)] ease-smooth ${flagged ? "fill-brand text-brand" : "fill-transparent"}`}
             aria-hidden
           />
         </button>

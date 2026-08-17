@@ -18,7 +18,6 @@ const size = (bytes: number) =>
       ? `${Math.round(bytes / 1024)} KB`
       : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
 
-/** Inline parts belong to the body, not the attachment strip. */
 const downloadable = (parts: BodyPart[] | undefined) =>
   (parts ?? []).filter((part) => part.blobId && !part.cid);
 
@@ -82,13 +81,16 @@ export function MessageView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, dark]);
 
-  if (error) return <p className="p-6 text-sm font-bold text-brand">{error}</p>;
-  if (!message) return <p className="p-6 text-sm text-subtle">Loading…</p>;
+  if (error) {
+    return <p className="flex-1 p-6 text-sm font-bold text-brand">{error}</p>;
+  }
+  if (!message)
+    return <p className="flex-1 p-6 text-sm text-subtle">Loading…</p>;
 
   const files = downloadable(message.attachments);
 
   return (
-    <article className="flex min-h-0 flex-1 flex-col">
+    <article className="flex min-h-0 flex-1 animate-fade-in flex-col">
       <header className="border-b-2 border-line px-5 py-3">
         <p className="text-sm font-bold text-ink">
           {addressLine(message.from)}
@@ -105,7 +107,7 @@ export function MessageView({
                 <a
                   href={blobUrl(part)}
                   download={part.name ?? "attachment"}
-                  className="flex items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink transition hover:bg-tint"
+                  className="flex items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink hover:bg-tint"
                 >
                   <Paperclip size={12} aria-hidden />
                   <span className="max-w-48 truncate">
@@ -176,13 +178,13 @@ export function Conversation({
   return (
     <>
       {thread.length > 1 && (
-        <ul className="max-h-40 shrink-0 divide-y-2 divide-line overflow-y-auto border-b-2 border-line">
+        <ul className="max-h-40 shrink-0 animate-rise-in divide-y-2 divide-line overflow-y-auto border-b-2 border-line">
           {thread.map((item) => (
             <li key={item.id}>
               <button
                 type="button"
                 onClick={() => setOpen(item.id)}
-                className={`flex w-full items-baseline justify-between gap-3 px-5 py-2 text-left transition ${
+                className={`flex w-full items-baseline justify-between gap-3 px-5 py-2 text-left ${
                   item.id === open ? "bg-tint" : "hover:bg-raised"
                 }`}
               >

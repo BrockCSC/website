@@ -210,7 +210,7 @@ export default function EventDetailPageClient() {
         )}
 
         {!loading && !error && event && (
-          <section className="mt-4 grid items-start gap-8 min-[901px]:grid-cols-[320px_1fr]">
+          <section className="animate-fade-in mt-4 grid items-start gap-8 min-[901px]:grid-cols-[320px_1fr]">
             <div className="brand-shadow-lg relative mx-auto aspect-[3/4] w-full max-w-[320px] overflow-hidden rounded-[18px] border-2 border-line bg-raised min-[901px]:max-w-none">
               {hasImage && (
                 <div

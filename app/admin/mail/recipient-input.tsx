@@ -71,12 +71,12 @@ export function RecipientInput({
 
   return (
     <div className="relative">
-      <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-line px-2 py-1.5 focus-within:border-brand">
+      <div className="flex flex-wrap items-center gap-1.5 rounded-[10px] border-2 border-line px-2 py-1.5 transition-colors duration-[var(--dur-fast)] ease-smooth focus-within:border-brand">
         <span className="px-1 text-sm font-bold text-subtle">{label}</span>
         {value.map((email) => (
           <span
             key={email}
-            className="flex items-center gap-1 rounded-full bg-tint px-2.5 py-0.5 text-sm font-semibold text-brand"
+            className="flex animate-pop-in items-center gap-1 rounded-full bg-tint px-2.5 py-0.5 text-sm font-semibold text-brand"
           >
             {email}
             <button
@@ -103,7 +103,7 @@ export function RecipientInput({
       </div>
 
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full overflow-hidden rounded-[10px] border-2 border-line bg-surface shadow-brut-sm">
+        <ul className="absolute z-10 mt-1 w-full animate-fade-in overflow-hidden rounded-[10px] border-2 border-line bg-surface shadow-brut-sm">
           {suggestions.map((contact, index) => (
             <li key={contact.email}>
               <button

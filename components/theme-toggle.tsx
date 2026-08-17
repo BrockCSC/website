@@ -14,7 +14,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={flip}
       title="Switch between light and dark"
       aria-label="Switch between light and dark"
-      className={`grid size-11 place-items-center rounded-[10px] border-2 border-line text-ink transition hover:bg-tint ${className}`}
+      className={`grid size-11 place-items-center rounded-[10px] border-2 border-line text-ink hover:bg-tint ${className}`}
     >
       <svg
         viewBox="0 0 24 24"

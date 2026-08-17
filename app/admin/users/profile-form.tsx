@@ -158,7 +158,7 @@ export default function ProfileForm({
           return (
             <div key={key}>
               <Label htmlFor={`person-${key}`}>{label}</Label>
-              <div className="flex items-center overflow-hidden rounded-[10px] border-2 border-line bg-raised">
+              <div className="flex items-center overflow-hidden rounded-[10px] border-2 border-line bg-raised transition-colors duration-[var(--dur-fast)] ease-smooth focus-within:border-brand">
                 <span className="shrink-0 px-2 py-2 text-xs text-subtle">
                   {prefix}
                 </span>

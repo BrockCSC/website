@@ -4,6 +4,7 @@ import { logout } from "@/lib/api";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { LoginForm } from "@/components/admin/login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SessionProvider, useSession } from "./session";
@@ -52,7 +53,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div className="py-32 text-center text-lg font-bold">
+      <div className="animate-fade-in py-32 text-center text-lg font-bold">
         Authenticating...
       </div>
     );
@@ -66,13 +67,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     return (
       <div className="py-32 text-center">
         <p className="text-lg font-bold">Your access has been removed.</p>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-subtle">
           Ask a co-president if you think this is a mistake. This page updates
           on its own if your roles come back.
         </p>
         <button
           onClick={handleLogout}
-          className="mt-6 font-bold text-gray-500 underline hover:text-black"
+          className="mt-6 font-bold text-subtle underline hover:text-ink"
         >
           Log out
         </button>
@@ -87,11 +88,22 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen flex-col">
       <header className="flex items-center gap-3 border-b-2 border-line px-4 py-2.5 sm:px-6">
         {onMenu ? (
-          <span className="font-extrabold text-brand">BrockCSC Admin</span>
+          <span className="flex items-center gap-2.5">
+            <span className="flex size-8 items-center justify-center rounded-[6px] border-2 border-line bg-brand shadow-brut-sm">
+              <Image
+                src="/logo-light.svg"
+                alt="BrockCSC"
+                width={22}
+                height={21}
+                className="object-contain"
+              />
+            </span>
+            <span className="font-extrabold text-ink">Admin</span>
+          </span>
         ) : (
           <Link
             href="/admin"
-            className="flex items-center gap-2 rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink transition hover:bg-tint"
+            className="flex items-center gap-2 rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
           >
             <span aria-hidden>←</span> Menu
           </Link>
@@ -114,14 +126,16 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           <ThemeToggle />
           <button
             onClick={handleLogout}
-            className="rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink transition hover:bg-tint"
+            className="rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
           >
             Log out
           </button>
         </div>
       </header>
 
-      <main className="min-h-0 flex-1">{children}</main>
+      <main className="min-h-0 flex-1 animate-fade-in" key={pathname}>
+        {children}
+      </main>
     </div>
   );
 }

@@ -17,7 +17,7 @@ const COMMANDS: [
 ];
 
 const BUTTON =
-  "min-w-8 rounded-[8px] border-2 border-line bg-surface px-2 py-0.5 text-sm font-bold transition hover:bg-tint active:translate-y-[1px]";
+  "min-w-8 rounded-[8px] border-2 border-line bg-surface px-2 py-0.5 text-sm font-bold hover:bg-tint";
 
 export function Editor({
   editorRef,
@@ -54,7 +54,7 @@ export function Editor({
   };
 
   return (
-    <div className="overflow-hidden rounded-[10px] border-2 border-line focus-within:border-brand">
+    <div className="overflow-hidden rounded-[10px] border-2 border-line transition-colors duration-[var(--dur-fast)] ease-smooth focus-within:border-brand">
       <div className="flex flex-wrap items-center gap-1.5 border-b-2 border-line bg-tint px-2 py-1.5">
         {COMMANDS.map(([command, label, title, style]) => (
           <button

@@ -130,7 +130,7 @@ export default function PersonView({
   ];
 
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex animate-fade-in flex-col gap-5">
       <div>
         <Button onClick={onBack} type="button" variant="link">
           ← All people

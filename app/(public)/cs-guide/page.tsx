@@ -121,7 +121,7 @@ const Guide: React.FC = () => {
 
             <div className="grid md:grid-cols-2 gap-8">
               {/* FULL CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
                 <div className="absolute -top-4 left-6 bg-surface border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   F
                 </div>
@@ -138,7 +138,7 @@ const Guide: React.FC = () => {
               </div>
 
               {/* HALF CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
                 <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   P/Q
                 </div>
@@ -156,7 +156,7 @@ const Guide: React.FC = () => {
               </div>
 
               {/* COOP CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
                 <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   C
                 </div>
@@ -171,7 +171,7 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               {/* COOP CREDIT */}
-              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--line)]">
+              <div className="relative bg-surface border-2 border-line rounded-2xl p-6 sm:p-8 shadow-[4px_4px_0_var(--shade)]">
                 <div className="absolute -top-4 left-6 bg-brand text-brand-ink border-2 border-line px-3 py-1 rounded-full shadow-brut-sm font-semibold">
                   N
                 </div>
