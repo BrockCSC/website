@@ -130,7 +130,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               </span>
             )}
             <SearchButton />
-            <ThemeToggle />
+            <ThemeToggle className="size-9" />
             <button
               onClick={handleLogout}
               className="rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
