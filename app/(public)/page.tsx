@@ -10,7 +10,7 @@ import { Reveal } from "@/components/reveal";
 
 export default function Home() {
   return (
-    <main className="flex flex-col w-full font-sans bg-surface overflow-x-hidden">
+    <main className="flex flex-col w-full font-sans bg-surface overflow-x-clip">
       <section className="relative w-full border-b-2 border-line">
         <div className="animate-rise-in max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col items-start gap-6 z-10">
