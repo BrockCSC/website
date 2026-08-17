@@ -1,4 +1,5 @@
 import React from "react";
+import type { Metadata } from "next";
 import type { VariantProps } from "class-variance-authority";
 import { Table, type TableData } from "@/components/ui/table";
 import { Badge, badgeVariants } from "@/components/ui/badge";
@@ -6,6 +7,12 @@ import Sidebar from "@/components/ui/sidebar";
 import durations from "@/data/courseDurations.json";
 import requirements from "@/data/programRequirements.json";
 import courses from "@/data/courses.json";
+
+export const metadata: Metadata = {
+  title: "CS Guide",
+  description:
+    "An open-source guide to course registration, program requirements, resources and opportunities for Computer Science students at Brock University.",
+};
 
 const Guide: React.FC = () => {
   return (
