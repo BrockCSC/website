@@ -4,7 +4,7 @@ Everything technical lives here. The [README](README.md) is user-facing only.
 
 ## Prerequisites
 
-- **Node 22.9+** — the dev scripts use `node --env-file-if-exists`
+- **Node 24+** — the dev scripts use `node --env-file-if-exists`
 - **Docker** — for the local Postgres only
 - A Keycloak account in the `brockcsc` realm, if you need the admin portal
 
