@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, UserRound } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { ExecRecord, WithKey } from "@/lib/api";
@@ -177,9 +177,13 @@ export function TeamMemberCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <div className="flex size-16 items-center justify-center rounded-full border-2 border-brand/35 bg-surface/80">
-              <UserRound className="size-8 text-brand" strokeWidth={2.25} />
-            </div>
+            <Image
+              alt=""
+              className="size-16 rounded-full border-2 border-brand/35 opacity-90"
+              height={64}
+              src="/email-logo.png"
+              width={64}
+            />
           </div>
         )}
       </div>

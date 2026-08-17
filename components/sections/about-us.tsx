@@ -72,7 +72,7 @@ export function AboutUsSection() {
             {execs.map((exec, index) => (
               <div
                 key={exec.$key}
-                className="animate-fade-in relative group flex justify-center"
+                className="animate-fade-in relative z-0 hover:z-30 group flex justify-center"
                 style={{ animationDelay: `${Math.min(index, 5) * 20}ms` }}
               >
                 <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full border-[3px] border-line bg-raised flex items-center justify-center overflow-hidden shadow-[3px_3px_0_0_var(--brand)] transition-transform duration-[var(--dur)] ease-smooth group-hover:-translate-y-1 motion-reduce:group-hover:translate-y-0">

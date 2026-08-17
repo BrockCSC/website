@@ -15,9 +15,10 @@ export type Signer = { name: string; title?: string; photo?: string };
 /** Shared mailboxes speak for the club, not a person. */
 const GENERIC: Signer = { name: "BrockCSC" };
 
-export const signerFor = async (localPart: string): Promise<Signer> => {
+export const signerFor = async (account: string): Promise<Signer> => {
+  const localPart = account.split("@")[0].toLowerCase();
   const signup = (await findAll<SignupRecord>(signupsTable)).find(
-    (record) => record.username === localPart,
+    (record) => record.username?.toLowerCase() === localPart,
   );
   if (!signup) return GENERIC;
 

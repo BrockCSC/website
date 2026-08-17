@@ -89,15 +89,13 @@ function AdminShell({ children }: { children: React.ReactNode }) {
       <header className="flex items-center gap-3 border-b-2 border-line px-4 py-2.5 sm:px-6">
         {onMenu ? (
           <span className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-[6px] border-2 border-line bg-brand shadow-brut-sm">
-              <Image
-                src="/logo-light.svg"
-                alt="BrockCSC"
-                width={22}
-                height={21}
-                className="object-contain"
-              />
-            </span>
+            <Image
+              src="/email-logo.png"
+              alt="BrockCSC"
+              width={32}
+              height={32}
+              className="size-8 rounded-[8px] border-2 border-line"
+            />
             <span className="font-extrabold text-ink">Admin</span>
           </span>
         ) : (
