@@ -15,8 +15,6 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   const { user, loading, refresh } = useSession();
   const [mailAddress, setMailAddress] = useState<string | null>(null);
 
-  // Well inside Keycloak's 30 minute idle window, and again on returning to the
-  // tab, which is what a closed laptop looks like from here.
   useEffect(() => {
     if (!user?.isExecutive) return;
     const beat = () => {
@@ -64,7 +62,6 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     return <LoginForm onSuccess={() => void refresh()} />;
   }
 
-  // Signed in, but every route behind here would refuse them.
   if (!user.isMember) {
     return (
       <div className="py-32 text-center">

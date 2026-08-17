@@ -26,10 +26,8 @@ type TableProps = React.HTMLAttributes<HTMLTableElement> & {
   containerClassName?: string;
   containerStyle?: React.CSSProperties;
 
-  // Optional JSON mode: render from data instead of children.
   data?: TableData;
 
-  // "stack" renders cards on mobile instead of a scrolling table.
   mobileVariant?: "scroll" | "stack";
 };
 

@@ -1,6 +1,3 @@
-/** Stalwart provisioning over JMAP. Object shapes verified against 0.16.17;
- * re-check after a major upgrade. */
-
 const CAPABILITIES = ["urn:ietf:params:jmap:core", "urn:stalwart:jmap"];
 
 const config = () => {
@@ -61,7 +58,6 @@ export const domainId = async (name: string): Promise<string> => {
   return match.id;
 };
 
-/** Retired accounts keep their name, so a namesake never inherits their mail. */
 export const localPartTaken = async (localPart: string): Promise<boolean> =>
   (await accounts()).some((a) => a.name === localPart);
 
@@ -107,8 +103,6 @@ export const createMailbox = async (mailbox: {
   return created.id;
 };
 
-/** Membership is held on the member, not the group, so this diffs every account
- * against the wanted set and patches only the ones that changed. */
 export const setGroupMembers = async (
   group: string,
   localParts: string[],
@@ -134,7 +128,6 @@ export const setGroupMembers = async (
   await jmap([["x:Account/set", { update }, "c0"]]);
 };
 
-/** The inverse of makeReadOnly: clears the block so sending is inherited again. */
 export const clearReadOnly = async (localPart: string): Promise<void> => {
   const account = (await accounts()).find((a) => a.name === localPart);
   if (!account) return;
@@ -161,7 +154,6 @@ export const clearReadOnly = async (localPart: string): Promise<void> => {
   ]);
 };
 
-/** disabledPermissions wins over anything inherited from roles or groups. */
 export const makeReadOnly = async (localPart: string): Promise<void> => {
   const account = (await accounts()).find((a) => a.name === localPart);
   if (!account) return;

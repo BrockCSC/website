@@ -2,7 +2,6 @@ import { Navbar } from "@/components/ui/navbar";
 import { SkipLink } from "@/components/ui/skip-link";
 import Footer from "@/components/ui/footer";
 
-/** Shared shell for the 404 and error boundaries, so both look like the site. */
 export function MessagePage({
   eyebrow,
   title,

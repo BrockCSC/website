@@ -25,7 +25,6 @@ export function UpcomingEventsSection() {
         const futureEvents = await fetchFutureEvents();
         if (!active) return;
 
-        // Sorted ascending by start time and takes the first two for now( could change this to display more but I think 2 is enough)
         const sorted = futureEvents.sort((a, b) => {
           return (
             (getEventStartTimestamp(a) || 0) - (getEventStartTimestamp(b) || 0)

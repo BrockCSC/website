@@ -4,11 +4,6 @@ import { useMemo, useState } from "react";
 
 type Group<T> = { items: T[] };
 
-/**
- * Reveals whole groups at a time, never splitting one across a click, and keeps
- * going until at least `step` more items are shown. Stopping mid-term would read
- * as broken rather than paginated.
- */
 export const useRevealedGroups = <T, G extends Group<T>>(
   groups: G[],
   step = 10,

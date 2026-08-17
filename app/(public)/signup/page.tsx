@@ -31,7 +31,6 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BROCK_EMAIL_PATTERN = /@(?:[a-z0-9-]+\.)*brocku\.ca$/i;
 const STUDENT_ID_PATTERN = /^\d{6,10}$/;
 
-/** Mirrors the server's checks, so nothing is discovered only after a round trip. */
 const problems = (form: Form): Errors => {
   const found: Errors = {};
   const email = form.email.trim();
@@ -72,8 +71,6 @@ const remember = (result: Submitted | null) => {
   }
 };
 
-/** Read through useSyncExternalStore, so a refresh keeps the code the server
- * will never show again without breaking hydration. */
 const noSubscribe = () => () => {};
 
 const readStore = (): string | null => {
@@ -142,7 +139,6 @@ export default function SignupPage() {
   const [errors, setErrors] = useState<Errors>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  // Wrapped so clearing a restored result still re-renders.
   const [override, setOverride] = useState<{ value: Submitted | null } | null>(
     null,
   );

@@ -18,8 +18,6 @@ const addresses = (value: unknown): string[] | null =>
 
 const bad = (error: string) => NextResponse.json({ error }, { status: 400 });
 
-/** Blob ids come back from this app's own upload route, so only their shape is
- * checked here; Stalwart rejects any the account cannot read. */
 const attachments = (value: unknown): Attachment[] | null => {
   if (value === undefined) return [];
   if (!Array.isArray(value) || value.length > MAX_ATTACHMENTS) return null;
@@ -35,7 +33,6 @@ export const POST = async (req: NextRequest) => {
   const token = await mailToken(req);
   if (!token) return unauthorized();
 
-  // from is deliberately ignored: the sender comes from the session identity.
   const body = (await req.json().catch(() => null)) as {
     to?: unknown;
     cc?: unknown;

@@ -10,10 +10,6 @@ export const parsePosition = (position?: string) => {
   return { x: Number.isFinite(x) ? x : 50, y: Number.isFinite(y) ? y : 50 };
 };
 
-/**
- * Cards crop with object-cover, which cuts heads off centred portraits.
- * Click or drag to pick the point that stays in frame.
- */
 export function ImageFocus({
   url,
   position,
@@ -53,7 +49,6 @@ export function ImageFocus({
           }}
           onPointerDown={(e) => {
             dragging.current = true;
-            // Capture so the drag keeps tracking outside the thumbnail.
             e.currentTarget.setPointerCapture(e.pointerId);
             pick(e.clientX, e.clientY);
           }}

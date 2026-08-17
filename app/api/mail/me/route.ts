@@ -6,8 +6,6 @@ export const GET = async (req: NextRequest) => {
   const token = await mailToken(req);
   if (!token) return unauthorized();
 
-  // A null email means "this account has no mailbox" and hides Mail, so a
-  // server that simply could not be reached must not answer with one.
   try {
     return NextResponse.json({ email: await sendingAddress(token) });
   } catch {

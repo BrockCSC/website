@@ -113,7 +113,6 @@ const haystack = (person: Person) =>
     .join(" ")
     .toLowerCase();
 
-/** Every word has to appear somewhere, so "sam co-pres" narrows as you type. */
 export const searchPeople = (people: Person[], query: string): Person[] => {
   const words = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (!words.length) return people;

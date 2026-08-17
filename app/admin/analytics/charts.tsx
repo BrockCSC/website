@@ -3,7 +3,6 @@ import type { DayCount } from "@/lib/api";
 const PLOT_W = 600;
 const PLOT_H = 160;
 
-/** Brand at these opacities is a validated light-to-dark ramp in both themes. */
 const SEGMENT_OPACITY = [1, 0.68, 0.45];
 
 export const formatDay = (day: string) =>

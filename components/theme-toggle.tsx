@@ -1,11 +1,5 @@
 "use client";
 
-/**
- * The button shows the opposite of the current theme through CSS, so nothing
- * about the theme lives in React state and there is no hydration mismatch to
- * paper over. The class itself is set before paint by the script in the root
- * layout.
- */
 const flip = () => {
   const dark = document.documentElement.classList.toggle("dark");
   try {

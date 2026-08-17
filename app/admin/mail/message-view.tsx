@@ -67,7 +67,6 @@ export function MessageView({
         if (!live) return;
         setMessage(detail);
         setBody(html);
-        // Reading a message is what marks it read, exactly as in any mail app.
         if (!detail.keywords?.$seen) {
           void fetch(`${path}/flags`, {
             method: "POST",
@@ -80,7 +79,6 @@ export function MessageView({
     return () => {
       live = false;
     };
-    // onRead is a fresh closure each render; the message id is the real input.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, dark]);
 
@@ -136,7 +134,6 @@ export function MessageView({
   );
 }
 
-/** Gmail-style conversation: one thread, one message open at a time. */
 export function Conversation({
   message,
   count,
@@ -149,7 +146,6 @@ export function Conversation({
   const [thread, setThread] = useState<MessageSummary[]>([]);
   const [open, setOpen] = useState(message.id);
 
-  // Keyed on the selected message by its parent, so state starts fresh here.
   useEffect(() => {
     if (count <= 1) return;
     let live = true;

@@ -38,7 +38,6 @@ export function Compose({
   const [error, setError] = useState<string | null>(null);
   const body = useRef<HTMLDivElement>(null);
 
-  /** Each file becomes a blob on the mail server first; sending only cites it. */
   const attach = async (list: FileList | null) => {
     for (const file of Array.from(list ?? [])) {
       setUploading((count) => count + 1);

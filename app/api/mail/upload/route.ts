@@ -4,7 +4,6 @@ import { mailToken, unauthorized } from "../auth";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
-/** Takes one file and hands back the blob id compose references when sending. */
 export const POST = async (req: NextRequest) => {
   const token = await mailToken(req);
   if (!token) return unauthorized();

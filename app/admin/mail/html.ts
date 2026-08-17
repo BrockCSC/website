@@ -8,13 +8,6 @@ const SAFE_URL = /^(?:https?:|mailto:|tel:|cid:|#)/i;
 const BLOCK =
   /^(ADDRESS|ARTICLE|DD|DIV|DL|DT|H[1-6]|HR|OL|P|PRE|SECTION|TABLE|TR|UL)$/;
 
-/**
- * Second pass over body markup the API already sanitised: it is about to be
- * inserted into the app document rather than the sandboxed iframe the endpoint
- * was written for, so the CSP that backed that sanitising no longer applies.
- * Run again once the browser has parsed it, so a tree that came back different
- * from the one that was checked is still scrubbed.
- */
 export const harden = (root: HTMLElement) => {
   root
     .querySelectorAll("script,style,link,meta,base,iframe,object,embed,form")
@@ -29,7 +22,6 @@ export const harden = (root: HTMLElement) => {
   });
 };
 
-/** Attribution line plus the original body, rendered, ready to seed the editor. */
 export const buildQuote = async (message: MessageSummary): Promise<string> => {
   const doc = document.implementation.createHTMLDocument("");
   const sender = message.from?.[0];

@@ -2,8 +2,6 @@
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
 
-// Each id must match an element id in the guide page; the scroll-spy observer
-// resolves these directly rather than scanning for sections.
 const navItems = [
   { name: "Introduction", id: "introduction", indent: false },
   { name: "Course Registration", id: "registration", indent: false },
@@ -34,8 +32,6 @@ export default function Sidebar() {
       .map((item) => document.getElementById(item.id))
       .filter((el) => el !== null);
 
-    // Tracks every target currently crossing the viewport midline, keyed by id.
-    // The observer callback only reports entries that changed, so the full set
     // has to be accumulated here.
     const crossing = new Map<string, number>();
 
@@ -49,7 +45,6 @@ export default function Sidebar() {
           }
         }
 
-        // Lowest target wins, so an id nested inside another section takes
         // precedence over its parent.
         const current = [...crossing.entries()].sort((a, b) => b[1] - a[1])[0];
         if (current) {

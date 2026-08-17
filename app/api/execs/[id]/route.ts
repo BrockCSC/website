@@ -15,7 +15,6 @@ import { badJson, jsonObject } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 
-/** A hidden tile reads as absent to the public, same as the collection route. */
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -55,7 +54,6 @@ export const PATCH = async (
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Only an explicit demotion: an omitted flag leaves the tile alone, so it
   // must not retire the mailbox either.
   if (
     ownsIdentities() &&

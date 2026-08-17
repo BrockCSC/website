@@ -2,8 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { downloadBlob } from "@/lib/mail/jmap-mail";
 import { mailToken, unauthorized } from "../../auth";
 
-/** Anything a browser might execute in our origin is downgraded before it is
- * served back; every blob is a download, never an inline document. */
 const RISKY = /html|xml|svg|javascript|ecmascript/i;
 const TYPE = /^[\w.+-]+\/[\w.+-]+$/;
 
@@ -16,10 +14,6 @@ const safeName = (name: string) =>
     .trim()
     .slice(0, 200) || "attachment";
 
-/**
- * Proxies one JMAP blob. The user's Stalwart token stays server side; the
- * browser only ever sees this route.
- */
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ blobId: string }> },

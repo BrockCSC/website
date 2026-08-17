@@ -33,7 +33,6 @@ export type ExecRecord = {
     url?: string;
     name?: string;
     path?: string;
-    /** CSS object-position, e.g. "50% 25%". Keeps heads in frame when cropped. */
     position?: string;
   };
 };
@@ -65,14 +64,12 @@ export type SignupRecord = {
   /** Shown once at sign-up; the approver checks it out-of-band. */
   confirmationCode?: string;
   status?: SignupStatus;
-  /** Exec record this account is linked to once approved. Null once unlinked. */
   execKey?: string | null;
   submittedAt?: string;
   reviewedBy?: string;
   reviewedAt?: string;
 };
 
-/** One bucket per calendar day, `day` as YYYY-MM-DD in the club's timezone. */
 export type DayCount = { day: string; count: number };
 
 export type DashboardStats = {
@@ -82,7 +79,6 @@ export type DashboardStats = {
     topPaths: { path: string; views: number }[];
     /** 30 buckets, oldest first, zero-filled. */
     daily: DayCount[];
-    /** Null while nothing has ever been recorded, so a zero can be explained. */
     firstRecordedDay: string | null;
   };
   execs: {

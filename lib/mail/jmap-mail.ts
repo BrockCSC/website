@@ -1,7 +1,3 @@
-/** JMAP mail client (RFC 8620 core, RFC 8621 mail and submission). Every call acts
- * as the signed-in user via their Keycloak access token; Stalwart's OIDC
- * directory resolves it to that user's account and enforces isolation. */
-
 import { sanitizeOutboundHtml } from "./sanitize";
 import {
   htmlSignature,
@@ -108,7 +104,6 @@ type Session = {
   uploadUrl?: string;
 };
 
-/** The token alone decides the account; never take an accountId from a caller. */
 const mailSession = async (
   token: string,
 ): Promise<{ session: Session; accountId: string }> => {
@@ -177,7 +172,6 @@ export type MessagePage = {
 
 type Condition = Record<string, unknown>;
 
-/** One search term: `field:value`, `"a quoted phrase"`, or a bare word. */
 const TERM = /(?:(\w+):)?(?:"([^"]*)"|(\S+))/g;
 
 const FIELDS: Record<string, (value: string) => Condition | undefined> = {
@@ -201,7 +195,6 @@ const inFolder = (value: string, boxes: Mailbox[]) => {
   return box ? { inMailbox: box.id } : undefined;
 };
 
-/** Anything unrecognised stays free text, so a stray colon still finds mail. */
 const searchConditions = (search: string, boxes: Mailbox[]): Condition[] => {
   const conditions: Condition[] = [];
   const text: string[] = [];
@@ -220,7 +213,6 @@ const searchConditions = (search: string, boxes: Mailbox[]): Condition[] => {
   return conditions;
 };
 
-/** Search runs on the server, and spans every folder unless one is named. */
 /** Nobody searching their mail means "and also the bin". */
 const BURIED = ["trash", "junk"];
 
@@ -298,7 +290,6 @@ const queryMessages = async (
     { list: { id: string; emailIds: string[] }[] } | undefined,
   ];
 
-  // /get may answer in any order, so the query ids carry the sort.
   const byId = new Map(get.list.map((message) => [message.id, message]));
   return {
     messages: query.ids.flatMap((id) => byId.get(id) ?? []),
@@ -323,7 +314,6 @@ export const listMessages = async (
   const run = (threaded: boolean) =>
     queryMessages(token, accountId, opts, threaded, filter);
   if (!opts.threaded) return run(false);
-  // collapseThreads is optional in RFC 8621; fall back to a flat list.
   return run(true).catch(() => run(false));
 };
 
@@ -352,7 +342,6 @@ export const getThread = async (
   return get.list.sort((a, b) => a.receivedAt.localeCompare(b.receivedAt));
 };
 
-/** A false value clears the keyword; JMAP patches take null for "remove". */
 export const setKeywords = async (
   token: string,
   ids: string[],
@@ -426,11 +415,6 @@ export const getMessage = async (
   return message;
 };
 
-/**
- * Moves messages wholesale, replacing their mailboxes rather than adding one.
- * Stalwart ships no Archive folder, so it is created on first use; Trash always
- * exists. Nothing is erased here: every move is reversible from the folder.
- */
 export const moveMessages = async (
   token: string,
   ids: string[],
@@ -441,7 +425,6 @@ export const moveMessages = async (
     ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
   ])) as [{ list: { id: string; role: string | null }[] }];
 
-  // Only ids the account actually owns: a client may not name a stranger's box.
   let target = to.mailboxId
     ? boxes.list.find((box) => box.id === to.mailboxId)?.id
     : boxes.list.find((box) => box.role === to.role)?.id;
@@ -493,15 +476,9 @@ export const moveMessages = async (
 
 const BLOB_MAX_BYTES = 25 * 1024 * 1024;
 
-/**
- * Stalwart advertises its public origin, which this server must not call: that
- * hostname is routed for people, not for the app, and it does not serve JMAP.
- * Swapped textually so the {placeholders} survive, which a URL parser escapes.
- */
 const internalUrl = (advertised: string) =>
   config().url + advertised.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]+/i, "");
 
-/** Streams one blob straight from Stalwart; the caller's token never leaves here. */
 export const downloadBlob = async (
   token: string,
   blobId: string,
@@ -600,7 +577,6 @@ export const mailStats = async (
   return counts;
 };
 
-/** The address this account sends from, or null when it has no mailbox. */
 export const sendingAddress = async (token: string): Promise<string | null> => {
   const { session, accountId } = await mailSession(token);
   const [identities] = (await jmap(token, [
@@ -635,9 +611,6 @@ type Identity = {
 const ownName = (session: Session, accountId: string) =>
   session.accounts?.[accountId]?.name ?? session.username;
 
-/** Identities are Stalwart's own addresses for the account, aliases included,
- * so the sender can never be someone else's. Prefer the one the session names
- * as the account over an alias. */
 const senderIdentity = (
   session: Session,
   accountId: string,
@@ -651,13 +624,6 @@ const senderIdentity = (
   return match;
 };
 
-/**
- * Keeps the account's own Identity carrying the current signature. Stalwart
- * materialises Identity objects lazily from the account's addresses, so there
- * is nothing to write at provisioning time; reconciling here, as the user, also
- * picks up a later title change. Best effort: a signature must never block a
- * send.
- */
 const refreshSignature = async (
   token: string,
   accountId: string,
@@ -679,8 +645,6 @@ const refreshSignature = async (
   ]).catch(() => {});
 };
 
-/** Drafts and submits in one request; onSuccessUpdateEmail refiles into Sent
- * only once the send succeeds. */
 export const sendMessage = async (
   token: string,
   msg: OutgoingMessage,
@@ -702,7 +666,6 @@ export const sendMessage = async (
     { list: { id: string; role: string | null }[] },
   ];
 
-  // Names are localised; the role is the stable handle.
   const drafts = mailboxes.list.find((box) => box.role === "drafts");
   const sent = mailboxes.list.find((box) => box.role === "sent");
   if (!drafts || !sent) {

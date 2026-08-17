@@ -76,7 +76,6 @@ export default function ProfileForm({
         term,
         hidden,
         socials,
-        // The focus point is the exec's own setting; keep it across an edit.
         image: { url: photo, position: exec?.image?.position ?? "50% 50%" },
       };
       onSaved(

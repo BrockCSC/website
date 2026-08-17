@@ -54,7 +54,6 @@ const countViews = async (fromMs: number, toMs: number): Promise<number> => {
   return row?.total ?? 0;
 };
 
-/** The path column is recorded on every view; without this it is dead weight. */
 const topPaths = async (fromMs: number) => {
   const path = sql<string>`${pageViewsTable.data}->>'path'`;
   const rows = await db
@@ -77,7 +76,6 @@ const viewsByDay = async (fromMs: number): Promise<Map<string, number>> => {
   return new Map(rows.map((row) => [row.day, row.views]));
 };
 
-/** Distinguishes "nobody visited" from "nothing has ever been recorded". */
 const firstRecordedDay = async (): Promise<string | null> => {
   const [row] = await db
     .select({

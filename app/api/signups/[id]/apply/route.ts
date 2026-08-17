@@ -3,11 +3,6 @@ import { requireApprover } from "@/lib/auth/session";
 import { badJson, jsonObject } from "@/lib/json";
 import { applyConsequences, findPerson } from "../consequences";
 
-/**
- * Applies the consequences the approver actually ticked. The plan is rebuilt
- * server side, so an id that is stale or blocked comes back as skipped rather
- * than being run because it arrived in the list.
- */
 export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },

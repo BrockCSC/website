@@ -7,11 +7,6 @@ import {
 } from "@/lib/mail/sanitize";
 import { mailToken } from "../../../auth";
 
-/**
- * Serves one message body as a standalone document for a sandboxed iframe.
- * Sanitised here and served under a strict CSP, so hostile markup has to defeat
- * both to reach the reader.
- */
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -29,7 +24,6 @@ export const GET = async (
     ? sanitizeEmailHtml(raw ?? "")
     : emailBodyToText(raw ?? "");
 
-  // Sender markup assumes a light page, so only plain text follows the theme.
   const dark = !isHtml && new URL(req.url).searchParams.get("theme") === "dark";
   const palette = dark
     ? { fg: "#f4f1ee", bg: "#1a181b", link: "#d98079" }

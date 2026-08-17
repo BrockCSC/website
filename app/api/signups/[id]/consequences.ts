@@ -19,17 +19,11 @@ import { localPartTaken } from "@/lib/mail/stalwart";
 
 type Entity<T> = T & { id: string };
 
-/**
- * One vocabulary for every change that touches an identity. The detail view,
- * the single-click role and mailbox buttons and the lifecycle confirmation all
- * post the same ids, so a caller can always apply part of a bundle.
- */
 export type Consequence = {
   id: string;
   group: "role" | "mailbox" | "tile";
   title: string;
   detail: string;
-  /** Set when the change cannot be made; the reason is shown and never applied. */
   blocked?: string;
 };
 
@@ -65,15 +59,9 @@ const managedRoles = () => [
   },
 ];
 
-/**
- * Outside production these are rehearsed rather than refused: the plan, the
- * ticking and the ordering are all real, and only the write is withheld. The
- * shared realm and the one mail server are why the write cannot happen.
- */
 const rehearsed = (group: Consequence["group"]) =>
   !ownsIdentities() && group !== "tile";
 
-/** id is a sign-up id, or an exec id for a tile that has no account. */
 export const findPerson = async (id: string): Promise<Person | null> => {
   const signup = await findById<SignupRecord>(signupsTable, id);
   if (signup) {
@@ -98,7 +86,6 @@ const roleItems = (
 
   return managedRoles().map(({ name, label, grants, revokes }) => {
     const has = held.includes(name);
-    // Unknown counts as last: losing the only approver is not recoverable here.
     const last =
       has && name === CO_PRESIDENT
         ? coPresidents === null
@@ -184,19 +171,16 @@ const tileItems = (exec: Entity<ExecRecord> | null): Item[] => {
 export type PersonDetail = {
   signup: (SignupRecord & { $key: string }) | null;
   exec: (ExecRecord & { $key: string }) | null;
-  /** Null when Keycloak could not be read; the UI says so rather than guessing. */
   roles: string[] | null;
   managedRoles: string[];
   mailbox: {
     address: string | null;
     provisioned: boolean | null;
     protected: boolean;
-    /** Derived from the tile: past executives are made read-only when moved. */
     readOnly: boolean;
   };
   identitiesEditable: boolean;
   consequences: Consequence[];
-  /** The lifecycle move on offer, as an ordered slice of `consequences`. */
   transition: { to: "former" | "current"; label: string; ids: string[] } | null;
 };
 
@@ -307,14 +291,11 @@ export const describePerson = async (person: Person): Promise<PersonDetail> => {
 
 export type ApplyResult = {
   applied: string[];
-  /** Ticked and ordered as usual, but the write was withheld outside production. */
   rehearsed: string[];
-  /** Requested but no longer offered, or blocked. Never silently treated as done. */
   skipped: string[];
   failed: { id: string; error: string }[];
 };
 
-/** Applies only what was asked for, in catalogue order so roles settle before mail. */
 export const applyConsequences = async (
   person: Person,
   requested: string[],

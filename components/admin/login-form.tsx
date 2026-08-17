@@ -9,8 +9,6 @@ import { ApiError } from "@/lib/api/client";
 const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none";
 
-/** Never says whether the account exists: only a caller who already passed the
- * password check can reach 403, and everyone else gets the same sentence. */
 const reason = (err: unknown): string => {
   const status = err instanceof ApiError ? err.status : 0;
   if (status === 429) {

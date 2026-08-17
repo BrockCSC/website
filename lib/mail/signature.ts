@@ -1,9 +1,3 @@
-/**
- * Signature and disclaimer for club mail. `withFooter` only reaches mail sent
- * through this app's own JMAP client: Apple Mail and the Gmail app submit over
- * SMTP and bypass it. Covering those needs a Stalwart DATA-stage Sieve script,
- * which is not installed.
- */
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 import { findAll, findById } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
@@ -21,8 +15,6 @@ export type Signer = { name: string; title?: string; photo?: string };
 /** Shared mailboxes speak for the club, not a person. */
 const GENERIC: Signer = { name: "BrockCSC" };
 
-/** Read from the exec tile rather than copied at provisioning time, so a title
- * change follows through to the signature. */
 export const signerFor = async (localPart: string): Promise<Signer> => {
   const signup = (await findAll<SignupRecord>(signupsTable)).find(
     (record) => record.username === localPart,
@@ -51,9 +43,6 @@ const lines = ({ name, title }: Signer): string[] =>
 export const textSignature = (signer: Signer): string =>
   `${lines(signer).join("\n")}\nhttps://${SITE}\n\n${DISCLAIMER}`;
 
-/** Tables and inline styles, because Outlook renders neither flexbox nor a
- * stylesheet. The avatar is the sender's own photo where they have one, and the
- * club mark otherwise. */
 export const htmlSignature = (signer: Signer): string => {
   const site = SITE_URL();
   const avatar = signer.photo ?? `${site}/email-logo.png`;
@@ -82,8 +71,6 @@ export const htmlSignature = (signer: Signer): string => {
   );
 };
 
-/** Matched against the end of the body, not anywhere in it: a reply quoting an
- * earlier club message must still get its own signature. */
 export const withHtmlFooter = (html: string, signer: Signer): string =>
   `${html}<div style="margin-top:24px;border-top:1px solid #e5e7eb"></div>${htmlSignature(signer)}`;
 

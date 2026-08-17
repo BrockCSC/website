@@ -11,8 +11,6 @@ import {
 
 const domain = () => process.env.MAIL_DOMAIN ?? "brockcsc.ca";
 
-/** Service accounts. Defaulted rather than required so the guard survives a
- * missing env var, and checked here so no caller can route around it. */
 const protectedMailboxes = (): string[] =>
   (process.env.PROTECTED_MAIL_USERS ?? "alaqmargandhi")
     .split(",")
@@ -22,9 +20,6 @@ const protectedMailboxes = (): string[] =>
 export const isProtectedMailbox = (username: string): boolean =>
   protectedMailboxes().includes(username);
 
-/** admin@ has no mailbox of its own; it fans out to whoever currently holds
- * co-president, plus the protected owner accounts. Recomputed from Keycloak
- * rather than patched per change, so it cannot drift. */
 export const syncAdminGroup = async (): Promise<void> => {
   const holders = await usersWithRealmRole("co-president");
   await setGroupMembers(process.env.ADMIN_MAIL_GROUP ?? "admin", [
@@ -49,13 +44,10 @@ export const provisionMailbox = async (exec: {
       domain: domain(),
     });
   }
-  // Also the way back for a returning alumnus: the mailbox already exists, but
-  // it is still blocked from sending until that block is lifted.
   await clearReadOnly(exec.username);
   await createApprovedSender(`${exec.username}@${domain()}`);
 };
 
-/** Alumni keep a readable inbox but cannot send, and drop off the OCI quota. */
 export const makeMailboxReadOnly = async (username: string): Promise<void> => {
   if (isProtectedMailbox(username)) return;
   await makeReadOnly(username);

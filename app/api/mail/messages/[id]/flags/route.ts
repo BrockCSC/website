@@ -2,7 +2,6 @@ import { NextResponse, type NextRequest } from "next/server";
 import { setKeywords } from "@/lib/mail/jmap-mail";
 import { mailToken, unauthorized } from "../../../auth";
 
-/** Only these two keywords are settable; the rest are the server's business. */
 const KEYWORDS = { seen: "$seen", flagged: "$flagged" } as const;
 
 export const POST = async (

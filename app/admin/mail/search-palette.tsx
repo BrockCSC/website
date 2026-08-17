@@ -87,8 +87,6 @@ export function SearchPalette({
 
   const query = text.trim();
   const trailing = text.slice(text.lastIndexOf(" ") + 1).toLowerCase();
-  // Results the user can see always name the query they answered, which is
-  // both the in-flight indicator and the guard against a late response.
   const busy = query !== "" && result.query !== query;
 
   const retype = (next: string) => {
@@ -227,7 +225,6 @@ export function SearchPalette({
   }, [query, text, trailing, recents, result, contacts, mailboxes]);
 
   const rows = useMemo(() => groups.flatMap((group) => group.rows), [groups]);
-  // Clamped so a shrinking result set never points the highlight at nothing.
   const index = highlight < rows.length ? highlight : 0;
   const active = rows[index];
 

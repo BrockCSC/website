@@ -27,7 +27,6 @@ const badRequest = (error: string) =>
 const conflict = (error: string) =>
   NextResponse.json({ error }, { status: 409 });
 
-/** No vowels or look-alike characters, so it survives being read aloud. */
 const CONFIRMATION_ALPHABET = "23456789BCDFGHJKLMNPQRSTVWXZ";
 
 const confirmationCode = () =>
@@ -37,7 +36,6 @@ const confirmationCode = () =>
   ).join("");
 
 export const POST = async (req: NextRequest) => {
-  // Every accepted request creates a Keycloak account, so cap the burst.
   const flooding = rateLimit(req, "signup", 20, 60 * 60 * 1000);
   if (flooding) return flooding;
 
@@ -53,7 +51,6 @@ export const POST = async (req: NextRequest) => {
   const password = body.password ?? "";
 
   if (!isValidInviteCode(inviteCode)) {
-    // A wrong code is the only signal a guesser gets; make guesses expensive.
     return (
       rateLimit(req, "invite-code", 10, 60 * 60 * 1000) ??
       NextResponse.json(
@@ -74,7 +71,6 @@ export const POST = async (req: NextRequest) => {
   if (phone.length > MAX_PHONE) {
     return badRequest("That phone number is too long.");
   }
-  // Current execs verify with Brock credentials; alumni no longer have them.
   if (!isFormerExec) {
     if (!BROCK_EMAIL_PATTERN.test(email)) {
       return badRequest(
@@ -94,7 +90,6 @@ export const POST = async (req: NextRequest) => {
     return badRequest("Passwords do not match.");
   }
 
-  // A second request would strand a second account; say what to do instead.
   const existing = (await findAll<SignupRecord>(signupsTable)).find(
     (record) =>
       record.status !== "rejected" &&
@@ -152,7 +147,6 @@ export const POST = async (req: NextRequest) => {
       submittedAt: new Date().toISOString(),
     });
   } catch (err) {
-    // Don't orphan a Keycloak account we have no signup record for.
     await deleteUser(keycloakUserId);
     throw err;
   }
@@ -161,7 +155,6 @@ export const POST = async (req: NextRequest) => {
     {
       confirmationCode: confirmation,
       username,
-      // Alumni are approved without a mailbox, so promise one only to execs.
       mailbox: isFormerExec
         ? undefined
         : `${username}@${process.env.MAIL_DOMAIN ?? "brockcsc.ca"}`,

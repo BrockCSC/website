@@ -1,4 +1,3 @@
-/** Renders before the navbar; the target is the page's `#main-content`. */
 export function SkipLink() {
   return (
     <a

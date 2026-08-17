@@ -6,12 +6,6 @@ import {
 } from "@/lib/auth/mail-token";
 import { requireMember } from "@/lib/auth/session";
 
-/**
- * Keycloak drops a session that goes idle for longer than the dashboard cookie
- * lives, which used to strand mail behind a still-valid login. Exchanging the
- * refresh token resets that idle timer, so the client calls this on a timer and
- * whenever the tab is looked at again.
- */
 export const POST = async (req: NextRequest) => {
   if (!(await requireMember(req))) {
     return NextResponse.json({ error: "Not authorized" }, { status: 401 });

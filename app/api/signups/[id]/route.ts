@@ -26,7 +26,6 @@ import {
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 
-/** Everything the person detail view shows, including what changing them costs. */
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -105,7 +104,6 @@ export const PATCH = async (
       exec = (await findById<ExecRecord>(execsTable, execKey)) ?? undefined;
     }
 
-    // Alumni may edit their own tile and nothing else, whatever they once held.
     const isPastExec = exec?.isCurrentExec === false;
     const role = isPastExec
       ? (process.env.ALUMNI_ROLE ?? "alumni")

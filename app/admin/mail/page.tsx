@@ -21,7 +21,6 @@ type Page = {
   threadCounts: Record<string, number>;
 };
 
-/** Everyone on the message bar the reader and the sender: a reply-all's Cc. */
 const otherRecipients = (message: MessageSummary, self: string | null) =>
   (message.to ?? [])
     .map((address) => address.email)
@@ -54,7 +53,6 @@ export default function MailPage() {
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [palette, setPalette] = useState(false);
-  /** A hit from global search, so it can be read before its folder loads. */
   const [found, setFound] = useState<MessageSummary | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -144,7 +142,6 @@ export default function MailPage() {
   const message =
     messages.find((item) => item.id === selected) ??
     (found?.id === selected ? found : null);
-  // One pane at a time on a phone; all three side by side from md up.
   const open = Boolean(message);
 
   const mark = useCallback((id: string, flags: Flags) => {
@@ -278,8 +275,6 @@ export default function MailPage() {
   if (loading) {
     return <p className="p-6 text-sm text-subtle">Loading mail…</p>;
   }
-  // The dashboard cookie outlives the Keycloak session mail borrows tokens
-  // from, so mail alone can go stale while the rest of the admin still works.
   if (expired) {
     return (
       <div className="m-4 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut">

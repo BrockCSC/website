@@ -59,11 +59,6 @@
   --shadow-brut-sm: var(--brut-sm);
 }
 
-/**
- * Semantic tokens for the club's look: a hard border, a flat offset shadow and
- * one accent. Use these rather than literal colours, so dark mode is a matter
- * of swapping values here instead of auditing every component again.
- */
 :root {
   --surface: #ffffff;
   --raised: #fafafa;
@@ -73,24 +68,25 @@
   --brand: #9a4440;
   --brand-ink: #ffffff;
   --tint: #fff1f0;
-  --brut: 6px 6px 0 0 var(--line);
-  --brut-sm: 3px 3px 0 0 var(--line);
-  /* Deliberately dark in both themes: the footer is a band, not a surface, and
-     inverting it would put a near-white slab under every page. */
+  --shade: var(--line);
+  --brut: 6px 6px 0 0 var(--shade);
+  --brut-sm: 3px 3px 0 0 var(--shade);
   --slab: #101012;
   --slab-ink: #f4f1ee;
   --slab-brand: #d98079;
 }
 
 .dark {
-  --surface: #1a181b;
-  --raised: #232025;
-  --ink: #f4f1ee;
-  --subtle: #a1a1aa;
-  --line: #f4f1ee;
-  --brand: #d98079;
-  --brand-ink: #1a181b;
-  --tint: #33262a;
+  --surface: #1b181d;
+  --raised: #241f26;
+  --ink: #ece6e3;
+  --subtle: #a09aa3;
+  --line: #4a424e;
+  --brand: #e08a82;
+  --brand-ink: #17141a;
+  --tint: #2a1e22;
+  --shade: #0a090b;
+  --slab: #0a090b;
 }
 
 :root {
@@ -129,37 +125,37 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: #9a4440;
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: #131114;
+  --foreground: #ece6e3;
+  --card: #1b181d;
+  --card-foreground: #ece6e3;
+  --popover: #1b181d;
+  --popover-foreground: #ece6e3;
+  --primary: #e08a82;
+  --primary-foreground: #17141a;
+  --secondary: #241f26;
+  --secondary-foreground: #ece6e3;
+  --muted: #241f26;
+  --muted-foreground: #a09aa3;
+  --accent: #241f26;
+  --accent-foreground: #ece6e3;
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
+  --border: #4a424e;
+  --input: #4a424e;
+  --ring: #e08a82;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: #9a4440;
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --sidebar: #1b181d;
+  --sidebar-foreground: #ece6e3;
+  --sidebar-primary: #e08a82;
+  --sidebar-primary-foreground: #17141a;
+  --sidebar-accent: #241f26;
+  --sidebar-accent-foreground: #ece6e3;
+  --sidebar-border: #4a424e;
+  --sidebar-ring: #e08a82;
 }
 
 @layer base {
@@ -174,8 +170,6 @@
   [role="button"]:not(:disabled) {
     cursor: pointer;
   }
-  /* One keyboard focus indicator for the whole site. The `*` rule above only
-     sets a colour, which leaves links with the browser's own faint ring. */
   :where(
     a,
     button,

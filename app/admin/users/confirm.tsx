@@ -4,13 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Consequence } from "./api";
 
-/** `fixed` items happen whatever else is chosen, so they are shown but locked. */
 export type ConfirmItem = Omit<Consequence, "group"> & { fixed?: boolean };
 
-/**
- * Spells out every effect of a change and lets the approver drop any of them
- * before it happens. Whatever stays ticked is exactly what gets applied.
- */
 export default function Confirm({
   title,
   intro,
