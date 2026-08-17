@@ -5,7 +5,7 @@ import { useRef } from "react";
 
 const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n)));
 
-export const parsePosition = (position?: string) => {
+const parsePosition = (position?: string) => {
   const [x, y] = (position ?? "50% 50%").split(" ").map((p) => parseFloat(p));
   return { x: Number.isFinite(x) ? x : 50, y: Number.isFinite(y) ? y : 50 };
 };

@@ -22,7 +22,5 @@ export type {
   EventRecord,
   ExecRecord,
   SessionUser,
-  SignupInput,
-  SignupRecord,
   WithKey,
 } from "./types";

@@ -11,14 +11,14 @@ const base = (className?: string) => ({
   className,
 });
 
-export const MailIcon = ({ className }: IconProps) => (
+const MailIcon = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
     <path d="m3.5 7 7.4 5.4a2 2 0 0 0 2.2 0L20.5 7" />
   </svg>
 );
 
-export const ChartIcon = ({ className }: IconProps) => (
+const ChartIcon = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <path d="M4 20V4" />
     <path d="M4 20h16" />
@@ -28,7 +28,7 @@ export const ChartIcon = ({ className }: IconProps) => (
   </svg>
 );
 
-export const CalendarIcon = ({ className }: IconProps) => (
+const CalendarIcon = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <rect x="3" y="5" width="18" height="16" rx="2.5" />
     <path d="M3 10h18M8 3v4M16 3v4" />
@@ -36,7 +36,7 @@ export const CalendarIcon = ({ className }: IconProps) => (
   </svg>
 );
 
-export const PeopleIcon = ({ className }: IconProps) => (
+const PeopleIcon = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <circle cx="9" cy="8" r="3.5" />
     <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
@@ -45,7 +45,7 @@ export const PeopleIcon = ({ className }: IconProps) => (
   </svg>
 );
 
-export const BadgeIcon = ({ className }: IconProps) => (
+const BadgeIcon = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <rect x="4" y="3" width="16" height="18" rx="2.5" />
     <circle cx="12" cy="10" r="2.5" />
