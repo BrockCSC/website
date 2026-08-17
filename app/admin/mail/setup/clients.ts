@@ -4,7 +4,7 @@ export type ClientGuide = {
   steps: string[];
 };
 
-export const MAIL_HOST = "mail.brockcsc.ca";
+const MAIL_HOST = "mail.brockcsc.ca";
 
 export const SERVER_SETTINGS = [
   { label: "Incoming (IMAP)", value: `${MAIL_HOST}, port 993, SSL/TLS` },
