@@ -167,7 +167,7 @@ export default function AnalyticsPage() {
               }
               detail={
                 mailStats
-                  ? `${plural(mailStats.sent, "sent")}, ${plural(mailStats.received, "received")}`
+                  ? `${mailStats.sent} sent, ${mailStats.received} received`
                   : mail === "unavailable"
                     ? "Mail stats unavailable"
                     : "Loading"
