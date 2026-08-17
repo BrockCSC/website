@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef, useState } from "react";
+import { toUploadableImage } from "@/lib/image-file";
 import { Button } from "./button";
 
 export function ImageUpload({
@@ -22,7 +23,7 @@ export function ImageUpload({
     setError(null);
     try {
       const body = new FormData();
-      body.append("file", file);
+      body.append("file", await toUploadableImage(file));
       const res = await fetch("/api/uploads", { method: "POST", body });
       const data = (await res.json().catch(() => ({}))) as {
         url?: string;
@@ -62,7 +63,7 @@ export function ImageUpload({
 
         <div className="flex flex-col gap-2">
           <input
-            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
+            accept="image/*,.heic,.heif"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -94,7 +95,7 @@ export function ImageUpload({
             )}
           </div>
           <span className="text-xs text-subtle">
-            JPEG, PNG, WebP, GIF or AVIF. Max 5MB.
+            Any photo. Large ones are resized before uploading.
           </span>
         </div>
       </div>
