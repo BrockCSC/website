@@ -3,6 +3,7 @@ export type Section = {
   href: string;
   blurb: string;
   approverOnly?: boolean;
+  execOnly?: boolean;
   mailboxOnly?: boolean;
 };
 
@@ -22,6 +23,7 @@ export const SECTIONS: Section[] = [
     name: "Events",
     href: "/admin/events",
     blurb: "Publish and edit what the club is running.",
+    execOnly: true,
   },
   {
     name: "Users",

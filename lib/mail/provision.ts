@@ -6,6 +6,7 @@ import {
   createMailbox,
   localPartTaken,
   makeReadOnly,
+  setExpungeAllowed,
   setGroupMembers,
 } from "./stalwart";
 
@@ -20,14 +21,26 @@ const protectedMailboxes = (): string[] =>
 export const isProtectedMailbox = (username: string): boolean =>
   protectedMailboxes().includes(username);
 
-export const syncAdminGroup = async (): Promise<void> => {
+const approvers = async (): Promise<string[]> => {
   const holders = await usersWithRealmRole("co-president");
-  await setGroupMembers(process.env.ADMIN_MAIL_GROUP ?? "admin", [
+  return [
     ...new Set([
       ...holders.map((holder) => holder.username),
       ...protectedMailboxes(),
     ]),
-  ]);
+  ];
+};
+
+export const syncAdminGroup = async (): Promise<void> => {
+  await setGroupMembers(
+    process.env.ADMIN_MAIL_GROUP ?? "admin",
+    await approvers(),
+  );
+};
+
+/** Keeps permanent deletion over IMAP to the people who may approve it. */
+export const syncExpungeRights = async (): Promise<void> => {
+  await setExpungeAllowed(await approvers());
 };
 
 /** Idempotent, so a failed approval can be retried. */
@@ -45,6 +58,7 @@ export const provisionMailbox = async (exec: {
     });
   }
   await clearReadOnly(exec.username);
+  await syncExpungeRights();
   await createApprovedSender(`${exec.username}@${domain()}`);
 };
 

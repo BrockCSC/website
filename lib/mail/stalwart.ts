@@ -41,8 +41,12 @@ type Account = {
   id: string;
   name: string;
   emailAddress: string;
+  "@type"?: string;
   memberGroupIds?: Record<string, boolean>;
+  permissions?: { disabledPermissions?: Record<string, boolean> };
 };
+
+const EXPUNGE = "imapExpunge";
 
 const accounts = async (): Promise<Account[]> => {
   const [res] = await jmap<{ list: Account[] }>([["x:Account/get", {}, "c0"]]);
@@ -122,6 +126,30 @@ export const setGroupMembers = async (
         [`memberGroupIds/${target.id}`]: shouldBe ? true : null,
       };
     }
+  }
+  if (Object.keys(update).length === 0) return;
+
+  await jmap([["x:Account/set", { update }, "c0"]]);
+};
+
+export const setExpungeAllowed = async (
+  localParts: string[],
+): Promise<void> => {
+  const allowed = new Set(localParts);
+  const update: Record<string, Record<string, unknown>> = {};
+  for (const account of await accounts()) {
+    if (account["@type"] !== "User") continue;
+    const disable = !allowed.has(account.name);
+    const disabled =
+      account.permissions?.disabledPermissions?.[EXPUNGE] === true;
+    if (disabled === disable) continue;
+    update[account.id] = {
+      permissions: {
+        "@type": "Merge",
+        enabledPermissions: {},
+        disabledPermissions: { [EXPUNGE]: disable || null },
+      },
+    };
   }
   if (Object.keys(update).length === 0) return;
 

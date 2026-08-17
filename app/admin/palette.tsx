@@ -209,10 +209,11 @@ export function PaletteProvider({
       ...SECTIONS.filter(
         (section) =>
           (!section.approverOnly || user?.isApprover) &&
+          (!section.execOnly || user?.isExecutive) &&
           (!section.mailboxOnly || hasMail),
       ),
     ],
-    [user?.isApprover, hasMail],
+    [user?.isApprover, user?.isExecutive, hasMail],
   );
 
   const actions = useMemo<Action[]>(
@@ -227,12 +228,16 @@ export function PaletteProvider({
             },
           ]
         : []),
-      {
-        id: "new-event",
-        label: "New event",
-        hint: "publish something to the site",
-        run: () => send("/admin/events", { newEvent: true }),
-      },
+      ...(user?.isExecutive
+        ? [
+            {
+              id: "new-event",
+              label: "New event",
+              hint: "publish something to the site",
+              run: () => send("/admin/events", { newEvent: true }),
+            },
+          ]
+        : []),
       ...(user?.isApprover
         ? [
             {
@@ -252,7 +257,7 @@ export function PaletteProvider({
       { id: "theme", label: "Toggle dark mode", run: flipTheme },
       { id: "logout", label: "Log out", run: onLogout },
     ],
-    [hasMail, user?.isApprover, send, onLogout],
+    [hasMail, user?.isApprover, user?.isExecutive, send, onLogout],
   );
 
   const value = useMemo(

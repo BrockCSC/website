@@ -16,6 +16,7 @@ import {
   makeMailboxReadOnly,
   provisionMailbox,
   syncAdminGroup,
+  syncExpungeRights,
 } from "@/lib/mail/provision";
 import {
   create,
@@ -147,12 +148,15 @@ export const PATCH = async (
     }
 
     try {
-      if (ownsIdentities()) await syncAdminGroup();
+      if (ownsIdentities()) {
+        await syncAdminGroup();
+        await syncExpungeRights();
+      }
     } catch {
       return NextResponse.json(
         {
           error:
-            "The account is approved but admin@ could not be updated. Approve again to retry.",
+            "The account is approved but admin@ and mail permissions could not be updated. Approve again to retry.",
         },
         { status: 422 },
       );

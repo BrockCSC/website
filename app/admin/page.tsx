@@ -23,6 +23,7 @@ export default function AdminMenu() {
   const open = SECTIONS.filter(
     (section) =>
       (!section.approverOnly || user?.isApprover) &&
+      (!section.execOnly || user?.isExecutive) &&
       (!section.mailboxOnly || hasMailbox),
   );
 
