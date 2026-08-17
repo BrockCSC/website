@@ -1,18 +1,6 @@
 # Contributing
 
-Everything technical lives here. The [README](README.md) is deliberately user-facing only.
-
-- [Prerequisites](#prerequisites)
-- [Running locally](#running-locally)
-- [Getting into the admin portal](#getting-into-the-admin-portal)
-- [Architecture](#architecture)
-- [Environment variables](#environment-variables)
-- [Database and migrations](#database-and-migrations)
-- [Mail](#mail)
-- [Deploys](#deploys)
-- [Adding an environment variable](#adding-an-environment-variable)
-- [Conventions and checks](#conventions-and-checks)
-- [Opening a pull request](#opening-a-pull-request)
+Everything technical lives here. The [README](README.md) is user-facing only.
 
 ## Prerequisites
 
@@ -30,9 +18,8 @@ cp .env.local.example .env.local    # then fill in KEYCLOAK_CLIENT_SECRET
 npm run dev                         # migrates first, then http://localhost:3000
 ```
 
-Production Postgres lives on the VPS and is not reachable from your machine, so local dev runs its
-own throwaway Postgres in Docker. Keycloak is public, so you log in against the real realm — there
-is no local Keycloak.
+Prod Postgres is not reachable from your machine, so local dev runs a throwaway Postgres in Docker.
+Keycloak is public, so you log in against the real realm — there is no local Keycloak.
 
 | Script                            | What it does                                                   |
 | --------------------------------- | -------------------------------------------------------------- |
@@ -46,16 +33,13 @@ is no local Keycloak.
 | `npm run db:migrate`              | Applies migrations to `DB_SCHEMA`                              |
 | `npm run db:up` / `db:down`       | Starts / stops `deploy/docker-compose.dev.yml`                 |
 
-`scripts/migrate.mjs` exits with a message rather than starting against a broken database if
-`DATABASE_URL` is missing, creates `DB_SCHEMA` if it does not exist, and rejects any schema name
-that is not `^[a-z0-9_]+$`.
+`scripts/migrate.mjs` refuses to start without `DATABASE_URL`, creates `DB_SCHEMA` if missing, and
+rejects schema names that are not `^[a-z0-9_]+$`.
 
-A fresh local schema is **empty** — no events, no execs. `scripts/sync-from-prod.mjs` only does
-anything when a `prod` schema exists in the same database, which is never true locally, so populate
-local data by hand through the admin portal.
-
-Local dev writes to the `local` schema, entirely separate from `prod`, `uat` and previews.
-`npm run db:down` stops the container; data lives in a named Docker volume and survives restarts.
+Local dev uses the `local` schema, separate from `prod`, `uat` and previews. A fresh one is
+**empty**, and `scripts/sync-from-prod.mjs` no-ops without a `prod` schema in the same database, so
+add events and execs by hand through the portal. `npm run db:down` stops the container; a named
+Docker volume keeps the data.
 
 > **Use Chrome or Firefox locally.** `sessionCookieOptions` sets `secure: true` unconditionally.
 > Chrome and Firefox will set a `Secure` cookie on `http://localhost`; Safari will not, so the
@@ -64,14 +48,12 @@ Local dev writes to the `local` schema, entirely separate from `prod`, `uat` and
 ## Getting into the admin portal
 
 Auth is a direct password grant against the shared Keycloak `brockcsc` realm (`KEYCLOAK_ISSUER`).
-You need two things, and they are separate asks:
+Two separate asks:
 
-1. **`KEYCLOAK_CLIENT_SECRET`** for the `brockcsc-web` client. Get it from a club admin or the
-   Komodo stack config. It never goes in a committed file — `.env.local` is gitignored, keep it
-   that way.
-2. **A realm role on your user.** Without one, `POST /api/auth/login` returns 403 and you never get
-   a session cookie at all — it is not a case of logging in and then being bounced. This catches
-   people out.
+1. **`KEYCLOAK_CLIENT_SECRET`** for the `brockcsc-web` client, from a club admin or the Komodo stack
+   config. Never commit it — `.env.local` is gitignored, keep it that way.
+2. **A realm role on your user.** Without one, `POST /api/auth/login` returns 403 and you get no
+   session cookie at all. This catches people out.
 
 | To test                                  | You need                                                          |
 | ---------------------------------------- | ----------------------------------------------------------------- |
@@ -81,97 +63,91 @@ You need two things, and they are separate asks:
 | Sign-up creating accounts                | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` for `brockcsc-provisioner` |
 | Everything, permanently                  | `owner` (see below)                                               |
 
-The `owner` realm role (`SUPERUSER_ROLE`) satisfies every role check, including gates added after it
-was introduced — the check lives in `requireRole` in `lib/auth/session.ts`, so new gates inherit it
-for free. It is a realm role rather than a hardcoded username so it can be revoked from Keycloak
-like any other. Grant it sparingly.
+`owner` (`SUPERUSER_ROLE`) passes every role check, including gates added later, because the check
+lives in `requireRole` in `lib/auth/session.ts`. It is a realm role, so Keycloak can revoke it like
+any other. Grant it sparingly.
 
-Roles are read from Keycloak **on each request** with a 15-second cache, not from the session
-cookie, so grants and revokes take effect immediately. If Keycloak is unreachable, admin requests
-are denied rather than falling back to stale roles. `GET /api/auth/roles-stream` is an SSE channel
-(`lib/auth/role-events.ts`) that pushes a payload-free `roles` event so an open portal tab re-reads
-`/api/auth/me` without a reload; a user who loses every role mid-session sees the portal swap to
-"Your access has been removed."
+Roles come from Keycloak **on each request** (15-second cache), not from the session cookie, so
+grants and revokes apply at once. If Keycloak is unreachable, admin requests are denied rather than
+falling back to stale roles. The SSE channel `GET /api/auth/roles-stream` (`lib/auth/role-events.ts`)
+pushes an empty `roles` event, so an open tab re-reads `/api/auth/me` without a reload; losing every
+role swaps the portal to "Your access has been removed."
 
-The `brockcsc-provisioner` service account holds `manage-users` and `view-realm`. It deliberately
-does **not** hold `manage-realm` — it runs at request time, so a leaked secret should not be able to
-rewrite the realm's role model. Creating roles is a one-off admin task, done by hand.
+The `brockcsc-provisioner` service account holds `manage-users` and `view-realm`, and deliberately
+**not** `manage-realm`: it runs at request time, so a leaked secret must not be able to rewrite the
+realm's role model. Roles are created by hand instead.
 
-Sign-up creates the Keycloak user **disabled**, so a test sign-up cannot log in until approved.
-Rejecting deletes the user. Both are real writes against the shared realm — use obviously-fake names
-when testing, and clean up after yourself.
+Sign-up creates the Keycloak user **disabled**, so it cannot log in until approved; rejecting deletes
+it. Both are real writes against the shared realm — use fake names and clean up.
 
-Outside production, identity changes are **rehearsed rather than written**: `ownsIdentities()` in
-`lib/env.ts` returns true only when `DB_SCHEMA === "prod"`, and the users screen shows a banner
-saying so. The apply result reports `applied / rehearsed / skipped / failed`.
+Outside production, identity changes are **rehearsed, not written**: `ownsIdentities()` in
+`lib/env.ts` is true only when `DB_SCHEMA === "prod"`, and the users screen says so. Results report
+`applied / rehearsed / skipped / failed`.
 
 ## Architecture
 
-One Next.js 16 App Router application, no separate backend. Everything below runs as a container on
-one VPS behind Traefik, deployed by Komodo.
+One Next.js 16 App Router app, no separate backend. It runs as a container on one VPS behind Traefik,
+deployed by Komodo.
 
-<img src="public/readme/arch-system.svg" alt="The browser reaches Traefik, which routes to the Next.js app container on a private Docker network alongside Postgres and Stalwart. Keycloak issues tokens and answers role checks, and Stalwart relays outbound mail through OCI Email Delivery" width="850" />
+<img src="public/readme/arch-system.svg" alt="Traefik routes the browser to the Next.js container, on a private Docker network with Postgres and Stalwart. Keycloak issues tokens and answers role checks; Stalwart relays outbound mail through OCI Email Delivery" width="850" />
 
 ### What lives where
 
-<img src="public/readme/arch-tree.svg" alt="Repository structure: app holds the public routes, the admin portal and the API handlers; components holds shared UI; lib holds auth, db, events, execs, mail and api; alongside drizzle, deploy, komodo, scripts, data, the GitHub workflows and middleware.ts" width="850" />
+<img src="public/readme/arch-tree.svg" alt="Repository structure: app, components, lib (auth, db, events, execs, mail, api), drizzle, deploy, komodo, scripts, data, the GitHub workflows and middleware.ts" width="850" />
 
-**Host split.** `middleware.ts` gives the portal its own hostname. When `ADMIN_SUBDOMAIN` is set,
-requests to that host rewrite `/` to `/admin`, and public paths 308-redirect to `PUBLIC_SUBDOMAIN`.
-On the public host, `/admin*` 308-redirects to the admin host. With neither set (local dev) both
-live on `localhost:3000`.
+**Host split.** `middleware.ts` gives the portal its own hostname. With `ADMIN_SUBDOMAIN` set, that
+host rewrites `/` to `/admin` and 308s public paths to `PUBLIC_SUBDOMAIN`; the public host 308s
+`/admin*` back the other way. With neither set (local dev) both live on `localhost:3000`.
 
-**Data model.** Four tables, all the same shape — `id uuid`, `data jsonb`, `created_at` — declared
-by `jsonbTable()` in `lib/db/schema.ts`: `events`, `execs`, `signups`, `page_views`. CRUD routes are
-generated by `createCollectionHandlers` / `createItemHandlers` in `lib/db/repository.ts`, so adding
-a collection is a schema entry plus a route file, not a new query layer.
+**Data model.** Four tables of one shape — `id uuid`, `data jsonb`, `created_at` — from
+`jsonbTable()` in `lib/db/schema.ts`: `events`, `execs`, `signups`, `page_views`.
+`createCollectionHandlers` / `createItemHandlers` in `lib/db/repository.ts` generate the CRUD routes,
+so a new collection is a schema entry plus a route file, not a new query layer.
 
-**Theming.** Light is the default. Dark is the `dark` class on `<html>` plus `localStorage`
-`brockcsc-theme`; an inline script in `app/layout.tsx` applies it before paint to avoid a flash.
-Tailwind v4 with `@custom-variant dark (&:is(.dark *))` in `app/globals.css`. Brand `#9a4440`,
-dark-mode accent `#e08a82`. There is no system-preference option and no theme context — the toggle
-in `components/theme-toggle.tsx` and the palette action both flip the class directly.
+**Theming.** Light by default. Dark is the `dark` class on `<html>` plus `localStorage`
+`brockcsc-theme`, applied by an inline script in `app/layout.tsx` before paint to avoid a flash.
+Tailwind v4, `@custom-variant dark (&:is(.dark *))` in `app/globals.css`. Brand `#9a4440`, dark
+accent `#e08a82`. No system-preference option, no theme context: `components/theme-toggle.tsx` and
+the palette action flip the class directly.
 
 **Analytics data.** `components/page-view-tracker.tsx` POSTs the pathname to `/api/page-view` on
 every public navigation. That route rate-limits to 60/min per IP, rejects non-public paths, `/admin`
-and anything over 200 characters, and stores **only the path and a timestamp**. No cookies, no IP,
-no user agent, no sessions — so the numbers are raw view counts, not unique visitors. Buckets are
-computed in `America/Toronto`, not the server's timezone.
+and anything over 200 characters, and stores **only path and timestamp** — no cookies, IP, user agent
+or sessions. So the numbers are raw views, not unique visitors, bucketed in `America/Toronto`, not
+the server's timezone.
 
 ## Environment variables
 
 Documented in `.env.example` (production shape) and `.env.local.example` (the local subset).
 
-| Variable                               | Required    | Default                        | Notes                                                                                                        |
-| -------------------------------------- | ----------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| `DATABASE_URL`                         | yes         | —                              | Postgres connection string                                                                                   |
-| `DB_SCHEMA`                            | no          | `public`                       | Schema-per-environment. Must match `^[a-z0-9_]+$`. `prod` is the only value that makes identity changes real |
-| `KEYCLOAK_ISSUER`                      | yes         | —                              | Realm issuer URL                                                                                             |
-| `KEYCLOAK_CLIENT_ID`                   | yes         | `brockcsc-web` in examples     | Login client                                                                                                 |
-| `KEYCLOAK_CLIENT_SECRET`               | yes         | —                              | **Secret.** The one value you cannot make up locally                                                         |
-| `ADMIN_ROLE`                           | no          | `executive`                    | Realm role required to reach the portal                                                                      |
-| `ALUMNI_ROLE`                          | no          | `alumni`                       | Past execs: own profile only                                                                                 |
-| `APPROVER_ROLE`                        | no          | `brockcsc-approver`            | Bundled into the `co-president` composite role                                                               |
-| `SUPERUSER_ROLE`                       | no          | `owner`                        | Satisfies every role check                                                                                   |
-| `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` | for sign-up | falls back to the login client | **Secret.** Service account with `manage-users` + `view-realm`                                               |
-| `SESSION_JWT_SECRET`                   | yes         | —                              | **Secret.** Signs our own session cookie, not the Keycloak token                                             |
-| `INVITE_CODE_SECRET`                   | yes         | —                              | **Secret.** Seeds the rotating sign-up invite code; changing it invalidates codes already handed out         |
-| `MAIL_DOMAIN`                          | no          | `brockcsc.ca`                  | Mailbox domain                                                                                               |
-| `STALWART_URL`                         | for mail    | —                              | The Stalwart container on the internal Docker network; its admin API is never exposed publicly               |
-| `STALWART_ADMIN_USER` / `_SECRET`      | for mail    | —                              | **Secret.** Basic auth for the provisioning client only                                                      |
-| `OCI_COMPARTMENT_OCID`                 | for mail    | —                              | **Secret.** OCI Email Delivery approved senders, reached with instance principal auth (no keys)              |
-| `PROTECTED_MAIL_USERS`                 | no          | `alaqmargandhi`                | Comma-separated accounts that can never be deprovisioned or rate-limited                                     |
-| `MAIL_DAILY_LIMIT`                     | no          | `50`                           | Default outbound messages per user per day (ceiling 500)                                                     |
-| `MAIL_TRASH_DAYS`                      | no          | `7`                            | Age at which trashed mail is purged                                                                          |
-| `MAIL_SITE_URL`                        | no          | `https://brockcsc.ca`          | Link target in the mail signature                                                                            |
-| `ADMIN_MAIL_GROUP`                     | no          | `admin`                        | Stalwart group kept in sync with the current execs                                                           |
-| `ADMIN_SUBDOMAIN` / `PUBLIC_SUBDOMAIN` | prod only   | unset                          | Enables the middleware host split                                                                            |
-| `UPLOAD_DIR`                           | prod only   | —                              | `/data/uploads` in the container, backed by the `brockcsc-uploads` volume                                    |
-| `PORT`                                 | no          | `3000`                         | Set by the Dockerfile                                                                                        |
+| Variable                               | Required    | Default                        | Notes                                                                                        |
+| -------------------------------------- | ----------- | ------------------------------ | -------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                         | yes         | —                              | Postgres connection string                                                                   |
+| `DB_SCHEMA`                            | no          | `public`                       | Schema per environment. Must match `^[a-z0-9_]+$`. Only `prod` makes identity changes real   |
+| `KEYCLOAK_ISSUER`                      | yes         | —                              | Realm issuer URL                                                                             |
+| `KEYCLOAK_CLIENT_ID`                   | yes         | `brockcsc-web` in examples     | Login client                                                                                 |
+| `KEYCLOAK_CLIENT_SECRET`               | yes         | —                              | **Secret.** The one value you cannot make up locally                                         |
+| `ADMIN_ROLE`                           | no          | `executive`                    | Realm role required to reach the portal                                                      |
+| `ALUMNI_ROLE`                          | no          | `alumni`                       | Past execs: own profile only                                                                 |
+| `APPROVER_ROLE`                        | no          | `brockcsc-approver`            | Bundled into the `co-president` composite role                                               |
+| `SUPERUSER_ROLE`                       | no          | `owner`                        | Passes every role check                                                                      |
+| `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` | for sign-up | falls back to the login client | **Secret.** Service account with `manage-users` + `view-realm`                               |
+| `SESSION_JWT_SECRET`                   | yes         | —                              | **Secret.** Signs our own session cookie, not the Keycloak token                             |
+| `INVITE_CODE_SECRET`                   | yes         | —                              | **Secret.** Seeds the rotating sign-up invite code; changing it invalidates codes handed out |
+| `MAIL_DOMAIN`                          | no          | `brockcsc.ca`                  | Mailbox domain                                                                               |
+| `STALWART_URL`                         | for mail    | —                              | Stalwart on the internal Docker network; its admin API is never exposed publicly             |
+| `STALWART_ADMIN_USER` / `_SECRET`      | for mail    | —                              | **Secret.** Basic auth for the provisioning client only                                      |
+| `OCI_COMPARTMENT_OCID`                 | for mail    | —                              | **Secret.** OCI Email Delivery approved senders, via instance principal auth (no keys)       |
+| `PROTECTED_MAIL_USERS`                 | no          | `alaqmargandhi`                | Comma-separated accounts that can never be deprovisioned or rate-limited                     |
+| `MAIL_DAILY_LIMIT`                     | no          | `50`                           | Outbound messages per user per day (ceiling 500)                                             |
+| `MAIL_SITE_URL`                        | no          | `https://brockcsc.ca`          | Link target in the mail signature                                                            |
+| `ADMIN_MAIL_GROUP`                     | no          | `admin`                        | Stalwart group kept in sync with the current execs                                           |
+| `ADMIN_SUBDOMAIN` / `PUBLIC_SUBDOMAIN` | prod only   | unset                          | Enables the middleware host split                                                            |
+| `UPLOAD_DIR`                           | prod only   | —                              | `/data/uploads` in the container, on the `brockcsc-uploads` volume                           |
+| `PORT`                                 | no          | `3000`                         | Set by the Dockerfile                                                                        |
 
-`MAIL_DAILY_LIMIT`, `MAIL_TRASH_DAYS`, `MAIL_SITE_URL` and `ADMIN_MAIL_GROUP` are read by the code
-but are not in `.env.example` — they run on their defaults everywhere. Add them there if you ever
-need to override one.
+`MAIL_DAILY_LIMIT`, `MAIL_SITE_URL` and `ADMIN_MAIL_GROUP` are read by the code
+but are not in `.env.example` — they run on their defaults. Add them there to override one.
 
 ## Database and migrations
 
@@ -181,53 +157,50 @@ Edit `lib/db/schema.ts`, then:
 npm run db:generate      # writes drizzle/NNNN_*.sql — commit it
 ```
 
-Every environment is a schema in one shared database (`DB_SCHEMA`), and migrations run per-schema on
-container start (`CMD` in the `Dockerfile` runs `migrate.mjs`, then `sync-from-prod.mjs`, then the
-server). Never hand-edit a generated migration that has already shipped.
+Every environment is a schema in one shared database (`DB_SCHEMA`). Migrations run per-schema on
+container start: the `Dockerfile` `CMD` runs `migrate.mjs`, then `sync-from-prod.mjs`, then the
+server. Never hand-edit a migration that has already shipped.
 
 `sync-from-prod.mjs` truncates `events`, `execs` and `signups` in the current schema and re-copies
-them from `prod` on every deploy. It no-ops when `DB_SCHEMA` is `prod` or when no `prod` schema
-exists. So preview and uat data is temporary — and anything you write to prod is not.
+them from `prod` on every deploy, unless `DB_SCHEMA` is `prod` or no `prod` schema exists. So preview
+and uat data is temporary — and what you write to prod is not.
 
 ## Mail
 
-Sending is the least obvious path in the system, so here it is end to end.
+<img src="public/readme/arch-mail-send.svg" alt="Sending: the portal posts to /api/mail/send, which validates the payload and counts today's sends; the refresh cookie is swapped with Keycloak for a short-lived token; Stalwart is called over JMAP with Email/set and EmailSubmission/set and relays out through OCI. The from: address is chosen server-side by Identity/get" width="850" />
 
-<img src="public/readme/arch-mail-send.svg" alt="Sending a message: the portal posts to /api/mail/send, which validates the payload and counts today's sends, the refresh cookie is swapped with Keycloak for a short-lived token, Stalwart is called over JMAP with Email/set and EmailSubmission/set, and Stalwart relays out through OCI. The from: address is chosen on the server by Identity/get" width="850" />
+Two JMAP clients, for two jobs.
 
-Two separate JMAP clients, for two separate jobs.
-
-**As the signed-in user** — `lib/mail/jmap-mail.ts`, used by everything under `app/api/mail/`.
-A Keycloak refresh token is kept in the `brockcsc_refresh` httpOnly cookie and exchanged for a
-short-lived access token per request (`lib/auth/mail-token.ts`), which is the JMAP `Bearer`. The app
-never reads someone else's mailbox — Stalwart enforces the isolation, not us. The session lapses
-after 30 minutes of inactivity, so the portal POSTs `/api/mail/keepalive` every 10 minutes while the
-tab is visible.
+**As the signed-in user** — `lib/mail/jmap-mail.ts`, behind everything under `app/api/mail/`. The
+Keycloak refresh token in the `brockcsc_refresh` httpOnly cookie is swapped per request for a
+short-lived access token (`lib/auth/mail-token.ts`), used as the JMAP `Bearer`. The app never reads
+someone else's mailbox — Stalwart enforces that, not us. Sessions lapse after 30 minutes idle, so the
+portal POSTs `/api/mail/keepalive` every 10 minutes while the tab is visible.
 
 **As an administrator** — `lib/mail/stalwart.ts`, Basic auth with `STALWART_ADMIN_USER/SECRET` and
-Stalwart's `urn:stalwart:jmap` extension. Used only for provisioning accounts, group membership and
-flipping a past exec's mailbox to read-only.
+Stalwart's `urn:stalwart:jmap` extension. Only for provisioning accounts, group membership, and
+making a past exec's mailbox read-only.
 
-Message bodies are sanitised server-side (`lib/mail/sanitize.ts`, `isomorphic-dompurify`) and
-rendered into a `<iframe sandbox="" srcDoc>` with its own CSP and `referrer-policy: no-referrer`.
-Attachments are served through `/api/mail/blob/[blobId]`, which forces
-`Content-Disposition: attachment`, rewrites `html|xml|svg|javascript` MIME types to
-`application/octet-stream`, and sets `default-src 'none'; sandbox`. Keep it that way.
+Bodies are sanitised server-side (`lib/mail/sanitize.ts`, `isomorphic-dompurify`) and rendered in an
+`<iframe sandbox="" srcDoc>` with its own CSP and `referrer-policy: no-referrer`. Attachments go
+through `/api/mail/blob/[blobId]`, which forces `Content-Disposition: attachment`, rewrites
+`html|xml|svg|javascript` MIME types to `application/octet-stream`, and sets
+`default-src 'none'; sandbox`. Keep it that way.
 
-Send limits (`lib/mail/limit.ts`) count messages in the Sent mailbox since local midnight via
-`Email/query … calculateTotal`, so mail sent from any other client counts too. Over the limit,
-`POST /api/mail/send` returns **429**. Per-message caps: 100 KB text, 400 KB HTML, 20 attachments,
+Send limits (`lib/mail/limit.ts`) count the Sent mailbox since local midnight via
+`Email/query … calculateTotal`, so mail sent from any other client counts too; over the limit,
+`POST /api/mail/send` returns **429**. Caps per message: 100 KB text, 400 KB HTML, 20 attachments,
 50 recipients, 15 MB per uploaded file.
 
-The mail stack itself (`deploy/mail/docker-compose.yml`) is deployed by a **separate** workflow so
-that website commits never bounce IMAP — see below.
+The mail stack (`deploy/mail/docker-compose.yml`) has its own workflow, so website commits never
+bounce IMAP.
 
 ## Deploys
 
 Self-hosted, orchestrated by [Komodo](https://komo.do) through the reusable actions in
 [`BrockCSC/komodo-deploy`](https://github.com/BrockCSC/komodo-deploy).
 
-<img src="public/readme/arch-deploy.svg" alt="Deploy pipeline: a push or tag runs lint, typecheck and format checks, then deploy-context reads the ref, then the job waits on its GitHub Environment before Komodo builds the image and deploys the Stack. A tag lands on production, main on uat, and any other branch on its own preview" width="850" />
+<img src="public/readme/arch-deploy.svg" alt="Deploy pipeline: a push or tag runs lint, typecheck and format checks; deploy-context reads the ref; the job waits on its GitHub Environment before Komodo builds the image and deploys the Stack. A tag lands on production, main on uat, any other branch on its own preview" width="850" />
 
 | Workflow                                              | Trigger                                             | What it does                                                                                                   |
 | ----------------------------------------------------- | --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
@@ -235,9 +208,9 @@ Self-hosted, orchestrated by [Komodo](https://komo.do) through the reusable acti
 | `.github/workflows/deploy-mail.yml` — **Deploy Mail** | push to `main` touching `deploy/mail/**`, or manual | deploys the single long-lived `brockcsc-mail` Stack                                                            |
 | `.github/workflows/cleanup.yml` — **Cleanup**         | branch deleted                                      | deletes that branch's Komodo Stack and drops its `preview_*` schema                                            |
 
-`komodo/deploy-context.mjs` decides the target from `GITHUB_REF` and prints the whole `KEY=VALUE`
-environment block for the Stack. Secrets are never in the block — they are `[[BROCKCSC_NAME]]`
-placeholders resolved by Komodo from its own Variables.
+`komodo/deploy-context.mjs` reads `GITHUB_REF` and prints the Stack's whole `KEY=VALUE` environment
+block. Secrets are never in it — they are `[[BROCKCSC_NAME]]` placeholders Komodo resolves from its
+own Variables.
 
 | Ref              | Stack                | Schema           | Where                       |
 | ---------------- | -------------------- | ---------------- | --------------------------- |
@@ -245,10 +218,10 @@ placeholders resolved by Komodo from its own Variables.
 | `main`           | `brockcsc-uat`       | `uat`            | an internal host            |
 | any other branch | `brockcsc-pr-<slug>` | `preview_<slug>` | an internal per-branch host |
 
-Preview and uat are deliberately not under `brockcsc.ca` — their databases are copies of prod, so
-they should not be discoverable. A scheduled Komodo Action, `komodo/actions/preview-sweep.ts`
-(registered by the `ensure-action` step and run daily at 09:00), tears down preview stacks and
-schemas whose branch has been gone for three days, catching anything `cleanup.yml` missed.
+Preview and uat sit off `brockcsc.ca` on purpose: their databases are copies of prod, so they should
+not be discoverable. `komodo/actions/preview-sweep.ts` — a Komodo Action registered by the
+`ensure-action` step and run daily at 09:00 — tears down preview stacks and schemas whose branch has
+been gone three days, catching whatever `cleanup.yml` missed.
 
 ## Adding an environment variable
 
@@ -259,8 +232,7 @@ Add it in **all four** places or deploys break:
 3. `deploy/docker-compose.yml`
 4. `komodo/deploy-context.mjs` — secrets as `[[BROCKCSC_NAME]]` placeholders
 
-If it is a secret, it also needs a GitHub secret and a `sync_var` line in `deploy.yml`, and the
-Komodo Variable must exist.
+A secret also needs a GitHub secret, a `sync_var` line in `deploy.yml`, and the Komodo Variable.
 
 ## Conventions and checks
 
@@ -268,8 +240,7 @@ Komodo Variable must exist.
 - Arrow-function exports, `type` over `interface`, named exports.
 - Gate every admin route with `requireAdmin` / `requireApprover` from `lib/auth/session.ts`.
 - Never trust a client-side gate. `hidden` on a profile, role checks and limits are all enforced
-  server-side as well.
-- Run `npm run format` before pushing.
+  server-side too.
 
 Before opening a PR:
 
@@ -277,14 +248,13 @@ Before opening a PR:
 npm run lint && npm run typecheck && npm run format:check && npm run build
 ```
 
-CI runs the first three and will fail the deploy job if any of them do.
+CI runs the first three and fails the deploy job if any of them do.
 
 ## Opening a pull request
 
-Push a branch — it gets its own preview environment and its own `preview_<slug>` schema
-automatically, and the environment URL appears on the workflow run. Fill in
-`.github/pull_request_template.md`, including how a reviewer can actually test it and whether it
-needs a role or an env var that does not exist yet.
+Push a branch — it gets its own preview environment and `preview_<slug>` schema automatically, and
+the environment URL appears on the workflow run. Fill in `.github/pull_request_template.md`,
+including how a reviewer can test it and whether it needs a role or env var that does not exist yet.
 
 Deleting the branch tears the preview down. Merging to `main` deploys to uat; tagging deploys to
 production.

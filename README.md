@@ -13,7 +13,7 @@
 <br />
 
 **The home of the Brock University Computer Science Club on the web.**
-A community of 900+ students who code, connect, and create together.
+900+ students who code, connect and create together.
 
 <br />
 
@@ -37,168 +37,83 @@ A community of 900+ students who code, connect, and create together.
 
 The public side of **[brockcsc.ca](https://brockcsc.ca)**. No account needed.
 
-<table width="100%">
-  <tr>
-    <td width="88" align="center" valign="middle"><img src="public/readme/icon-home.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Home</strong><br />
-      The landing page. A hero, what the club is about, and whatever's coming up next.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-events.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Events</strong><br />
-      One-off events and recurring ones — weekly, biweekly or monthly. Everything is worked out
-      against Toronto time and split into what's happening <em>now</em>, what's coming up, and what
-      already happened. Search by title, presenter or location. Every event has its own page with a
-      poster, a registration link, an <strong>Add to calendar</strong> button that downloads an
-      <code>.ics</code>, and a copy-link button.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-team.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Team</strong><br />
-      The current execs, sorted by role, each with a photo, a short bio and their socials. Past execs
-      get their own wall, grouped by the term they served.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-cs-guide.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>CS Guide</strong><br />
-      Written by students, for students. How to read a course code, what the credit types mean,
-      program requirements, and where to go for help.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-links.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Links</strong><br />
-      Discord, ExperienceBU, Instagram, GitHub and LinkedIn, all on one page.
-    </td>
-  </tr>
-</table>
+|                                                                 |                                                                                                                                             |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| <img src="public/readme/icon-home.svg" alt="" width="64" />     | **Home** — what the club is, and what's on next.                                                                                            |
+| <img src="public/readme/icon-events.svg" alt="" width="64" />   | **Events** — now, upcoming and past, searchable by title, presenter or location. Each has a poster, a sign-up link and **Add to calendar**. |
+| <img src="public/readme/icon-team.svg" alt="" width="64" />     | **Team** — current execs by role, with photo, bio and socials. Past execs have their own wall.                                              |
+| <img src="public/readme/icon-cs-guide.svg" alt="" width="64" /> | **CS Guide** — course codes, credit types, program requirements and where to get help.                                                      |
+| <img src="public/readme/icon-links.svg" alt="" width="64" />    | **Links** — Discord, ExperienceBU, Instagram, GitHub and LinkedIn.                                                                          |
 
 <br />
 
 ## For the exec team
 
-Sign in and you land on a **tile menu** — one card per thing you can do, and only the ones you're
-allowed to. Everything else is one hop away from there.
+Sign in and you land on a **tile menu** — one card per thing you're allowed to do.
 
-<table width="100%">
-  <tr>
-    <td width="88" align="center" valign="middle"><img src="public/readme/icon-mail.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Email</strong><br />
-      A full webmail client for your <code>@brockcsc.ca</code> mailbox — no separate app, no IMAP
-      setup. Folders with unread counts, conversation threading, rich-text compose with attachments,
-      reply / reply-all / forward with the original quoted properly, star, archive, move and delete.
-      Your club signature is added for you. The bin empties itself after a week, and you can delete
-      for good from inside it.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-analytics.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Analytics</strong><br />
-      Page views over the last 30 days with a trend line and the most visited pages, mail sent versus
-      received, sign-ups waiting on you, upcoming events, and a health check on the team page —
-      who's missing a photo or a bio. Only path and time are ever recorded: no cookies, no IPs, no
-      tracking of individual people.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-events.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Events</strong><br />
-      Publish and edit what the club is running, split into Upcoming, Recurring and Past. Add a
-      poster, a location, a start and end time, a repeat rule and a sign-up link. It's live on the
-      public site the moment you save.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-people.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Users</strong> <sub>(co-presidents)</sub><br />
-      Approve sign-ups, grant and revoke roles, provision mailboxes, edit anyone's public tile, and
-      move people between the current team and the alumni wall. Every action tells you exactly what
-      it will do <em>before</em> you confirm it, with a checklist you can untick line by line.
-    </td>
-  </tr>
-  <tr>
-    <td align="center" valign="middle"><img src="public/readme/icon-admin.svg" alt="" width="64" height="64" /></td>
-    <td valign="middle">
-      <strong>Profile</strong><br />
-      Your own tile on the team page — photo (with a focal-point picker so you're never cropped
-      badly), bio, term and socials, previewed live as you type. There's a toggle to hide yourself
-      from the team page entirely.
-    </td>
-  </tr>
-</table>
+|                                                                  |                                                                                                                                                                                                        |
+| ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| <img src="public/readme/icon-mail.svg" alt="" width="64" />      | **Email** — webmail for your `@brockcsc.ca` mailbox. Threads, search, rich-text compose with attachments, reply and forward with quoting, star, archive and move. Your signature is added for you.     |
+| <img src="public/readme/icon-analytics.svg" alt="" width="64" /> | **Analytics** — 30 days of page views, top pages, mail sent versus received, sign-ups waiting on you, and who is missing a photo. Only path and time are recorded: no cookies, no IPs.                 |
+| <img src="public/readme/icon-events.svg" alt="" width="64" />    | **Events** — publish and edit events: poster, location, times, repeat rule, sign-up link. Live the moment you save.                                                                                    |
+| <img src="public/readme/icon-people.svg" alt="" width="64" />    | **Users** (co-presidents) — approve sign-ups, change roles, provision mailboxes, move people to the alumni wall. Every action lists what it will do before you confirm, as a checklist you can untick. |
+| <img src="public/readme/icon-admin.svg" alt="" width="64" />     | **Profile** — your own team page tile: photo with a focal-point picker, bio, term and socials, previewed as you type. A toggle hides you.                                                              |
 
 <br />
 
 ### Search everything with <kbd>⌘</kbd> <kbd>K</kbd>
 
-Press <kbd>⌘K</kbd> (or <kbd>Ctrl</kbd> <kbd>K</kbd>) anywhere in the portal. One box searches your
-mail, people and events at once, and doubles as a command bar — compose a message, create an event,
-jump to pending sign-ups, toggle dark mode, log out. Your last few picks are remembered.
+<kbd>⌘K</kbd> anywhere in the portal searches mail, people and events in one box, and runs
+commands: compose, create an event, review sign-ups, switch theme, log out.
 
-<img src="public/readme/palette.svg" alt="The command palette: one search box over mail, people and events, with the mail search operators from:, to:, subject:, in:, has:attachment, is:unread and is:starred" width="850" />
+<img src="public/readme/palette.svg" alt="The command palette: one search box over mail, people and events, with the mail operators from:, to:, subject:, in:, has:attachment, is:unread and is:starred" width="850" />
 
-Mail search understands those operators and <kbd>Tab</kbd> completes them for you. `in:` suggests
-your actual folders, and searches skip the bin and junk unless you ask for them.
+<kbd>Tab</kbd> completes operators, `in:` suggests your folders, and searches skip the bin and junk
+unless you ask for them.
 
 ### Keyboard shortcuts in mail
 
-<img src="public/readme/keys-mail.svg" alt="Mail keyboard shortcuts: j and k move to the next and previous message, r replies, e archives, # deletes, s stars, / opens search, u or Esc closes the message, and ⌘K searches everything" width="850" />
+<img src="public/readme/keys-mail.svg" alt="Mail shortcuts: j and k next and previous message, r reply, e archive, # delete, s star, / search, u or Esc close the message, ⌘K search everything" width="850" />
 
 ### Sending limits
 
-Outbound club mail is metered, so everyone has a daily send allowance shown in the mail sidebar.
-When you're running low a **Request more** button appears — say how many you need and why, and a
-co-president approves it. The count resets at midnight.
+Club mail is metered, so everyone has a daily allowance, shown in the sidebar. Run low and a
+**Request more** button appears; a co-president approves it. Resets at midnight.
 
 <br />
 
 ## Getting an account
 
-Exec accounts aren't self-serve. You'll need an **invite code** from a current exec — it rotates
-every week, so ask for a fresh one.
+Exec accounts aren't self-serve. You need an **invite code** from a current exec — it rotates weekly,
+so ask for a fresh one.
 
-<img src="public/readme/getting-started.svg" alt="Four steps: ask an exec for the weekly invite code, sign up with it and your Brock email, write down the six-character code shown once, then a co-president approves and your mailbox is created" width="850" />
+<img src="public/readme/getting-started.svg" alt="Four steps: get the weekly invite code from an exec, sign up with it and your Brock email, write down the six-character code shown once, then a co-president approves and your mailbox is created" width="850" />
 
-1. Go to **[brockcsc.ca/signup](https://brockcsc.ca/signup)** and fill in the form with your invite
-   code and your Brock email. Former execs can tick the box to say so.
-2. You'll be shown your username, your new `@brockcsc.ca` address, and a **six-character
-   confirmation code**. Write it down — it is shown once and cannot be sent to you again.
-3. Give that code to a co-president so they can confirm the request really came from you.
-4. Once they approve, your login is enabled and your mailbox is created. Nothing is emailed to you
-   on approval, so check with them.
+1. Sign up at **[brockcsc.ca/signup](https://brockcsc.ca/signup)** with the code and your Brock
+   email. Former execs tick the box.
+2. You get your username, your `@brockcsc.ca` address, and a **six-character code**. Save it: it is
+   shown once and cannot be resent.
+3. Give that code to a co-president, so they know the request is yours.
+4. On approval your login works and your mailbox exists. Nothing is emailed, so check with them.
 
-Then sign in at **[brockcsc.ca/admin](https://brockcsc.ca/admin)** with the username and password
-you chose.
+Then sign in at **[brockcsc.ca/admin](https://brockcsc.ca/admin)**.
 
 <br />
 
 ## The look
 
-Neubrutalist throughout: flat colours, thick black outlines, and hard shadows offset in brand red
-(`#9A4440`). No gradients, no blur. Buttons press down when you click them, cards lift on hover,
-and the member badge bobs.
+Neubrutalist: flat colour, thick outlines, hard shadows in brand red (`#9A4440`). No gradients, no
+blur. Buttons press, cards lift.
 
-There's a **dark theme** too — the sun/moon button in the navbar, or "Toggle dark mode" in ⌘K. It
-sticks between visits, uses a warmer accent (`#e08a82`), and even the emails you read follow it.
+The **dark theme** is a real design, not an inversion: its own palette (`#e08a82`), shadows darker
+than the page. Toggle it in the navbar or with ⌘K; it sticks between visits.
 
 <br />
 
 ## Contributing
 
-Architecture, local setup, environment variables, the deploy pipeline and conventions all live in
-**[CONTRIBUTING.md](CONTRIBUTING.md)**. Issues and pull requests are welcome from anyone at Brock.
+Architecture, setup, environment variables and deploys are in
+**[CONTRIBUTING.md](CONTRIBUTING.md)**. Issues and pull requests welcome from anyone at Brock.
 
 Licensed under the [MIT Licence](LICENSE).
 

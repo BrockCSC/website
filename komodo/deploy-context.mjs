@@ -67,7 +67,6 @@ const environment = [
   `OCI_COMPARTMENT_OCID=[[BROCKCSC_OCI_COMPARTMENT_OCID]]`,
   `PROTECTED_MAIL_USERS=${process.env.PROTECTED_MAIL_USERS ?? "alaqmargandhi"}`,
   `MAIL_DAILY_LIMIT=${process.env.MAIL_DAILY_LIMIT ?? "50"}`,
-  `MAIL_TRASH_DAYS=${process.env.MAIL_TRASH_DAYS ?? "0"}`,
   `MAIL_SITE_URL=https://brockcsc.ca`,
   `ADMIN_MAIL_GROUP=${process.env.ADMIN_MAIL_GROUP ?? "admin"}`,
 ].join("\n");

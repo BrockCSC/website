@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 510" width="880" height="510" role="img" aria-label="Coordinated disclosure: report privately through the Security tab or admin@brockcsc.ca, a co-president triages it, the fix ships to production on the one deployed version, then an advisory is published with credit. Also lists what counts as a vulnerability here, what does not, and the automated scanning that is always on">
+  <title>Coordinated disclosure</title>
+
+  <defs>
+    <marker id="sink" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#101012" />
+    </marker>
+  </defs>
+
+  <style>
+    .spine { stroke-dasharray: 9 6; animation: crawl 1.5s linear infinite; }
+    @keyframes crawl { to { stroke-dashoffset: -30; } }
+    @media (prefers-reduced-motion: reduce) { .spine { animation: none; } }
+
+    .h { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 12.5px; font-weight: 800; letter-spacing: 1px; fill: #101012; }
+    .b { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; font-size: 11px; fill: #55525a; }
+    .m { font-family: ui-monospace, 'SF Mono', 'Courier New', monospace; font-size: 11px; fill: #101012; }
+    .lbl { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; }
+  </style>
+
+  <rect x="26" y="26" width="820" height="464" rx="24" fill="#9A4440" />
+  <rect x="16" y="16" width="820" height="464" rx="24" fill="#ffffff" stroke="#101012" stroke-width="3" />
+
+  <rect x="48" y="44" width="222" height="30" rx="15" fill="#fff1f1" stroke="#9A4440" stroke-width="2" />
+  <text class="lbl" x="159" y="64" text-anchor="middle" font-size="12" font-weight="700" letter-spacing="1.6" fill="#9A4440">COORDINATED DISCLOSURE</text>
+  <text class="lbl" x="814" y="64" text-anchor="end" font-size="13" fill="#6b6870">no bounty · no SLA · one deployed version</text>
+
+  <!-- 01 report -->
+  <g>
+    <rect x="54" y="102" width="164" height="112" rx="14" fill="#9A4440" />
+    <rect x="48" y="96" width="164" height="112" rx="14" fill="#fff1f1" stroke="#9A4440" stroke-width="2.5" />
+    <path d="M78 112 L92 117 V126 C92 135 86 140 78 143 C70 140 64 135 64 126 V117 Z" fill="none" stroke="#9A4440" stroke-width="2.4" />
+    <path d="M71 126 l5 5 l9 -10" fill="none" stroke="#9A4440" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" />
+    <text class="h" x="102" y="132" style="fill:#9A4440">REPORT</text>
+    <text class="b" x="64" y="164" style="fill:#9A4440">Security tab, then</text>
+    <text class="b" x="64" y="180" style="fill:#9A4440">Report a vulnerability</text>
+    <text class="m" x="64" y="196" style="fill:#9A4440">admin@brockcsc.ca</text>
+  </g>
+  <path class="spine" d="M216 152 H240" stroke="#101012" stroke-width="2.5" marker-end="url(#sink)" />
+
+  <!-- 02 triage -->
+  <g>
+    <rect x="248" y="96" width="164" height="112" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="264" y="132">TRIAGE</text>
+    <text class="b" x="264" y="164">A co-president reads</text>
+    <text class="b" x="264" y="180">it and replies. Days,</text>
+    <text class="b" x="264" y="196">not hours — no pager.</text>
+  </g>
+  <path class="spine" d="M416 152 H440" stroke="#101012" stroke-width="2.5" marker-end="url(#sink)" />
+
+  <!-- 03 fix -->
+  <g>
+    <rect x="448" y="96" width="164" height="112" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="464" y="132">FIX</text>
+    <text class="b" x="464" y="164">Patched on main and</text>
+    <text class="b" x="464" y="180">deployed. One live</text>
+    <text class="b" x="464" y="196">version, no back-ports.</text>
+  </g>
+  <path class="spine" d="M616 152 H640" stroke="#101012" stroke-width="2.5" marker-end="url(#sink)" />
+
+  <!-- 04 disclose -->
+  <g>
+    <rect x="648" y="96" width="164" height="112" rx="14" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="664" y="132">DISCLOSE</text>
+    <text class="b" x="664" y="164">An advisory, once the</text>
+    <text class="b" x="664" y="180">fix is live. Credited</text>
+    <text class="b" x="664" y="196">to you if you want it.</text>
+  </g>
+
+  <!-- scope -->
+  <g>
+    <rect x="54" y="242" width="372" height="140" rx="16" fill="#9A4440" />
+    <rect x="48" y="236" width="372" height="140" rx="16" fill="#ffffff" stroke="#101012" stroke-width="3" />
+    <text class="h" x="68" y="264" style="fill:#9A4440">WORTH REPORTING HERE</text>
+    <circle cx="72" cy="285" r="3" fill="#9A4440" />
+    <text class="b" x="86" y="289">Holding a role, or reaching a route, you weren't granted</text>
+    <circle cx="72" cy="307" r="3" fill="#9A4440" />
+    <text class="b" x="86" y="311">Reading or sending mail from a mailbox that isn't yours</text>
+    <circle cx="72" cy="329" r="3" fill="#9A4440" />
+    <text class="b" x="86" y="333">Guessing or replaying an invite or confirmation code</text>
+    <circle cx="72" cy="351" r="3" fill="#9A4440" />
+    <text class="b" x="86" y="355">Stored XSS — rendered mail, uploads, profile fields</text>
+  </g>
+
+  <g>
+    <rect x="440" y="236" width="372" height="140" rx="16" fill="#f4f1ee" stroke="#c9c2bb" stroke-width="2" />
+    <text class="h" x="460" y="264" style="fill:#6b6870">NOT A VULNERABILITY</text>
+    <circle cx="464" cy="285" r="3" fill="#9c968f" />
+    <text class="b" x="478" y="289">A scanner grade or a missing header, with no exploit</text>
+    <circle cx="464" cy="307" r="3" fill="#9c968f" />
+    <text class="b" x="478" y="311">Bugs in Keycloak, Stalwart or Next.js — go upstream</text>
+    <circle cx="464" cy="329" r="3" fill="#9c968f" />
+    <text class="b" x="478" y="333">Load testing or brute force against the live site</text>
+    <circle cx="464" cy="351" r="3" fill="#9c968f" />
+    <text class="b" x="478" y="355">Social engineering of execs, or physical access</text>
+  </g>
+
+  <!-- always on -->
+  <g>
+    <rect x="48" y="400" width="764" height="56" rx="16" fill="#ffffff" stroke="#101012" stroke-width="2.5" />
+    <text class="h" x="68" y="433" style="fill:#9A4440">ALWAYS ON</text>
+    <rect x="168" y="414" width="84" height="28" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="lbl" x="210" y="432" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.4" fill="#101012">CodeQL</text>
+    <rect x="262" y="414" width="132" height="28" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="lbl" x="328" y="432" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.4" fill="#101012">Dependabot alerts</text>
+    <rect x="404" y="414" width="208" height="28" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="lbl" x="508" y="432" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.4" fill="#101012">Secret scanning + push protection</text>
+    <rect x="622" y="414" width="172" height="28" rx="14" fill="#f4f1ee" stroke="#101012" stroke-width="2" />
+    <text class="lbl" x="708" y="432" text-anchor="middle" font-size="10.5" font-weight="700" letter-spacing="0.4" fill="#101012">Protected default branch</text>
+  </g>
+</svg>
