@@ -21,6 +21,8 @@ const size = (bytes: number) =>
 const downloadable = (parts: BodyPart[] | undefined) =>
   (parts ?? []).filter((part) => part.blobId && !part.cid);
 
+type RenderedBody = { html: string; blocked: boolean };
+
 const blobUrl = (part: BodyPart) =>
   `/api/mail/blob/${encodeURIComponent(part.blobId!)}?name=${encodeURIComponent(
     part.name ?? "attachment",
@@ -49,6 +51,8 @@ export function MessageView({
   const [message, setMessage] = useState<MessageDetail | null>(null);
   const [body, setBody] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showImages, setShowImages] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const dark = useDarkTheme();
 
   useEffect(() => {
@@ -58,14 +62,22 @@ export function MessageView({
       fetch(path).then((res) =>
         res.ok ? res.json() : Promise.reject(res.status),
       ),
-      fetch(`${path}/body?theme=${dark ? "dark" : "light"}`).then((res) =>
-        res.ok ? res.text() : Promise.reject(res.status),
+      fetch(
+        `${path}/body?theme=${dark ? "dark" : "light"}${showImages ? "&images=1" : ""}`,
+      ).then(async (res) =>
+        res.ok
+          ? {
+              html: await res.text(),
+              blocked: res.headers.get("x-images-blocked") === "1",
+            }
+          : Promise.reject(res.status),
       ),
     ])
-      .then(([detail, html]: [MessageDetail, string]) => {
+      .then(([detail, rendered]: [MessageDetail, RenderedBody]) => {
         if (!live) return;
         setMessage(detail);
-        setBody(html);
+        setBody(rendered.html);
+        setBlocked(rendered.blocked);
         if (!detail.keywords?.$seen) {
           void fetch(`${path}/flags`, {
             method: "POST",
@@ -79,7 +91,7 @@ export function MessageView({
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, dark]);
+  }, [id, dark, showImages]);
 
   if (error) {
     return <p className="flex-1 p-6 text-sm font-bold text-brand">{error}</p>;
@@ -122,6 +134,22 @@ export function MessageView({
           </ul>
         )}
       </header>
+
+      {blocked && (
+        <div className="flex items-center justify-between gap-3 border-b-2 border-line bg-tint px-5 py-2">
+          <p className="text-xs font-semibold text-ink">
+            This message links to images hosted elsewhere. Loading them tells
+            the sender you opened it.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowImages(true)}
+            className="shrink-0 rounded-[10px] border-2 border-line bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:bg-raised"
+          >
+            Show images
+          </button>
+        </div>
+      )}
 
       {/* Sandboxed: the body is untrusted even after sanitising. srcdoc rather
           than src so the app's own X-Frame-Options cannot block it. */}
