@@ -167,18 +167,18 @@ const mailboxItems = (
 
 const tileItems = (exec: Entity<ExecRecord> | null): Item[] => {
   if (!exec) return [];
-  const past = exec.isCurrentExec === false;
+  const toCurrent = exec.isCurrentExec === false;
   return [
     {
-      id: past ? "tile:current" : "tile:past",
+      id: toCurrent ? "tile:current" : "tile:past",
       group: "tile",
-      title: past
+      title: toCurrent
         ? "Move their tile back to the current team"
         : "Move their tile to past executives",
-      detail: past
+      detail: toCurrent
         ? "They appear again under the current executive team."
         : "They drop off the current team and appear under past executives.",
-      run: () => update(execsTable, exec.id, { isCurrentExec: !past }),
+      run: () => update(execsTable, exec.id, { isCurrentExec: toCurrent }),
     },
   ];
 };
