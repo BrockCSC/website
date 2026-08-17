@@ -18,6 +18,7 @@ import {
 } from "@/lib/db/schema";
 import { classifyEventsByTiming } from "@/lib/events/classify";
 import { getEventTiming } from "@/lib/events/schedule";
+import { notAuthorized } from "@/lib/json";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const THIRTY_DAYS_MS = 30 * DAY_MS;
@@ -88,9 +89,7 @@ const firstRecordedDay = async (): Promise<string | null> => {
 };
 
 export const GET = async (req: NextRequest) => {
-  if (!(await requireMember(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireMember(req))) return notAuthorized();
 
   const now = Date.now();
   const [

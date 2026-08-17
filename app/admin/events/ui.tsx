@@ -1,7 +1,6 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 
 const base =
   "inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-line px-4 py-2 text-sm font-bold disabled:pointer-events-none disabled:opacity-50";
@@ -18,20 +17,6 @@ export const field =
 
 export const errorText =
   "mt-1 animate-rise-in text-xs font-bold text-destructive";
-
-export function Label({
-  children,
-  htmlFor,
-}: {
-  children: React.ReactNode;
-  htmlFor: string;
-}) {
-  return (
-    <label className="mb-1 block text-sm font-bold text-ink" htmlFor={htmlFor}>
-      {children}
-    </label>
-  );
-}
 
 /** Full-screen on a phone, a centred dialog from `sm` up. */
 export function Sheet({
@@ -77,98 +62,6 @@ export function Sheet({
         </div>
         {children}
       </div>
-    </div>
-  );
-}
-
-export function PosterField({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (url: string) => void;
-}) {
-  const input = useRef<HTMLInputElement>(null);
-  const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const upload = async (file: File) => {
-    setUploading(true);
-    setError(null);
-    try {
-      const body = new FormData();
-      body.append("file", file);
-      const res = await fetch("/api/uploads", { method: "POST", body });
-      const data = (await res.json().catch(() => ({}))) as {
-        url?: string;
-        error?: string;
-      };
-      if (!res.ok || !data.url) throw new Error(data.error ?? "Upload failed.");
-      onChange(data.url);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed.");
-    } finally {
-      setUploading(false);
-      if (input.current) input.current.value = "";
-    }
-  };
-
-  return (
-    <div>
-      <span className="mb-1 block text-sm font-bold text-ink">Poster</span>
-      <div className="flex items-center gap-4">
-        <div className="relative size-20 shrink-0 overflow-hidden rounded-[10px] border-2 border-line bg-tint">
-          {value ? (
-            <Image
-              alt=""
-              className="object-cover"
-              fill
-              src={value}
-              unoptimized
-            />
-          ) : (
-            <span className="flex h-full items-center justify-center text-xs font-bold text-subtle">
-              None
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-2">
-          <input
-            accept="image/jpeg,image/png,image/webp,image/gif,image/avif"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void upload(file);
-            }}
-            ref={input}
-            type="file"
-          />
-          <div className="flex gap-2">
-            <button
-              className={btn.secondary}
-              disabled={uploading}
-              onClick={() => input.current?.click()}
-              type="button"
-            >
-              {uploading ? "Uploading..." : value ? "Replace" : "Upload"}
-            </button>
-            {value && (
-              <button
-                className={btn.quiet}
-                disabled={uploading}
-                onClick={() => onChange("")}
-                type="button"
-              >
-                Remove
-              </button>
-            )}
-          </div>
-          <span className="text-xs text-subtle">
-            JPEG, PNG, WebP, GIF or AVIF. Max 5MB.
-          </span>
-        </div>
-      </div>
-      {error && <p className={errorText}>{error}</p>}
     </div>
   );
 }

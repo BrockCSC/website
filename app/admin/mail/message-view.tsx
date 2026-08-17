@@ -41,7 +41,7 @@ const useDarkTheme = () => {
   return dark;
 };
 
-export function MessageView({
+function MessageView({
   id,
   onRead,
 }: {

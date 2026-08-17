@@ -53,7 +53,7 @@ export const SOCIAL_PLATFORMS: Platform[] = [
   },
 ];
 
-export const platformFor = (key: SocialKey) =>
+const platformFor = (key: SocialKey) =>
   SOCIAL_PLATFORMS.find((p) => p.key === key)!;
 
 /** Pulls the handle out of a stored URL so the form can show just that. */

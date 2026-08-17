@@ -53,7 +53,7 @@ const accounts = async (): Promise<Account[]> => {
   return res.list;
 };
 
-export const domainId = async (name: string): Promise<string> => {
+const domainId = async (name: string): Promise<string> => {
   const [res] = await jmap<{ list: { id: string; name: string }[] }>([
     ["x:Domain/get", {}, "c0"],
   ]);
@@ -156,16 +156,22 @@ export const setExpungeAllowed = async (
   await jmap([["x:Account/set", { update }, "c0"]]);
 };
 
+const accountNamed = async (localPart: string): Promise<Account | undefined> =>
+  (await accounts()).find((a) => a.name === localPart);
+
 export const isReadOnly = async (
   localPart: string,
 ): Promise<boolean | null> => {
-  const account = (await accounts()).find((a) => a.name === localPart);
+  const account = await accountNamed(localPart);
   if (!account) return null;
   return account.permissions?.disabledPermissions?.emailSend === true;
 };
 
-export const clearReadOnly = async (localPart: string): Promise<void> => {
-  const account = (await accounts()).find((a) => a.name === localPart);
+const setReadOnly = async (
+  localPart: string,
+  readOnly: boolean,
+): Promise<void> => {
+  const account = await accountNamed(localPart);
   if (!account) return;
 
   await jmap([
@@ -178,8 +184,8 @@ export const clearReadOnly = async (localPart: string): Promise<void> => {
               "@type": "Merge",
               enabledPermissions: {},
               disabledPermissions: {
-                emailSend: null,
-                jmapEmailSubmissionCreate: null,
+                emailSend: readOnly || null,
+                jmapEmailSubmissionCreate: readOnly || null,
               },
             },
           },
@@ -190,28 +196,8 @@ export const clearReadOnly = async (localPart: string): Promise<void> => {
   ]);
 };
 
-export const makeReadOnly = async (localPart: string): Promise<void> => {
-  const account = (await accounts()).find((a) => a.name === localPart);
-  if (!account) return;
+export const clearReadOnly = (localPart: string): Promise<void> =>
+  setReadOnly(localPart, false);
 
-  await jmap([
-    [
-      "x:Account/set",
-      {
-        update: {
-          [account.id]: {
-            permissions: {
-              "@type": "Merge",
-              enabledPermissions: {},
-              disabledPermissions: {
-                emailSend: true,
-                jmapEmailSubmissionCreate: true,
-              },
-            },
-          },
-        },
-      },
-      "c0",
-    ],
-  ]);
-};
+export const makeReadOnly = (localPart: string): Promise<void> =>
+  setReadOnly(localPart, true);

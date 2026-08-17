@@ -159,10 +159,8 @@ const getNormalizedRecurrence = (
   const interval = recurrence.interval ?? 1;
   const unit = recurrence.unit;
   if (
-    typeof interval !== "number" ||
-    !Number.isFinite(interval) ||
-    interval <= 0 ||
     !Number.isInteger(interval) ||
+    interval <= 0 ||
     (unit !== "day" && unit !== "week" && unit !== "month")
   ) {
     return null;
@@ -259,6 +257,12 @@ const getTorontoWeekdayFromTimestamp = (timestamp: number): number => {
   return WEEKDAY_SHORT_TO_INDEX[weekdayShort] ?? 0;
 };
 
+const getWeekdayName = (timestamp: number): string =>
+  WEEKDAY_NAMES_LONG[getTorontoWeekdayFromTimestamp(timestamp)];
+
+const formatClockTime = (hour: number, minute: number): string =>
+  `${((hour + 11) % 12) + 1}:${String(minute).padStart(2, "0")} ${hour >= 12 ? "PM" : "AM"}`;
+
 const getNextWeeklyStart = (
   baseStart: number,
   recurrence: NormalizedRecurrence,
@@ -336,12 +340,8 @@ const isAfterSeriesEnd = (event: EventRecord, timestamp: number): boolean => {
   );
 };
 
-export const isRecurringEvent = (event: EventRecord): boolean => {
-  if (!event.schedule) {
-    return false;
-  }
-  return getNormalizedRecurrence(event.schedule) !== null;
-};
+const isRecurringEvent = (event: EventRecord): boolean =>
+  event.schedule ? getNormalizedRecurrence(event.schedule) !== null : false;
 
 export const getRecurrenceLabel = (event: EventRecord): string | null => {
   const schedule = event.schedule;
@@ -366,39 +366,27 @@ export const getRecurrenceLabel = (event: EventRecord): string | null => {
   return `Recurring every ${recurrence.interval} ${recurrence.unit}s`;
 };
 
-export const getEventStartTimestamp = (event: EventRecord): number | null => {
-  const schedule = event.schedule;
-  if (!schedule) {
-    return null;
-  }
-  return getBaseStartTimestamp(schedule);
-};
+export const getEventStartTimestamp = (event: EventRecord): number | null =>
+  event.schedule ? getBaseStartTimestamp(event.schedule) : null;
 
 export const getEventDurationMs = (event: EventRecord): number | null =>
   event.schedule ? getSessionDurationMs(event.schedule) : null;
 
-export const getRecurringScheduleText = (event: EventRecord): string | null => {
+const getRecurringScheduleText = (event: EventRecord): string | null => {
   const schedule = event.schedule;
   if (!schedule) {
     return null;
   }
 
   const baseStart = getBaseStartTimestamp(schedule);
-  if (baseStart === null) {
-    return null;
-  }
-
   const recurrence = getNormalizedRecurrence(schedule);
-  if (!recurrence) {
+  if (baseStart === null || !recurrence) {
     return null;
   }
 
   const parts = getTimeZoneParts(baseStart);
-  const weekday = WEEKDAY_NAMES_LONG[getTorontoWeekdayFromTimestamp(baseStart)];
-  const hour12 = ((parts.hour + 11) % 12) + 1;
-  const amPm = parts.hour >= 12 ? "PM" : "AM";
-  const minute = String(parts.minute).padStart(2, "0");
-  const timeText = `${hour12}:${minute} ${amPm}`;
+  const weekday = getWeekdayName(baseStart);
+  const timeText = formatClockTime(parts.hour, parts.minute);
 
   if (recurrence.unit === "week") {
     if (recurrence.interval === 1) {
@@ -451,16 +439,12 @@ export const getEventTiming = (
   const startsInFuture = nowTimestamp <= baseStart;
 
   if (!recurrence) {
-    if (
-      isBeforeSeriesStart(event, nowTimestamp) ||
-      isAfterSeriesEnd(event, nowTimestamp)
-    ) {
+    const afterSeriesEnd = isAfterSeriesEnd(event, nowTimestamp);
+    if (isBeforeSeriesStart(event, nowTimestamp) || afterSeriesEnd) {
       return {
         isRecurring: false,
         isOngoing: false,
-        nextStartTimestamp: isAfterSeriesEnd(event, nowTimestamp)
-          ? null
-          : baseStart,
+        nextStartTimestamp: afterSeriesEnd ? null : baseStart,
       };
     }
     const isOngoing =
@@ -471,11 +455,7 @@ export const getEventTiming = (
     return {
       isRecurring: false,
       isOngoing,
-      nextStartTimestamp: startsInFuture
-        ? baseStart
-        : isOngoing
-          ? baseStart
-          : null,
+      nextStartTimestamp: startsInFuture || isOngoing ? baseStart : null,
     };
   }
 
@@ -548,10 +528,7 @@ export const formatEventDateLabel = (
   }
 
   const parts = getTimeZoneParts(occurrenceStartTimestamp);
-  const weekday =
-    WEEKDAY_NAMES_LONG[
-      getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)
-    ];
+  const weekday = getWeekdayName(occurrenceStartTimestamp);
   return `${weekday}, ${MONTH_NAMES_SHORT[parts.month - 1]} ${parts.day}, ${parts.year}`;
 };
 
@@ -564,10 +541,7 @@ export const formatEventDayBadge = (
   }
 
   const parts = getTimeZoneParts(occurrenceStartTimestamp);
-  const weekday =
-    WEEKDAY_NAMES_LONG[
-      getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)
-    ];
+  const weekday = getWeekdayName(occurrenceStartTimestamp);
   if (isRecurringEvent(event)) {
     return weekday;
   }
@@ -584,10 +558,7 @@ export const formatEventTimeLabel = (
   }
 
   const start = getTimeZoneParts(occurrenceStartTimestamp);
-  const startHour = ((start.hour + 11) % 12) + 1;
-  const startMinute = String(start.minute).padStart(2, "0");
-  const startAmPm = start.hour >= 12 ? "PM" : "AM";
-  const startText = `${startHour}:${startMinute} ${startAmPm}`;
+  const startText = formatClockTime(start.hour, start.minute);
 
   if (!schedule.endTime) {
     return startText;
@@ -598,11 +569,7 @@ export const formatEventTimeLabel = (
     return startText;
   }
 
-  const endText = `${((parsedEnd.hour + 11) % 12) + 1}:${String(parsedEnd.minute).padStart(2, "0")} ${
-    parsedEnd.hour >= 12 ? "PM" : "AM"
-  }`;
-
-  return `${startText} - ${endText}`;
+  return `${startText} - ${formatClockTime(parsedEnd.hour, parsedEnd.minute)}`;
 };
 
 export const formatNextOccurrenceDate = (
@@ -613,10 +580,7 @@ export const formatNextOccurrenceDate = (
   }
 
   const parts = getTimeZoneParts(occurrenceStartTimestamp);
-  const weekday =
-    WEEKDAY_NAMES_LONG[
-      getTorontoWeekdayFromTimestamp(occurrenceStartTimestamp)
-    ];
+  const weekday = getWeekdayName(occurrenceStartTimestamp);
 
   return `${weekday}, ${MONTH_NAMES_SHORT[parts.month - 1]} ${parts.day}`;
 };

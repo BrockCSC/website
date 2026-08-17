@@ -1,6 +1,12 @@
 import jwt from "jsonwebtoken";
 import type { NextRequest } from "next/server";
 import type { SessionUser } from "@/lib/api/types";
+import {
+  alumniRole,
+  approverRole,
+  execRole,
+  ownerRole,
+} from "@/lib/auth/capabilities";
 import type { KeycloakIdentity } from "./keycloak";
 import { effectiveRealmRoles } from "./keycloak-admin";
 
@@ -93,13 +99,11 @@ const requireRole = async (
   if (!user) return null;
   const roles = await liveRoles(user.sub);
   if (!roles) return null;
-  const superuser = process.env.SUPERUSER_ROLE ?? "owner";
-  if (!roles.includes(role) && !roles.includes(superuser)) return null;
+  if (!roles.includes(role) && !roles.includes(ownerRole())) return null;
   return { ...user, roles };
 };
 
-export const requireAdmin = (req: NextRequest) =>
-  requireRole(req, process.env.ADMIN_ROLE ?? "executive");
+export const requireAdmin = (req: NextRequest) => requireRole(req, execRole());
 
 /**
  * Anyone with a linked profile: current execs and alumni. Alumni may edit
@@ -108,9 +112,8 @@ export const requireAdmin = (req: NextRequest) =>
 export const requireMember = async (
   req: NextRequest,
 ): Promise<SessionUser | null> =>
-  (await requireAdmin(req)) ??
-  (await requireRole(req, process.env.ALUMNI_ROLE ?? "alumni"));
+  (await requireAdmin(req)) ?? (await requireRole(req, alumniRole()));
 
 /** Approving sign-ups is gated separately; bundle this with co-president. */
 export const requireApprover = (req: NextRequest) =>
-  requireRole(req, process.env.APPROVER_ROLE ?? "brockcsc-approver");
+  requireRole(req, approverRole());

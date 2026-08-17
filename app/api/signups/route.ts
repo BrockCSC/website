@@ -4,11 +4,10 @@ import { requireApprover } from "@/lib/auth/session";
 import { findExecMatchingName } from "@/lib/db/execs";
 import { findAll, toWireRecord } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
+import { notAuthorized } from "@/lib/json";
 
 export const GET = async (req: NextRequest) => {
-  if (!(await requireApprover(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireApprover(req))) return notAuthorized();
 
   const signups = await findAll<SignupRecord>(signupsTable);
   const withMatches = await Promise.all(

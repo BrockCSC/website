@@ -22,7 +22,7 @@ const config = () => {
   return { url: STALWART_URL.replace(/\/$/, "") };
 };
 
-export type EmailAddress = { name: string | null; email: string };
+type EmailAddress = { name: string | null; email: string };
 
 export type Mailbox = {
   id: string;
@@ -99,6 +99,27 @@ export const jmap = async (
   });
 };
 
+const throwIfRefused = (
+  failed: Record<string, unknown> | undefined,
+  reason: string,
+) => {
+  if (failed && Object.keys(failed).length > 0) {
+    throw new Error(`${reason}: ${JSON.stringify(failed)}`);
+  }
+};
+
+type RoleBox = { id: string; role: string | null };
+
+const roleBoxes = async (
+  token: string,
+  accountId: string,
+): Promise<RoleBox[]> => {
+  const [boxes] = (await jmap(token, [
+    ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
+  ])) as [{ list: RoleBox[] }];
+  return boxes.list;
+};
+
 type Session = {
   primaryAccounts?: Record<string, string>;
   username?: string;
@@ -159,7 +180,7 @@ const SUMMARY_PROPERTIES = [
   "keywords",
 ];
 
-export type MessageQuery = {
+type MessageQuery = {
   mailboxId?: string;
   search?: string;
   limit?: number;
@@ -381,11 +402,7 @@ export const setKeywords = async (
     ],
   ])) as [{ notUpdated?: Record<string, unknown> }];
 
-  if (res.notUpdated && Object.keys(res.notUpdated).length > 0) {
-    throw new Error(
-      `Stalwart refused the flag change: ${JSON.stringify(res.notUpdated)}`,
-    );
-  }
+  throwIfRefused(res.notUpdated, "Stalwart refused the flag change");
 };
 
 export const getMessage = async (
@@ -455,41 +472,8 @@ export const destroyMessages = async (
     ["Email/set", { accountId, destroy: ids }, "d0"],
   ])) as [{ destroyed?: string[]; notDestroyed?: Record<string, unknown> }];
 
-  if (res.notDestroyed && Object.keys(res.notDestroyed).length > 0) {
-    throw new Error(
-      `Stalwart kept some messages: ${JSON.stringify(res.notDestroyed)}`,
-    );
-  }
+  throwIfRefused(res.notDestroyed, "Stalwart kept some messages");
   return res.destroyed?.length ?? 0;
-};
-
-export const purgeTrash = async (
-  token: string,
-  days: number,
-): Promise<number> => {
-  const accountId = await mailAccountId(token);
-  const trash = (await listMailboxes(token)).find(
-    (box) => box.role === "trash",
-  );
-  if (!trash) return 0;
-
-  const before = new Date(Date.now() - days * 86_400_000).toISOString();
-  const [found] = (await jmap(token, [
-    [
-      "Email/query",
-      {
-        accountId,
-        filter: {
-          operator: "AND",
-          conditions: [{ inMailbox: trash.id }, { before }],
-        },
-        limit: 500,
-      },
-      "q0",
-    ],
-  ])) as [{ ids: string[] }];
-
-  return destroyMessages(token, found.ids ?? []);
 };
 
 export const moveMessages = async (
@@ -498,13 +482,11 @@ export const moveMessages = async (
   to: { role?: "trash" | "archive"; mailboxId?: string },
 ): Promise<void> => {
   const accountId = await mailAccountId(token);
-  const [boxes] = (await jmap(token, [
-    ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
-  ])) as [{ list: { id: string; role: string | null }[] }];
+  const boxes = await roleBoxes(token, accountId);
 
   let target = to.mailboxId
-    ? boxes.list.find((box) => box.id === to.mailboxId)?.id
-    : boxes.list.find((box) => box.role === to.role)?.id;
+    ? boxes.find((box) => box.id === to.mailboxId)?.id
+    : boxes.find((box) => box.role === to.role)?.id;
 
   if (!target && to.role) {
     const [made] = (await jmap(token, [
@@ -544,11 +526,7 @@ export const moveMessages = async (
     ],
   ])) as [{ notUpdated?: Record<string, unknown> }];
 
-  if (res.notUpdated && Object.keys(res.notUpdated).length > 0) {
-    throw new Error(
-      `Stalwart refused the move: ${JSON.stringify(res.notUpdated)}`,
-    );
-  }
+  throwIfRefused(res.notUpdated, "Stalwart refused the move");
 };
 
 const BLOB_MAX_BYTES = 25 * 1024 * 1024;
@@ -619,12 +597,9 @@ export const mailStats = async (
 ): Promise<{ sent: number; received: number }> => {
   const accountId = await mailAccountId(token);
   const after = new Date(Date.now() - days * 86_400_000).toISOString();
-  const [boxes] = (await jmap(token, [
-    ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
-  ])) as [{ list: { id: string; role: string | null }[] }];
+  const boxes = await roleBoxes(token, accountId);
 
-  const byRole = (role: string) =>
-    boxes.list.find((box) => box.role === role)?.id;
+  const byRole = (role: string) => boxes.find((box) => box.role === role)?.id;
   const wanted: ["sent" | "received", string][] = [];
   const sent = byRole("sent");
   const inbox = byRole("inbox");
@@ -669,7 +644,7 @@ export const sendingAddress = async (token: string): Promise<string | null> => {
 
 export type Attachment = { blobId: string; type: string; name: string };
 
-export type OutgoingMessage = {
+type OutgoingMessage = {
   to: string[];
   cc?: string[];
   subject: string;
@@ -738,10 +713,7 @@ export const sendMessage = async (
       "i0",
     ],
     ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
-  ])) as [
-    { list: Identity[] },
-    { list: { id: string; role: string | null }[] },
-  ];
+  ])) as [{ list: Identity[] }, { list: RoleBox[] }];
 
   const drafts = mailboxes.list.find((box) => box.role === "drafts");
   const sent = mailboxes.list.find((box) => box.role === "sent");

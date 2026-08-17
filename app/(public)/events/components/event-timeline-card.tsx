@@ -67,12 +67,10 @@ export function EventTimelineCard({
   event,
   variant,
   nowTimestamp,
-  displayButton = true,
 }: {
   event: EventItem;
   variant: EventVariant;
   nowTimestamp?: number;
-  displayButton?: boolean;
 }) {
   const hasImage = Boolean(event.image?.url);
   const imageSrc = event.image?.url || EMPTY_IMAGE;
@@ -91,6 +89,26 @@ export function EventTimelineCard({
       : null;
   const recurrenceLabel =
     variant === "upcoming" ? getRecurrenceLabel(event) : null;
+  const badges = [
+    ...(recurrenceLabel
+      ? [{ Icon: Repeat, label: recurrenceLabel, variant: "blue" as const }]
+      : []),
+    {
+      Icon: CalendarDays,
+      label: formatEventDayBadge(event, displayStartTimestamp),
+      variant: "default" as const,
+    },
+    {
+      Icon: Clock3,
+      label: formatEventTimeLabel(event, displayStartTimestamp),
+      variant: "default" as const,
+    },
+    {
+      Icon: MapPin,
+      label: event.location || "Location TBD",
+      variant: "default" as const,
+    },
+  ];
   const handleEventLinkClick = () => {
     if (typeof window === "undefined") {
       return;
@@ -217,91 +235,48 @@ export function EventTimelineCard({
         ) : (
           <div className={`${variant === "upcoming" ? "mt-auto" : ""}`}>
             <div className="mt-2.5 flex flex-wrap gap-1.5">
-              {recurrenceLabel && (
+              {badges.map(({ Icon, label, variant }) => (
                 <Badge
                   className="w-fit"
                   icon={
-                    <Repeat
+                    <Icon
                       aria-hidden="true"
                       className="h-3 w-3"
                       strokeWidth={2.25}
                     />
                   }
-                  variant="blue"
+                  key={label}
                   size="sm"
+                  variant={variant}
                 >
-                  {recurrenceLabel}
+                  {label}
                 </Badge>
-              )}
-              <Badge
-                className="w-fit"
-                icon={
-                  <CalendarDays
-                    aria-hidden="true"
-                    className="h-3 w-3"
-                    strokeWidth={2.25}
-                  />
-                }
-                variant="default"
-                size="sm"
-              >
-                {formatEventDayBadge(event, displayStartTimestamp)}
-              </Badge>
-              <Badge
-                className="w-fit"
-                icon={
-                  <Clock3
-                    aria-hidden="true"
-                    className="h-3 w-3"
-                    strokeWidth={2.25}
-                  />
-                }
-                variant="default"
-                size="sm"
-              >
-                {formatEventTimeLabel(event, displayStartTimestamp)}
-              </Badge>
-              <Badge
-                className="w-fit"
-                icon={
-                  <MapPin
-                    aria-hidden="true"
-                    className="h-3 w-3"
-                    strokeWidth={2.25}
-                  />
-                }
-                variant="default"
-                size="sm"
-              >
-                {event.location || "Location TBD"}
-              </Badge>
+              ))}
             </div>
 
-            {displayButton && (
-              <div
-                className={
-                  variant === "upcoming"
-                    ? "mt-2.5"
-                    : variant === "ongoing"
-                      ? "mt-auto pt-2"
-                      : "mt-auto pt-0 max-[700px]:pt-2"
-                }
+            <div
+              className={
+                variant === "upcoming"
+                  ? "mt-2.5"
+                  : variant === "ongoing"
+                    ? "mt-auto pt-2"
+                    : "mt-auto pt-0 max-[700px]:pt-2"
+              }
+            >
+              <Button
+                asChild
+                className="w-full max-w-full"
+                size="sm"
+                variant="primary"
               >
-                <Button
-                  asChild
-                  className="w-full max-w-full"
-                  size="sm"
-                  variant="primary"
+                <Link
+                  href={`/events/${event.$key}`}
+                  onClick={handleEventLinkClick}
                 >
-                  <Link
-                    href={`/events/${event.$key}`}
-                    onClick={handleEventLinkClick}
-                  >
-                    {variant === "ongoing" ? "Happening Now" : "Learn More"}
-                  </Link>
-                </Button>
-              </div>
-            )}
+                  {variant === "ongoing" ? "Happening Now" : "Learn More"}
+                </Link>
+              </Button>
+            </div>
           </div>
         )}
       </div>

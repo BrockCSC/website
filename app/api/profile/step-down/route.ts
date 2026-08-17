@@ -1,19 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { removeRealmRole, usersWithRealmRole } from "@/lib/auth/keycloak-admin";
+import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { requireApprover } from "@/lib/auth/session";
 import { syncAdminGroup, syncExpungeRights } from "@/lib/mail/provision";
 import { ownsIdentities } from "@/lib/env";
-
-const CO_PRESIDENT_ROLE = "co-president";
+import { notAuthorized } from "@/lib/json";
 
 /** Lets a co-president step down, provided they are not the last one. */
 export const POST = async (req: NextRequest) => {
   const user = await requireApprover(req);
-  if (!user) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!user) return notAuthorized();
 
-  const holders = await usersWithRealmRole(CO_PRESIDENT_ROLE);
+  const holders = await usersWithRealmRole(CO_PRESIDENT);
   if (!holders.some((holder) => holder.id === user.sub)) {
     return NextResponse.json(
       { error: "You do not hold the co-president role." },
@@ -36,7 +34,7 @@ export const POST = async (req: NextRequest) => {
       { status: 409 },
     );
   }
-  await removeRealmRole(user.sub, CO_PRESIDENT_ROLE);
+  await removeRealmRole(user.sub, CO_PRESIDENT);
   await syncAdminGroup();
   await syncExpungeRights();
   return NextResponse.json({ remaining: holders.length - 1 });

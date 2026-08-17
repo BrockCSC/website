@@ -3,16 +3,15 @@ import type { SignupRecord } from "@/lib/api/types";
 import { requireApprover } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
-import { badJson, jsonObject } from "@/lib/json";
+import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
+import { isSelfReview, selfReviewRefused } from "../review";
 
 export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const approver = await requireApprover(req);
-  if (!approver) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!approver) return notAuthorized();
 
   const body = await jsonObject<{ action?: string; requestId?: string }>(req);
   if (!body) return badJson();
@@ -23,15 +22,9 @@ export const POST = async (
 
   const { id } = await params;
   const signup = await findById<SignupRecord>(signupsTable, id);
-  if (!signup) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  if (signup.keycloakUserId === approver.sub) {
-    return NextResponse.json(
-      { error: "Another co-president has to review your own request." },
-      { status: 409 },
-    );
-  }
+  if (!signup) return notFound();
+  if (isSelfReview(approver, signup.keycloakUserId))
+    return selfReviewRefused("request");
 
   const requests = signup.mailDeletionRequests ?? [];
   const target = requests.find(
@@ -56,8 +49,6 @@ export const POST = async (
       request.id === target.id ? reviewed : request,
     ),
   });
-  if (!updated) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!updated) return notFound();
   return NextResponse.json(toWireRecord(updated));
 };

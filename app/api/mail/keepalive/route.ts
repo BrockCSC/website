@@ -5,11 +5,10 @@ import {
   refreshCookieOptions,
 } from "@/lib/auth/mail-token";
 import { requireMember } from "@/lib/auth/session";
+import { notAuthorized } from "@/lib/json";
 
 export const POST = async (req: NextRequest) => {
-  if (!(await requireMember(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireMember(req))) return notAuthorized();
 
   const tokens = await exchangeRefreshToken(req);
   if (!tokens) {

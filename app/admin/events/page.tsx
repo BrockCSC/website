@@ -305,8 +305,6 @@ export default function EventsManagementPage() {
           onSave={() => void load()}
           selectedEvent={selectedEvent}
           setShowModal={setShowModal}
-          showModal={showModal}
-          variant={selectedEvent ? "edit" : "create"}
         />
       )}
     </div>

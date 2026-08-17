@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { moveMessages } from "@/lib/mail/jmap-mail";
 import { mailToken, unauthorized } from "../../../auth";
+import { jsonObject } from "@/lib/json";
 
 const ROLES = ["trash", "archive"] as const;
 
@@ -11,10 +12,7 @@ export const POST = async (
   const token = await mailToken(req);
   if (!token) return unauthorized();
 
-  const body = (await req.json().catch(() => null)) as {
-    to?: unknown;
-    mailboxId?: unknown;
-  } | null;
+  const body = await jsonObject<{ to?: unknown; mailboxId?: unknown }>(req);
   const role = ROLES.find((name) => name === body?.to);
   const mailboxId =
     typeof body?.mailboxId === "string" ? body.mailboxId : undefined;

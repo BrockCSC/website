@@ -16,7 +16,7 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
 
 export const isAllowedImageType = (type: string) => type in EXTENSION_BY_TYPE;
 
-export const extensionForType = (type: string) => EXTENSION_BY_TYPE[type] ?? "";
+const extensionForType = (type: string) => EXTENSION_BY_TYPE[type] ?? "";
 
 /** Random name keyed by date; the original filename is never trusted. */
 export const uploadNameFor = (contentType: string, now = new Date()) => {
@@ -65,13 +65,11 @@ export const sniffImageType = (bytes: Uint8Array): string | null => {
   return null;
 };
 
-export const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
-  ".jpg": "image/jpeg",
+const CONTENT_TYPE_BY_EXTENSION: Record<string, string> = {
+  ...Object.fromEntries(
+    Object.entries(EXTENSION_BY_TYPE).map(([type, ext]) => [ext, type]),
+  ),
   ".jpeg": "image/jpeg",
-  ".png": "image/png",
-  ".webp": "image/webp",
-  ".gif": "image/gif",
-  ".avif": "image/avif",
 };
 
 export const contentTypeForPath = (path: string) =>

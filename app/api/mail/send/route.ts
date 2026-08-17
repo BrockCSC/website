@@ -3,6 +3,7 @@ import { findSignupByUserId } from "@/lib/db/signups";
 import { sendMessage, type Attachment } from "@/lib/mail/jmap-mail";
 import { allowanceFor, overLimitMessage } from "@/lib/mail/limit";
 import { mailUser, unauthorized } from "../auth";
+import { jsonObject } from "@/lib/json";
 
 const MAX_RECIPIENTS = 50;
 const MAX_ATTACHMENTS = 20;
@@ -36,14 +37,14 @@ export const POST = async (req: NextRequest) => {
   if (!session) return unauthorized();
   const { token } = session;
 
-  const body = (await req.json().catch(() => null)) as {
+  const body = await jsonObject<{
     to?: unknown;
     cc?: unknown;
     subject?: unknown;
     text?: unknown;
     html?: unknown;
     attachments?: unknown;
-  } | null;
+  }>(req);
   if (!body) return bad("Body must be JSON");
 
   const to = addresses(body.to);

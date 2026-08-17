@@ -2,13 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export function Reveal({
-  children,
-  className = "",
-}: {
-  children: React.ReactNode;
-  className?: string;
-}) {
+export function Reveal({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const [isShown, setIsShown] = useState(true);
 
@@ -38,7 +32,7 @@ export function Reveal({
     <div
       className={`transition-[opacity,transform] duration-[var(--dur-slow)] ease-smooth ${
         isShown ? "" : "translate-y-3 opacity-0"
-      } ${className}`}
+      }`}
       ref={ref}
     >
       {children}

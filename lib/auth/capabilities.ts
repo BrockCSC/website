@@ -1,4 +1,4 @@
-export type Capability = {
+type Capability = {
   label: string;
   detail: string;
 };
@@ -37,11 +37,6 @@ const OWNER: Capability[] = [
   },
 ];
 
-/** co-president is composite in Keycloak: holding it grants exec and approver. */
-export const GRANTED_BY: Record<string, string[]> = {
-  [CO_PRESIDENT]: [execRole(), approverRole()],
-};
-
 export const capabilitiesOf = (role: string): Capability[] => {
   if (role === ownerRole()) return OWNER;
   if (role === CO_PRESIDENT) return [...EXEC, ...APPROVER];
@@ -51,4 +46,6 @@ export const capabilitiesOf = (role: string): Capability[] => {
   return [];
 };
 
-export const impliedBy = (role: string): string[] => GRANTED_BY[role] ?? [];
+/** co-president is composite in Keycloak: holding it grants exec and approver. */
+export const impliedBy = (role: string): string[] =>
+  role === CO_PRESIDENT ? [execRole(), approverRole()] : [];

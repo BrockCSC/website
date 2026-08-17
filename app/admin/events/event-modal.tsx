@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { EventRecord, WithKey, createEvent, editEvent } from "@/lib/api";
-import { Label, PosterField, Sheet, btn, errorText, field } from "./ui";
+import { ImageUpload } from "@/components/ui/image-upload";
+import { Label } from "../users/ui";
+import { Sheet, btn, errorText, field } from "./ui";
 
 type Errors = Partial<
   Record<"title" | "start" | "end" | "signupUrl" | "form", string>
@@ -20,18 +22,15 @@ const isHttpUrl = (value: string) => {
 };
 
 export default function EventModal({
-  showModal,
   setShowModal,
-  variant = "create",
   selectedEvent,
   onSave,
 }: {
-  showModal: boolean;
   setShowModal: (value: boolean) => void;
-  variant: "create" | "edit";
   selectedEvent?: WithKey<EventRecord> | null;
   onSave: () => void;
 }) {
+  const variant = selectedEvent ? "edit" : "create";
   const schedule = selectedEvent?.schedule;
   const [title, setTitle] = useState(selectedEvent?.title ?? "");
   const [presenter, setPresenter] = useState(selectedEvent?.presenter ?? "");
@@ -55,8 +54,6 @@ export default function EventModal({
   const [signupUrl, setSignupUrl] = useState(selectedEvent?.signupUrl ?? "");
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<Errors>({});
-
-  if (!showModal) return null;
 
   const clear = (key: keyof Errors) =>
     setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
@@ -196,7 +193,11 @@ export default function EventModal({
             />
           </div>
 
-          <PosterField onChange={setPosterUrl} value={posterUrl} />
+          <ImageUpload
+            label="Poster"
+            onChange={setPosterUrl}
+            value={posterUrl}
+          />
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div>

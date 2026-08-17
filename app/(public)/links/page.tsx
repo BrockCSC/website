@@ -4,6 +4,7 @@ import Image from "next/image";
 import { ArrowUpRight, School } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DISCORD_INVITE } from "@/lib/links";
 
 export const metadata: Metadata = {
   title: "Links",
@@ -31,7 +32,7 @@ type QuickLink =
 const quickLinks: QuickLink[] = [
   {
     title: "Join our Discord",
-    href: "https://discord.gg/qsctEK2",
+    href: DISCORD_INVITE,
     icon: "/icons/discord.svg",
     iconAlt: "Discord icon",
     featured: true,

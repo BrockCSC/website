@@ -5,8 +5,14 @@ import {
   removeRealmRole,
   usersWithRealmRole,
 } from "@/lib/auth/keycloak-admin";
+import { alumniRole, CO_PRESIDENT, execRole } from "@/lib/auth/capabilities";
 import { invalidateRoles } from "@/lib/auth/session";
-import { findById, update } from "@/lib/db/repository";
+import {
+  type Entity,
+  findById,
+  toWireRecord,
+  update,
+} from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
 import {
@@ -17,8 +23,6 @@ import {
   syncExpungeRights,
 } from "@/lib/mail/provision";
 import { isReadOnly, localPartTaken } from "@/lib/mail/stalwart";
-
-type Entity<T> = T & { id: string };
 
 export type Consequence = {
   id: string;
@@ -34,10 +38,6 @@ export type Person = {
   signup: Entity<SignupRecord> | null;
   exec: Entity<ExecRecord> | null;
 };
-
-const CO_PRESIDENT = "co-president";
-const execRole = () => process.env.ADMIN_ROLE ?? "executive";
-const alumniRole = () => process.env.ALUMNI_ROLE ?? "alumni";
 
 const managedRoles = () => [
   {
@@ -286,19 +286,10 @@ const transitionFor = (
   };
 };
 
-const stated = ({ id, group, title, detail, blocked }: Item): Consequence => ({
-  id,
-  group,
-  title,
-  detail,
-  blocked,
-});
+const stated = ({ run, ...rest }: Item): Consequence => rest;
 
-const wire = <T>(entity: (T & { id: string }) | null) => {
-  if (!entity) return null;
-  const { id, ...rest } = entity;
-  return { $key: id, ...rest } as T & { $key: string };
-};
+const wire = <T>(entity: Entity<T> | null) =>
+  entity ? (toWireRecord(entity) as T & { $key: string }) : null;
 
 export const describePerson = async (person: Person): Promise<PersonDetail> => {
   const { signup, exec } = person;

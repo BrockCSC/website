@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-const flip = () => {
+export const flipTheme = () => {
   const dark = document.documentElement.classList.toggle("dark");
   try {
     localStorage.setItem("brockcsc-theme", dark ? "dark" : "light");
@@ -13,7 +13,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
   return (
     <button
       type="button"
-      onClick={flip}
+      onClick={flipTheme}
       title="Switch between light and dark"
       aria-label="Switch between light and dark"
       className={cn(

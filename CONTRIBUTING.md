@@ -29,6 +29,7 @@ Keycloak is public, so you log in against the real realm — there is no local K
 | `npm run lint`                    | `eslint`                                                       |
 | `npm run typecheck`               | `next typegen && tsc --noEmit`                                 |
 | `npm run format` / `format:check` | Prettier write / verify — CI runs the check                    |
+| `npm run deadcode`                | `knip` — unreached files, exports and deps; not run by CI      |
 | `npm run db:generate`             | `drizzle-kit generate` — writes a migration into `drizzle/`    |
 | `npm run db:migrate`              | Applies migrations to `DB_SCHEMA`                              |
 | `npm run db:up` / `db:down`       | Starts / stops `deploy/docker-compose.dev.yml`                 |

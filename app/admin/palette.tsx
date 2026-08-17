@@ -16,6 +16,7 @@ import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { sender, when } from "./mail/message-list";
 import { SECTIONS, type Section } from "./sections";
 import { useSession } from "./session";
+import { flipTheme } from "@/components/theme-toggle";
 import {
   buildPeople,
   fetchExecs,
@@ -130,15 +131,6 @@ const asTerm = (name: string) => (name.includes(" ") ? `"${name}"` : name);
 
 const details = (values: (string | undefined)[]) =>
   values.filter(Boolean).join(" · ");
-
-const flipTheme = () => {
-  const dark = document.documentElement.classList.toggle("dark");
-  try {
-    localStorage.setItem("brockcsc-theme", dark ? "dark" : "light");
-  } catch {
-    return;
-  }
-};
 
 const ROW =
   "relative z-10 block w-full animate-rise-in rounded-[10px] px-3 py-2 text-left";

@@ -1,16 +1,15 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireApprover } from "@/lib/auth/session";
-import { badJson, jsonObject } from "@/lib/json";
+import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { applyConsequences, findPerson } from "../consequences";
+import { isSelfReview, selfReviewRefused } from "../review";
 
 export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const approver = await requireApprover(req);
-  if (!approver) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!approver) return notAuthorized();
 
   const body = await jsonObject<{ apply?: unknown }>(req);
   if (!body) return badJson();
@@ -23,15 +22,9 @@ export const POST = async (
 
   const { id } = await params;
   const person = await findPerson(id);
-  if (!person) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
-  if (person.signup?.keycloakUserId === approver.sub) {
-    return NextResponse.json(
-      { error: "Another co-president has to review your own record." },
-      { status: 409 },
-    );
-  }
+  if (!person) return notFound();
+  if (isSelfReview(approver, person.signup?.keycloakUserId))
+    return selfReviewRefused("record");
 
   return NextResponse.json(await applyConsequences(person, apply));
 };

@@ -2,7 +2,7 @@
 export const ACTIVE_TITLES = ["Co-President", "Treasurer", "Executive"];
 
 /** Held by past execs only. Kept so historical records read correctly. */
-export const DEPRECATED_TITLES = ["President", "Vice President"];
+const DEPRECATED_TITLES = ["President", "Vice President"];
 
 export const isDeprecatedTitle = (title?: string) =>
   DEPRECATED_TITLES.some(

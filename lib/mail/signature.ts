@@ -7,7 +7,7 @@ const CLUB = "Brock University Computer Science Club";
 const SITE = "brockcsc.ca";
 const SITE_URL = () => process.env.MAIL_SITE_URL ?? `https://${SITE}`;
 
-export const DISCLAIMER =
+const DISCLAIMER =
   "BrockCSC is a student club at Brock University. Views expressed are the sender's own and are not those of Brock University. This message may be confidential. If you have received it in error, please notify the sender immediately and delete it from your system.";
 
 export type Signer = { name: string; title?: string; photo?: string };

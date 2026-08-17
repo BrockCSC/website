@@ -5,10 +5,11 @@ import {
   deleteUser,
   setUserEnabled,
 } from "@/lib/auth/keycloak-admin";
+import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { requireApprover } from "@/lib/auth/session";
 import { describePerson, findPerson } from "./consequences";
 import { ownsIdentities } from "@/lib/env";
-import { badJson, jsonObject } from "@/lib/json";
+import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
 import {
@@ -31,14 +32,10 @@ export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  if (!(await requireApprover(req))) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!(await requireApprover(req))) return notAuthorized();
   const { id } = await params;
   const person = await findPerson(id);
-  if (!person) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!person) return notFound();
   return NextResponse.json(await describePerson(person));
 };
 
@@ -47,9 +44,7 @@ export const PATCH = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const approver = await requireApprover(req);
-  if (!approver) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!approver) return notAuthorized();
 
   const body = await jsonObject<{ action?: string }>(req);
   if (!body) return badJson();
@@ -60,9 +55,7 @@ export const PATCH = async (
 
   const { id } = await params;
   const signup = await findById<SignupRecord>(signupsTable, id);
-  if (!signup) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!signup) return notFound();
   if (signup.status !== "pending") {
     return NextResponse.json(
       { error: `Already ${signup.status}` },
@@ -114,7 +107,7 @@ export const PATCH = async (
       if (ownsIdentities()) {
         await assignRealmRole(signup.keycloakUserId!, role);
         if (!isPastExec && grantsApproval(exec?.title)) {
-          await assignRealmRole(signup.keycloakUserId!, "co-president");
+          await assignRealmRole(signup.keycloakUserId!, CO_PRESIDENT);
         }
       }
     } catch (err) {
@@ -169,9 +162,7 @@ export const PATCH = async (
     reviewedBy: approver.email || approver.name,
     reviewedAt: new Date().toISOString(),
   });
-  if (!reviewed) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!reviewed) return notFound();
   return NextResponse.json(toWireRecord(reviewed));
 };
 
@@ -180,15 +171,11 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const approver = await requireApprover(req);
-  if (!approver) {
-    return NextResponse.json({ error: "Not authorized" }, { status: 401 });
-  }
+  if (!approver) return notAuthorized();
 
   const { id } = await params;
   const signup = await findById<SignupRecord>(signupsTable, id);
-  if (!signup) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  if (!signup) return notFound();
   if (signup.keycloakUserId === approver.sub) {
     return NextResponse.json(
       { error: "You cannot delete your own account." },

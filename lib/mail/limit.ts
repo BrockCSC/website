@@ -32,7 +32,7 @@ const today = () => {
 };
 
 /** Counted on the mail server, so sends from other clients count too. */
-export const sentToday = async (token: string): Promise<number> => {
+const sentToday = async (token: string): Promise<number> => {
   const accountId = await mailAccountId(token);
   const [boxes] = (await jmap(token, [
     ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
