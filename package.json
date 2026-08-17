@@ -14,7 +14,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env.local scripts/migrate.mjs",
     "db:up": "docker compose -f deploy/docker-compose.dev.yml up -d",
-    "db:down": "docker compose -f deploy/docker-compose.dev.yml down"
+    "db:down": "docker compose -f deploy/docker-compose.dev.yml down",
+    "deadcode": "knip"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
@@ -48,6 +49,7 @@
     "drizzle-kit": "^0.31.10",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
+    "knip": "^6.32.2",
     "prettier": "^3.4.2",
     "tailwindcss": "^4",
     "typescript": "^5"

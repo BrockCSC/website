@@ -5,6 +5,7 @@ import Sidebar from "@/components/ui/sidebar";
 import durations from "@/data/courseDurations.json";
 import requirements from "@/data/programRequirements.json";
 import courses from "@/data/courses.json";
+import { DISCORD_INVITE } from "@/lib/links";
 
 export const metadata: Metadata = {
   title: "CS Guide",
@@ -449,7 +450,7 @@ const Guide: React.FC = () => {
                     Instagram
                   </a>{" "}
                   and join our{" "}
-                  <a className={linkStyle} href="https://discord.gg/a8nWyZAY9T">
+                  <a className={linkStyle} href={DISCORD_INVITE}>
                     Discord
                   </a>{" "}
                   to stay connected.

@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { ArrowUpRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DISCORD_INVITE } from "@/lib/links";
 
-interface DiscordButtonProps {
+type DiscordButtonProps = {
   className?: string;
-}
+};
 
 export function DiscordButton({ className }: DiscordButtonProps) {
   return (
@@ -14,11 +15,7 @@ export function DiscordButton({ className }: DiscordButtonProps) {
       variant="primary"
       className={cn("w-full cursor-pointer sm:w-auto", className)}
     >
-      <a
-        href="https://discord.com/invite/qsctEK2"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href={DISCORD_INVITE} target="_blank" rel="noopener noreferrer">
         Join Discord <ArrowUpRight className="ml-2" />
       </a>
     </Button>

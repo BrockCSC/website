@@ -2,7 +2,6 @@ export {
   fetchAllEvents,
   fetchCurrentExecs,
   fetchEventById,
-  fetchFutureEvents,
   fetchPreviousExecs,
   fetchProfile,
   updateProfile,

@@ -1,10 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import logo from "../../public/logo.svg";
+import { DISCORD_INVITE } from "@/lib/links";
 
 const socials = [
   { name: "Instagram", href: "https://www.instagram.com/brockcsc/" },
-  { name: "Discord", href: "https://discord.com/invite/qsctEK2" },
+  { name: "Discord", href: DISCORD_INVITE },
   { name: "LinkedIn", href: "https://www.linkedin.com/company/brockcsc" },
 ];
 

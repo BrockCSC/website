@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, CalendarDays, Clock3, MapPin } from "lucide-react";
 
-import { fetchFutureEvents, type EventRecord, type WithKey } from "@/lib/api";
+import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
+import { classifyEventsByTiming } from "@/lib/events/classify";
 import {
   formatEventDayBadge,
   formatEventTimeLabel,
   getEventStartTimestamp,
+  getEventTiming,
 } from "@/lib/events/schedule";
 import { EventCard } from "@/components/ui/event-card";
 
@@ -17,20 +19,19 @@ type EventItem = WithKey<EventRecord>;
 export function UpcomingEventsSection() {
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [nowTimestamp] = useState(() => Date.now());
 
   useEffect(() => {
     let active = true;
     const loadEvents = async () => {
       try {
-        const futureEvents = await fetchFutureEvents();
+        const { upcoming } = classifyEventsByTiming(
+          await fetchAllEvents(),
+          nowTimestamp,
+        );
         if (!active) return;
 
-        const sorted = futureEvents.sort((a, b) => {
-          return (
-            (getEventStartTimestamp(a) || 0) - (getEventStartTimestamp(b) || 0)
-          );
-        });
-        setEvents(sorted.slice(0, 2));
+        setEvents(upcoming.slice(0, 2));
       } catch (e) {
         console.error("Failed to load events", e);
       } finally {
@@ -42,7 +43,7 @@ export function UpcomingEventsSection() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [nowTimestamp]);
 
   return (
     <section className="w-full border-b-2 border-line bg-raised">
@@ -95,7 +96,9 @@ export function UpcomingEventsSection() {
             </>
           ) : events.length > 0 ? (
             events.map((event) => {
-              const ts = getEventStartTimestamp(event);
+              const ts =
+                getEventTiming(event, nowTimestamp).nextStartTimestamp ??
+                getEventStartTimestamp(event);
               const dayLabel = formatEventDayBadge(event, ts);
               const timeLabel = formatEventTimeLabel(event, ts);
 

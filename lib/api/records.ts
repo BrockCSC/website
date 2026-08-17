@@ -1,6 +1,5 @@
 import { apiFetch } from "./client";
 import type { DashboardStats, EventRecord, ExecRecord, WithKey } from "./types";
-import { getEventStartTimestamp, getEventTiming } from "@/lib/events/schedule";
 
 const fetchAllExecs = async (): Promise<WithKey<ExecRecord>[]> =>
   apiFetch<WithKey<ExecRecord>[]>("/api/execs");
@@ -25,24 +24,6 @@ export const updateProfile = async (
 
 export const fetchAllEvents = async (): Promise<WithKey<EventRecord>[]> =>
   apiFetch<WithKey<EventRecord>[]>("/api/events");
-
-export const fetchFutureEvents = async (): Promise<WithKey<EventRecord>[]> => {
-  const now = Date.now();
-  const events = await fetchAllEvents();
-
-  return events.filter((event) => {
-    const timing = getEventTiming(event, now);
-    if (timing.isOngoing) {
-      return false;
-    }
-    if (timing.isRecurring) {
-      return timing.nextStartTimestamp !== null;
-    }
-
-    const startTimestamp = getEventStartTimestamp(event);
-    return typeof startTimestamp === "number" && startTimestamp >= now;
-  });
-};
 
 export const fetchEventById = async (
   eventId: string,

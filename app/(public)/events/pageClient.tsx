@@ -11,6 +11,7 @@ import { getEventStartTimestamp } from "@/lib/events/schedule";
 
 import { RetryNotice, SearchField } from "../components/search-panel";
 import { EventTimelineCard } from "./components/event-timeline-card";
+import { DISCORD_INVITE } from "@/lib/links";
 
 type EventItem = WithKey<EventRecord>;
 
@@ -248,14 +249,15 @@ export default function EventsPageClient({
                 We run workshops, socials and talks through the school year.
                 Join the Discord and you&apos;ll hear about the next one first.
               </p>
-              <a
-                className="inline-flex items-center gap-2 rounded-[16px] border-2 border-line bg-brand px-4 py-2.5 text-sm font-semibold text-brand-ink shadow-brut-sm"
-                href="https://discord.gg/dsxEASYgRd"
-                rel="noreferrer"
-                target="_blank"
-              >
-                Join the Discord
-              </a>
+              <Button asChild>
+                <a
+                  href={DISCORD_INVITE}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Join the Discord
+                </a>
+              </Button>
             </section>
           )}
 
