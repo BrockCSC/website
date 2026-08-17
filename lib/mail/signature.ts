@@ -58,10 +58,10 @@ export const htmlSignature = (signer: Signer): string => {
   return (
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:18px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">` +
     `<tr>` +
-    `<td style="padding-right:14px;vertical-align:top">` +
+    `<td valign="middle" style="padding-right:14px;vertical-align:middle">` +
     `<img src="${escapeHtml(avatar)}" width="52" height="52" alt="" style="width:52px;height:52px;border-radius:10px;border:0" />` +
     `</td>` +
-    `<td style="vertical-align:top;border-left:3px solid #9A4440;padding-left:14px">` +
+    `<td valign="middle" style="vertical-align:middle;border-left:3px solid #9A4440;padding-left:14px">` +
     `<div style="font-size:14px;font-weight:700;line-height:1.45;color:#9A4440">${escapeHtml(signer.name)}</div>` +
     detail +
     `<a href="${site}" style="font-size:12px;line-height:1.45;color:#9A4440;text-decoration:none">${SITE}</a>` +
