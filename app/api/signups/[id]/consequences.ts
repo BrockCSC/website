@@ -16,7 +16,7 @@ import {
   syncAdminGroup,
   syncExpungeRights,
 } from "@/lib/mail/provision";
-import { localPartTaken } from "@/lib/mail/stalwart";
+import { isReadOnly, localPartTaken } from "@/lib/mail/stalwart";
 
 type Entity<T> = T & { id: string };
 
@@ -203,19 +203,28 @@ type Plan = {
   items: Item[];
   held: string[] | null;
   provisioned: boolean | null;
+  readOnly: boolean | null;
 };
 
 const plan = async ({ signup, exec }: Person): Promise<Plan> => {
   if (!signup) {
-    return { items: tileItems(exec), held: null, provisioned: null };
+    return {
+      items: tileItems(exec),
+      held: null,
+      provisioned: null,
+      readOnly: null,
+    };
   }
 
-  const [held, coPresidents, provisioned] = await Promise.all([
+  const [held, coPresidents, provisioned, readOnly] = await Promise.all([
     signup.keycloakUserId
       ? effectiveRealmRoles(signup.keycloakUserId).catch(() => null)
       : null,
     usersWithRealmRole(CO_PRESIDENT).catch(() => null),
     mailboxProvisioned(signup),
+    signup.username
+      ? isReadOnly(signup.username).catch(() => null)
+      : Promise.resolve(null),
   ]);
   const address = mailAddress(signup);
 
@@ -227,13 +236,14 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
             signup,
             address,
             provisioned,
-            exec?.isCurrentExec === false,
+            readOnly ?? exec?.isCurrentExec === false,
           )
         : []),
       ...tileItems(exec),
     ],
     held,
     provisioned,
+    readOnly,
   };
 };
 
@@ -292,7 +302,7 @@ const wire = <T>(entity: (T & { id: string }) | null) => {
 
 export const describePerson = async (person: Person): Promise<PersonDetail> => {
   const { signup, exec } = person;
-  const { items, held, provisioned } = await plan(person);
+  const { items, held, provisioned, readOnly } = await plan(person);
 
   return {
     signup: wire(signup),
@@ -303,7 +313,7 @@ export const describePerson = async (person: Person): Promise<PersonDetail> => {
       address: signup ? mailAddress(signup) : null,
       provisioned,
       protected: !!signup?.username && isProtectedMailbox(signup.username),
-      readOnly: exec?.isCurrentExec === false,
+      readOnly: readOnly ?? exec?.isCurrentExec === false,
     },
     identitiesEditable: ownsIdentities(),
     consequences: items.map(stated),

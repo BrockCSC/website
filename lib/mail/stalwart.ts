@@ -156,6 +156,14 @@ export const setExpungeAllowed = async (
   await jmap([["x:Account/set", { update }, "c0"]]);
 };
 
+export const isReadOnly = async (
+  localPart: string,
+): Promise<boolean | null> => {
+  const account = (await accounts()).find((a) => a.name === localPart);
+  if (!account) return null;
+  return account.permissions?.disabledPermissions?.emailSend === true;
+};
+
 export const clearReadOnly = async (localPart: string): Promise<void> => {
   const account = (await accounts()).find((a) => a.name === localPart);
   if (!account) return;
