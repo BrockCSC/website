@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import Image from "next/image";
-import { ChevronDown, X } from "lucide-react";
+import { X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { ExecRecord, WithKey } from "@/lib/api";
@@ -141,8 +141,8 @@ export function TeamMemberCard({
                 <X className="size-3.5" />
               </button>
             </div>
-            <div className="flex min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 pb-3">
-              <p className="m-auto whitespace-pre-line text-[0.82rem] leading-relaxed text-subtle">
+            <div className="flex min-h-0 flex-1 items-center-safe overflow-y-auto overscroll-contain px-3 pb-3">
+              <p className="w-full whitespace-pre-line text-[0.82rem] leading-relaxed text-subtle">
                 {bio}
               </p>
             </div>
@@ -170,7 +170,7 @@ export function TeamMemberCard({
                 {socialLinks.map((social) => (
                   <a
                     aria-label={`${name} ${social.platform}`}
-                    className="inline-flex size-9 items-center justify-center text-brand hover:opacity-75"
+                    className="inline-flex size-9 items-center justify-center rounded-full text-brand hover:bg-tint"
                     href={social.url}
                     key={social.platform}
                     rel="noopener noreferrer"
@@ -191,16 +191,15 @@ export function TeamMemberCard({
                   <button
                     aria-controls={bioPanelId}
                     aria-expanded={isBioOpen}
-                    className="inline-flex h-9 items-center gap-1 rounded-full border border-brand/35 bg-tint px-2.5 text-[0.65rem] font-semibold uppercase tracking-wide text-brand hover:bg-brand hover:text-brand-ink"
+                    className={`inline-flex h-9 items-center rounded-full px-2.5 text-[0.65rem] font-bold uppercase tracking-wider ${
+                      isBioOpen
+                        ? "bg-brand text-brand-ink"
+                        : "text-brand hover:bg-tint"
+                    }`}
                     onClick={() => setIsBioOpen((previous) => !previous)}
                     type="button"
                   >
                     Bio
-                    <ChevronDown
-                      className={`size-3.5 transition-transform duration-[var(--dur)] ease-smooth ${
-                        isBioOpen ? "" : "rotate-180"
-                      }`}
-                    />
                   </button>
                 )}
               </div>
