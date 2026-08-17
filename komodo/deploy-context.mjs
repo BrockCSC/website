@@ -8,6 +8,11 @@ if (!VPS_HOST) {
   throw new Error("VPS_HOST is not set.");
 }
 
+const IMAGE = process.env.IMAGE;
+if (!IMAGE) {
+  throw new Error("IMAGE is not set.");
+}
+
 const slugify = (branch) =>
   branch
     .toLowerCase()
@@ -46,6 +51,7 @@ const databaseUrl = `postgresql://brockcsc:[[BROCKCSC_DB_PASSWORD]]@postgres:543
 const adminSubdomain = `admin.${subdomain}`;
 
 const environment = [
+  `IMAGE=${IMAGE}`,
   `PROJECT_NAME=${projectName}`,
   `SUBDOMAIN=${subdomain}`,
   `ADMIN_SUBDOMAIN=${adminSubdomain}`,
@@ -75,7 +81,7 @@ const environment = [
 ].join("\n");
 
 console.log(
-  `Deploying ${projectName} from ${branch} -> https://${subdomain} (+ https://${adminSubdomain})`,
+  `Deploying ${IMAGE} as ${projectName} from ${branch} -> https://${subdomain} (+ https://${adminSubdomain})`,
 );
 
 const output = process.env.GITHUB_OUTPUT;

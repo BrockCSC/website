@@ -1,0 +1,2 @@
+# npm's bundled tar in node:22-alpine; the runtime never invokes npm.
+CVE-2026-59873

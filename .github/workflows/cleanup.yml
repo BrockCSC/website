@@ -44,6 +44,5 @@ jobs:
           install -m 600 -D /dev/null ~/.ssh/id_deploy
           echo "$SSH_KEY" > ~/.ssh/id_deploy
           ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          ssh -i ~/.ssh/id_deploy "$DEPLOY_USER@$DEPLOY_HOST" \
-            "docker exec postgres psql -U brockcsc -d brockcsc -c \"DROP SCHEMA IF EXISTS $DB_SCHEMA CASCADE;\"" \
+          ssh -i ~/.ssh/id_deploy "$DEPLOY_USER@$DEPLOY_HOST" "drop-db $DB_SCHEMA" \
             || echo "::warning::Schema drop failed - continuing, the daily sweep will catch it"
