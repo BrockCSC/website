@@ -15,9 +15,9 @@ komodo() {
     -d "$body")
   if [ "$status" -ge 400 ]; then
     if [ "$quiet" = "quiet" ]; then
-      echo "POST $path -> HTTP $status: $(cat "$resp")"
+      echo "POST $path -> HTTP $status: $(cat "$resp")" >&2
     else
-      echo "::error::POST $path -> HTTP $status: $(cat "$resp")"
+      echo "::error::POST $path -> HTTP $status: $(cat "$resp")" >&2
     fi
     rm -f "$resp"
     return 1
