@@ -61,6 +61,7 @@ Two separate asks:
 | Own profile only                         | `alumni`                                                          |
 | Portal, mail, analytics, events, profile | `executive`                                                       |
 | Approving sign-ups, roles, mail limits   | `co-president` (composite, carries `brockcsc-approver`)           |
+| Reading any inbox, aliases, routing      | `brockcsc-mail-admin` (also carried by `co-president`)            |
 | Sign-up creating accounts                | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` for `brockcsc-provisioner` |
 | Everything, permanently                  | `owner` (see below)                                               |
 
@@ -131,6 +132,7 @@ Documented in `.env.example` (production shape) and `.env.local.example` (the lo
 | `ADMIN_ROLE`                           | no          | `executive`                    | Realm role required to reach the portal                                                      |
 | `ALUMNI_ROLE`                          | no          | `alumni`                       | Past execs: own profile only                                                                 |
 | `APPROVER_ROLE`                        | no          | `brockcsc-approver`            | Bundled into the `co-president` composite role                                               |
+| `MAIL_ADMIN_ROLE`                      | no          | `brockcsc-mail-admin`          | Reads every mailbox and manages aliases. Bundled into `co-president`                         |
 | `SUPERUSER_ROLE`                       | no          | `owner`                        | Passes every role check                                                                      |
 | `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` | for sign-up | falls back to the login client | **Secret.** Service account with `manage-users` + `view-realm`                               |
 | `SESSION_JWT_SECRET`                   | yes         | —                              | **Secret.** Signs our own session cookie, not the Keycloak token                             |
@@ -142,7 +144,8 @@ Documented in `.env.example` (production shape) and `.env.local.example` (the lo
 | `PROTECTED_MAIL_USERS`                 | no          | `alaqmargandhi`                | Comma-separated accounts that can never be deprovisioned or rate-limited                     |
 | `MAIL_DAILY_LIMIT`                     | no          | `50`                           | Outbound messages per user per day (ceiling 500)                                             |
 | `MAIL_SITE_URL`                        | no          | `https://brockcsc.ca`          | Link target in the mail signature                                                            |
-| `ADMIN_MAIL_GROUP`                     | no          | `admin`                        | Stalwart group kept in sync with the current execs                                           |
+| `ADMIN_MAIL_GROUP`                     | no          | `admin`                        | Stalwart group kept in sync with the current co-presidents                                   |
+| `CO_PRESIDENTS_LIST`                   | no          | `co-presidents`                | Mailing list of the co-presidents: catch-all target, and where read-only mailboxes forward   |
 | `ADMIN_SUBDOMAIN` / `PUBLIC_SUBDOMAIN` | prod only   | unset                          | Enables the middleware host split                                                            |
 | `UPLOAD_DIR`                           | prod only   | —                              | `/data/uploads` in the container, on the `brockcsc-uploads` volume                           |
 | `PORT`                                 | no          | `3000`                         | Set by the Dockerfile                                                                        |
@@ -201,12 +204,15 @@ idempotent, so run it as often as you like. Install it on the VPS beside `drop-d
 daily timer - nothing runs it automatically from this repo, and the certificate goes stale roughly
 every sixty days without it.
 
-**Outside mail apps.** Keycloak passwords do not authenticate against Stalwart, so IMAP and SMTP need
-a Stalwart app password. `/admin/mail/setup` lets a member mint one per device and revoke it, through
-`x:AppPassword/set` in `lib/mail/stalwart.ts`; the secret is returned once and never readable again.
-`makeMailboxReadOnly` revokes every one of them, so a stepped-down exec's mail app stops when their
-portal access does. IMAP is `mail.brockcsc.ca:993` and submission `:465`, both SSL, username being the
-full address — the same values Stalwart publishes at `autoconfig.brockcsc.ca`.
+**Outside mail apps.** A portal sign-in sets the Stalwart password to the one just used
+(`syncMailPassword` in `lib/mail/password.ts`, from the login route, production only), so IMAP and
+SMTP take the portal password; anyone whose last sign-in predates that needs one more. `/admin/mail/setup`
+hands Apple devices an unsigned `.mobileconfig` from `/api/mail/setup/profile`, and app passwords stay
+there as an optional per-device alternative — `makeMailboxReadOnly` revokes every one of them. Outlook
+and Thunderbird find the servers through `autodiscover.brockcsc.ca` and `autoconfig.brockcsc.ca`, and
+`app/.well-known/` proxies Stalwart's user-agent-configuration and autoconfig XML onto `brockcsc.ca`
+for clients that only look there. IMAP is `mail.brockcsc.ca:993` and submission `:465`, both SSL,
+username being the full address.
 
 The mail stack (`deploy/mail/docker-compose.yml`) has its own workflow, so website commits never
 bounce IMAP.

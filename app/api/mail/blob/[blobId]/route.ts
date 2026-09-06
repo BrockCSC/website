@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { downloadBlob } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../../auth";
+import { mailAccess, unauthorized } from "../../auth";
 
 const RISKY = /html|xml|svg|javascript|ecmascript/i;
 const TYPE = /^[\w.+-]+\/[\w.+-]+$/;
@@ -18,15 +18,15 @@ export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ blobId: string }> },
 ) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const access = await mailAccess(req);
+  if (!access) return unauthorized();
 
   const search = new URL(req.url).searchParams;
   const name = safeName(search.get("name") ?? "attachment");
   const type = safeType(search.get("type") ?? "");
   const { blobId } = await params;
 
-  const upstream = await downloadBlob(token, blobId, name, type).catch(
+  const upstream = await downloadBlob(access, blobId, name, type).catch(
     () => null,
   );
   if (!upstream?.body) {

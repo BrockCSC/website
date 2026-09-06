@@ -5,6 +5,7 @@ import {
   alumniRole,
   approverRole,
   execRole,
+  mailAdminRole,
   ownerRole,
 } from "@/lib/auth/capabilities";
 import type { KeycloakIdentity } from "./keycloak";
@@ -117,3 +118,6 @@ export const requireMember = async (
 /** Approving sign-ups is gated separately; bundle this with co-president. */
 export const requireApprover = (req: NextRequest) =>
   requireRole(req, approverRole());
+
+export const requireMailAdmin = (req: NextRequest) =>
+  requireRole(req, mailAdminRole());

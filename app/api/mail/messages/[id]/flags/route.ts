@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { setKeywords } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../../../auth";
+import { mailWriter } from "../../../auth";
 import { jsonObject } from "@/lib/json";
 
 const KEYWORDS = { seen: "$seen", flagged: "$flagged" } as const;
@@ -9,8 +9,8 @@ export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const scope = await mailWriter(req);
+  if (scope instanceof NextResponse) return scope;
 
   const body = await jsonObject<Record<string, unknown>>(req);
   const wanted = Object.entries(KEYWORDS).flatMap(([key, keyword]) =>
@@ -24,6 +24,6 @@ export const POST = async (
   }
 
   const { id } = await params;
-  await setKeywords(token, [id], Object.fromEntries(wanted));
+  await setKeywords(scope.access, [id], Object.fromEntries(wanted));
   return NextResponse.json({ ok: true });
 };

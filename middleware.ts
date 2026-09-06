@@ -18,6 +18,12 @@ export const middleware = (req: NextRequest) => {
     if (pathname === "/") {
       return NextResponse.rewrite(new URL("/admin", req.url));
     }
+    if (pathname === "/site") {
+      const site = process.env.PUBLIC_SUBDOMAIN;
+      return site
+        ? NextResponse.redirect(`https://${site}/`, 308)
+        : NextResponse.rewrite(new URL("/", req.url));
+    }
     // Public pages stay on the public site so there is one canonical copy.
     if (/^\/(events|team|links|cs-guide)(\/|$)/.test(pathname)) {
       const site = process.env.PUBLIC_SUBDOMAIN;
@@ -31,6 +37,9 @@ export const middleware = (req: NextRequest) => {
     return NextResponse.next();
   }
 
+  if (pathname === "/site") {
+    return NextResponse.rewrite(new URL("/", req.url));
+  }
   if (ADMIN_HOST && /^\/admin(\/|$)/.test(pathname)) {
     return NextResponse.redirect(
       `https://${ADMIN_HOST}${pathname}${search}`,

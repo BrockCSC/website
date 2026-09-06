@@ -19,7 +19,7 @@ import {
   isProtectedMailbox,
   makeMailboxReadOnly,
   provisionMailbox,
-  syncAdminGroup,
+  syncMailRouting,
   syncExpungeRights,
 } from "@/lib/mail/provision";
 import { isReadOnly, localPartTaken } from "@/lib/mail/stalwart";
@@ -101,7 +101,7 @@ const roleItems = (
       if (has) await removeRealmRole(userId, name);
       else await assignRealmRole(userId, name);
       if (name === CO_PRESIDENT) {
-        await syncAdminGroup();
+        await syncMailRouting();
         await syncExpungeRights();
       }
       invalidateRoles(userId);

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import logo from "../../public/logo.svg";
 import { DISCORD_INVITE } from "@/lib/links";
+import { Lock } from "lucide-react";
 
 const socials = [
   { name: "Instagram", href: "https://www.instagram.com/brockcsc/" },
@@ -34,6 +35,13 @@ export default function Footer() {
             {social.name}
           </Link>
         ))}
+        <Link
+          href="/admin"
+          className="inline-flex items-center gap-1 px-1 py-2 text-sm text-slab-ink/70 underline-offset-4 hover:text-slab-ink hover:underline"
+        >
+          <Lock className="size-3.5" aria-hidden />
+          Exec portal
+        </Link>
       </div>
     </footer>
   );

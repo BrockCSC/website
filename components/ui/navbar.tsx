@@ -13,6 +13,7 @@ const navLinks = [
   { name: "Team", href: "/team" },
   { name: "Events", href: "/events" },
   { name: "CS Guide", href: "/cs-guide" },
+  { name: "Portal", href: "/admin", muted: true },
 ];
 
 export function Navbar() {
@@ -57,6 +58,7 @@ export function Navbar() {
               aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
                 "border-b-2 border-transparent pb-1 hover:text-brand",
+                link.muted && "text-subtle",
                 isActive(link.href) && "border-brand text-brand",
               )}
             >
@@ -122,6 +124,7 @@ export function Navbar() {
               onClick={() => setIsMenuOpen(false)}
               className={cn(
                 "rounded-[10px] border-2 border-transparent px-3 py-2.5 text-base font-semibold text-ink",
+                link.muted && "text-subtle",
                 isActive(link.href)
                   ? "border-brand bg-tint text-brand"
                   : "hover:bg-tint",

@@ -4,7 +4,7 @@ import { update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { destroyMessages } from "@/lib/mail/jmap-mail";
-import { mailUser, unauthorized } from "../auth";
+import { mailWriter } from "../auth";
 
 /**
  * Mail access is per user, so an approver cannot reach the requester's
@@ -12,8 +12,8 @@ import { mailUser, unauthorized } from "../auth";
  * requester's own token, the next time their client checks in.
  */
 export const POST = async (req: NextRequest) => {
-  const session = await mailUser(req);
-  if (!session) return unauthorized();
+  const session = await mailWriter(req);
+  if (session instanceof NextResponse) return session;
 
   const signup = await findSignupByUserId(session.user.sub);
   const requests = signup?.mailDeletionRequests ?? [];
@@ -24,7 +24,7 @@ export const POST = async (req: NextRequest) => {
 
   const done = new Set<string>();
   for (const request of approved) {
-    await destroyMessages(session.token, request.messageIds)
+    await destroyMessages(session.access, request.messageIds)
       .then(() => done.add(request.id))
       .catch(() => null);
   }

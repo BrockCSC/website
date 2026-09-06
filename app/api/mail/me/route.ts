@@ -1,13 +1,19 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { sendingAddress } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../auth";
+import { mailScope, unauthorized } from "../auth";
 
 export const GET = async (req: NextRequest) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const scope = await mailScope(req);
+  if (!scope) return unauthorized();
+  if (scope.viewing) {
+    return NextResponse.json({
+      email: scope.viewing.emailAddress,
+      viewing: true,
+    });
+  }
 
   try {
-    return NextResponse.json({ email: await sendingAddress(token) });
+    return NextResponse.json({ email: await sendingAddress(scope.access) });
   } catch {
     return NextResponse.json(
       { error: "Could not reach the mail server" },

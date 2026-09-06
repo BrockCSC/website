@@ -7,21 +7,21 @@ import { findSignupByUserId } from "@/lib/db/signups";
 import { jsonObject } from "@/lib/json";
 import { destroyMessages, subjectOf } from "@/lib/mail/jmap-mail";
 import { isProtectedMailbox } from "@/lib/mail/provision";
-import { mailUser, unauthorized } from "../../../auth";
+import { mailWriter } from "../../../auth";
 
 /** Records a request only: destroying club mail is an approver's call. */
 export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const session = await mailUser(req);
-  if (!session) return unauthorized();
+  const session = await mailWriter(req);
+  if (session instanceof NextResponse) return session;
 
   const { id } = await params;
   const signup = await findSignupByUserId(session.user.sub);
   if (signup?.username && isProtectedMailbox(signup.username)) {
     return NextResponse.json({
-      purged: await destroyMessages(session.token, [id]),
+      purged: await destroyMessages(session.access, [id]),
     });
   }
   if (!signup) {
@@ -47,7 +47,7 @@ export const POST = async (
   const request: MailDeletionRequest = {
     id: randomUUID(),
     messageIds: [id],
-    subject: (await subjectOf(session.token, id)) ?? undefined,
+    subject: (await subjectOf(session.access, id)) ?? undefined,
     reason: reason ? reason.slice(0, 500) : undefined,
     requestedAt: new Date().toISOString(),
     status: "pending",

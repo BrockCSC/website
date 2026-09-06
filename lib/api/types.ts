@@ -9,6 +9,8 @@ export type SessionUser = {
   isExecutive?: boolean;
   /** Holds the approver role, so may manage executives. */
   isApprover?: boolean;
+  /** Holds the mail admin role, so may read every inbox. */
+  isMailAdmin?: boolean;
   /** Current exec or alumnus. False once every role is revoked. */
   isMember?: boolean;
   /** False outside production, where identity changes are only rehearsed. */

@@ -1,12 +1,12 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { uploadBlob } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../auth";
+import { mailWriter } from "../auth";
 
 const MAX_BYTES = 15 * 1024 * 1024;
 
 export const POST = async (req: NextRequest) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const scope = await mailWriter(req);
+  if (scope instanceof NextResponse) return scope;
 
   const form = await req.formData().catch(() => null);
   const file = form?.get("file");
@@ -22,7 +22,7 @@ export const POST = async (req: NextRequest) => {
 
   const type = file.type || "application/octet-stream";
   try {
-    const blob = await uploadBlob(token, await file.arrayBuffer(), type);
+    const blob = await uploadBlob(scope.access, await file.arrayBuffer(), type);
     return NextResponse.json({
       ...blob,
       type,

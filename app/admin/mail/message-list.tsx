@@ -28,7 +28,7 @@ export function MessageList({
   selected: string | null;
   threadCounts: Record<string, number>;
   onSelect: (id: string) => void;
-  onFlag: (message: MessageSummary, flagged: boolean) => void;
+  onFlag?: (message: MessageSummary, flagged: boolean) => void;
 }) {
   if (messages.length === 0) {
     return (
@@ -45,6 +45,13 @@ export function MessageList({
         const flagged = Boolean(message.keywords?.$flagged);
         const active = message.id === selected;
         const count = threadCounts[message.threadId] ?? 1;
+        const star = (
+          <Star
+            size={15}
+            className={`transition-colors duration-[var(--dur-fast)] ease-smooth ${flagged ? "fill-brand text-brand" : "fill-transparent"}`}
+            aria-hidden
+          />
+        );
         return (
           <li
             key={message.id}
@@ -53,19 +60,19 @@ export function MessageList({
               active ? "bg-tint" : "hover:bg-raised"
             }`}
           >
-            <button
-              type="button"
-              aria-label={flagged ? "Remove star" : "Star"}
-              aria-pressed={flagged}
-              onClick={() => onFlag(message, !flagged)}
-              className="mt-3.5 shrink-0 rounded-[6px] p-1 text-subtle hover:text-brand"
-            >
-              <Star
-                size={15}
-                className={`transition-colors duration-[var(--dur-fast)] ease-smooth ${flagged ? "fill-brand text-brand" : "fill-transparent"}`}
-                aria-hidden
-              />
-            </button>
+            {onFlag ? (
+              <button
+                type="button"
+                aria-label={flagged ? "Remove star" : "Star"}
+                aria-pressed={flagged}
+                onClick={() => onFlag(message, !flagged)}
+                className="mt-3.5 shrink-0 rounded-[6px] p-1 text-subtle hover:text-brand"
+              >
+                {star}
+              </button>
+            ) : (
+              <span className="mt-3.5 shrink-0 p-1 text-subtle">{star}</span>
+            )}
             <button
               type="button"
               onClick={() => onSelect(message.id)}

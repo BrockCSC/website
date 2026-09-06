@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { removeRealmRole, usersWithRealmRole } from "@/lib/auth/keycloak-admin";
 import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { requireApprover } from "@/lib/auth/session";
-import { syncAdminGroup, syncExpungeRights } from "@/lib/mail/provision";
+import { syncMailRouting, syncExpungeRights } from "@/lib/mail/provision";
 import { ownsIdentities } from "@/lib/env";
 import { notAuthorized } from "@/lib/json";
 
@@ -35,7 +35,7 @@ export const POST = async (req: NextRequest) => {
     );
   }
   await removeRealmRole(user.sub, CO_PRESIDENT);
-  await syncAdminGroup();
+  await syncMailRouting();
   await syncExpungeRights();
   return NextResponse.json({ remaining: holders.length - 1 });
 };

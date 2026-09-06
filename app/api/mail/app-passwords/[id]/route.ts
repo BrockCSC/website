@@ -1,5 +1,4 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { notAuthorized } from "@/lib/json";
 import { deleteAppPassword } from "@/lib/mail/stalwart";
 import { ownMailbox } from "../mailbox";
 
@@ -8,7 +7,7 @@ export const DELETE = async (
   { params }: { params: Promise<{ id: string }> },
 ) => {
   const mailbox = await ownMailbox(req);
-  if (!mailbox) return notAuthorized();
+  if (mailbox instanceof NextResponse) return mailbox;
 
   const { id } = await params;
   await deleteAppPassword(mailbox, id);

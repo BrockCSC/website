@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { badJson, jsonObject, notAuthorized } from "@/lib/json";
+import { badJson, jsonObject } from "@/lib/json";
 import { createAppPassword, listAppPasswords } from "@/lib/mail/stalwart";
 import { ownMailbox } from "./mailbox";
 
@@ -7,13 +7,13 @@ const MAX_DESCRIPTION = 60;
 
 export const GET = async (req: NextRequest) => {
   const mailbox = await ownMailbox(req);
-  if (!mailbox) return notAuthorized();
+  if (mailbox instanceof NextResponse) return mailbox;
   return NextResponse.json(await listAppPasswords(mailbox));
 };
 
 export const POST = async (req: NextRequest) => {
   const mailbox = await ownMailbox(req);
-  if (!mailbox) return notAuthorized();
+  if (mailbox instanceof NextResponse) return mailbox;
 
   const body = await jsonObject<{ description?: unknown }>(req);
   if (!body) return badJson();

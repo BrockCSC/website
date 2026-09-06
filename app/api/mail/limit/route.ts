@@ -5,15 +5,15 @@ import { signupsTable } from "@/lib/db/schema";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { badJson, jsonObject } from "@/lib/json";
 import { allowanceFor, dailyLimitFor, MAX_DAILY_LIMIT } from "@/lib/mail/limit";
-import { mailUser, unauthorized } from "../auth";
+import { mailWriter } from "../auth";
 
 export const GET = async (req: NextRequest) => {
-  const session = await mailUser(req);
-  if (!session) return unauthorized();
+  const session = await mailWriter(req);
+  if (session instanceof NextResponse) return session;
 
   const signup = await findSignupByUserId(session.user.sub);
   try {
-    return NextResponse.json(await allowanceFor(session.token, signup));
+    return NextResponse.json(await allowanceFor(session.access, signup));
   } catch {
     return NextResponse.json(
       { error: "Could not reach the mail server" },
@@ -24,8 +24,8 @@ export const GET = async (req: NextRequest) => {
 
 /** Records a request only: raising a limit is an approver's call. */
 export const POST = async (req: NextRequest) => {
-  const session = await mailUser(req);
-  if (!session) return unauthorized();
+  const session = await mailWriter(req);
+  if (session instanceof NextResponse) return session;
 
   const body = await jsonObject<{ requested?: unknown; reason?: unknown }>(req);
   if (!body) return badJson();
