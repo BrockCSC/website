@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowUpRight } from "lucide-react";
 import { LoginForm } from "@/components/admin/login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SessionProvider, useSession } from "./session";
@@ -131,6 +132,14 @@ function AdminShell({ children }: { children: React.ReactNode }) {
             )}
             <SearchButton />
             <ThemeToggle className="size-9" />
+            <Link
+              href="/site"
+              aria-label="View site"
+              className="inline-flex h-9 items-center gap-1 rounded-[10px] border-2 border-line px-2 text-sm font-bold text-ink hover:bg-tint sm:px-3"
+            >
+              <ArrowUpRight className="size-4" aria-hidden />
+              <span className="hidden sm:inline">View site</span>
+            </Link>
             <button
               onClick={handleLogout}
               className="rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"

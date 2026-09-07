@@ -24,6 +24,7 @@ export default function AdminMenu() {
     (section) =>
       (!section.approverOnly || user?.isApprover) &&
       (!section.execOnly || user?.isExecutive) &&
+      (!section.mailAdminOnly || user?.isMailAdmin) &&
       (!section.mailboxOnly || hasMailbox !== false),
   );
 

@@ -3,7 +3,7 @@ import type { DayCount } from "@/lib/api";
 const PLOT_W = 600;
 const PLOT_H = 160;
 
-const SEGMENT_OPACITY = [1, 0.68, 0.45];
+const SEGMENT_OPACITY = [1, 0.68, 0.45, 0.3, 0.18];
 
 export const formatDay = (day: string) =>
   new Date(`${day}T00:00`).toLocaleDateString(undefined, {
@@ -114,8 +114,10 @@ export const BarList = ({
 
 export const SplitBar = ({
   segments,
+  format = (value) => value.toLocaleString(),
 }: {
   segments: { label: string; value: number }[];
+  format?: (value: number) => string;
 }) => {
   const total = segments.reduce((sum, segment) => sum + segment.value, 0);
   const widths = segments.map((segment) =>
@@ -125,7 +127,7 @@ export const SplitBar = ({
     ...segment,
     x: widths.slice(0, index).reduce((sum, width) => sum + width, 0),
     width: widths[index],
-    opacity: SEGMENT_OPACITY[index] ?? 0.45,
+    opacity: SEGMENT_OPACITY[index] ?? 0.18,
   }));
 
   return (
@@ -170,7 +172,7 @@ export const SplitBar = ({
             />
             <span className="text-subtle">{part.label}</span>
             <span className="font-bold tabular-nums text-ink">
-              {part.value.toLocaleString()}
+              {format(part.value)}
             </span>
           </li>
         ))}

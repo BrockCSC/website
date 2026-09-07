@@ -13,6 +13,8 @@ import {
 import { Loader2, Search } from "lucide-react";
 import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
+import type { Inbox } from "@/app/api/mail/inboxes/route";
+import { fetchInboxes, matchesInbox, withAs } from "./mail/inbox-picker";
 import { sender, when } from "./mail/message-list";
 import { SECTIONS, type Section } from "./sections";
 import { useSession } from "./session";
@@ -45,6 +47,7 @@ type EventItem = WithKey<EventRecord>;
 type Kind =
   | "Mail"
   | "Person"
+  | "Inbox"
   | "Event"
   | "Go to"
   | "Action"
@@ -67,7 +70,12 @@ type Row = {
 
 type Group = { label: string; rows: Row[] };
 type Action = { id: string; label: string; hint?: string; run: () => void };
-type Data = { people: Person[]; events: EventItem[]; mailboxes: Mailbox[] };
+type Data = {
+  people: Person[];
+  events: EventItem[];
+  mailboxes: Mailbox[];
+  inboxes: Inbox[];
+};
 
 export type Handoff = {
   person?: string;
@@ -75,6 +83,7 @@ export type Handoff = {
   newEvent?: true;
   pending?: true;
   compose?: true;
+  pickInbox?: true;
   message?: MessageSummary;
 };
 
@@ -182,10 +191,11 @@ export function PaletteProvider({
       people,
       fetchAllEvents().catch((): EventItem[] => []),
       mailboxes,
-    ]).then(([people, events, mailboxes]) =>
-      setData({ people, events, mailboxes }),
+      user?.isMailAdmin ? fetchInboxes().catch((): Inbox[] => []) : [],
+    ]).then(([people, events, mailboxes, inboxes]) =>
+      setData({ people, events, mailboxes, inboxes }),
     );
-  }, [isOpen, user?.isApprover, hasMail]);
+  }, [isOpen, user?.isApprover, user?.isMailAdmin, hasMail]);
 
   const send = useCallback(
     (href: string, next: Handoff) => {
@@ -202,10 +212,11 @@ export function PaletteProvider({
         (section) =>
           (!section.approverOnly || user?.isApprover) &&
           (!section.execOnly || user?.isExecutive) &&
-          (!section.mailboxOnly || hasMail),
+          (!section.mailboxOnly || hasMail) &&
+          (!section.mailAdminOnly || user?.isMailAdmin),
       ),
     ],
-    [user?.isApprover, user?.isExecutive, hasMail],
+    [user?.isApprover, user?.isExecutive, user?.isMailAdmin, hasMail],
   );
 
   const actions = useMemo<Action[]>(
@@ -230,6 +241,16 @@ export function PaletteProvider({
             },
           ]
         : []),
+      ...(user?.isMailAdmin
+        ? [
+            {
+              id: "read-inbox",
+              label: "Read another inbox",
+              hint: "open any club inbox, read-only",
+              run: () => send("/admin/mail", { pickInbox: true }),
+            },
+          ]
+        : []),
       ...(user?.isApprover
         ? [
             {
@@ -244,12 +265,19 @@ export function PaletteProvider({
         id: "site",
         label: "Open the public site",
         hint: "in a new tab",
-        run: () => window.open("/", "_blank", "noopener"),
+        run: () => window.open("/site", "_blank", "noopener"),
       },
       { id: "theme", label: "Toggle dark mode", run: flipTheme },
       { id: "logout", label: "Log out", run: onLogout },
     ],
-    [hasMail, user?.isApprover, user?.isExecutive, send, onLogout],
+    [
+      hasMail,
+      user?.isApprover,
+      user?.isExecutive,
+      user?.isMailAdmin,
+      send,
+      onLogout,
+    ],
   );
 
   const value = useMemo(
@@ -523,6 +551,29 @@ function Palette({
             recent: { kind: "Person", id: person.id, label: person.name },
             run: () => onSend("/admin/users", { person: person.id }),
           })),
+        });
+      }
+    }
+
+    if (query && data?.inboxes.length) {
+      const inboxes = data.inboxes
+        .filter((inbox) => matchesInbox(inbox, needle))
+        .slice(0, LIMIT);
+      if (inboxes.length) {
+        out.push({
+          label: "Inboxes",
+          rows: inboxes.map((inbox) => {
+            const href = withAs("/admin/mail", inbox.username);
+            const label = `${inbox.name}’s inbox`;
+            return {
+              key: `inbox:${inbox.username}`,
+              kind: "Inbox" as const,
+              label,
+              hint: inbox.address,
+              recent: { kind: "Inbox", id: href, label },
+              run: () => onSend(href, {}),
+            };
+          }),
         });
       }
     }

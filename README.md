@@ -75,6 +75,13 @@ unless you ask for them.
 
 <img src="public/readme/keys-mail.svg" alt="Mail shortcuts: j and k next and previous message, r reply, e archive, # delete, s star, / search, u or Esc close the message, ⌘K search everything" width="850" />
 
+### Outside mail apps
+
+Your mailbox works in any IMAP app, and the password is the one you sign in with here — it is set on
+every portal sign-in, so sign in once more if you have not since this landed. Apple devices get a
+one-tap profile from **[/admin/mail/setup](https://brockcsc.ca/admin/mail/setup)**; Outlook and
+Thunderbird find the servers by themselves. App passwords are still there if you want one per device.
+
 ### Sending limits
 
 Club mail is metered, so everyone has a daily allowance, shown in the sidebar. Run low and a

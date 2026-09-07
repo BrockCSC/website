@@ -64,6 +64,7 @@ const environment = [
   `ADMIN_ROLE=executive`,
   `ALUMNI_ROLE=alumni`,
   `APPROVER_ROLE=brockcsc-approver`,
+  `MAIL_ADMIN_ROLE=brockcsc-mail-admin`,
   `SUPERUSER_ROLE=owner`,
   `KEYCLOAK_ADMIN_CLIENT_ID=[[BROCKCSC_KEYCLOAK_ADMIN_CLIENT_ID]]`,
   `KEYCLOAK_ADMIN_CLIENT_SECRET=[[BROCKCSC_KEYCLOAK_ADMIN_CLIENT_SECRET]]`,
@@ -78,6 +79,7 @@ const environment = [
   `MAIL_DAILY_LIMIT=${process.env.MAIL_DAILY_LIMIT ?? "50"}`,
   `MAIL_SITE_URL=https://brockcsc.ca`,
   `ADMIN_MAIL_GROUP=${process.env.ADMIN_MAIL_GROUP ?? "admin"}`,
+  `CO_PRESIDENTS_LIST=${process.env.CO_PRESIDENTS_LIST ?? "co-presidents"}`,
 ].join("\n");
 
 console.log(

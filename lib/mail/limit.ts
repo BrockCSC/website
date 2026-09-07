@@ -1,4 +1,5 @@
 import type { MailLimitRequest, SignupRecord } from "@/lib/api/types";
+import type { Access } from "./access";
 import { jmap, mailAccountId } from "./jmap-mail";
 import { isProtectedMailbox } from "./provision";
 
@@ -32,16 +33,16 @@ const today = () => {
 };
 
 /** Counted on the mail server, so sends from other clients count too. */
-const sentToday = async (token: string): Promise<number> => {
-  const accountId = await mailAccountId(token);
-  const [boxes] = (await jmap(token, [
+const sentToday = async (access: Access): Promise<number> => {
+  const accountId = await mailAccountId(access);
+  const [boxes] = (await jmap(access, [
     ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
   ])) as [{ list: { id: string; role: string | null }[] }];
 
   const sent = boxes.list.find((box) => box.role === "sent");
   if (!sent) return 0;
 
-  const [found] = (await jmap(token, [
+  const [found] = (await jmap(access, [
     [
       "Email/query",
       {
@@ -57,11 +58,11 @@ const sentToday = async (token: string): Promise<number> => {
 };
 
 export const allowanceFor = async (
-  token: string,
+  access: Access,
   signup: SignupRecord | null,
 ): Promise<MailAllowance> => {
   const limit = dailyLimitFor(signup);
-  const used = await sentToday(token);
+  const used = await sentToday(access);
   return {
     used,
     limit,

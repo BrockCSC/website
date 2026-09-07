@@ -18,6 +18,14 @@ const MailIcon = ({ className }: IconProps) => (
   </svg>
 );
 
+const AliasIcon = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <circle cx="10" cy="12" r="3.5" />
+    <path d="M13.5 8.5V13a2 2 0 0 0 4 0v-1a7.5 7.5 0 1 0-4 6.5" />
+    <path d="M16 18.5 20.5 21M16 18.5l4.5-2.5" />
+  </svg>
+);
+
 const ChartIcon = ({ className }: IconProps) => (
   <svg {...base(className)}>
     <path d="M4 20V4" />
@@ -58,6 +66,7 @@ export const SECTION_ICONS: Record<
   (props: IconProps) => React.ReactElement
 > = {
   "/admin/mail": MailIcon,
+  "/admin/mail/aliases": AliasIcon,
   "/admin/analytics": ChartIcon,
   "/admin/events": CalendarIcon,
   "/admin/users": PeopleIcon,

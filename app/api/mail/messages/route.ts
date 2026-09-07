@@ -1,10 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { listMessages } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../auth";
+import { mailAccess, unauthorized } from "../auth";
 
 export const GET = async (req: NextRequest) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const access = await mailAccess(req);
+  if (!access) return unauthorized();
 
   const params = new URL(req.url).searchParams;
   const search = params.get("search")?.trim() ?? "";
@@ -17,7 +17,7 @@ export const GET = async (req: NextRequest) => {
   }
 
   return NextResponse.json(
-    await listMessages(token, {
+    await listMessages(access, {
       mailboxId,
       search,
       limit: Math.min(Number(params.get("limit")) || 50, 100),

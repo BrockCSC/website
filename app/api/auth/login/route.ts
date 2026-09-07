@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCredentials } from "@/lib/auth/keycloak";
 import { REFRESH_COOKIE, refreshCookieOptions } from "@/lib/auth/mail-token";
+import { syncMailPassword } from "@/lib/mail/password";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import {
@@ -56,6 +57,8 @@ export const POST = async (req: NextRequest) => {
   ) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
   }
+
+  await syncMailPassword(username, password);
 
   const response = NextResponse.json({
     sub: identity.sub,

@@ -1,13 +1,15 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { ArrowLeft, MailOpen, Search, Star } from "lucide-react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { ArrowLeft, Eye, MailOpen, Search, Star } from "lucide-react";
 import { logout } from "@/lib/api";
 import type { MailDeletionRequest } from "@/lib/api/types";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import { useSession } from "../session";
 import { useHandoff, usePalette } from "../palette";
 import { Allowance } from "./allowance";
+import { InboxPicker, useInboxes, withAs } from "./inbox-picker";
 import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { Conversation } from "./message-view";
@@ -24,6 +26,8 @@ type Page = {
   total: number;
   threadCounts: Record<string, number>;
 };
+
+const EMPTY: Page = { messages: [], total: 0, threadCounts: {} };
 
 const otherRecipients = (message: MessageSummary, self: string | null) =>
   (message.to ?? [])
@@ -44,16 +48,79 @@ const withKeywords = (message: MessageSummary, flags: Flags) => {
   return { ...message, keywords: next };
 };
 
-export default function MailPage() {
+const BUTTON =
+  "rounded-[10px] border-2 border-line bg-brand px-4 py-2 font-bold text-brand-ink shadow-brut-sm hover:opacity-90";
+
+export default function Page() {
+  return (
+    <Suspense
+      fallback={<p className="p-6 text-sm text-subtle">Loading mail…</p>}
+    >
+      <Scoped />
+    </Suspense>
+  );
+}
+
+/** Mounts MailPage afresh per inbox. */
+function Scoped() {
+  const { user } = useSession();
+  const params = useSearchParams();
+  const viewing = (user?.isMailAdmin && params.get("as")) || null;
+  const inboxes = useInboxes();
+  const [picking, setPicking] = useState(false);
+  const [draft, setDraft] = useState<Draft | null>(null);
+  const wantedRef = useRef<MessageSummary | null>(null);
+
+  const { load } = inboxes;
+  const openPicker = useCallback(() => {
+    setPicking(true);
+    load();
+  }, [load]);
+
+  useHandoff(
+    "compose",
+    useCallback(() => setDraft({}), []),
+  );
+  useHandoff("pickInbox", openPicker);
+
+  return (
+    <MailPage
+      key={viewing ?? ""}
+      viewing={viewing}
+      inboxes={inboxes}
+      picking={picking}
+      openPicker={openPicker}
+      closePicker={() => setPicking(false)}
+      draft={draft}
+      setDraft={setDraft}
+      wantedRef={wantedRef}
+    />
+  );
+}
+
+function MailPage({
+  viewing,
+  inboxes: { inboxes, failed, load: loadInboxes },
+  picking,
+  openPicker,
+  closePicker,
+  draft,
+  setDraft,
+  wantedRef,
+}: {
+  viewing: string | null;
+  inboxes: ReturnType<typeof useInboxes>;
+  picking: boolean;
+  openPicker: () => void;
+  closePicker: () => void;
+  draft: Draft | null;
+  setDraft: (draft: Draft | null) => void;
+  wantedRef: React.RefObject<MessageSummary | null>;
+}) {
   const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
   const [mailbox, setMailbox] = useState<string | null>(null);
-  const [page, setPage] = useState<Page>({
-    messages: [],
-    total: 0,
-    threadCounts: {},
-  });
+  const [page, setPage] = useState<Page>(EMPTY);
   const [selected, setSelected] = useState<string | null>(null);
-  const [draft, setDraft] = useState<Draft | null>(null);
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [found, setFound] = useState<MessageSummary | null>(null);
@@ -63,22 +130,31 @@ export default function MailPage() {
     null,
   );
   const [expired, setExpired] = useState(false);
+  const [missing, setMissing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0);
   const request = useRef(0);
-  const { refresh } = useSession();
+  const router = useRouter();
+  const { user, refresh } = useSession();
   const { open: openPalette, isOpen: palette } = usePalette();
+
+  const view = useCallback(
+    (username: string | null) =>
+      router.replace(withAs("/admin/mail", username), { scroll: false }),
+    [router],
+  );
 
   const loadMailboxes = useCallback(
     () =>
-      fetch("/api/mail/mailboxes")
+      fetch(withAs("/api/mail/mailboxes", viewing))
         .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
         .then((boxes: Mailbox[]) => {
           setMailboxes(boxes);
           setMailbox((current) => current ?? boxes[0]?.id ?? null);
+          return boxes;
         }),
-    [],
+    [viewing],
   );
 
   const settleDeletions = useCallback(
@@ -102,15 +178,31 @@ export default function MailPage() {
     [loadMailboxes],
   );
 
+  const reveal = useCallback((hit: MessageSummary, boxes: Mailbox[]) => {
+    const box = boxes.find((item) => hit.mailboxIds?.[item.id]);
+    if (box) setMailbox(box.id);
+    setFound(hit);
+    setSelected(hit.id);
+  }, []);
+
   useEffect(() => {
+    if (viewing) loadInboxes();
     loadMailboxes()
+      .then((boxes) => {
+        if (wantedRef.current) reveal(wantedRef.current, boxes);
+        wantedRef.current = null;
+      })
       .catch((status) =>
-        status === 401
-          ? setExpired(true)
-          : setError("Could not reach the mail server."),
+        viewing
+          ? setMissing(true)
+          : status === 401
+            ? setExpired(true)
+            : setError("Could not reach the mail server."),
       )
       .finally(() => setLoading(false));
+  }, [loadInboxes, loadMailboxes, reveal, viewing, wantedRef]);
 
+  useEffect(() => {
     fetch("/api/mail/me")
       .then((res) => (res.ok ? res.json() : { email: null }))
       .then((data: { email: string | null }) => setFrom(data.email))
@@ -122,7 +214,7 @@ export default function MailPage() {
       .catch(() => setContacts([]));
 
     void settleDeletions();
-  }, [loadMailboxes, settleDeletions]);
+  }, [settleDeletions]);
 
   const load = useCallback(
     async (position: number) => {
@@ -137,7 +229,9 @@ export default function MailPage() {
       });
 
       try {
-        const res = await fetch(`/api/mail/messages?${params}`);
+        const res = await fetch(
+          withAs(`/api/mail/messages?${params}`, viewing),
+        );
         if (!res.ok) throw new Error(String(res.status));
         const data = (await res.json()) as Page;
         if (ticket !== request.current) return;
@@ -160,7 +254,7 @@ export default function MailPage() {
         if (ticket === request.current) setBusy(false);
       }
     },
-    [mailbox],
+    [mailbox, viewing],
   );
 
   useEffect(() => {
@@ -216,19 +310,17 @@ export default function MailPage() {
     [loadMailboxes],
   );
 
-  const startDraft = useCallback(() => setDraft({}), []);
+  const startDraft = useCallback(() => setDraft({}), [setDraft]);
 
   const showMessage = useCallback(
     (hit: MessageSummary) => {
-      const box = mailboxes.find((item) => hit.mailboxIds?.[item.id]);
-      if (box) setMailbox(box.id);
-      setFound(hit);
-      setSelected(hit.id);
+      if (!viewing) return reveal(hit, mailboxes);
+      wantedRef.current = hit;
+      view(null);
     },
-    [mailboxes],
+    [mailboxes, reveal, viewing, view, wantedRef],
   );
 
-  useHandoff("compose", startDraft);
   useHandoff("message", showMessage);
 
   const requestPurge = useCallback(
@@ -282,9 +374,12 @@ export default function MailPage() {
     [loadMailboxes, settleDeletions],
   );
 
-  const quoteInto = useCallback((target: MessageSummary, base: Draft) => {
-    void buildQuote(target).then((html) => setDraft({ ...base, html }));
-  }, []);
+  const quoteInto = useCallback(
+    (target: MessageSummary, base: Draft) => {
+      void buildQuote(target).then((html) => setDraft({ ...base, html }));
+    },
+    [setDraft],
+  );
 
   const replyTo = useCallback(
     (target: MessageSummary, all: boolean) => {
@@ -311,6 +406,7 @@ export default function MailPage() {
       ) {
         return;
       }
+      if (viewing && ["e", "#", "r", "s"].includes(event.key)) return;
 
       const step = (delta: number) => {
         const index = messages.findIndex((item) => item.id === selected);
@@ -369,6 +465,7 @@ export default function MailPage() {
     move,
     flag,
     replyTo,
+    viewing,
   ]);
 
   if (loading) {
@@ -388,28 +485,63 @@ export default function MailPage() {
             await logout();
             await refresh();
           }}
-          className="mt-5 rounded-[10px] border-2 border-line bg-brand px-4 py-2 font-bold text-brand-ink shadow-brut-sm hover:opacity-90"
+          className={`mt-5 ${BUTTON}`}
         >
           Sign in again
         </button>
       </div>
     );
   }
+  if (missing) {
+    return (
+      <div className="m-4 animate-rise-in rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut">
+        <p className="font-bold text-brand">
+          No such inbox, or you may not read it.
+        </p>
+        <button
+          type="button"
+          onClick={() => view(null)}
+          className={`mt-5 ${BUTTON}`}
+        >
+          Back to your inbox
+        </button>
+      </div>
+    );
+  }
 
   const current = mailboxes.find((box) => box.id === mailbox);
+  const shown: { name: string; address?: string } | null = viewing
+    ? (inboxes?.find((inbox) => inbox.username === viewing) ?? {
+        name: viewing,
+      })
+    : null;
 
   return (
     <div className="flex h-[calc(100dvh-3.625rem)] animate-fade-in gap-3 p-3 md:gap-4 md:p-4">
       <aside
         className={`min-h-0 shrink-0 flex-col gap-3 md:flex md:w-52 ${open ? "hidden" : "flex"}`}
       >
-        <button
-          type="button"
-          onClick={startDraft}
-          className="shrink-0 rounded-[10px] border-2 border-line bg-brand px-4 py-2.5 font-bold text-brand-ink shadow-brut-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0"
-        >
-          Compose
-        </button>
+        {user?.isMailAdmin && (
+          <InboxPicker
+            inboxes={inboxes}
+            failed={failed}
+            self={from}
+            viewing={shown}
+            open={picking}
+            onOpen={openPicker}
+            onClose={closePicker}
+            onPick={view}
+          />
+        )}
+        {!viewing && (
+          <button
+            type="button"
+            onClick={startDraft}
+            className="shrink-0 rounded-[10px] border-2 border-line bg-brand px-4 py-2.5 font-bold text-brand-ink shadow-brut-sm hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-none motion-reduce:hover:translate-x-0 motion-reduce:hover:translate-y-0"
+          >
+            Compose
+          </button>
+        )}
         <MailboxList
           mailboxes={mailboxes}
           selected={mailbox}
@@ -418,129 +550,166 @@ export default function MailPage() {
             setMailbox(id);
           }}
         />
-        <Allowance refresh={reload} />
-        <Link
-          className="shrink-0 rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-center text-xs font-bold text-ink hover:bg-tint"
-          href="/admin/mail/setup"
-        >
-          Set up on your phone
-        </Link>
+        {!viewing && (
+          <>
+            <Allowance refresh={reload} />
+            <Link
+              className="shrink-0 rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-center text-xs font-bold text-ink hover:bg-tint"
+              href="/admin/mail/setup"
+            >
+              Set up on your phone
+            </Link>
+          </>
+        )}
       </aside>
 
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut">
-        <div
-          className={`min-h-0 w-full flex-col md:flex md:w-80 md:shrink-0 md:border-r-2 md:border-line ${open ? "hidden" : "flex"}`}
-        >
-          <header className="shrink-0 space-y-2 border-b-2 border-line px-4 py-2.5">
-            <div className="flex items-baseline justify-between gap-2">
-              <h2 className="truncate text-sm font-extrabold text-ink">
-                {current?.name ?? "Mail"}
-              </h2>
-              <p className="shrink-0 text-xs text-subtle">
-                {messages.length} of {total}
-              </p>
-            </div>
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-[20px] border-2 border-line bg-surface shadow-brut">
+        {shown && (
+          <div
+            role="status"
+            className="flex shrink-0 flex-wrap items-center gap-3 border-b-2 border-line bg-tint px-4 py-2.5 text-sm"
+          >
+            <Eye size={15} className="shrink-0 text-brand" aria-hidden />
+            <p className="min-w-0 flex-1 font-semibold text-ink">
+              Reading {shown.name}&rsquo;s inbox
+              {shown.address && ` (${shown.address})`} as an administrator.{" "}
+              <span className="text-subtle">
+                Read-only — opening a message here does not mark it as read for
+                them.
+              </span>
+            </p>
             <button
               type="button"
-              onClick={openPalette}
-              className="flex w-full items-center gap-2 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-subtle hover:bg-tint"
+              onClick={() => view(null)}
+              className="shrink-0 rounded-[8px] border-2 border-line bg-surface px-2.5 py-1 text-xs font-bold text-ink hover:bg-raised"
             >
-              <Search size={14} aria-hidden />
-              <span className="flex-1 text-left">Search everything</span>
-              <kbd className="rounded-[6px] border-2 border-line px-1 text-[10px] font-bold text-ink">
-                ⌘K
-              </kbd>
+              Back to your inbox
             </button>
-          </header>
+          </div>
+        )}
 
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            {error ? (
-              <p className="px-4 py-10 text-center text-sm font-bold text-brand">
-                {error}
-              </p>
-            ) : (
-              <MessageList
-                key={mailbox}
-                messages={messages}
-                selected={selected}
-                threadCounts={threadCounts}
-                onSelect={setSelected}
-                onFlag={(item, flagged) => void flag(item.id, { flagged })}
-              />
-            )}
-            {messages.length < total && (
+        <div className="flex min-h-0 flex-1">
+          <div
+            className={`min-h-0 w-full flex-col md:flex md:w-80 md:shrink-0 md:border-r-2 md:border-line ${open ? "hidden" : "flex"}`}
+          >
+            <header className="shrink-0 space-y-2 border-b-2 border-line px-4 py-2.5">
+              <div className="flex items-baseline justify-between gap-2">
+                <h2 className="truncate text-sm font-extrabold text-ink">
+                  {current?.name ?? "Mail"}
+                </h2>
+                <p className="shrink-0 text-xs text-subtle">
+                  {messages.length} of {total}
+                </p>
+              </div>
               <button
                 type="button"
-                disabled={busy}
-                onClick={() => void load(messages.length)}
-                className="w-full border-t-2 border-line px-4 py-3 text-sm font-bold text-brand hover:bg-tint disabled:opacity-50"
+                onClick={openPalette}
+                className="flex w-full items-center gap-2 rounded-[8px] border-2 border-line bg-surface px-2 py-1 text-sm text-subtle hover:bg-tint"
               >
-                {busy
-                  ? "Loading…"
-                  : `Load ${Math.min(PAGE, total - messages.length)} more`}
+                <Search size={14} aria-hidden />
+                <span className="flex-1 text-left">Search everything</span>
+                <kbd className="rounded-[6px] border-2 border-line px-1 text-[10px] font-bold text-ink">
+                  ⌘K
+                </kbd>
               </button>
+            </header>
+
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {error ? (
+                <p className="px-4 py-10 text-center text-sm font-bold text-brand">
+                  {error}
+                </p>
+              ) : (
+                <MessageList
+                  key={mailbox}
+                  messages={messages}
+                  selected={selected}
+                  threadCounts={threadCounts}
+                  onSelect={setSelected}
+                  onFlag={
+                    viewing
+                      ? undefined
+                      : (item, flagged) => void flag(item.id, { flagged })
+                  }
+                />
+              )}
+              {messages.length < total && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void load(messages.length)}
+                  className="w-full border-t-2 border-line px-4 py-3 text-sm font-bold text-brand hover:bg-tint disabled:opacity-50"
+                >
+                  {busy
+                    ? "Loading…"
+                    : `Load ${Math.min(PAGE, total - messages.length)} more`}
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div
+            className={`min-h-0 min-w-0 flex-1 flex-col ${open ? "flex" : "hidden md:flex"}`}
+          >
+            {message ? (
+              <>
+                <MessageActions
+                  message={message}
+                  mailboxes={mailboxes}
+                  busy={busy}
+                  viewing={Boolean(viewing)}
+                  replyAll={otherRecipients(message, from).length > 0}
+                  onBack={() => setSelected(null)}
+                  onReply={(all) => replyTo(message, all)}
+                  onForward={() =>
+                    quoteInto(message, {
+                      subject: prefixed(message.subject, "Fwd:"),
+                    })
+                  }
+                  onFlag={(flags) => void flag(message.id, flags)}
+                  onUnread={() => {
+                    void flag(message.id, { seen: false });
+                    setSelected(null);
+                  }}
+                  onMove={(to) => void move(message.id, to)}
+                  inTrash={
+                    mailboxes.find((box) => box.id === mailbox)?.role ===
+                    "trash"
+                  }
+                  deletionPending={deletions.some(
+                    (request) =>
+                      (request.status === "pending" ||
+                        request.status === "approved") &&
+                      request.messageIds.includes(message.id),
+                  )}
+                  onPurge={() => void requestPurge(message.id)}
+                />
+                {notice?.id === message.id && (
+                  <p className="shrink-0 animate-rise-in border-b-2 border-line bg-tint px-5 py-2 text-sm font-bold text-ink">
+                    {notice.text}
+                  </p>
+                )}
+                <h2 className="shrink-0 border-b-2 border-line px-5 py-3 text-lg font-extrabold text-brand">
+                  {message.subject || "(no subject)"}
+                </h2>
+                <Conversation
+                  key={message.id}
+                  message={message}
+                  count={threadCounts[message.threadId] ?? 1}
+                  viewing={viewing}
+                  onRead={(id) => {
+                    mark(id, { seen: true });
+                    void loadMailboxes().catch(() => {});
+                  }}
+                />
+              </>
+            ) : (
+              <p className="p-6 text-sm text-subtle">
+                Select a message to read it. Shortcuts: j/k move,{" "}
+                {viewing ? "" : "r reply, e archive, # delete, "}/ search.
+              </p>
             )}
           </div>
-        </div>
-
-        <div
-          className={`min-h-0 min-w-0 flex-1 flex-col ${open ? "flex" : "hidden md:flex"}`}
-        >
-          {message ? (
-            <>
-              <MessageActions
-                message={message}
-                mailboxes={mailboxes}
-                busy={busy}
-                replyAll={otherRecipients(message, from).length > 0}
-                onBack={() => setSelected(null)}
-                onReply={(all) => replyTo(message, all)}
-                onForward={() =>
-                  quoteInto(message, {
-                    subject: prefixed(message.subject, "Fwd:"),
-                  })
-                }
-                onFlag={(flags) => void flag(message.id, flags)}
-                onUnread={() => {
-                  void flag(message.id, { seen: false });
-                  setSelected(null);
-                }}
-                onMove={(to) => void move(message.id, to)}
-                inTrash={
-                  mailboxes.find((box) => box.id === mailbox)?.role === "trash"
-                }
-                deletionPending={deletions.some(
-                  (request) =>
-                    (request.status === "pending" ||
-                      request.status === "approved") &&
-                    request.messageIds.includes(message.id),
-                )}
-                onPurge={() => void requestPurge(message.id)}
-              />
-              {notice?.id === message.id && (
-                <p className="shrink-0 animate-rise-in border-b-2 border-line bg-tint px-5 py-2 text-sm font-bold text-ink">
-                  {notice.text}
-                </p>
-              )}
-              <h2 className="shrink-0 border-b-2 border-line px-5 py-3 text-lg font-extrabold text-brand">
-                {message.subject || "(no subject)"}
-              </h2>
-              <Conversation
-                key={message.id}
-                message={message}
-                count={threadCounts[message.threadId] ?? 1}
-                onRead={(id) => {
-                  mark(id, { seen: true });
-                  void loadMailboxes().catch(() => {});
-                }}
-              />
-            </>
-          ) : (
-            <p className="p-6 text-sm text-subtle">
-              Select a message to read it. Shortcuts: j/k move, r reply, e
-              archive, # delete, / search.
-            </p>
-          )}
         </div>
       </div>
 
@@ -572,6 +741,7 @@ function MessageActions({
   message,
   mailboxes,
   busy,
+  viewing,
   replyAll,
   onBack,
   onReply,
@@ -586,6 +756,7 @@ function MessageActions({
   message: MessageSummary;
   mailboxes: Mailbox[];
   busy: boolean;
+  viewing: boolean;
   replyAll: boolean;
   onBack: () => void;
   onReply: (all: boolean) => void;
@@ -604,7 +775,9 @@ function MessageActions({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 border-b-2 border-line px-3 py-2.5 md:px-5">
+    <div
+      className={`flex flex-wrap items-center gap-1.5 border-b-2 border-line px-3 py-2.5 md:px-5 ${viewing ? "md:hidden" : ""}`}
+    >
       <button
         type="button"
         onClick={onBack}
@@ -613,95 +786,107 @@ function MessageActions({
       >
         <ArrowLeft size={15} aria-hidden />
       </button>
-      <button type="button" className={ACTION} onClick={() => onReply(false)}>
-        Reply
-      </button>
-      {replyAll && (
-        <button type="button" className={ACTION} onClick={() => onReply(true)}>
-          Reply all
-        </button>
-      )}
-      <button type="button" className={ACTION} onClick={onForward}>
-        Forward
-      </button>
-
-      <div className="ml-auto flex flex-wrap items-center gap-1.5">
-        <button
-          type="button"
-          aria-label={flagged ? "Remove star" : "Star"}
-          aria-pressed={flagged}
-          className={ACTION}
-          onClick={() => onFlag({ flagged: !flagged })}
-        >
-          <Star
-            size={15}
-            className={`transition-colors duration-[var(--dur-fast)] ease-smooth ${flagged ? "fill-brand text-brand" : "fill-transparent"}`}
-            aria-hidden
-          />
-        </button>
-        <button
-          type="button"
-          aria-label="Mark unread"
-          disabled={unread}
-          title={unread ? "Already unread" : "Mark unread"}
-          className={ACTION}
-          onClick={onUnread}
-        >
-          <MailOpen size={15} aria-hidden />
-        </button>
-        <select
-          aria-label="Move to folder"
-          value=""
-          disabled={busy}
-          onChange={(event) =>
-            event.target.value && onMove({ mailboxId: event.target.value })
-          }
-          className={`${ACTION} max-w-32 bg-surface`}
-        >
-          <option value="">Move to…</option>
-          {mailboxes
-            .filter((box) => !message.mailboxIds?.[box.id])
-            .map((box) => (
-              <option key={box.id} value={box.id}>
-                {box.name}
-              </option>
-            ))}
-        </select>
-        <button
-          type="button"
-          disabled={busy || inArchive}
-          title={inArchive ? "Already in the archive" : undefined}
-          className={ACTION}
-          onClick={() => onMove({ to: "archive" })}
-        >
-          Archive
-        </button>
-        {inTrash ? (
-          deletionPending ? (
-            <span className="rounded-[8px] border-2 border-line bg-tint px-2.5 py-1.5 text-sm font-bold text-ink">
-              Waiting on a co-president
-            </span>
-          ) : (
-            <button
-              type="button"
-              disabled={busy}
-              className={`${ACTION} text-destructive`}
-              onClick={onPurge}
-            >
-              Request deletion
-            </button>
-          )
-        ) : (
+      {!viewing && (
+        <>
           <button
             type="button"
-            disabled={busy}
-            className={`${ACTION} text-brand`}
-            onClick={() => onMove({ to: "trash" })}
+            className={ACTION}
+            onClick={() => onReply(false)}
           >
-            Delete
+            Reply
           </button>
-        )}
-      </div>
+          {replyAll && (
+            <button
+              type="button"
+              className={ACTION}
+              onClick={() => onReply(true)}
+            >
+              Reply all
+            </button>
+          )}
+          <button type="button" className={ACTION} onClick={onForward}>
+            Forward
+          </button>
+
+          <div className="ml-auto flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              aria-label={flagged ? "Remove star" : "Star"}
+              aria-pressed={flagged}
+              className={ACTION}
+              onClick={() => onFlag({ flagged: !flagged })}
+            >
+              <Star
+                size={15}
+                className={`transition-colors duration-[var(--dur-fast)] ease-smooth ${flagged ? "fill-brand text-brand" : "fill-transparent"}`}
+                aria-hidden
+              />
+            </button>
+            <button
+              type="button"
+              aria-label="Mark unread"
+              disabled={unread}
+              title={unread ? "Already unread" : "Mark unread"}
+              className={ACTION}
+              onClick={onUnread}
+            >
+              <MailOpen size={15} aria-hidden />
+            </button>
+            <select
+              aria-label="Move to folder"
+              value=""
+              disabled={busy}
+              onChange={(event) =>
+                event.target.value && onMove({ mailboxId: event.target.value })
+              }
+              className={`${ACTION} max-w-32 bg-surface`}
+            >
+              <option value="">Move to…</option>
+              {mailboxes
+                .filter((box) => !message.mailboxIds?.[box.id])
+                .map((box) => (
+                  <option key={box.id} value={box.id}>
+                    {box.name}
+                  </option>
+                ))}
+            </select>
+            <button
+              type="button"
+              disabled={busy || inArchive}
+              title={inArchive ? "Already in the archive" : undefined}
+              className={ACTION}
+              onClick={() => onMove({ to: "archive" })}
+            >
+              Archive
+            </button>
+            {inTrash ? (
+              deletionPending ? (
+                <span className="rounded-[8px] border-2 border-line bg-tint px-2.5 py-1.5 text-sm font-bold text-ink">
+                  Waiting on a co-president
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  disabled={busy}
+                  className={`${ACTION} text-destructive`}
+                  onClick={onPurge}
+                >
+                  Request deletion
+                </button>
+              )
+            ) : (
+              <button
+                type="button"
+                disabled={busy}
+                className={`${ACTION} text-brand`}
+                onClick={() => onMove({ to: "trash" })}
+              >
+                Delete
+              </button>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

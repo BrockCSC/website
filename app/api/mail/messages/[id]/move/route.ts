@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { moveMessages } from "@/lib/mail/jmap-mail";
-import { mailToken, unauthorized } from "../../../auth";
+import { mailWriter } from "../../../auth";
 import { jsonObject } from "@/lib/json";
 
 const ROLES = ["trash", "archive"] as const;
@@ -9,8 +9,8 @@ export const POST = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const token = await mailToken(req);
-  if (!token) return unauthorized();
+  const scope = await mailWriter(req);
+  if (scope instanceof NextResponse) return scope;
 
   const body = await jsonObject<{ to?: unknown; mailboxId?: unknown }>(req);
   const role = ROLES.find((name) => name === body?.to);
@@ -24,6 +24,6 @@ export const POST = async (
   }
 
   const { id } = await params;
-  await moveMessages(token, [id], { role, mailboxId });
+  await moveMessages(scope.access, [id], { role, mailboxId });
   return NextResponse.json({ ok: true });
 };

@@ -16,7 +16,7 @@ import {
   isProtectedMailbox,
   makeMailboxReadOnly,
   provisionMailbox,
-  syncAdminGroup,
+  syncMailRouting,
   syncExpungeRights,
 } from "@/lib/mail/provision";
 import {
@@ -142,7 +142,7 @@ export const PATCH = async (
 
     try {
       if (ownsIdentities()) {
-        await syncAdminGroup();
+        await syncMailRouting();
         await syncExpungeRights();
       }
     } catch {

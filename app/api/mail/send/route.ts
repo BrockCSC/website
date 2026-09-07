@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { sendMessage, type Attachment } from "@/lib/mail/jmap-mail";
 import { allowanceFor, overLimitMessage } from "@/lib/mail/limit";
-import { mailUser, unauthorized } from "../auth";
+import { mailWriter } from "../auth";
 import { jsonObject } from "@/lib/json";
 
 const MAX_RECIPIENTS = 50;
@@ -33,9 +33,9 @@ const attachments = (value: unknown): Attachment[] | null => {
 };
 
 export const POST = async (req: NextRequest) => {
-  const session = await mailUser(req);
-  if (!session) return unauthorized();
-  const { token } = session;
+  const session = await mailWriter(req);
+  if (session instanceof NextResponse) return session;
+  const { access } = session;
 
   const body = await jsonObject<{
     to?: unknown;
@@ -70,7 +70,7 @@ export const POST = async (req: NextRequest) => {
   if (!files) return bad("attachments must each carry a blobId");
 
   const allowance = await allowanceFor(
-    token,
+    access,
     await findSignupByUserId(session.user.sub),
   );
   if (!allowance.exempt && allowance.remaining <= 0) {
@@ -80,7 +80,7 @@ export const POST = async (req: NextRequest) => {
     );
   }
 
-  const id = await sendMessage(token, {
+  const id = await sendMessage(access, {
     to,
     cc,
     subject: body.subject,

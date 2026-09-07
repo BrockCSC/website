@@ -7,6 +7,7 @@ import type {
   MessageDetail,
   MessageSummary,
 } from "@/lib/mail/jmap-mail";
+import { withAs } from "./inbox-picker";
 
 const addressLine = (list: MessageDetail["from"]) =>
   (list ?? []).map((a) => a.name || a.email).join(", ");
@@ -23,10 +24,13 @@ const downloadable = (parts: BodyPart[] | undefined) =>
 
 type RenderedBody = { html: string; blocked: boolean };
 
-const blobUrl = (part: BodyPart) =>
-  `/api/mail/blob/${encodeURIComponent(part.blobId!)}?name=${encodeURIComponent(
-    part.name ?? "attachment",
-  )}&type=${encodeURIComponent(part.type)}`;
+const blobUrl = (part: BodyPart, viewing: string | null) =>
+  withAs(
+    `/api/mail/blob/${encodeURIComponent(part.blobId!)}?name=${encodeURIComponent(
+      part.name ?? "attachment",
+    )}&type=${encodeURIComponent(part.type)}`,
+    viewing,
+  );
 
 const useDarkTheme = () => {
   const [dark, setDark] = useState(false);
@@ -43,9 +47,11 @@ const useDarkTheme = () => {
 
 function MessageView({
   id,
+  viewing,
   onRead,
 }: {
   id: string;
+  viewing: string | null;
   onRead?: (id: string) => void;
 }) {
   const [message, setMessage] = useState<MessageDetail | null>(null);
@@ -59,11 +65,14 @@ function MessageView({
     let live = true;
     const path = `/api/mail/messages/${encodeURIComponent(id)}`;
     Promise.all([
-      fetch(path).then((res) =>
+      fetch(withAs(path, viewing)).then((res) =>
         res.ok ? res.json() : Promise.reject(res.status),
       ),
       fetch(
-        `${path}/body?theme=${dark ? "dark" : "light"}${showImages ? "&images=1" : ""}`,
+        withAs(
+          `${path}/body?theme=${dark ? "dark" : "light"}${showImages ? "&images=1" : ""}`,
+          viewing,
+        ),
       ).then(async (res) =>
         res.ok
           ? {
@@ -78,7 +87,7 @@ function MessageView({
         setMessage(detail);
         setBody(rendered.html);
         setBlocked(rendered.blocked);
-        if (!detail.keywords?.$seen) {
+        if (!viewing && !detail.keywords?.$seen) {
           void fetch(`${path}/flags`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -91,7 +100,7 @@ function MessageView({
       live = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, dark, showImages]);
+  }, [id, dark, showImages, viewing]);
 
   if (error) {
     return <p className="flex-1 p-6 text-sm font-bold text-brand">{error}</p>;
@@ -117,7 +126,7 @@ function MessageView({
             {files.map((part) => (
               <li key={part.blobId}>
                 <a
-                  href={blobUrl(part)}
+                  href={blobUrl(part, viewing)}
                   download={part.name ?? "attachment"}
                   className="flex items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink hover:bg-tint"
                 >
@@ -167,10 +176,12 @@ function MessageView({
 export function Conversation({
   message,
   count,
+  viewing,
   onRead,
 }: {
   message: MessageSummary;
   count: number;
+  viewing: string | null;
   onRead?: (id: string) => void;
 }) {
   const [thread, setThread] = useState<MessageSummary[]>([]);
@@ -179,7 +190,12 @@ export function Conversation({
   useEffect(() => {
     if (count <= 1) return;
     let live = true;
-    fetch(`/api/mail/threads/${encodeURIComponent(message.threadId)}`)
+    fetch(
+      withAs(
+        `/api/mail/threads/${encodeURIComponent(message.threadId)}`,
+        viewing,
+      ),
+    )
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((data: { messages: MessageSummary[] }) => {
         if (!live) return;
@@ -190,7 +206,7 @@ export function Conversation({
     return () => {
       live = false;
     };
-  }, [message.id, message.threadId, count]);
+  }, [message.id, message.threadId, count, viewing]);
 
   const markRead = (id: string) => {
     setThread((prev) =>
@@ -236,7 +252,7 @@ export function Conversation({
           ))}
         </ul>
       )}
-      <MessageView key={open} id={open} onRead={markRead} />
+      <MessageView key={open} id={open} viewing={viewing} onRead={markRead} />
     </>
   );
 }

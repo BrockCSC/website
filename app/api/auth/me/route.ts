@@ -4,6 +4,7 @@ import {
   invalidateRoles,
   requireAdmin,
   requireApprover,
+  requireMailAdmin,
   requireMember,
 } from "@/lib/auth/session";
 import { ownsIdentities } from "@/lib/env";
@@ -16,9 +17,10 @@ export const GET = async (req: NextRequest) => {
   }
   invalidateRoles(user.sub);
 
-  const [isExecutive, isApprover, member] = await Promise.all([
+  const [isExecutive, isApprover, isMailAdmin, member] = await Promise.all([
     requireAdmin(req),
     requireApprover(req),
+    requireMailAdmin(req),
     requireMember(req),
   ]);
   return NextResponse.json({
@@ -27,6 +29,7 @@ export const GET = async (req: NextRequest) => {
     roles: member?.roles ?? [],
     isExecutive: !!isExecutive,
     isApprover: !!isApprover,
+    isMailAdmin: !!isMailAdmin,
     isMember: !!member,
     identitiesEditable: ownsIdentities(),
   });

@@ -5,6 +5,7 @@ export type Section = {
   approverOnly?: boolean;
   execOnly?: boolean;
   mailboxOnly?: boolean;
+  mailAdminOnly?: boolean;
 };
 
 export const SECTIONS: Section[] = [
@@ -13,6 +14,12 @@ export const SECTIONS: Section[] = [
     href: "/admin/mail",
     blurb: "Read, write and file your club mail.",
     mailboxOnly: true,
+  },
+  {
+    name: "Aliases",
+    href: "/admin/mail/aliases",
+    blurb: "Shared addresses, who receives them, forwarding and the catch-all.",
+    mailAdminOnly: true,
   },
   {
     name: "Analytics",
@@ -39,4 +46,6 @@ export const SECTIONS: Section[] = [
 ];
 
 export const sectionFor = (pathname: string): Section | undefined =>
-  SECTIONS.find((section) => pathname.startsWith(section.href));
+  SECTIONS.filter((section) => pathname.startsWith(section.href)).sort(
+    (a, b) => b.href.length - a.href.length,
+  )[0];

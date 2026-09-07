@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import type { Access } from "@/lib/mail/access";
 import { downloadBlob, getMessage, type BodyPart } from "@/lib/mail/jmap-mail";
 import {
   contentId,
@@ -6,14 +7,14 @@ import {
   emailBodyToText,
   sanitizeEmailBody,
 } from "@/lib/mail/sanitize";
-import { mailToken } from "../../../auth";
+import { mailAccess } from "../../../auth";
 
 const INLINE_MAX_BYTES = 2 * 1024 * 1024;
 const INLINE_TOTAL_BYTES = 8 * 1024 * 1024;
 
 /** Inlined rather than proxied: the sandboxed iframe sends no session cookie. */
 const inlineImages = async (
-  token: string,
+  access: Access,
   parts: BodyPart[] | undefined,
 ): Promise<Record<string, string>> => {
   const inline: Record<string, string> = {};
@@ -26,7 +27,7 @@ const inlineImages = async (
 
     try {
       const res = await downloadBlob(
-        token,
+        access,
         part.blobId,
         part.name ?? "image",
         part.type,
@@ -47,11 +48,11 @@ export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) => {
-  const token = await mailToken(req);
-  if (!token) return new NextResponse("Sign in again", { status: 401 });
+  const access = await mailAccess(req);
+  if (!access) return new NextResponse("Sign in again", { status: 401 });
 
   const { id } = await params;
-  const message = await getMessage(token, id);
+  const message = await getMessage(access, id);
 
   const part = message.htmlBody?.[0] ?? message.textBody?.[0];
   const raw = part?.partId ? message.bodyValues?.[part.partId]?.value : "";
@@ -60,7 +61,7 @@ export const GET = async (
 
   const { html: body, blocked } = isHtml
     ? sanitizeEmailBody(raw ?? "", {
-        inline: await inlineImages(token, message.attachments),
+        inline: await inlineImages(access, message.attachments),
         allowRemote: search.get("images") === "1",
       })
     : { html: emailBodyToText(raw ?? ""), blocked: false };

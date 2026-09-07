@@ -1,3 +1,4 @@
+import type { Access } from "./access";
 import { sanitizeOutboundHtml } from "./sanitize";
 import {
   htmlSignature,
@@ -75,29 +76,36 @@ export type MessageDetail = MessageSummary & {
 
 export type Call = [string, Record<string, unknown>, string];
 
-export const jmap = async (
-  token: string,
+export const jmapResponses = async (
+  access: Access,
   calls: Call[],
-): Promise<unknown[]> => {
+): Promise<Call[]> => {
   const { url } = config();
   const res = await fetch(`${url}/jmap`, {
     method: "POST",
     headers: {
-      authorization: `Bearer ${token}`,
+      authorization: access.authorization,
       "content-type": "application/json",
     },
     body: JSON.stringify({ using: CAPABILITIES, methodCalls: calls }),
   });
-  if (!res.ok) throw new Error(`Stalwart JMAP failed (${res.status}).`);
+  if (!res.ok) {
+    throw new Error(
+      `Stalwart JMAP failed (${res.status}): ${(await res.text()).slice(0, 300)}`,
+    );
+  }
 
   const body = (await res.json()) as { methodResponses: Call[] };
-  return body.methodResponses.map(([name, payload]) => {
+  return body.methodResponses;
+};
+
+export const jmap = async (access: Access, calls: Call[]): Promise<unknown[]> =>
+  (await jmapResponses(access, calls)).map(([name, payload]) => {
     if (name === "error") {
       throw new Error(`Stalwart rejected the call: ${JSON.stringify(payload)}`);
     }
     return payload;
   });
-};
 
 const throwIfRefused = (
   failed: Record<string, unknown> | undefined,
@@ -111,10 +119,10 @@ const throwIfRefused = (
 type RoleBox = { id: string; role: string | null };
 
 const roleBoxes = async (
-  token: string,
+  access: Access,
   accountId: string,
 ): Promise<RoleBox[]> => {
-  const [boxes] = (await jmap(token, [
+  const [boxes] = (await jmap(access, [
     ["Mailbox/get", { accountId, ids: null, properties: ["id", "role"] }, "m0"],
   ])) as [{ list: RoleBox[] }];
   return boxes.list;
@@ -129,26 +137,27 @@ type Session = {
 };
 
 const mailSession = async (
-  token: string,
+  access: Access,
 ): Promise<{ session: Session; accountId: string }> => {
   const { url } = config();
   const res = await fetch(`${url}/jmap/session`, {
-    headers: { authorization: `Bearer ${token}` },
+    headers: { authorization: access.authorization },
   });
   if (!res.ok) throw new Error(`Stalwart JMAP session failed (${res.status}).`);
 
   const session = (await res.json()) as Session;
-  const accountId = session.primaryAccounts?.[MAIL_CAPABILITY];
+  const accountId =
+    access.accountId ?? session.primaryAccounts?.[MAIL_CAPABILITY];
   if (!accountId) throw new Error("Stalwart session has no mail account.");
   return { session, accountId };
 };
 
-export const mailAccountId = async (token: string): Promise<string> =>
-  (await mailSession(token)).accountId;
+export const mailAccountId = async (access: Access): Promise<string> =>
+  (await mailSession(access)).accountId;
 
-export const listMailboxes = async (token: string): Promise<Mailbox[]> => {
-  const accountId = await mailAccountId(token);
-  const [res] = (await jmap(token, [
+export const listMailboxes = async (access: Access): Promise<Mailbox[]> => {
+  const accountId = await mailAccountId(access);
+  const [res] = (await jmap(access, [
     [
       "Mailbox/get",
       {
@@ -256,10 +265,10 @@ const searchConditions = (search: string, boxes: Mailbox[]): Condition[] => {
 /** Nobody searching their mail means "and also the bin". */
 const BURIED = ["trash", "junk"];
 
-const messageFilter = async (token: string, opts: MessageQuery) => {
+const messageFilter = async (access: Access, opts: MessageQuery) => {
   const search = opts.search?.trim() ?? "";
   const scoped = Boolean(opts.mailboxId) || /(?:^|\s)in:/i.test(search);
-  const boxes = search && !opts.mailboxId ? await listMailboxes(token) : [];
+  const boxes = search && !opts.mailboxId ? await listMailboxes(access) : [];
   const buried = scoped
     ? []
     : boxes.filter((box) => BURIED.includes(box.role ?? "")).map((b) => b.id);
@@ -276,7 +285,7 @@ const messageFilter = async (token: string, opts: MessageQuery) => {
 };
 
 const queryMessages = async (
-  token: string,
+  access: Access,
   accountId: string,
   opts: MessageQuery,
   threaded: boolean,
@@ -324,7 +333,7 @@ const queryMessages = async (
       : []),
   ];
 
-  const [query, get, threads] = (await jmap(token, calls)) as [
+  const [query, get, threads] = (await jmap(access, calls)) as [
     { ids: string[]; total: number },
     { list: MessageSummary[] },
     { list: { id: string; emailIds: string[] }[] } | undefined,
@@ -344,25 +353,25 @@ const queryMessages = async (
 };
 
 export const listMessages = async (
-  token: string,
+  access: Access,
   opts: MessageQuery,
 ): Promise<MessagePage> => {
   const [accountId, filter] = await Promise.all([
-    mailAccountId(token),
-    messageFilter(token, opts),
+    mailAccountId(access),
+    messageFilter(access, opts),
   ]);
   const run = (threaded: boolean) =>
-    queryMessages(token, accountId, opts, threaded, filter);
+    queryMessages(access, accountId, opts, threaded, filter);
   if (!opts.threaded) return run(false);
   return run(true).catch(() => run(false));
 };
 
 export const getThread = async (
-  token: string,
+  access: Access,
   threadId: string,
 ): Promise<MessageSummary[]> => {
-  const accountId = await mailAccountId(token);
-  const [, get] = (await jmap(token, [
+  const accountId = await mailAccountId(access);
+  const [, get] = (await jmap(access, [
     ["Thread/get", { accountId, ids: [threadId] }, "t0"],
     [
       "Email/get",
@@ -383,18 +392,18 @@ export const getThread = async (
 };
 
 export const setKeywords = async (
-  token: string,
+  access: Access,
   ids: string[],
   keywords: Record<string, boolean>,
 ): Promise<void> => {
-  const accountId = await mailAccountId(token);
+  const accountId = await mailAccountId(access);
   const patch = Object.fromEntries(
     Object.entries(keywords).map(([name, on]) => [
       `keywords/${name}`,
       on ? true : null,
     ]),
   );
-  const [res] = (await jmap(token, [
+  const [res] = (await jmap(access, [
     [
       "Email/set",
       { accountId, update: Object.fromEntries(ids.map((id) => [id, patch])) },
@@ -406,11 +415,11 @@ export const setKeywords = async (
 };
 
 export const getMessage = async (
-  token: string,
+  access: Access,
   id: string,
 ): Promise<MessageDetail> => {
-  const accountId = await mailAccountId(token);
-  const [res] = (await jmap(token, [
+  const accountId = await mailAccountId(access);
+  const [res] = (await jmap(access, [
     [
       "Email/get",
       {
@@ -452,23 +461,23 @@ export const getMessage = async (
 };
 
 export const subjectOf = async (
-  token: string,
+  access: Access,
   id: string,
 ): Promise<string | null> => {
-  const accountId = await mailAccountId(token);
-  const [res] = (await jmap(token, [
+  const accountId = await mailAccountId(access);
+  const [res] = (await jmap(access, [
     ["Email/get", { accountId, ids: [id], properties: ["subject"] }, "g0"],
   ])) as [{ list: { subject: string | null }[] }];
   return res.list[0]?.subject ?? null;
 };
 
 export const destroyMessages = async (
-  token: string,
+  access: Access,
   ids: string[],
 ): Promise<number> => {
   if (ids.length === 0) return 0;
-  const accountId = await mailAccountId(token);
-  const [res] = (await jmap(token, [
+  const accountId = await mailAccountId(access);
+  const [res] = (await jmap(access, [
     ["Email/set", { accountId, destroy: ids }, "d0"],
   ])) as [{ destroyed?: string[]; notDestroyed?: Record<string, unknown> }];
 
@@ -477,19 +486,19 @@ export const destroyMessages = async (
 };
 
 export const moveMessages = async (
-  token: string,
+  access: Access,
   ids: string[],
   to: { role?: "trash" | "archive"; mailboxId?: string },
 ): Promise<void> => {
-  const accountId = await mailAccountId(token);
-  const boxes = await roleBoxes(token, accountId);
+  const accountId = await mailAccountId(access);
+  const boxes = await roleBoxes(access, accountId);
 
   let target = to.mailboxId
     ? boxes.find((box) => box.id === to.mailboxId)?.id
     : boxes.find((box) => box.role === to.role)?.id;
 
   if (!target && to.role) {
-    const [made] = (await jmap(token, [
+    const [made] = (await jmap(access, [
       [
         "Mailbox/set",
         {
@@ -515,7 +524,7 @@ export const moveMessages = async (
   if (!target) throw new Error("No such mailbox in this account.");
 
   const mailboxIds = { [target]: true };
-  const [res] = (await jmap(token, [
+  const [res] = (await jmap(access, [
     [
       "Email/set",
       {
@@ -535,12 +544,12 @@ const internalUrl = (advertised: string) =>
   config().url + advertised.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]+/i, "");
 
 export const downloadBlob = async (
-  token: string,
+  access: Access,
   blobId: string,
   name: string,
   type: string,
 ): Promise<Response> => {
-  const { session, accountId } = await mailSession(token);
+  const { session, accountId } = await mailSession(access);
   if (!session.downloadUrl) {
     throw new Error("Stalwart session advertises no download URL.");
   }
@@ -551,7 +560,7 @@ export const downloadBlob = async (
     .replace("{type}", encodeURIComponent(type));
 
   const res = await fetch(url, {
-    headers: { authorization: `Bearer ${token}` },
+    headers: { authorization: access.authorization },
   });
   if (!res.ok)
     throw new Error(`Stalwart blob download failed (${res.status}).`);
@@ -559,14 +568,14 @@ export const downloadBlob = async (
 };
 
 export const uploadBlob = async (
-  token: string,
+  access: Access,
   body: ArrayBuffer,
   type: string,
 ): Promise<{ blobId: string; size: number }> => {
   if (body.byteLength > BLOB_MAX_BYTES) {
     throw new Error("That file is too large to attach.");
   }
-  const { session, accountId } = await mailSession(token);
+  const { session, accountId } = await mailSession(access);
   if (!session.uploadUrl) {
     throw new Error("Stalwart session advertises no upload URL.");
   }
@@ -578,7 +587,7 @@ export const uploadBlob = async (
     {
       method: "POST",
       headers: {
-        authorization: `Bearer ${token}`,
+        authorization: access.authorization,
         "content-type": type || "application/octet-stream",
       },
       body,
@@ -592,12 +601,12 @@ export const uploadBlob = async (
 };
 
 export const mailStats = async (
-  token: string,
+  access: Access,
   days: number,
 ): Promise<{ sent: number; received: number }> => {
-  const accountId = await mailAccountId(token);
+  const accountId = await mailAccountId(access);
   const after = new Date(Date.now() - days * 86_400_000).toISOString();
-  const boxes = await roleBoxes(token, accountId);
+  const boxes = await roleBoxes(access, accountId);
 
   const byRole = (role: string) => boxes.find((box) => box.role === role)?.id;
   const wanted: ["sent" | "received", string][] = [];
@@ -610,7 +619,7 @@ export const mailStats = async (
   if (wanted.length === 0) return counts;
 
   const results = (await jmap(
-    token,
+    access,
     wanted.map(([key, id]) => [
       "Email/query",
       {
@@ -629,9 +638,11 @@ export const mailStats = async (
   return counts;
 };
 
-export const sendingAddress = async (token: string): Promise<string | null> => {
-  const { session, accountId } = await mailSession(token);
-  const [identities] = (await jmap(token, [
+export const sendingAddress = async (
+  access: Access,
+): Promise<string | null> => {
+  const { session, accountId } = await mailSession(access);
+  const [identities] = (await jmap(access, [
     [
       "Identity/get",
       { accountId, ids: null, properties: ["id", "email"] },
@@ -677,7 +688,7 @@ const senderIdentity = (
 };
 
 const refreshSignature = async (
-  token: string,
+  access: Access,
   accountId: string,
   identity: Identity,
   signer: Signer,
@@ -692,17 +703,17 @@ const refreshSignature = async (
   ) {
     return;
   }
-  await jmap(token, [
+  await jmap(access, [
     ["Identity/set", { accountId, update: { [identity.id]: wanted } }, "d0"],
   ]).catch(() => {});
 };
 
 export const sendMessage = async (
-  token: string,
+  access: Access,
   msg: OutgoingMessage,
 ): Promise<string> => {
-  const { session, accountId } = await mailSession(token);
-  const [identities, mailboxes] = (await jmap(token, [
+  const { session, accountId } = await mailSession(access);
+  const [identities, mailboxes] = (await jmap(access, [
     [
       "Identity/get",
       {
@@ -723,9 +734,9 @@ export const sendMessage = async (
 
   const identity = senderIdentity(session, accountId, identities.list);
   const signer = await signerFor(ownName(session, accountId) ?? "");
-  await refreshSignature(token, accountId, identity, signer);
+  await refreshSignature(access, accountId, identity, signer);
 
-  const [draft, submission] = (await jmap(token, [
+  const [draft, submission] = (await jmap(access, [
     [
       "Email/set",
       {

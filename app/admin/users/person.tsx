@@ -1,6 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import { Inbox } from "lucide-react";
+import { withAs } from "../mail/inbox-picker";
 import {
   applyToPerson,
   deleteAccount,
@@ -318,6 +321,21 @@ export default function PersonView({
                     ],
                   ]}
                 />
+                {user?.isMailAdmin &&
+                  detail.mailbox.provisioned &&
+                  signup?.username && (
+                    <Button
+                      asChild
+                      className="self-start"
+                      size="sm"
+                      variant="secondary"
+                    >
+                      <Link href={withAs("/admin/mail", signup.username)}>
+                        <Inbox aria-hidden />
+                        Open inbox
+                      </Link>
+                    </Button>
+                  )}
                 {detail.mailbox.protected && (
                   <Note>
                     This is a protected service account. It can never be
