@@ -7,6 +7,7 @@ import { Note, Pill } from "../../users/ui";
 import {
   errorText,
   fetchAliases,
+  setCatchAll,
   syncAliases,
   type Alias,
   type AliasDirectory,
@@ -20,10 +21,12 @@ const Tile = ({
   label,
   value,
   detail,
+  children,
 }: {
   label: string;
   value: string;
   detail: string;
+  children?: React.ReactNode;
 }) => (
   <div className="animate-rise-in rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm">
     <div className="text-xs font-bold uppercase tracking-wide text-subtle">
@@ -33,6 +36,7 @@ const Tile = ({
       {value}
     </div>
     <div className="mt-1 text-sm text-subtle">{detail}</div>
+    {children}
   </div>
 );
 
@@ -47,6 +51,7 @@ export default function AliasesPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [catchAllBusy, setCatchAllBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -81,6 +86,27 @@ export default function AliasesPage() {
       setError(errorText(err, "Could not re-sync right now."));
     } finally {
       setSyncing(false);
+    }
+  };
+
+  const changeCatchAll = async (address: string) => {
+    setCatchAllBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const result = await setCatchAll(address || null);
+      await load();
+      setNotice(
+        result.rehearsed
+          ? "Rehearsed — nothing was written."
+          : address
+            ? `Unaddressed mail now goes to ${address}.`
+            : "Unaddressed mail now bounces.",
+      );
+    } catch (err) {
+      setError(errorText(err, "Could not change the catch-all right now."));
+    } finally {
+      setCatchAllBusy(false);
     }
   };
 
@@ -139,11 +165,31 @@ export default function AliasesPage() {
             detail={
               directory.catchAll
                 ? `Unaddressed mail lands at ${directory.catchAll}`
-                : "Unaddressed mail bounces"
+                : "Unaddressed mail bounces back to the sender"
             }
             label="Catch-all"
             value={directory.catchAll ? `→ ${directory.catchAll}` : "Off"}
-          />
+          >
+            <select
+              aria-label="Where unaddressed mail goes"
+              className="mt-3 w-full rounded-[10px] border-2 border-line bg-raised px-2 py-1.5 text-sm font-semibold text-ink outline-none focus:border-brand disabled:opacity-50"
+              disabled={catchAllBusy}
+              onChange={(event) => void changeCatchAll(event.target.value)}
+              value={directory.catchAll ?? ""}
+            >
+              <option value="">Bounce it (off)</option>
+              {directory.aliases.map((one) => (
+                <option key={one.id} value={one.address}>
+                  {one.name} — everyone on the alias
+                </option>
+              ))}
+              {directory.people.map((person) => (
+                <option key={person.address} value={person.address}>
+                  {person.name} — {person.address}
+                </option>
+              ))}
+            </select>
+          </Tile>
           <Tile
             detail={
               directory.forwarding.length

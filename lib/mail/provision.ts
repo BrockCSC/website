@@ -80,9 +80,11 @@ export const syncMailRouting = async (): Promise<void> => {
   const holders = await approvers();
   await setGroupMembers(process.env.ADMIN_MAIL_GROUP ?? "admin", holders);
   await syncCoPresidentsList(holders.map((name) => `${name}@${domain()}`));
-  const catchAll = holders.length ? coPresidentsAddress() : null;
-  if ((await getCatchAll(domain())) !== catchAll) {
-    await setCatchAll(domain(), catchAll);
+  const catchAll = await getCatchAll(domain());
+  if (!catchAll && holders.length) {
+    await setCatchAll(domain(), coPresidentsAddress());
+  } else if (catchAll === coPresidentsAddress() && !holders.length) {
+    await setCatchAll(domain(), null);
   }
   await syncForwarding(holders);
 };
