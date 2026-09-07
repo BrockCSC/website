@@ -192,6 +192,7 @@ export function InboxPicker({
           <div className="border-b-2 border-line p-2">
             <input
               autoFocus
+              type="search"
               autoComplete="off"
               value={text}
               onChange={(event) => {
