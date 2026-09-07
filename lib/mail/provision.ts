@@ -75,6 +75,27 @@ const syncForwarding = async (holders: string[]): Promise<void> => {
   }
 };
 
+/** Aliases that carry a club role follow whoever holds it. */
+const syncRoleAliases = async (): Promise<void> => {
+  const { readAliases, recipientsFor } = await import("./aliases");
+  const directory = await readAliases();
+  for (const alias of directory.aliases) {
+    if (alias.synced || !alias.recipients.roles.length) continue;
+    const wanted = await recipientsFor(alias.recipients);
+    const current = [
+      ...alias.recipients.people,
+      ...alias.recipients.groups,
+      ...alias.recipients.external,
+      ...alias.delivered.filter((one) => !one.direct).map((one) => one.address),
+    ];
+    const same =
+      wanted.length === new Set(current).size &&
+      wanted.every((address) => current.includes(address));
+    if (same) continue;
+    await updateMailingList(alias.id, { recipients: wanted }, domain());
+  }
+};
+
 /** admin@ membership, the co-presidents list, the catch-all and forwarding. */
 export const syncMailRouting = async (): Promise<void> => {
   const holders = await approvers();
@@ -87,6 +108,7 @@ export const syncMailRouting = async (): Promise<void> => {
     await setCatchAll(domain(), null);
   }
   await syncForwarding(holders);
+  await syncRoleAliases();
 };
 
 /** Keeps permanent deletion over IMAP to the people who may approve it. */

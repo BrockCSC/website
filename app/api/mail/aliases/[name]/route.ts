@@ -2,7 +2,13 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireMailAdmin } from "@/lib/auth/session";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
-import { draftAlias, previewAlias, readAliases } from "@/lib/mail/aliases";
+import {
+  draftAlias,
+  forgetAliasRoles,
+  previewAlias,
+  readAliases,
+  setAliasRoles,
+} from "@/lib/mail/aliases";
 import { deleteMailingList, updateMailingList } from "@/lib/mail/stalwart";
 
 type Params = { params: Promise<{ name: string }> };
@@ -48,6 +54,7 @@ export const PATCH = async (req: NextRequest, { params }: Params) => {
     },
     directory.domain,
   );
+  if (!existing.synced) await setAliasRoles(existing.name, draft.roles);
   const alias = (await readAliases()).aliases.find((one) => one.name === name);
   return NextResponse.json(alias);
 };
@@ -78,5 +85,6 @@ export const DELETE = async (req: NextRequest, { params }: Params) => {
   if (!ownsIdentities()) return NextResponse.json({ rehearsed: true });
 
   await deleteMailingList(existing.id);
+  await forgetAliasRoles(existing.name);
   return new NextResponse(null, { status: 204 });
 };

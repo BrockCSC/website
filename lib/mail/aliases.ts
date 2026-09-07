@@ -1,8 +1,9 @@
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
-import { findAll } from "@/lib/db/repository";
-import { execsTable, signupsTable } from "@/lib/db/schema";
+import { create, findAll, remove, update } from "@/lib/db/repository";
+import { execsTable, mailAliasesTable, signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
 import { coPresidentsList, domain } from "./provision";
+import { expandRoles, roleGroups, type RoleGroup } from "./roles";
 import {
   forwardingAccounts,
   getCatchAll,
@@ -16,6 +17,8 @@ export type Recipients = {
   people: string[];
   groups: string[];
   external: string[];
+  /** Club roles: membership is recomputed rather than typed in. */
+  roles: string[];
 };
 
 export type Delivered = {
@@ -46,6 +49,9 @@ type Person = {
 export type AliasDirectory = {
   domain: string;
   aliases: Alias[];
+  roleGroups: RoleGroup[];
+  /** Addresses each role currently covers, so a draft can preview itself. */
+  roleMembers: Record<string, string[]>;
   people: Person[];
   catchAll: string | null;
   forwarding: { address: string; name: string }[];
@@ -57,6 +63,7 @@ export type Draft = {
   description: string;
   aliases: string[];
   recipients: string[];
+  roles: string[];
 };
 
 const LOCAL_PART = /^[a-z0-9][a-z0-9._-]{0,63}$/;
@@ -92,7 +99,18 @@ const addressesOf = (list: MailingList) => [
   ...list.aliases.map((alias) => `${alias}@${domain()}`),
 ];
 
-const assemble = (lists: MailingList[], people: Person[]): Alias[] => {
+type RoleState = {
+  /** Group ids each list carries, by list name. */
+  byList: Map<string, string[]>;
+  /** Addresses each group currently covers. */
+  members: Map<string, string[]>;
+};
+
+const assemble = (
+  lists: MailingList[],
+  people: Person[],
+  roles: RoleState,
+): Alias[] => {
   const names = new Map(people.map((p) => [p.address, p.name]));
   const byAddress = new Map(
     lists.flatMap((list) => addressesOf(list).map((a) => [a, list] as const)),
@@ -124,23 +142,47 @@ const assemble = (lists: MailingList[], people: Person[]): Alias[] => {
     return [...out.values()];
   };
 
+  const labels = new Map(roleGroups().map((group) => [group.id, group.label]));
+
   return lists
-    .map((list) => ({
-      id: list.id,
-      name: list.name,
-      address: list.emailAddress,
-      description: list.description ?? "",
-      aliases: list.aliases,
-      recipients: {
-        people: list.recipients.filter((r) => names.has(r)),
-        groups: list.recipients.filter((r) => byAddress.has(r)),
-        external: list.recipients.filter(
-          (r) => !names.has(r) && !byAddress.has(r),
-        ),
-      },
-      delivered: deliveries(list),
-      synced: list.name === coPresidentsList(),
-    }))
+    .map((list) => {
+      const carried = roles.byList.get(list.name) ?? [];
+      const fromRoles = new Map<string, string[]>();
+      for (const group of carried) {
+        for (const address of roles.members.get(group) ?? []) {
+          const via = fromRoles.get(address) ?? [];
+          via.push(labels.get(group) ?? group);
+          fromRoles.set(address, via);
+        }
+      }
+      const typed = list.recipients.filter(
+        (address) => !fromRoles.has(address),
+      );
+
+      return {
+        id: list.id,
+        name: list.name,
+        address: list.emailAddress,
+        description: list.description ?? "",
+        aliases: list.aliases,
+        recipients: {
+          people: typed.filter((r) => names.has(r)),
+          groups: typed.filter((r) => byAddress.has(r)),
+          external: typed.filter((r) => !names.has(r) && !byAddress.has(r)),
+          roles: carried,
+        },
+        delivered: deliveries(list).map((entry) => {
+          const viaRoles = fromRoles.get(entry.address);
+          if (!viaRoles) return entry;
+          return {
+            ...entry,
+            direct: false,
+            via: [...new Set([...entry.via, ...viaRoles])],
+          };
+        }),
+        synced: list.name === coPresidentsList(),
+      };
+    })
     .sort((a, b) => a.name.localeCompare(b.name));
 };
 
@@ -160,10 +202,17 @@ export const readAliases = async (): Promise<AliasDirectory> => {
   });
   const byName = (a: Person, b: Person) => a.name.localeCompare(b.name);
   const people = users.map(person).sort(byName);
+  const byList = await storedRoles();
+  const members = await expandRoles(
+    roleGroups().map((group) => group.id),
+    domain(),
+  );
 
   return {
     domain: domain(),
-    aliases: assemble(lists, people),
+    aliases: assemble(lists, people, { byList, members }),
+    roleGroups: roleGroups(),
+    roleMembers: Object.fromEntries(members),
     people,
     catchAll,
     forwarding: users
@@ -173,6 +222,49 @@ export const readAliases = async (): Promise<AliasDirectory> => {
       .map(({ address, name }) => ({ address, name })),
     identitiesEditable: ownsIdentities(),
   };
+};
+
+type RoleRecord = { name: string; roles: string[] };
+
+/** Group ids each alias carries, by alias name. */
+const storedRoles = async (): Promise<Map<string, string[]>> =>
+  new Map(
+    (await findAll<RoleRecord>(mailAliasesTable)).map((row) => [
+      row.name,
+      row.roles ?? [],
+    ]),
+  );
+
+export const setAliasRoles = async (
+  name: string,
+  roles: string[],
+): Promise<void> => {
+  const rows = await findAll<RoleRecord>(mailAliasesTable);
+  const existing = rows.find((row) => row.name === name);
+  if (!roles.length) {
+    if (existing) await remove(mailAliasesTable, existing.id);
+    return;
+  }
+  if (existing) await update(mailAliasesTable, existing.id, { name, roles });
+  else await create(mailAliasesTable, { name, roles });
+};
+
+export const forgetAliasRoles = async (name: string): Promise<void> =>
+  setAliasRoles(name, []);
+
+/** Every address a saved alias should carry, roles expanded. */
+export const recipientsFor = async (
+  recipients: Recipients,
+): Promise<string[]> => {
+  const members = await expandRoles(recipients.roles, domain());
+  return [
+    ...new Set([
+      ...recipients.people,
+      ...recipients.groups,
+      ...recipients.external,
+      ...[...members.values()].flat(),
+    ]),
+  ];
 };
 
 const toList = (alias: Alias): MailingList => ({
@@ -202,10 +294,15 @@ export const previewAlias = (
     aliases: draft.aliases,
     recipients: draft.recipients,
   };
-  const others = directory.aliases.filter((a) => a.id !== id).map(toList);
-  return assemble([...others, list], directory.people).find(
-    (a) => a.id === id,
-  )!;
+  const others = directory.aliases.filter((a) => a.id !== id);
+  const byList = new Map(
+    others.map((alias) => [alias.name, alias.recipients.roles]),
+  );
+  byList.set(draft.name, draft.roles);
+  return assemble([...others.map(toList), list], directory.people, {
+    byList,
+    members: new Map(Object.entries(directory.roleMembers)),
+  }).find((a) => a.id === id)!;
 };
 
 const strings = (value: unknown): string[] | null =>
@@ -288,6 +385,7 @@ export const draftAlias = (
   }
 
   let recipients: string[];
+  let roles: string[] = existing?.recipients.roles ?? [];
   if (body.recipients === undefined) {
     if (!existing) return { error: "Say who receives the mail." };
     recipients = toList(existing).recipients;
@@ -316,12 +414,25 @@ export const draftAlias = (
     if (missing) return { error: `${missing} is not a group.` };
     const bad = external.find((e) => !EMAIL.test(e));
     if (bad) return { error: `"${bad}" is not an email address.` };
+    const wantedRoles = strings(wanted?.roles ?? []);
+    if (!wantedRoles) return { error: "Roles must be a list of names." };
+    const known3 = new Set(directory.roleGroups.map((group) => group.id));
+    const unknown = wantedRoles.find((role) => !known3.has(role));
+    if (unknown) return { error: `${unknown} is not a club role.` };
+    roles = wantedRoles;
     if (existing && groups.some((g) => reaches(g, existing.id, byAddress))) {
       return { error: "That would make the group deliver to itself." };
     }
-    recipients = [...new Set([...people, ...groups, ...external])];
+    const fromRoles = roles.flatMap(
+      (role) => directory.roleMembers[role] ?? [],
+    );
+    recipients = [
+      ...new Set([...people, ...groups, ...external, ...fromRoles]),
+    ];
   }
-  if (!recipients.length) return { error: "Say who receives the mail." };
+  if (!recipients.length && !roles.length) {
+    return { error: "Say who receives the mail." };
+  }
 
-  return { draft: { name, description, aliases, recipients } };
+  return { draft: { name, description, aliases, recipients, roles } };
 };
