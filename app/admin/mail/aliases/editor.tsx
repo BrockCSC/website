@@ -69,10 +69,11 @@ export default function AliasEditor({
   const [people, setPeople] = useState(alias?.recipients.people ?? []);
   const [groups, setGroups] = useState(alias?.recipients.groups ?? []);
   const [external, setExternal] = useState(alias?.recipients.external ?? []);
+  const [roles, setRoles] = useState<string[]>(alias?.recipients.roles ?? []);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "delete" | null>(null);
 
-  const recipients = { people, groups, external };
+  const recipients = { people, groups, external, roles };
   const delivered = alias?.synced
     ? alias.delivered
     : resolve(recipients, directory, alias?.id ?? "new");
@@ -196,6 +197,44 @@ export default function AliasEditor({
         ) : (
           <div className="flex flex-col gap-2">
             <span className="text-sm font-bold text-ink">Delivers to</span>
+            <div className="rounded-[10px] border-2 border-line px-2 py-1.5">
+              <span className="px-1 text-sm font-bold text-subtle">Roles</span>
+              <div className="mt-1.5 flex flex-wrap gap-1.5">
+                {directory.roleGroups.map((group) => {
+                  const on = roles.includes(group.id);
+                  const covers = directory.roleMembers[group.id]?.length ?? 0;
+                  return (
+                    <button
+                      aria-pressed={on}
+                      className={`rounded-full border-2 border-line px-2.5 py-0.5 text-sm font-semibold ${
+                        on
+                          ? "bg-brand text-brand-ink"
+                          : "bg-surface text-ink hover:bg-tint"
+                      }`}
+                      key={group.id}
+                      onClick={() =>
+                        setRoles(
+                          on
+                            ? roles.filter((one) => one !== group.id)
+                            : [...roles, group.id],
+                        )
+                      }
+                      title={group.detail}
+                      type="button"
+                    >
+                      {group.label}
+                      <span
+                        className={on ? "opacity-80" : "text-subtle"}
+                      >{` ${covers}`}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 px-1 text-xs text-subtle">
+                A role keeps itself current: whoever holds it when mail arrives
+                is who receives it.
+              </p>
+            </div>
             <RecipientInput
               browse
               contacts={directory.people.map((p) => ({

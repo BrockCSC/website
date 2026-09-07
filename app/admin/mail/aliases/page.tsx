@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useSession } from "../../session";
 import { Note, Pill } from "../../users/ui";
 import {
+  createAlias,
   errorText,
   fetchAliases,
   setCatchAll,
@@ -16,6 +17,7 @@ import { DeliversTo } from "./chips";
 import AliasEditor from "./editor";
 
 const EXAMPLES = ["events", "sponsorship"];
+const CATCH_ALL_NAME = "catch-all";
 
 const Tile = ({
   label,
@@ -55,10 +57,13 @@ export default function AliasesPage() {
 
   const load = useCallback(async () => {
     try {
-      setDirectory(await fetchAliases());
+      const next = await fetchAliases();
+      setDirectory(next);
       setError(null);
+      return next;
     } catch {
       setError("Could not load aliases right now.");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -110,6 +115,46 @@ export default function AliasesPage() {
     }
   };
 
+  /** Unaddressed mail can only reach one address, so a list stands behind it. */
+  const startCatchAllList = async () => {
+    setCatchAllBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const existing = directory?.aliases.find(
+        (alias) => alias.name === CATCH_ALL_NAME,
+      );
+      const address =
+        existing?.address ?? `${CATCH_ALL_NAME}@${directory?.domain}`;
+      if (!existing) {
+        await createAlias({
+          name: CATCH_ALL_NAME,
+          description: "Mail sent to an address that does not exist.",
+          aliases: [],
+          recipients: {
+            people: [],
+            groups: synced ? [synced.address] : [],
+            external: [],
+            roles: [],
+          },
+        });
+      }
+      const result = await setCatchAll(address);
+      const next = await load();
+      setNotice(
+        result.rehearsed
+          ? "Rehearsed — nothing was written."
+          : `Unaddressed mail now goes to ${address}. Add whoever should read it.`,
+      );
+      const made = next?.aliases.find((alias) => alias.name === CATCH_ALL_NAME);
+      if (made) setEditing({ alias: made });
+    } catch (err) {
+      setError(errorText(err, "Could not set up a catch-all list right now."));
+    } finally {
+      setCatchAllBusy(false);
+    }
+  };
+
   if (!user?.isMailAdmin) {
     return (
       <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
@@ -121,6 +166,11 @@ export default function AliasesPage() {
   const synced = directory?.aliases.find((alias) => alias.synced);
   const forwardTo = synced?.name ?? "co-presidents";
   const readOnly = directory?.people.filter((person) => person.readOnly) ?? [];
+  const catchAllAlias = directory?.aliases.find(
+    (alias) =>
+      alias.address === directory.catchAll ||
+      alias.aliases.includes(directory.catchAll ?? ""),
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-5 px-5 py-8">
@@ -192,18 +242,80 @@ export default function AliasesPage() {
                 </option>
               ))}
             </select>
+            {catchAllAlias ? (
+              <Button
+                className="mt-2 w-full"
+                onClick={() => setEditing({ alias: catchAllAlias })}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                Edit who is on {catchAllAlias.name}
+              </Button>
+            ) : (
+              <Button
+                className="mt-2 w-full"
+                disabled={catchAllBusy}
+                onClick={() => void startCatchAllList()}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                {catchAllBusy ? "Working…" : "Share it with a list"}
+              </Button>
+            )}
           </Tile>
           <Tile
             detail={
               readOnly.length === 0
                 ? "No past executive holds a read-only mailbox."
-                : directory.forwarding.length < readOnly.length
-                  ? `Check routing to copy the rest to ${forwardTo}.`
-                  : `${directory.forwarding.map((f) => f.name).join(", ")} → ${forwardTo}`
+                : `Every one of them is copied to ${forwardTo}@${directory.domain}.`
             }
             label="Read-only inboxes forwarding"
             value={`${directory.forwarding.length} of ${readOnly.length}`}
-          />
+          >
+            {readOnly.length > 0 && (
+              <ul className="mt-3 flex max-h-40 flex-col gap-1 overflow-y-auto">
+                {readOnly.map((person) => {
+                  const on = directory.forwarding.some(
+                    (one) => one.address === person.address,
+                  );
+                  return (
+                    <li
+                      className="flex items-baseline justify-between gap-2 text-sm"
+                      key={person.address}
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-bold text-ink">
+                          {person.name}
+                        </span>
+                        <span className="block truncate text-xs text-subtle">
+                          {person.address}
+                        </span>
+                      </span>
+                      <span
+                        className={`shrink-0 text-[10px] font-extrabold tracking-wide uppercase ${on ? "text-subtle" : "text-brand"}`}
+                      >
+                        {on ? "forwarding" : "not yet"}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {readOnly.length > directory.forwarding.length && (
+              <Button
+                className="mt-3 w-full"
+                disabled={syncing}
+                onClick={sync}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                {syncing ? "Checking…" : "Set up the rest"}
+              </Button>
+            )}
+          </Tile>
         </div>
       )}
 

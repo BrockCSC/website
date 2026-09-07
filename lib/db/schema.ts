@@ -13,3 +13,4 @@ export const eventsTable = jsonbTable("events");
 export const execsTable = jsonbTable("execs");
 export const signupsTable = jsonbTable("signups");
 export const pageViewsTable = jsonbTable("page_views");
+export const mailAliasesTable = jsonbTable("mail_aliases");

@@ -2,7 +2,12 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireMailAdmin } from "@/lib/auth/session";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized } from "@/lib/json";
-import { draftAlias, previewAlias, readAliases } from "@/lib/mail/aliases";
+import {
+  draftAlias,
+  previewAlias,
+  readAliases,
+  setAliasRoles,
+} from "@/lib/mail/aliases";
 import { createMailingList } from "@/lib/mail/stalwart";
 
 export const GET = async (req: NextRequest) => {
@@ -30,6 +35,7 @@ export const POST = async (req: NextRequest) => {
   }
 
   await createMailingList({ ...draft, domain: directory.domain });
+  await setAliasRoles(draft.name, draft.roles);
   const alias = (await readAliases()).aliases.find(
     (one) => one.name === draft.name,
   );
