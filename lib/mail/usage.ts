@@ -3,7 +3,7 @@ import { findAll } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import { dailyLimitFor } from "./limit";
 import { isProtectedMailbox } from "./provision";
-import { adminAuthorization, listUsers } from "./stalwart";
+import { adminAuthorization, chunked, listUsers } from "./stalwart";
 
 export type MailUsage = {
   days: number;
@@ -20,8 +20,6 @@ export type MailUsage = {
 };
 
 type Call = [string, Record<string, unknown>, string];
-
-const CALLS_PER_REQUEST = 50;
 
 const post = async (calls: Call[]): Promise<Call[]> => {
   const { STALWART_URL } = process.env;
@@ -48,9 +46,7 @@ const post = async (calls: Call[]): Promise<Call[]> => {
 /** Responses keyed by call id; a per-call error is left out. */
 const jmap = async (calls: Call[]): Promise<Map<string, unknown>> => {
   const responses: Call[] = [];
-  for (let at = 0; at < calls.length; at += CALLS_PER_REQUEST) {
-    responses.push(...(await post(calls.slice(at, at + CALLS_PER_REQUEST))));
-  }
+  for (const batch of chunked(calls)) responses.push(...(await post(batch)));
   return new Map(
     responses
       .filter(([name]) => name !== "error")

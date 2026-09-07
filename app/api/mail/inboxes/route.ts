@@ -8,6 +8,7 @@ import { jmapResponses } from "@/lib/mail/jmap-mail";
 import { isProtectedMailbox } from "@/lib/mail/provision";
 import {
   adminAuthorization,
+  chunked,
   listUsers,
   type MailUser,
 } from "@/lib/mail/stalwart";
@@ -32,18 +33,24 @@ type InboxBox = {
 
 /** Null counts for an account whose call failed. */
 const inboxCounts = async (users: MailUser[]): Promise<Map<string, Counts>> => {
-  const responses = await jmapResponses(
-    { authorization: adminAuthorization() },
-    users.map((user) => [
-      "Mailbox/get",
-      {
-        accountId: user.id,
-        ids: null,
-        properties: ["role", "unreadEmails", "totalEmails"],
-      },
-      user.name,
-    ]),
-  );
+  const responses = (
+    await Promise.all(
+      chunked(users).map((batch) =>
+        jmapResponses(
+          { authorization: adminAuthorization() },
+          batch.map((user) => [
+            "Mailbox/get",
+            {
+              accountId: user.id,
+              ids: null,
+              properties: ["role", "unreadEmails", "totalEmails"],
+            },
+            user.name,
+          ]),
+        ),
+      ),
+    )
+  ).flat();
   return new Map(
     responses.map(([name, payload, id]) => {
       const inbox =

@@ -21,6 +21,14 @@ const config = () => {
 /** Authorization header value for acting as the Stalwart administrator. */
 export const adminAuthorization = (): string => `Basic ${config().auth}`;
 
+/** Stalwart's default maxCallsInRequest. */
+const MAX_CALLS = 16;
+
+export const chunked = <T>(items: T[], size = MAX_CALLS): T[][] =>
+  Array.from({ length: Math.ceil(items.length / size) }, (_, at) =>
+    items.slice(at * size, (at + 1) * size),
+  );
+
 type Call = [string, Record<string, unknown>, string];
 
 /** Raw method responses, per-call errors included. */
@@ -489,13 +497,19 @@ const forwardScript = (accountId: string) =>
 export const forwardingAccounts = async (): Promise<Set<string>> => {
   const users = (await accounts()).filter((a) => a["@type"] === "User");
   if (!users.length) return new Set();
-  const results = await jmapResponses(
-    users.map((u) => [
-      "SieveScript/get",
-      { accountId: u.id, ids: null },
-      u.name,
-    ]),
-  );
+  const results = (
+    await Promise.all(
+      chunked(users).map((batch) =>
+        jmapResponses(
+          batch.map((u) => [
+            "SieveScript/get",
+            { accountId: u.id, ids: null },
+            u.name,
+          ]),
+        ),
+      ),
+    )
+  ).flat();
   return new Set(
     results
       .filter(
