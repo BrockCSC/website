@@ -39,5 +39,11 @@ export const deleteAlias = (name: string) =>
     method: "DELETE",
   });
 
+export const setCatchAll = (address: string | null) =>
+  apiFetch<{ address: string | null; rehearsed?: true }>(
+    "/api/mail/catch-all",
+    { method: "PUT", body: JSON.stringify({ address }) },
+  );
+
 export const syncAliases = () =>
   apiFetch<{ rehearsed?: true }>("/api/mail/aliases/sync", { method: "POST" });

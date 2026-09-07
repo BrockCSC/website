@@ -120,6 +120,17 @@ const aliasEntries = (names: string[], domainId: string) =>
     names.map((name, i) => [i, { name, domainId, enabled: true }]),
   );
 
+/** Stalwart writes a Set as an object keyed by its members. */
+const setOf = (values: string[]) =>
+  Object.fromEntries(values.map((value) => [value, true]));
+
+const membersOf = (raw: Record<string, boolean> | string[] | undefined) =>
+  Array.isArray(raw)
+    ? raw
+    : Object.entries(raw ?? {})
+        .filter(([, on]) => on)
+        .map(([value]) => value);
+
 export type MailingList = {
   id: string;
   name: string;
@@ -129,9 +140,10 @@ export type MailingList = {
   recipients: string[];
 };
 
-type RawList = Omit<MailingList, "description" | "aliases"> & {
+type RawList = Omit<MailingList, "description" | "aliases" | "recipients"> & {
   description?: string | null;
   aliases?: Record<string, { name: string }> | { name: string }[];
+  recipients?: Record<string, boolean> | string[];
 };
 
 export const listMailingLists = async (): Promise<MailingList[]> => {
@@ -144,7 +156,7 @@ export const listMailingLists = async (): Promise<MailingList[]> => {
     emailAddress: list.emailAddress,
     description: list.description ?? null,
     aliases: Object.values(list.aliases ?? {}).map((a) => a.name),
-    recipients: list.recipients ?? [],
+    recipients: membersOf(list.recipients),
   }));
 };
 
@@ -169,7 +181,7 @@ export const createMailingList = async (list: {
             domainId: domain,
             description: list.description,
             aliases: aliasEntries(list.aliases ?? [], domain),
-            recipients: list.recipients,
+            recipients: setOf(list.recipients),
           },
         },
       },
@@ -195,7 +207,7 @@ export const updateMailingList = async (
   if (patch.aliases) {
     update.aliases = aliasEntries(patch.aliases, await domainId(domain));
   }
-  if (patch.recipients) update.recipients = patch.recipients;
+  if (patch.recipients) update.recipients = setOf(patch.recipients);
   const [res] = await jmap<{ notUpdated?: Record<string, unknown> }>([
     ["x:MailingList/set", { update: { [id]: update } }, "c0"],
   ]);

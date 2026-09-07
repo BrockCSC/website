@@ -13,28 +13,43 @@ export function RecipientInput({
   onChange,
   contacts,
   autoFocus,
+  browse,
+  placeholder,
+  empty,
 }: {
   label: string;
   value: string[];
   onChange: (next: string[]) => void;
   contacts: Contact[];
   autoFocus?: boolean;
+  /** Offers every choice as soon as the field is focused. */
+  browse?: boolean;
+  placeholder?: string;
+  empty?: string;
 }) {
   const [draft, setDraft] = useState("");
   const [highlight, setHighlight] = useState(0);
+  const [focused, setFocused] = useState(false);
+
+  const unpicked = useMemo(
+    () => contacts.filter((contact) => !value.includes(contact.email)),
+    [contacts, value],
+  );
 
   const suggestions = useMemo(() => {
     const query = draft.trim().toLowerCase();
-    if (!query) return [];
-    return contacts
+    if (!query) return browse && focused ? unpicked.slice(0, 50) : [];
+    return unpicked
       .filter(
         (contact) =>
-          !value.includes(contact.email) &&
-          (contact.name.toLowerCase().includes(query) ||
-            contact.email.toLowerCase().includes(query)),
+          contact.name.toLowerCase().includes(query) ||
+          contact.email.toLowerCase().includes(query),
       )
-      .slice(0, 6);
-  }, [draft, contacts, value]);
+      .slice(0, 50);
+  }, [draft, unpicked, browse, focused]);
+
+  const nothingLeft =
+    browse && focused && !draft.trim() && unpicked.length === 0;
 
   const add = (email: string) => {
     const trimmed = email.trim().replace(/[,;]$/, "");
@@ -93,17 +108,28 @@ export function RecipientInput({
           className="min-w-40 flex-1 px-1 py-0.5 text-sm focus:outline-none"
           value={draft}
           autoFocus={autoFocus}
+          placeholder={value.length === 0 ? placeholder : undefined}
           onChange={(event) => {
             setDraft(event.target.value);
             setHighlight(0);
           }}
           onKeyDown={onKeyDown}
-          onBlur={() => looksLikeAddress(draft.trim()) && add(draft)}
+          onFocus={() => setFocused(true)}
+          onBlur={() => {
+            setFocused(false);
+            if (looksLikeAddress(draft.trim())) add(draft);
+          }}
         />
       </div>
 
+      {nothingLeft && empty && (
+        <p className="absolute z-10 mt-1 w-full animate-fade-in rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-subtle shadow-brut-sm">
+          {empty}
+        </p>
+      )}
+
       {suggestions.length > 0 && (
-        <ul className="absolute z-10 mt-1 w-full animate-fade-in overflow-hidden rounded-[10px] border-2 border-line bg-surface shadow-brut-sm">
+        <ul className="absolute z-10 mt-1 max-h-56 w-full animate-fade-in overflow-y-auto rounded-[10px] border-2 border-line bg-surface shadow-brut-sm">
           {suggestions.map((contact, index) => (
             <li key={contact.email}>
               <button

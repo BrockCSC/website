@@ -184,6 +184,7 @@ export default function AliasEditor({
           contacts={[]}
           label="Also"
           onChange={setExtras}
+          placeholder="another local part, like team"
           value={extras}
         />
 
@@ -196,26 +197,33 @@ export default function AliasEditor({
           <div className="flex flex-col gap-2">
             <span className="text-sm font-bold text-ink">Delivers to</span>
             <RecipientInput
+              browse
               contacts={directory.people.map((p) => ({
                 name: p.name,
                 email: p.address,
               }))}
+              empty="Everyone with a mailbox is already on this alias."
               label="People"
               onChange={setPeople}
+              placeholder="Click to pick from the club"
               value={people}
             />
             <RecipientInput
+              browse
               contacts={directory.aliases
                 .filter((one) => one.id !== alias?.id)
                 .map((one) => ({ name: one.name, email: one.address }))}
+              empty="No other alias to nest yet."
               label="Groups"
               onChange={setGroups}
+              placeholder="Click to pick another alias"
               value={groups}
             />
             <RecipientInput
               contacts={[]}
               label="External"
               onChange={setExternal}
+              placeholder="anyone@elsewhere.com"
               value={external}
             />
           </div>

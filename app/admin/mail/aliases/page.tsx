@@ -7,6 +7,7 @@ import { Note, Pill } from "../../users/ui";
 import {
   errorText,
   fetchAliases,
+  setCatchAll,
   syncAliases,
   type Alias,
   type AliasDirectory,
@@ -20,10 +21,12 @@ const Tile = ({
   label,
   value,
   detail,
+  children,
 }: {
   label: string;
   value: string;
   detail: string;
+  children?: React.ReactNode;
 }) => (
   <div className="animate-rise-in rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm">
     <div className="text-xs font-bold uppercase tracking-wide text-subtle">
@@ -33,6 +36,7 @@ const Tile = ({
       {value}
     </div>
     <div className="mt-1 text-sm text-subtle">{detail}</div>
+    {children}
   </div>
 );
 
@@ -47,6 +51,7 @@ export default function AliasesPage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
+  const [catchAllBusy, setCatchAllBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -84,6 +89,27 @@ export default function AliasesPage() {
     }
   };
 
+  const changeCatchAll = async (address: string) => {
+    setCatchAllBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const result = await setCatchAll(address || null);
+      await load();
+      setNotice(
+        result.rehearsed
+          ? "Rehearsed — nothing was written."
+          : address
+            ? `Unaddressed mail now goes to ${address}.`
+            : "Unaddressed mail now bounces.",
+      );
+    } catch (err) {
+      setError(errorText(err, "Could not change the catch-all right now."));
+    } finally {
+      setCatchAllBusy(false);
+    }
+  };
+
   if (!user?.isMailAdmin) {
     return (
       <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
@@ -94,15 +120,18 @@ export default function AliasesPage() {
 
   const synced = directory?.aliases.find((alias) => alias.synced);
   const forwardTo = synced?.name ?? "co-presidents";
+  const readOnly = directory?.people.filter((person) => person.readOnly) ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-5 px-5 py-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-ink">Aliases</h1>
-          <p className="mt-1 text-subtle">
+          <p className="mt-1 max-w-prose text-subtle">
             Mail sent to a shared address fans out to everyone behind it. Drop a
-            whole group into an alias and its people inherit it.
+            whole group into an alias and its people inherit it. Checking
+            routing rebuilds what follows the co-president role: who is on
+            admin@ and {forwardTo}@, and which read-only inboxes forward there.
           </p>
         </div>
         <div className="flex gap-2">
@@ -113,7 +142,7 @@ export default function AliasesPage() {
             type="button"
             variant="secondary"
           >
-            {syncing ? "Syncing…" : "Re-sync"}
+            {syncing ? "Checking…" : "Check routing"}
           </Button>
           {!editing && (
             <Button
@@ -139,19 +168,41 @@ export default function AliasesPage() {
             detail={
               directory.catchAll
                 ? `Unaddressed mail lands at ${directory.catchAll}`
-                : "Unaddressed mail bounces"
+                : "Unaddressed mail bounces back to the sender"
             }
             label="Catch-all"
             value={directory.catchAll ? `→ ${directory.catchAll}` : "Off"}
-          />
+          >
+            <select
+              aria-label="Where unaddressed mail goes"
+              className="mt-3 w-full rounded-[10px] border-2 border-line bg-raised px-2 py-1.5 text-sm font-semibold text-ink outline-none focus:border-brand disabled:opacity-50"
+              disabled={catchAllBusy}
+              onChange={(event) => void changeCatchAll(event.target.value)}
+              value={directory.catchAll ?? ""}
+            >
+              <option value="">Bounce it (off)</option>
+              {directory.aliases.map((one) => (
+                <option key={one.id} value={one.address}>
+                  {one.name} — everyone on the alias
+                </option>
+              ))}
+              {directory.people.map((person) => (
+                <option key={person.address} value={person.address}>
+                  {person.name} — {person.address}
+                </option>
+              ))}
+            </select>
+          </Tile>
           <Tile
             detail={
-              directory.forwarding.length
-                ? `${directory.forwarding.map((f) => f.name).join(", ")} → ${forwardTo}`
-                : `Read-only inboxes forward to ${forwardTo}`
+              readOnly.length === 0
+                ? "No past executive holds a read-only mailbox."
+                : directory.forwarding.length < readOnly.length
+                  ? `Check routing to copy the rest to ${forwardTo}.`
+                  : `${directory.forwarding.map((f) => f.name).join(", ")} → ${forwardTo}`
             }
-            label="Forwarding"
-            value={`${directory.forwarding.length} read-only`}
+            label="Read-only inboxes forwarding"
+            value={`${directory.forwarding.length} of ${readOnly.length}`}
           />
         </div>
       )}
