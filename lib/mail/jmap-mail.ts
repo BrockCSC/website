@@ -89,7 +89,11 @@ export const jmapResponses = async (
     },
     body: JSON.stringify({ using: CAPABILITIES, methodCalls: calls }),
   });
-  if (!res.ok) throw new Error(`Stalwart JMAP failed (${res.status}).`);
+  if (!res.ok) {
+    throw new Error(
+      `Stalwart JMAP failed (${res.status}): ${(await res.text()).slice(0, 300)}`,
+    );
+  }
 
   const body = (await res.json()) as { methodResponses: Call[] };
   return body.methodResponses;

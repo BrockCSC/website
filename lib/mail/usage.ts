@@ -37,7 +37,11 @@ const post = async (calls: Call[]): Promise<Call[]> => {
       methodCalls: calls,
     }),
   });
-  if (!res.ok) throw new Error(`Stalwart JMAP failed (${res.status}).`);
+  if (!res.ok) {
+    throw new Error(
+      `Stalwart JMAP failed (${res.status}): ${(await res.text()).slice(0, 300)}`,
+    );
+  }
   return ((await res.json()) as { methodResponses: Call[] }).methodResponses;
 };
 
