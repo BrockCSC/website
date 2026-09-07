@@ -21,8 +21,9 @@ export type MailUsage = {
 
 type Call = [string, Record<string, unknown>, string];
 
-/** Responses keyed by call id; a per-call error is left out. */
-const jmap = async (calls: Call[]): Promise<Map<string, unknown>> => {
+const CALLS_PER_REQUEST = 50;
+
+const post = async (calls: Call[]): Promise<Call[]> => {
   const { STALWART_URL } = process.env;
   if (!STALWART_URL) throw new Error("STALWART_URL env var is not set.");
   const res = await fetch(`${STALWART_URL.replace(/\/$/, "")}/jmap`, {
@@ -37,9 +38,17 @@ const jmap = async (calls: Call[]): Promise<Map<string, unknown>> => {
     }),
   });
   if (!res.ok) throw new Error(`Stalwart JMAP failed (${res.status}).`);
-  const body = (await res.json()) as { methodResponses: Call[] };
+  return ((await res.json()) as { methodResponses: Call[] }).methodResponses;
+};
+
+/** Responses keyed by call id; a per-call error is left out. */
+const jmap = async (calls: Call[]): Promise<Map<string, unknown>> => {
+  const responses: Call[] = [];
+  for (let at = 0; at < calls.length; at += CALLS_PER_REQUEST) {
+    responses.push(...(await post(calls.slice(at, at + CALLS_PER_REQUEST))));
+  }
   return new Map(
-    body.methodResponses
+    responses
       .filter(([name]) => name !== "error")
       .map(([, payload, id]) => [id, payload]),
   );
