@@ -7,7 +7,7 @@ import { notAuthorized, notFound } from "@/lib/json";
 
 /** Stable per address, so reinstalling replaces the profile instead of adding one. */
 const uuidFor = (seed: string) => {
-  const hex = createHash("sha1").update(seed).digest("hex");
+  const hex = createHash("sha256").update(seed).digest("hex");
   return [
     hex.slice(0, 8),
     hex.slice(8, 12),
