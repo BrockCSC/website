@@ -165,16 +165,16 @@ export function InboxPicker({
         className="flex w-full items-center gap-2 rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-left text-sm font-bold text-ink shadow-brut-sm hover:bg-tint"
       >
         <span className="min-w-0 flex-1">
+          {viewing && (
+            <span className="block text-[10px] font-extrabold tracking-wide text-brand uppercase">
+              Read-only
+            </span>
+          )}
           <span className="block truncate">
             {viewing?.name ?? "Your inbox"}
           </span>
-          <span className="flex items-baseline gap-1.5 text-xs font-medium text-subtle">
-            <span className="truncate">{viewing?.address ?? self}</span>
-            {viewing && (
-              <span className="shrink-0 font-bold tracking-wide text-brand uppercase">
-                read-only
-              </span>
-            )}
+          <span className="block truncate text-xs font-medium text-subtle">
+            {viewing?.address ?? self}
           </span>
         </span>
         <ChevronDown
