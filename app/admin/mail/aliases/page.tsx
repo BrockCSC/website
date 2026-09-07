@@ -120,15 +120,18 @@ export default function AliasesPage() {
 
   const synced = directory?.aliases.find((alias) => alias.synced);
   const forwardTo = synced?.name ?? "co-presidents";
+  const readOnly = directory?.people.filter((person) => person.readOnly) ?? [];
 
   return (
     <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-5 px-5 py-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-ink">Aliases</h1>
-          <p className="mt-1 text-subtle">
+          <p className="mt-1 max-w-prose text-subtle">
             Mail sent to a shared address fans out to everyone behind it. Drop a
-            whole group into an alias and its people inherit it.
+            whole group into an alias and its people inherit it. Checking
+            routing rebuilds what follows the co-president role: who is on
+            admin@ and {forwardTo}@, and which read-only inboxes forward there.
           </p>
         </div>
         <div className="flex gap-2">
@@ -139,7 +142,7 @@ export default function AliasesPage() {
             type="button"
             variant="secondary"
           >
-            {syncing ? "Syncing…" : "Re-sync"}
+            {syncing ? "Checking…" : "Check routing"}
           </Button>
           {!editing && (
             <Button
@@ -192,12 +195,14 @@ export default function AliasesPage() {
           </Tile>
           <Tile
             detail={
-              directory.forwarding.length
-                ? `${directory.forwarding.map((f) => f.name).join(", ")} → ${forwardTo}`
-                : `Read-only inboxes forward to ${forwardTo}`
+              readOnly.length === 0
+                ? "No past executive holds a read-only mailbox."
+                : directory.forwarding.length < readOnly.length
+                  ? `Check routing to copy the rest to ${forwardTo}.`
+                  : `${directory.forwarding.map((f) => f.name).join(", ")} → ${forwardTo}`
             }
-            label="Forwarding"
-            value={`${directory.forwarding.length} read-only`}
+            label="Read-only inboxes forwarding"
+            value={`${directory.forwarding.length} of ${readOnly.length}`}
           />
         </div>
       )}
