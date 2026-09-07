@@ -9,6 +9,7 @@ import {
   errorText,
   fetchAliases,
   setCatchAll,
+  setForwarding,
   syncAliases,
   type Alias,
   type AliasDirectory,
@@ -54,6 +55,7 @@ export default function AliasesPage() {
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [catchAllBusy, setCatchAllBusy] = useState(false);
+  const [forwardBusy, setForwardBusy] = useState(false);
 
   const load = useCallback(async () => {
     try {
@@ -155,6 +157,27 @@ export default function AliasesPage() {
     }
   };
 
+  const changeForwarding = async (forwardTo: string | null, off?: string[]) => {
+    setForwardBusy(true);
+    setNotice(null);
+    setError(null);
+    try {
+      const result = await setForwarding(forwardTo, off);
+      await load();
+      setNotice(
+        result.rehearsed
+          ? "Rehearsed — nothing was written."
+          : forwardTo
+            ? `Read-only inboxes now copy to ${forwardTo}.`
+            : "Read-only inboxes no longer copy anywhere.",
+      );
+    } catch (err) {
+      setError(errorText(err, "Could not change forwarding right now."));
+    } finally {
+      setForwardBusy(false);
+    }
+  };
+
   if (!user?.isMailAdmin) {
     return (
       <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
@@ -166,6 +189,7 @@ export default function AliasesPage() {
   const synced = directory?.aliases.find((alias) => alias.synced);
   const forwardTo = synced?.name ?? "co-presidents";
   const readOnly = directory?.people.filter((person) => person.readOnly) ?? [];
+  const forwardDefault = synced?.address ?? "";
   const catchAllAlias = directory?.aliases.find(
     (alias) =>
       alias.address === directory.catchAll ||
@@ -293,27 +317,58 @@ export default function AliasesPage() {
                           {person.address}
                         </span>
                       </span>
-                      <span
-                        className={`shrink-0 text-[10px] font-extrabold tracking-wide uppercase ${on ? "text-subtle" : "text-brand"}`}
+                      <button
+                        aria-pressed={on}
+                        className={`shrink-0 rounded-full border-2 border-line px-2 py-0.5 text-[10px] font-extrabold tracking-wide uppercase ${
+                          on ? "bg-tint text-ink" : "bg-surface text-brand"
+                        }`}
+                        disabled={forwardBusy}
+                        onClick={() =>
+                          void changeForwarding(
+                            directory.forwardTo ?? forwardDefault,
+                            on
+                              ? [...directory.forwardingOff, person.username]
+                              : directory.forwardingOff.filter(
+                                  (one) => one !== person.username,
+                                ),
+                          )
+                        }
+                        title={
+                          on
+                            ? "Stop copying this inbox"
+                            : "Copy this inbox from now on"
+                        }
+                        type="button"
                       >
-                        {on ? "forwarding" : "not yet"}
-                      </span>
+                        {on ? "copying" : "off"}
+                      </button>
                     </li>
                   );
                 })}
               </ul>
             )}
-            {readOnly.length > directory.forwarding.length && (
-              <Button
-                className="mt-3 w-full"
-                disabled={syncing}
-                onClick={sync}
-                size="sm"
-                type="button"
-                variant="secondary"
+            {readOnly.length > 0 && (
+              <select
+                aria-label="Where read-only inboxes copy their mail"
+                className="mt-3 w-full rounded-[10px] border-2 border-line bg-raised px-2 py-1.5 text-sm font-semibold text-ink outline-none focus:border-brand disabled:opacity-50"
+                disabled={forwardBusy}
+                onChange={(event) =>
+                  void changeForwarding(event.target.value || null)
+                }
+                value={directory.forwardTo ?? forwardDefault}
               >
-                {syncing ? "Checking…" : "Set up the rest"}
-              </Button>
+                <option value="">Do not copy anywhere</option>
+                {directory.aliases.map((one) => (
+                  <option key={one.id} value={one.address}>
+                    Copy to {one.name} — everyone on the alias
+                  </option>
+                ))}
+                {directory.people.map((person) => (
+                  <option key={person.address} value={person.address}>
+                    Copy to {person.name}
+                  </option>
+                ))}
+              </select>
             )}
           </Tile>
         </div>

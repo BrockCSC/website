@@ -45,5 +45,11 @@ export const setCatchAll = (address: string | null) =>
     { method: "PUT", body: JSON.stringify({ address }) },
   );
 
+export const setForwarding = (forwardTo: string | null, off?: string[]) =>
+  apiFetch<{ forwardTo: string | null; rehearsed?: true }>(
+    "/api/mail/forwarding",
+    { method: "PUT", body: JSON.stringify({ forwardTo, off }) },
+  );
+
 export const syncAliases = () =>
   apiFetch<{ rehearsed?: true }>("/api/mail/aliases/sync", { method: "POST" });

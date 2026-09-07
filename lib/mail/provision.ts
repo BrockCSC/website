@@ -66,12 +66,19 @@ const syncCoPresidentsList = async (recipients: string[]): Promise<void> => {
 };
 
 const syncForwarding = async (holders: string[]): Promise<void> => {
-  const exempt = new Set([...holders, ...protectedMailboxes()]);
+  const { readMailSettings } = await import("./settings");
+  const settings = await readMailSettings();
+  const target = settings.forwardTo ?? coPresidentsAddress();
+  const exempt = new Set([
+    ...holders,
+    ...protectedMailboxes(),
+    ...settings.forwardingOff,
+  ]);
   const forwarding = await forwardingAccounts();
   for (const user of await listUsers()) {
     const wanted = user.readOnly && !exempt.has(user.name);
     if (forwarding.has(user.name) === wanted) continue;
-    await setForwarding(user.name, wanted ? coPresidentsAddress() : null);
+    await setForwarding(user.name, wanted ? target : null);
   }
 };
 

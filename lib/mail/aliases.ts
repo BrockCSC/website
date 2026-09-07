@@ -4,6 +4,7 @@ import { execsTable, mailAliasesTable, signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
 import { coPresidentsList, domain } from "./provision";
 import { expandRoles, roleGroups, type RoleGroup } from "./roles";
+import { readMailSettings } from "./settings";
 import {
   forwardingAccounts,
   getCatchAll,
@@ -40,6 +41,7 @@ export type Alias = {
 };
 
 type Person = {
+  username: string;
   address: string;
   name: string;
   readOnly: boolean;
@@ -55,6 +57,9 @@ export type AliasDirectory = {
   people: Person[];
   catchAll: string | null;
   forwarding: { address: string; name: string }[];
+  /** Where read-only inboxes copy their mail, and who is left out. */
+  forwardTo: string | null;
+  forwardingOff: string[];
   identitiesEditable: boolean;
 };
 
@@ -187,14 +192,17 @@ const assemble = (
 };
 
 export const readAliases = async (): Promise<AliasDirectory> => {
-  const [lists, users, known, catchAll, forwarding] = await Promise.all([
-    listMailingLists(),
-    listUsers(),
-    profiles(),
-    getCatchAll(domain()),
-    forwardingAccounts(),
-  ]);
+  const [lists, users, known, catchAll, forwarding, settings] =
+    await Promise.all([
+      listMailingLists(),
+      listUsers(),
+      profiles(),
+      getCatchAll(domain()),
+      forwardingAccounts(),
+      readMailSettings(),
+    ]);
   const person = (user: MailUser): Person => ({
+    username: user.name,
     address: user.emailAddress,
     name: known.get(user.name)?.name || user.description || user.name,
     readOnly: user.readOnly,
@@ -220,6 +228,8 @@ export const readAliases = async (): Promise<AliasDirectory> => {
       .map(person)
       .sort(byName)
       .map(({ address, name }) => ({ address, name })),
+    forwardTo: settings.forwardTo,
+    forwardingOff: settings.forwardingOff,
     identitiesEditable: ownsIdentities(),
   };
 };
