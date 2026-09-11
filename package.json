@@ -33,7 +33,7 @@
     "pg": "^8.23.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "sharp": "^0.35.3",
+    "sharp": "^0.35.4",
     "tailwind-merge": "^3.4.0"
   },
   "overrides": {
