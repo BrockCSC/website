@@ -733,7 +733,8 @@ export const sendMessage = async (
   }
 
   const identity = senderIdentity(session, accountId, identities.list);
-  const signer = await signerFor(ownName(session, accountId) ?? "");
+  // The identity, not the session: under adminAccess the session is the Stalwart admin.
+  const signer = await signerFor(identity.email);
   await refreshSignature(access, accountId, identity, signer);
 
   const [draft, submission] = (await jmap(access, [
