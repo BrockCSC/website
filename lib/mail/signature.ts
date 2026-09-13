@@ -6,21 +6,42 @@ import { escapeHtml } from "./sanitize";
 const CLUB = "Brock University Computer Science Club";
 const SITE = "brockcsc.ca";
 const SITE_URL = () => process.env.MAIL_SITE_URL ?? `https://${SITE}`;
+const MAILING_ADDRESS =
+  "Brock University, 1812 Sir Isaac Brock Way, St. Catharines, ON L2S 3A1, Canada";
 
-const DISCLAIMER =
-  "BrockCSC is a student club at Brock University. Views expressed are the sender's own and are not those of Brock University. This message may be confidential. If you have received it in error, please notify the sender immediately and delete it from your system.";
+/** The mailbox transactional mail (password resets) is sent from. */
+export const SYSTEM_SENDER = "security";
 
-export type Signer = { name: string; title?: string };
+// Read from env directly: importing provision.ts here would cycle back through jmap-mail.ts.
+const mailDomain = () => process.env.MAIL_DOMAIN ?? SITE;
+const helpAddress = () =>
+  `${process.env.CO_PRESIDENTS_LIST ?? "co-presidents"}@${mailDomain()}`;
 
-/** Shared mailboxes speak for the club, not a person. */
-const GENERIC: Signer = { name: "BrockCSC" };
+const CONFIDENTIALITY =
+  "Confidentiality notice: this email and any attachments are intended only for the named recipients and may contain confidential or personal information. If you received it in error, please let the sender know, delete it, and do not copy, forward or use its contents.";
+const AFFILIATION =
+  "BrockCSC is a student club at Brock University. Views expressed are the sender's own and not those of Brock University.";
+const automatedNotice = () =>
+  `This is an automated message from BrockCSC and replies to it are not read. For help, contact ${helpAddress()}. BrockCSC will never ask for your password by email.`;
+
+export type Signer = {
+  name: string;
+  title?: string;
+  email?: string;
+  automated?: boolean;
+};
 
 export const signerFor = async (account: string): Promise<Signer> => {
   const localPart = account.split("@")[0].toLowerCase();
+  const email = `${localPart}@${mailDomain()}`;
+  // Shared mailboxes speak for the club, not a person.
+  const generic: Signer = { name: "BrockCSC", email };
+  if (localPart === SYSTEM_SENDER) return { ...generic, automated: true };
+
   const signup = (await findAll<SignupRecord>(signupsTable)).find(
     (record) => record.username?.toLowerCase() === localPart,
   );
-  if (!signup) return GENERIC;
+  if (!signup) return generic;
 
   const exec = signup.execKey
     ? await findById<ExecRecord>(execsTable, signup.execKey)
@@ -28,29 +49,51 @@ export const signerFor = async (account: string): Promise<Signer> => {
   const name =
     exec?.name ||
     [signup.firstName, signup.lastName].filter(Boolean).join(" ").trim();
-  if (!name) return GENERIC;
+  if (!name) return generic;
 
-  return { name, title: exec?.title };
+  return { name, title: exec?.title, email };
 };
 
-const lines = ({ name, title }: Signer): string[] =>
-  [name, title, CLUB].filter((line): line is string => Boolean(line));
+const notices = (signer: Signer): string[] => [
+  ...(signer.automated ? [automatedNotice()] : []),
+  CONFIDENTIALITY,
+  AFFILIATION,
+];
 
 export const textSignature = (signer: Signer): string =>
-  `${lines(signer).join("\n")}\nhttps://${SITE}\n\n${DISCLAIMER}`;
+  [
+    [signer.name, signer.title, CLUB]
+      .filter((line): line is string => Boolean(line))
+      .join("\n"),
+    [signer.email, `https://${SITE}`].filter(Boolean).join(" | "),
+    MAILING_ADDRESS,
+    "",
+    notices(signer).join("\n\n"),
+  ].join("\n");
+
+const FONT = "font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif";
+const LINK = "color:#9A4440;text-decoration:none";
 
 export const htmlSignature = (signer: Signer): string => {
   const site = SITE_URL();
   const detail = [signer.title, CLUB]
-    .filter(Boolean)
+    .filter((line): line is string => Boolean(line))
     .map(
       (line) =>
-        `<div style="font-size:12px;line-height:1.45;color:#4b5563">${escapeHtml(line as string)}</div>`,
+        `<div style="font-size:12px;line-height:1.45;color:#4b5563">${escapeHtml(line)}</div>`,
     )
     .join("");
+  const contact = [
+    signer.email
+      ? `<a href="mailto:${escapeHtml(signer.email)}" style="${LINK}">${escapeHtml(signer.email)}</a>`
+      : "",
+    `<a href="${site}" style="${LINK}">${SITE}</a>`,
+  ]
+    .filter(Boolean)
+    .join(`<span style="color:#9ca3af"> &nbsp;|&nbsp; </span>`);
 
   return (
-    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:18px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">` +
+    `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:18px;${FONT}">` +
     `<tr>` +
     `<td valign="middle" style="padding-right:14px;vertical-align:middle">` +
     `<img src="${site}/email-logo.png" width="52" height="52" alt="BrockCSC" style="display:block;width:52px;height:52px;border-radius:10px;border:0" />` +
@@ -58,11 +101,17 @@ export const htmlSignature = (signer: Signer): string => {
     `<td valign="middle" style="vertical-align:middle;border-left:3px solid #9A4440;padding-left:14px">` +
     `<div style="font-size:14px;font-weight:700;line-height:1.45;color:#9A4440">${escapeHtml(signer.name)}</div>` +
     detail +
-    `<a href="${site}" style="font-size:12px;line-height:1.45;color:#9A4440;text-decoration:none">${SITE}</a>` +
+    `<div style="font-size:12px;line-height:1.45">${contact}</div>` +
+    `<div style="font-size:11px;line-height:1.45;color:#6b7280">${escapeHtml(MAILING_ADDRESS)}</div>` +
     `</td>` +
     `</tr>` +
     `</table>` +
-    `<p style="margin-top:14px;max-width:520px;font-size:11px;line-height:1.5;color:#6b7280;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">${escapeHtml(DISCLAIMER)}</p>`
+    notices(signer)
+      .map(
+        (notice) =>
+          `<p style="margin:12px 0 0;max-width:560px;font-size:11px;line-height:1.5;color:#6b7280;${FONT}">${escapeHtml(notice)}</p>`,
+      )
+      .join("")
   );
 };
 
