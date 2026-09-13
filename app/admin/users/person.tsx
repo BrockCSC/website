@@ -665,6 +665,12 @@ export default function PersonView({
                         {migration.error}
                       </p>
                     )}
+                    {migration.aborting && (
+                      <p className="mt-2 text-sm text-subtle">
+                        Abort requested: the runner stops at its next step and
+                        removes the new login and mailbox.
+                      </p>
+                    )}
                     {(at === 0 || isLive(migration)) && (
                       <div className="mt-3">
                         <MigrationSteps migration={migration} />
@@ -705,7 +711,9 @@ export default function PersonView({
                         <span className="text-sm text-subtle">
                           {migration.status === "failed"
                             ? "Fix the cause, then resume; the failed step runs again."
-                            : "The runner lost its lease, probably a deploy. Resume picks it back up."}
+                            : migration.canResume
+                              ? "The runner lost its lease, probably a deploy. Resume picks it back up."
+                              : "Nothing has been taken away yet; abort removes the new login and mailbox."}
                         </span>
                       </div>
                     )}

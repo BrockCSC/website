@@ -4,9 +4,14 @@
  * TTL, never persisted. If it is gone by hand-off, the member signs in again.
  */
 
+import { shared } from "./shared";
+
 const TTL_MS = 15 * 60_000;
 
-const entries = new Map<string, { password: string; expiresAt: number }>();
+const entries = shared(
+  "brockcsc.passwordVault",
+  () => new Map<string, { password: string; expiresAt: number }>(),
+);
 
 const sweep = () => {
   const now = Date.now();

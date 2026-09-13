@@ -134,6 +134,12 @@ function MigrationProgress({
               fixed.
             </Note>
           )}
+          {migration.aborting && (
+            <Note>
+              Abort requested. The change stops at its next step and the new
+              login and mailbox are removed; nothing of yours has changed.
+            </Note>
+          )}
           {migration.requestedBy === "approver" &&
             migration.handoff?.how === "relogin" && (
               <Note>

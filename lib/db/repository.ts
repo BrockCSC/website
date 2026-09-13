@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql, type SQL } from "drizzle-orm";
 import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
@@ -62,6 +62,21 @@ export const update = async <T>(
     .update(table)
     .set({ data: sql`${table.data} || ${patch}::jsonb` })
     .where(eq(table.id, id))
+    .returning();
+  return rows[0] ? toEntity<T>(rows[0]) : null;
+};
+
+/** One statement, so the check and the write cannot interleave with another writer. Null when the row did not match. */
+export const updateWhere = async <T>(
+  table: JsonbTable,
+  id: string,
+  condition: SQL,
+  patch: Partial<T>,
+): Promise<Entity<T> | null> => {
+  const rows = await db
+    .update(table)
+    .set({ data: sql`${table.data} || ${patch}::jsonb` })
+    .where(and(eq(table.id, id), condition))
     .returning();
   return rows[0] ? toEntity<T>(rows[0]) : null;
 };

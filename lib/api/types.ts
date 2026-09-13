@@ -126,7 +126,10 @@ export type RetiredUsernameRecord = {
   aliases: string[];
   signupId: string;
   successor: string;
-  migrationId: string;
+  /** Absent for a dotted alias retired by a name edit that kept the username. */
+  migrationId?: string;
+  /** The member's own sieve script the retired-address notice includes; reactivated when the notice goes. */
+  includedScript?: string | null;
   retiredAt: string;
   forwardUntil: string;
   sweptAt?: string;
@@ -207,6 +210,8 @@ export type IdentityMigrationRecord = {
   step: string;
   /** Null rather than absent: a jsonb merge cannot drop a key. */
   lease?: { until: string; by: string } | null;
+  /** Set by abort while a runner holds the lease; the runner tears down before the cut-over. */
+  cancelRequested?: string | null;
   steps: Record<string, MigrationStepState>;
   /** Old mailbox id -> its counterpart on the new account. */
   mailboxes: Record<string, MigrationMailbox>;
@@ -249,6 +254,8 @@ export type IdentityMigrationView = {
   } & MigrationStepState)[];
   messages: { copied: number; total: number };
   leaseExpired: boolean;
+  /** An abort is queued; the runner stops at its next step. */
+  aborting: boolean;
   canAbort: boolean;
   canResume: boolean;
 };

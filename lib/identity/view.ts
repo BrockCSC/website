@@ -3,10 +3,19 @@ import type {
   IdentityMigrationView,
 } from "@/lib/api/types";
 import type { Entity } from "@/lib/db/repository";
-import { FIRST_CUTOVER_STEP, STEP_LIST } from "./step-list";
+import { FIRST_CUTOVER_STEP, precedesCutOver, STEP_LIST } from "./step-list";
 
 export const leaseExpired = (record: IdentityMigrationRecord) =>
   !record.lease || new Date(record.lease.until).getTime() <= Date.now();
+
+/**
+ * True once the runner has reached the first cut-over step, whatever that
+ * step's recorded status: a crash inside it leaves the old login disabled
+ * with the step still reading pending.
+ */
+export const cutOverStarted = (record: IdentityMigrationRecord) =>
+  !precedesCutOver(record.step) ||
+  record.steps[FIRST_CUTOVER_STEP]?.status !== "pending";
 
 export const migrationView = (
   record: Entity<IdentityMigrationRecord>,
@@ -42,8 +51,8 @@ export const migrationView = (
       ),
     },
     leaseExpired: stale,
-    canAbort:
-      active && idle && record.steps[FIRST_CUTOVER_STEP]?.status === "pending",
+    aborting: !!record.cancelRequested,
+    canAbort: active && !record.cancelRequested && !cutOverStarted(record),
     canResume: active && idle,
   };
 };

@@ -24,12 +24,19 @@ import {
   directRealmRoles,
   effectiveRealmRoles,
   findUserByUsername,
+  getUser,
+  resetUserPassword,
   setUserEnabled,
   updateUser,
 } from "@/lib/auth/keycloak-admin";
 import { invalidateRoles } from "@/lib/auth/session";
 import { generateTempPassword } from "@/lib/auth/temp-password";
-import { findMigration, retireUsername } from "@/lib/db/identity-migrations";
+import {
+  claimMigrationLease,
+  findMigration,
+  retireUsername,
+  saveWhileLeased,
+} from "@/lib/db/identity-migrations";
 import {
   create,
   findAll,
@@ -57,7 +64,6 @@ import {
 import {
   FORWARD_SCRIPT,
   accountAliases,
-  accountIdOf,
   aliasTaken,
   createMailbox,
   destroyAccount,
@@ -71,7 +77,12 @@ import {
   updateMailingList,
 } from "@/lib/mail/stalwart";
 import { sameSet, type MigrationCtx } from "./context";
-import { ensureFolders, syncMail, verifyMail } from "./mail-sync";
+import {
+  ensureFolders,
+  syncMail,
+  verifyMail,
+  type MailVerification,
+} from "./mail-sync";
 import {
   notifyRenameCutover,
   notifyRenameDone,
@@ -83,17 +94,20 @@ import { usernameBase, type RenamePlan } from "./plan";
 import { requirePreflight } from "./preflight";
 import { reservedForSignup } from "./reserved";
 import { RETIRED_NOTICE_SCRIPT, retiredNoticeScript } from "./retired-notice";
-import { FIRST_CUTOVER_STEP, FORWARD_DAYS, STEP_LIST } from "./step-list";
-import { leaseExpired } from "./view";
+import { shared } from "./shared";
+import { FORWARD_DAYS, precedesCutOver, STEP_LIST } from "./step-list";
+import { cutOverStarted, leaseExpired } from "./view";
 
 const LEASE_MS = 60_000;
 /** After cut-over, how long to wait for the browser's hand-off before deleting the old login anyway. */
 const HANDOFF_GRACE_MS = 15 * 60_000;
 const TEMP_PASSWORD_TTL_MS = 60 * 60_000;
 const MIGRATION_REDIRECT_SCRIPT = "migration-redirect";
+/** Keycloak attribute stamped on the login a migration creates, so a resume adopts only its own. */
+const MIGRATION_ATTRIBUTE = "brockcsc_migration";
 
-const RUNNER = randomUUID();
-const running = new Set<string>();
+const RUNNER = shared("brockcsc.migrationRunner", () => randomUUID());
+const running = shared("brockcsc.migrationsRunning", () => new Set<string>());
 
 type Step = {
   id: string;
@@ -105,10 +119,26 @@ type Step = {
 };
 
 const now = () => new Date().toISOString();
+const leaseUntil = () => new Date(Date.now() + LEASE_MS).toISOString();
 const address = (localPart: string) => `${localPart}@${domain()}`;
 const noMailbox = (ctx: MigrationCtx) => ctx.record.from.mailboxId === null;
 const normalise = (value: string) =>
   value.trim().toLowerCase().replace(/\s+/g, " ");
+const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
+
+const withRetries = async <T>(
+  work: () => Promise<T>,
+  attempts: number,
+): Promise<T> => {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await work();
+    } catch (err) {
+      if (attempt >= attempts) throw err;
+      await sleep(1_000 * 2 ** (attempt - 1));
+    }
+  }
+};
 
 const remapDeletion =
   (copied: Record<string, string>) =>
@@ -131,8 +161,10 @@ const remapDeletion =
     };
   };
 
+const memberScript = (record: IdentityMigrationRecord) =>
+  record.sieve.find((script) => script.isActive)?.name ?? null;
+
 const installRetiredNotice = async (record: IdentityMigrationRecord) => {
-  const include = record.sieve.find((script) => script.isActive)?.name ?? null;
   // A read-only successor forwards to the co-presidents instead; that script
   // has to stay the active one, so the notice is installed but not activated.
   await putSieveScript(
@@ -142,11 +174,24 @@ const installRetiredNotice = async (record: IdentityMigrationRecord) => {
       retired: [record.from.username, ...record.from.aliases].map(address),
       successor: address(record.to.username),
       forwardUntil: record.forwardUntil!,
-      include,
+      include: memberScript(record),
     }),
     !record.from.readOnly,
   );
 };
+
+const createdByMigration = async (userId: string, migrationId: string) =>
+  (await getUser(userId))?.attributes?.[MIGRATION_ATTRIBUTE]?.[0] ===
+  migrationId;
+
+const strictVerification = (mail: MailVerification): MigrationVerification => ({
+  ...mail,
+  at: now(),
+  sieveOk: true,
+  rolesOk: true,
+  aliasesOk: true,
+  senderOk: true,
+});
 
 const STEPS: Step[] = [
   {
@@ -155,12 +200,7 @@ const STEPS: Step[] = [
       const { record } = ctx;
       if (record.to.keycloakUserId) return;
       const existing = await findUserByUsername(record.to.username);
-      if (existing) {
-        if (existing.enabled) {
-          throw new Error(
-            `Keycloak already has an enabled user "${record.to.username}".`,
-          );
-        }
+      if (existing && (await createdByMigration(existing.id, record.id))) {
         await ctx.save({ to: { ...record.to, keycloakUserId: existing.id } });
         return;
       }
@@ -181,11 +221,22 @@ const STEPS: Step[] = [
           firstName: record.to.firstName,
           lastName: record.to.lastName,
           password: password!,
-          attributes: record.from.phone
-            ? { phone: [record.from.phone] }
-            : undefined,
+          attributes: {
+            [MIGRATION_ATTRIBUTE]: [record.id],
+            ...(record.from.phone ? { phone: [record.from.phone] } : {}),
+          },
         });
-      let username = record.to.username;
+      const reserved = async (candidate: string) =>
+        candidate === record.from.username ||
+        (await reservedForSignup(candidate));
+      const nextFree = () =>
+        allocateUsername(
+          usernameBase(record.to.firstName, record.to.lastName),
+          reserved,
+        );
+      // A sign-up or another rename may have taken the planned name since
+      // the plan was made; a login with it that is not ours is theirs.
+      let username = existing ? await nextFree() : record.to.username;
       let keycloakUserId: string;
       try {
         keycloakUserId = await make(username);
@@ -193,12 +244,7 @@ const STEPS: Step[] = [
         if (!(err instanceof Error && err.message.includes("already taken"))) {
           throw err;
         }
-        username = await allocateUsername(
-          usernameBase(record.to.firstName, record.to.lastName),
-          async (candidate) =>
-            candidate === record.from.username ||
-            (await reservedForSignup(candidate)),
-        );
+        username = await nextFree();
         keycloakUserId = await make(username);
       }
       await ctx.save({
@@ -228,28 +274,28 @@ const STEPS: Step[] = [
     skipWhen: noMailbox,
     run: async (ctx) => {
       const { to } = ctx.record;
-      if (!(await localPartTaken(to.username))) {
-        const alias =
-          to.dottedAlias && !(await aliasTaken(to.dottedAlias))
-            ? to.dottedAlias
-            : undefined;
-        await createMailbox({
-          localPart: to.username,
-          displayName: [to.firstName, to.lastName].filter(Boolean).join(" "),
-          alias,
-          domain: domain(),
-        });
-        if (!alias && to.dottedAlias) {
-          await ctx.save({ to: { ...to, dottedAlias: null } });
-        }
-      }
-      const mailboxId = await accountIdOf(to.username);
-      if (!mailboxId) {
+      if (to.mailboxId) return;
+      // Never adopt: the plan only picked this name because nothing answered
+      // to it, so an account here now is either a stranger's or one Stalwart
+      // was asked to create while the record could not be written.
+      if (await localPartTaken(to.username)) {
         throw new Error(
-          `Stalwart has no account "${to.username}" after creating it.`,
+          `Stalwart already has an account "${to.username}" that this change did not create. A co-president has to check it before this can go on.`,
         );
       }
-      await ctx.save({ to: { ...ctx.record.to, mailboxId } });
+      const alias =
+        to.dottedAlias && !(await aliasTaken(to.dottedAlias))
+          ? to.dottedAlias
+          : undefined;
+      const mailboxId = await createMailbox({
+        localPart: to.username,
+        displayName: [to.firstName, to.lastName].filter(Boolean).join(" "),
+        alias,
+        domain: domain(),
+      });
+      await ctx.save({
+        to: { ...to, mailboxId, dottedAlias: alias ? to.dottedAlias : null },
+      });
     },
   },
   { id: "mailbox:folders", skipWhen: noMailbox, run: ensureFolders },
@@ -271,7 +317,12 @@ const STEPS: Step[] = [
       ];
       const sieve: IdentityMigrationRecord["sieve"] = [];
       for (const script of await listSieveScripts(from)) {
-        if (managed.includes(script.name) || !script.blobId) continue;
+        if (managed.includes(script.name)) continue;
+        if (!script.blobId) {
+          throw new Error(
+            `Mail rule "${script.name}" has no blob to download, so it cannot be copied.`,
+          );
+        }
         const text = await (
           await downloadBlob(
             adminAccess(from),
@@ -296,16 +347,8 @@ const STEPS: Step[] = [
     skipWhen: noMailbox,
     run: async (ctx) => {
       // Informational: the old mailbox is still live, so drift is expected.
-      const mail = await verifyMail(ctx);
       await ctx.save({
-        verification: {
-          ...mail,
-          at: now(),
-          sieveOk: true,
-          rolesOk: true,
-          aliasesOk: true,
-          senderOk: true,
-        },
+        verification: strictVerification(await verifyMail(ctx, true)),
       });
     },
   },
@@ -327,6 +370,9 @@ const STEPS: Step[] = [
     run: async (ctx) => {
       const { from, to } = ctx.record;
       await makeReadOnly(from.username);
+      // Mail apps hold app passwords, not the disabled login; they cannot
+      // move anyway, and revoking them now is what actually freezes the box.
+      await revokeAppPasswords(from.username);
       // No :copy, unlike the alumni forward: from here the old box stops
       // filling, so the delta after it is final.
       await putSieveScript(
@@ -343,6 +389,15 @@ const STEPS: Step[] = [
     run: async (ctx) => {
       await ensureFolders(ctx);
       await syncMail(ctx, true);
+      // The one moment both sides are quiet: the old box is frozen and the
+      // new login is still disabled, so the copy has to match exactly.
+      const mail = await verifyMail(ctx, true);
+      await ctx.save({ verification: strictVerification(mail) });
+      if (!mail.ok) {
+        throw new Error(
+          `The copy does not match the old mailbox: ${mail.notes.join(" ")}`,
+        );
+      }
     },
   },
   {
@@ -371,7 +426,9 @@ const STEPS: Step[] = [
           mailDeletionRequests: (signup.mailDeletionRequests ?? []).map(
             remapDeletion(record.copied),
           ),
-          passwordResetRequired: record.passwordSource === "temp",
+          passwordResetRequired:
+            signup.passwordResetRequired === true ||
+            record.passwordSource === "temp",
         });
       }
       for (const row of await findAll<PasswordResetRecord>(
@@ -388,6 +445,7 @@ const STEPS: Step[] = [
         signupId: signup.id,
         successor: record.to.username,
         migrationId: record.id,
+        includedScript: memberScript(record),
         retiredAt: now(),
         forwardUntil,
       });
@@ -465,10 +523,18 @@ const STEPS: Step[] = [
     run: async (ctx) => {
       const { record } = ctx;
       if (record.notified.cutover) return;
-      await notifyRenameCutover(
-        record,
-        record.passwordSource === "temp" ? peekPassword(record.id) : null,
-      );
+      let tempPassword: string | null = null;
+      if (record.passwordSource === "temp") {
+        tempPassword = peekPassword(record.id);
+        if (!tempPassword) {
+          // The vault is process memory with a short life; after a restart
+          // or a slow copy the new login has a password nobody knows.
+          tempPassword = generateTempPassword();
+          await resetUserPassword(record.to.keycloakUserId!, tempPassword);
+          stashPassword(record.id, tempPassword, TEMP_PASSWORD_TTL_MS);
+        }
+      }
+      await notifyRenameCutover(record, tempPassword);
       await ctx.save({ notified: { ...record.notified, cutover: now() } });
     },
   },
@@ -490,9 +556,9 @@ const STEPS: Step[] = [
       let aliasesOk = true;
       let senderOk = true;
       if (!noMailbox(ctx)) {
-        await ensureFolders(ctx);
-        await syncMail(ctx, true);
-        mail = await verifyMail(ctx);
+        // The member is on the new mailbox now, so nothing is written to it
+        // and only what they cannot have changed is compared.
+        mail = await verifyMail(ctx, false);
         const have = await listSieveScripts(record.to.mailboxId!);
         for (const script of record.sieve) {
           if (!have.some((one) => one.name === script.name)) {
@@ -565,14 +631,18 @@ const STEPS: Step[] = [
         await destroyAccount(from.username);
       }
       // Stalwart will not hand an address to a second principal, which is
-      // why the old account goes first and the aliases follow.
-      const current = await accountAliases(to.username);
-      const wanted = [
-        ...new Set([...current, from.username, ...from.aliases]),
-      ].filter((alias) => alias !== to.username);
-      if (!sameSet(current, wanted)) {
-        await setAccountAliases(to.username, wanted, domain());
-      }
+      // why the old account goes first and the aliases follow. Between the
+      // two, mail to the old address has nowhere to go, so the attach is
+      // retried here rather than left to someone reading the failure mail.
+      await withRetries(async () => {
+        const current = await accountAliases(to.username);
+        const wanted = [
+          ...new Set([...current, from.username, ...from.aliases]),
+        ].filter((alias) => alias !== to.username);
+        if (!sameSet(current, wanted)) {
+          await setAccountAliases(to.username, wanted, domain());
+        }
+      }, 5);
       await installRetiredNotice(ctx.record);
     },
   },
@@ -635,49 +705,63 @@ const release = async (id: string) => {
   }
 };
 
-/** Null when another runner holds a live lease. */
-const takeLease = async (
-  id: string,
-): Promise<Entity<IdentityMigrationRecord> | null> => {
-  const record = await findMigration(id);
-  if (!record) return null;
-  if (record.lease && !leaseExpired(record) && record.lease.by !== RUNNER) {
-    return null;
-  }
-  await update<IdentityMigrationRecord>(identityMigrationsTable, id, {
-    lease: { until: new Date(Date.now() + LEASE_MS).toISOString(), by: RUNNER },
-  });
-  const taken = await findMigration(id);
-  return taken?.lease?.by === RUNNER ? taken : null;
+/** Every write goes through the lease, so a runner that lost it stops at its next save. */
+const contextFor = (record: Entity<IdentityMigrationRecord>): MigrationCtx => {
+  const ctx: MigrationCtx = {
+    record,
+    save: async (patch) => {
+      const next = await saveWhileLeased(
+        record.id,
+        RUNNER,
+        leaseUntil(),
+        patch,
+      );
+      if (!next) {
+        throw new Error(
+          `Migration ${record.id}: another runner holds the lease now.`,
+        );
+      }
+      ctx.record = next;
+    },
+  };
+  return ctx;
 };
 
 const mark = (ctx: MigrationCtx, stepId: string, state: MigrationStepState) =>
   ctx.save({ steps: { ...ctx.record.steps, [stepId]: state } });
 
+/** Undoes phase A: the new login and mailbox go, and nothing else was touched. */
+const tearDown = async (ctx: MigrationCtx): Promise<void> => {
+  const { record } = ctx;
+  await ctx.save({ status: "aborted", error: null, cancelRequested: null });
+  try {
+    if (record.mode === "real") {
+      if (record.to.keycloakUserId) await deleteUser(record.to.keycloakUserId);
+      if (record.to.mailboxId) await destroyAccount(record.to.username);
+    }
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    await ctx.save({
+      status: "failed",
+      error: `The abort could not remove the new login or mailbox; abort again once the cause is fixed. ${error}`,
+    });
+    throw err;
+  }
+  forgetPassword(record.id);
+};
+
 const runSteps = async (id: string): Promise<void> => {
   if (running.has(id)) return;
   running.add(id);
+  // Long steps save nothing for minutes; the lease is kept fresh on a timer
+  // so nobody mistakes a working runner for a dead one.
+  const renew = setInterval(() => {
+    void claimMigrationLease(id, RUNNER, leaseUntil()).catch(() => {});
+  }, LEASE_MS / 3);
   try {
-    const leased = await takeLease(id);
+    const leased = await claimMigrationLease(id, RUNNER, leaseUntil());
     if (!leased) return;
-    const ctx: MigrationCtx = {
-      record: leased,
-      save: async (patch) => {
-        const next = await update<IdentityMigrationRecord>(
-          identityMigrationsTable,
-          id,
-          {
-            ...patch,
-            lease: {
-              until: new Date(Date.now() + LEASE_MS).toISOString(),
-              by: RUNNER,
-            },
-          },
-        );
-        if (!next) throw new Error(`Migration ${id} vanished mid-run.`);
-        ctx.record = next;
-      },
-    };
+    const ctx = contextFor(leased);
     if (!["planned", "running", "cut-over"].includes(ctx.record.status)) return;
     if (ctx.record.status === "planned") await ctx.save({ status: "running" });
 
@@ -688,6 +772,16 @@ const runSteps = async (id: string): Promise<void> => {
         attempts: 0,
       };
       if (state.status !== "pending") continue;
+      if (ctx.record.cancelRequested) {
+        if (precedesCutOver(step.id)) {
+          await tearDown(ctx);
+          return;
+        }
+        // Queued a moment too late: the cut-over has begun and this is
+        // forward-only now, so the request is dropped rather than left
+        // showing as pending forever.
+        await ctx.save({ cancelRequested: null });
+      }
       if (step.skipWhen?.(ctx)) {
         await mark(ctx, step.id, { ...state, status: "skipped", at: now() });
         continue;
@@ -738,6 +832,7 @@ const runSteps = async (id: string): Promise<void> => {
       `migration ${id} runner stopped: ${err instanceof Error ? err.message : err}`,
     );
   } finally {
+    clearInterval(renew);
     await release(id).catch(() => {});
     running.delete(id);
   }
@@ -792,6 +887,10 @@ export const startMigration = async (
 const busy = (record: IdentityMigrationRecord, id: string) =>
   running.has(id) || (!!record.lease && !leaseExpired(record));
 
+/** Whether the lease on a record was written by this process. */
+export const leaseHeldHere = (record: IdentityMigrationRecord) =>
+  record.lease?.by === RUNNER;
+
 export const resumeMigration = async (
   id: string,
 ): Promise<{ error?: string }> => {
@@ -821,7 +920,11 @@ export const resumeMigration = async (
   return {};
 };
 
-/** Only before cut-over: after that the record may already point at the new identity. */
+/**
+ * Only before cut-over: after that the record may already point at the new
+ * identity. While a runner is working, the abort is queued and the runner
+ * tears down at its next step; otherwise it happens here, under the lease.
+ */
 export const abortMigration = async (
   id: string,
 ): Promise<{ error?: string }> => {
@@ -830,24 +933,32 @@ export const abortMigration = async (
   if (["done", "aborted"].includes(record.status)) {
     return { error: "That change has already finished." };
   }
-  if (record.steps[FIRST_CUTOVER_STEP]?.status !== "pending") {
+  if (cutOverStarted(record)) {
     return {
       error:
         "The cut-over has started, so this can only be resumed, not aborted.",
     };
   }
-  if (busy(record, id)) return { error: "It is running right now." };
-  if (record.mode === "real") {
-    if (record.to.keycloakUserId) await deleteUser(record.to.keycloakUserId);
-    if (record.to.mailboxId) await destroyAccount(record.to.username);
+  if (record.cancelRequested) return {};
+  const queue = async () => {
+    await update<IdentityMigrationRecord>(identityMigrationsTable, id, {
+      cancelRequested: now(),
+    });
+    return {};
+  };
+  if (busy(record, id)) return queue();
+  running.add(id);
+  try {
+    const leased = await claimMigrationLease(id, RUNNER, leaseUntil());
+    if (!leased) return queue();
+    await tearDown(contextFor(leased));
+    return {};
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : String(err) };
+  } finally {
+    await release(id).catch(() => {});
+    running.delete(id);
   }
-  forgetPassword(id);
-  await update<IdentityMigrationRecord>(identityMigrationsTable, id, {
-    status: "aborted",
-    lease: null,
-    error: null,
-  });
-  return {};
 };
 
 /** Marks the member's own session as replaced, so the old login may go. */

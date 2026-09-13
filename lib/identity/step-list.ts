@@ -14,7 +14,11 @@ export const STEP_LIST: StepMeta[] = [
   { id: "verify:pre", label: "Check the copy", phase: "A" },
   { id: "keycloak:freeze-old", label: "Disable the old login", phase: "B" },
   { id: "mailbox:freeze-old", label: "Freeze the old mailbox", phase: "B" },
-  { id: "mailbox:delta", label: "Copy what arrived meanwhile", phase: "B" },
+  {
+    id: "mailbox:delta",
+    label: "Copy what arrived meanwhile and check the copy",
+    phase: "B",
+  },
   { id: "db:repoint", label: "Move the account record", phase: "B" },
   { id: "keycloak:enable-new", label: "Enable the new login", phase: "B" },
   { id: "mail:routing", label: "Rewire mail routing", phase: "B" },
@@ -29,6 +33,11 @@ export const STEP_LIST: StepMeta[] = [
 
 /** Before this step nothing has been taken away; after it the machine is forward-only. */
 export const FIRST_CUTOVER_STEP = "keycloak:freeze-old";
+
+const stepIndex = (id: string) => STEP_LIST.findIndex((step) => step.id === id);
+
+export const precedesCutOver = (stepId: string) =>
+  stepIndex(stepId) < stepIndex(FIRST_CUTOVER_STEP);
 
 /** How long the old address keeps delivering to the successor. */
 export const FORWARD_DAYS = 90;
