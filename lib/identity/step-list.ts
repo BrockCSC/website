@@ -1,6 +1,6 @@
 /** Shared by the runner (order) and the browser (labels), so it stays dependency-free. */
 
-export type StepPhase = "A" | "B" | "C";
+type StepPhase = "A" | "B" | "C";
 
 export type StepMeta = { id: string; label: string; phase: StepPhase };
 

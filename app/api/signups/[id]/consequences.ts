@@ -1,4 +1,8 @@
-import type { ExecRecord, SignupRecord } from "@/lib/api/types";
+import type {
+  ExecRecord,
+  IdentityMigrationView,
+  SignupRecord,
+} from "@/lib/api/types";
 import {
   assignRealmRole,
   effectiveRealmRoles,
@@ -8,6 +12,10 @@ import {
 import { alumniRole, CO_PRESIDENT, execRole } from "@/lib/auth/capabilities";
 import { invalidateRoles } from "@/lib/auth/session";
 import {
+  isActiveMigration,
+  listMigrationsForSignup,
+} from "@/lib/db/identity-migrations";
+import {
   type Entity,
   findById,
   toWireRecord,
@@ -15,6 +23,7 @@ import {
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
+import { migrationView } from "@/lib/identity/view";
 import {
   isProtectedMailbox,
   makeMailboxReadOnly,
@@ -123,11 +132,14 @@ const mailboxItems = (
   address: string,
   provisioned: boolean | null,
   readOnly: boolean,
+  migrating: boolean,
 ): Item[] => {
   const username = signup.username!;
   const shielded = isProtectedMailbox(username)
     ? `${address} is a service account and cannot be changed.`
-    : undefined;
+    : migrating
+      ? "A username change is in progress; the mailbox is moving."
+      : undefined;
 
   return [
     {
@@ -197,6 +209,8 @@ export type PersonDetail = {
   identitiesEditable: boolean;
   consequences: Consequence[];
   transition: { to: "former" | "current"; label: string; ids: string[] } | null;
+  /** Username changes, newest first; the first one may still be running. */
+  migrations: IdentityMigrationView[];
 };
 
 type Plan = {
@@ -204,6 +218,7 @@ type Plan = {
   held: string[] | null;
   provisioned: boolean | null;
   readOnly: boolean | null;
+  migrations: IdentityMigrationView[];
 };
 
 const plan = async ({ signup, exec }: Person): Promise<Plan> => {
@@ -213,20 +228,24 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
       held: null,
       provisioned: null,
       readOnly: null,
+      migrations: [],
     };
   }
 
-  const [held, coPresidents, provisioned, readOnly] = await Promise.all([
-    signup.keycloakUserId
-      ? effectiveRealmRoles(signup.keycloakUserId).catch(() => null)
-      : null,
-    usersWithRealmRole(CO_PRESIDENT).catch(() => null),
-    mailboxProvisioned(signup),
-    signup.username
-      ? isReadOnly(signup.username).catch(() => null)
-      : Promise.resolve(null),
-  ]);
+  const [held, coPresidents, provisioned, readOnly, migrations] =
+    await Promise.all([
+      signup.keycloakUserId
+        ? effectiveRealmRoles(signup.keycloakUserId).catch(() => null)
+        : null,
+      usersWithRealmRole(CO_PRESIDENT).catch(() => null),
+      mailboxProvisioned(signup),
+      signup.username
+        ? isReadOnly(signup.username).catch(() => null)
+        : Promise.resolve(null),
+      listMigrationsForSignup(signup.id),
+    ]);
   const address = mailAddress(signup);
+  const migrating = migrations.some(isActiveMigration);
 
   return {
     items: [
@@ -237,6 +256,7 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
             address,
             provisioned,
             readOnly ?? exec?.isCurrentExec === false,
+            migrating,
           )
         : []),
       ...tileItems(exec),
@@ -244,6 +264,7 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
     held,
     provisioned,
     readOnly,
+    migrations: migrations.map(migrationView),
   };
 };
 
@@ -293,7 +314,7 @@ const wire = <T>(entity: Entity<T> | null) =>
 
 export const describePerson = async (person: Person): Promise<PersonDetail> => {
   const { signup, exec } = person;
-  const { items, held, provisioned, readOnly } = await plan(person);
+  const { items, held, provisioned, readOnly, migrations } = await plan(person);
 
   return {
     signup: wire(signup),
@@ -309,6 +330,7 @@ export const describePerson = async (person: Person): Promise<PersonDetail> => {
     identitiesEditable: ownsIdentities(),
     consequences: items.map(stated),
     transition: transitionFor(exec, items),
+    migrations,
   };
 };
 

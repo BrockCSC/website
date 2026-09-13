@@ -646,7 +646,7 @@ export const forwardingAccounts = async (): Promise<Set<string>> => {
   );
 };
 
-export const uploadSieve = async (
+const uploadSieve = async (
   accountId: string,
   script: string,
 ): Promise<string> => {

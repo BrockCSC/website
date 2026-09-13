@@ -132,7 +132,7 @@ export type RetiredUsernameRecord = {
   sweptAt?: string;
 };
 
-export type MigrationMode = "real" | "rehearsal";
+type MigrationMode = "real" | "rehearsal";
 
 export type MigrationStatus =
   "planned" | "running" | "cut-over" | "failed" | "done" | "aborted";

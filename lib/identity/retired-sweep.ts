@@ -23,7 +23,7 @@ const stillForwarding = (row: RetiredUsernameRecord, now: Date) =>
   !row.sweptAt && new Date(row.forwardUntil) > now;
 
 /** Rewrites the notice for whatever the successor still forwards, or removes it. */
-export const refreshRetiredNotice = async (
+const refreshRetiredNotice = async (
   successor: string,
   rows: Entity<RetiredUsernameRecord>[],
   include: string | null = null,

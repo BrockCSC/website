@@ -654,7 +654,7 @@ const takeLease = async (
 const mark = (ctx: MigrationCtx, stepId: string, state: MigrationStepState) =>
   ctx.save({ steps: { ...ctx.record.steps, [stepId]: state } });
 
-export const runSteps = async (id: string): Promise<void> => {
+const runSteps = async (id: string): Promise<void> => {
   if (running.has(id)) return;
   running.add(id);
   try {

@@ -11,7 +11,7 @@ const RESUME_MS = 30_000;
 let started = false;
 
 /** Picks up whatever a restart interrupted: the lease has expired by now. */
-export const resumeStaleMigrations = async (): Promise<void> => {
+const resumeStaleMigrations = async (): Promise<void> => {
   if (!ownsIdentities()) return;
   for (const record of await activeMigrations()) {
     if (record.status !== "failed" && leaseExpired(record)) {

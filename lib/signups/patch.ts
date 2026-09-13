@@ -10,6 +10,37 @@ export type SignupDetailsInput = Pick<
   "firstName" | "lastName" | "email" | "phone" | "studentId" | "accessCardId"
 >;
 
+export const MAX_NAME = 60;
+
+/**
+ * The subset a member may edit about themselves. Phone stays the approver's.
+ * Picks fields off the body by name: spreading it would hand a member
+ * status, mailDailyLimit or keycloakUserId.
+ */
+export const cleanMemberDetails = (
+  body: Record<string, unknown>,
+): { error: string } | { patch: Partial<SignupRecord> } => {
+  const picked: SignupDetailsInput = {};
+  for (const key of [
+    "firstName",
+    "lastName",
+    "email",
+    "studentId",
+    "accessCardId",
+  ] as const) {
+    if (body[key] === undefined) continue;
+    if (typeof body[key] !== "string") return { error: "Expected text." };
+    picked[key] = body[key];
+  }
+  if (
+    (picked.firstName?.length ?? 0) > MAX_NAME ||
+    (picked.lastName?.length ?? 0) > MAX_NAME
+  ) {
+    return { error: "That name is too long." };
+  }
+  return cleanSignupDetails(picked);
+};
+
 /**
  * Fields an approver may edit about a person's roster record. Deliberately
  * excludes username, status, keycloakUserId, mailDailyLimit and everything
