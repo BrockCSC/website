@@ -68,6 +68,10 @@ type Account = {
   description?: string;
   memberGroupIds?: Record<string, boolean>;
   permissions?: { disabledPermissions?: Record<string, boolean> };
+  aliases?: Record<
+    string,
+    { name: string; domainId: string; enabled: boolean }
+  >;
 };
 
 const EXPUNGE = "imapExpunge";
@@ -224,6 +228,23 @@ export const deleteMailingList = async (id: string): Promise<void> => {
 export const localPartTaken = async (localPart: string): Promise<boolean> =>
   (await accounts()).some((a) => a.name === localPart);
 
+/** Any account name, account alias, mailing list name or mailing list alias. */
+export const addressTaken = async (localPart: string): Promise<boolean> => {
+  const [all, lists] = await Promise.all([accounts(), listMailingLists()]);
+  return (
+    all.some(
+      (a) =>
+        a.name === localPart ||
+        Object.values(a.aliases ?? {}).some(
+          (alias) => alias.name === localPart,
+        ),
+    ) ||
+    lists.some(
+      (list) => list.name === localPart || list.aliases.includes(localPart),
+    )
+  );
+};
+
 export type MailUser = {
   id: string;
   name: string;
@@ -285,6 +306,33 @@ export const createMailbox = async (mailbox: {
   return created.id;
 };
 
+export const accountAliases = async (localPart: string): Promise<string[]> =>
+  Object.values((await accountNamed(localPart))?.aliases ?? {}).map(
+    (alias) => alias.name,
+  );
+
+export const setAccountAliases = async (
+  localPart: string,
+  aliasNames: string[],
+  domain: string,
+): Promise<void> => {
+  const account = await accountNamed(localPart);
+  if (!account) return;
+  await jmap([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [account.id]: {
+            aliases: aliasEntries(aliasNames, await domainId(domain)),
+          },
+        },
+      },
+      "c0",
+    ],
+  ]);
+};
+
 export const setGroupMembers = async (
   group: string,
   localParts: string[],
@@ -337,12 +385,33 @@ export const setExpungeAllowed = async (
 const accountNamed = async (localPart: string): Promise<Account | undefined> =>
   (await accounts()).find((a) => a.name === localPart);
 
+/** No-op if the account does not exist. */
+export const destroyAccount = async (localPart: string): Promise<void> => {
+  const account = await accountNamed(localPart);
+  if (!account) return;
+  const [res] = await jmap<{ notDestroyed?: Record<string, unknown> }>([
+    ["x:Account/set", { destroy: [account.id] }, "c0"],
+  ]);
+  refused(res);
+};
+
 export const isReadOnly = async (
   localPart: string,
 ): Promise<boolean | null> => {
   const account = await accountNamed(localPart);
   if (!account) return null;
   return account.permissions?.disabledPermissions?.emailSend === true;
+};
+
+export const setDescription = async (
+  localPart: string,
+  description: string,
+): Promise<void> => {
+  const account = await accountNamed(localPart);
+  if (!account) return;
+  await jmap([
+    ["x:Account/set", { update: { [account.id]: { description } } }, "c0"],
+  ]);
 };
 
 const setReadOnly = async (
@@ -376,9 +445,6 @@ const setReadOnly = async (
 
 export const clearReadOnly = (localPart: string): Promise<void> =>
   setReadOnly(localPart, false);
-
-export const makeReadOnly = (localPart: string): Promise<void> =>
-  setReadOnly(localPart, true);
 
 export type AppPassword = {
   id: string;

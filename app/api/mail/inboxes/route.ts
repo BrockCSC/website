@@ -4,14 +4,9 @@ import { requireMailAdmin } from "@/lib/auth/session";
 import { findAll } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import { notAuthorized } from "@/lib/json";
-import { jmapResponses } from "@/lib/mail/jmap-mail";
+import { inboxCounts } from "@/lib/mail/inbox-counts";
 import { isProtectedMailbox } from "@/lib/mail/provision";
-import {
-  adminAuthorization,
-  chunked,
-  listUsers,
-  type MailUser,
-} from "@/lib/mail/stalwart";
+import { listUsers } from "@/lib/mail/stalwart";
 
 export type Inbox = {
   username: string;
@@ -22,52 +17,6 @@ export type Inbox = {
   current: boolean;
   unread: number | null;
   total: number | null;
-};
-
-type Counts = { unread: number | null; total: number | null };
-type InboxBox = {
-  role: string | null;
-  unreadEmails: number;
-  totalEmails: number;
-};
-
-/** Null counts for an account whose call failed. */
-const inboxCounts = async (users: MailUser[]): Promise<Map<string, Counts>> => {
-  const responses = (
-    await Promise.all(
-      chunked(users).map((batch) =>
-        jmapResponses(
-          { authorization: adminAuthorization() },
-          batch.map((user) => [
-            "Mailbox/get",
-            {
-              accountId: user.id,
-              ids: null,
-              properties: ["role", "unreadEmails", "totalEmails"],
-            },
-            user.name,
-          ]),
-        ),
-      ),
-    )
-  ).flat();
-  return new Map(
-    responses.map(([name, payload, id]) => {
-      const inbox =
-        name === "error"
-          ? undefined
-          : (payload as { list?: InboxBox[] }).list?.find(
-              (box) => box.role === "inbox",
-            );
-      return [
-        id,
-        {
-          unread: inbox?.unreadEmails ?? null,
-          total: inbox?.totalEmails ?? null,
-        },
-      ];
-    }),
-  );
 };
 
 export const GET = async (req: NextRequest) => {
