@@ -50,8 +50,8 @@ const FORCED_RESET_PURPOSE = "forced-password-reset";
 /**
  * Proves "this login just supplied the correct temporary password" across the
  * gap between the failed ROPC attempt and the follow-up set-new-password
- * call, without a real session existing yet. Short-lived and purpose-tagged
- * so it can never be replayed as, or confused with, a real session token.
+ * call, without a real session existing yet. Short-lived and purpose-tagged;
+ * getSessionUser rejects anything with a purpose claim.
  */
 export const signForcedResetToken = (payload: ForcedResetToken): string =>
   jwt.sign({ ...payload, purpose: FORCED_RESET_PURPOSE }, getSessionSecret(), {
@@ -84,9 +84,12 @@ export const getSessionUser = (req: NextRequest): SessionUser | null => {
   if (!token) return null;
   try {
     // Pinned so the token's own header can never choose the algorithm.
-    return jwt.verify(token, getSessionSecret(), {
+    const payload = jwt.verify(token, getSessionSecret(), {
       algorithms: ["HS256"],
-    }) as SessionUser;
+    }) as jwt.JwtPayload & { purpose?: unknown };
+    // Forced-reset tokens share this secret; one pasted into the cookie must not become a session.
+    if (payload.purpose !== undefined) return null;
+    return payload as unknown as SessionUser;
   } catch {
     return null;
   }

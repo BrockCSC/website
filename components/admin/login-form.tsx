@@ -55,14 +55,22 @@ function ForcedResetForm({
     setSubmitting(true);
     try {
       await completeForcedReset(resetToken, newPassword);
-      // Reuses the normal login path so the session and refresh cookies end
-      // up set exactly the way a regular sign-in sets them.
-      await login(username, newPassword);
-      onDone();
     } catch (err) {
       setError(
         (err instanceof ApiError && err.detail) ||
           "Could not set your new password. Try signing in again.",
+      );
+      setSubmitting(false);
+      return;
+    }
+    try {
+      // Reuses the normal login path so the session and refresh cookies end
+      // up set exactly the way a regular sign-in sets them.
+      await login(username, newPassword);
+      onDone();
+    } catch {
+      setError(
+        "Your new password is set, but signing in failed. Reload and sign in with it.",
       );
     } finally {
       setSubmitting(false);
