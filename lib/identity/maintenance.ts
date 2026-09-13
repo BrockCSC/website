@@ -51,7 +51,8 @@ export const startIdentityMaintenance = () => {
   if (state.started) return;
   state.started = true;
   setTimeout(
-    () => void quietly("resuming migrations", () => resumeStaleMigrations(true)),
+    () =>
+      void quietly("resuming migrations", () => resumeStaleMigrations(true)),
     RESUME_MS,
   );
   setInterval(

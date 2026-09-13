@@ -53,8 +53,7 @@ const leaseColumn = sql`${identityMigrationsTable.data}->'lease'`;
 const leaseFreeOrHeldBy = (runner: string) =>
   sql`(${leaseColumn} IS NULL OR jsonb_typeof(${leaseColumn}) = 'null' OR (${leaseColumn}->>'until')::timestamptz <= ${new Date().toISOString()}::timestamptz OR ${leaseColumn}->>'by' = ${runner})`;
 
-const leaseHeldBy = (runner: string) =>
-  sql`${leaseColumn}->>'by' = ${runner}`;
+const leaseHeldBy = (runner: string) => sql`${leaseColumn}->>'by' = ${runner}`;
 
 /**
  * Takes or renews the lease in one conditional statement: it succeeds only
