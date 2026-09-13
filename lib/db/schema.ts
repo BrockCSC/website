@@ -15,3 +15,5 @@ export const signupsTable = jsonbTable("signups");
 export const pageViewsTable = jsonbTable("page_views");
 export const mailAliasesTable = jsonbTable("mail_aliases");
 export const passwordResetsTable = jsonbTable("password_resets");
+export const sharedMailboxesTable = jsonbTable("shared_mailboxes");
+export const retiredMailboxesTable = jsonbTable("retired_mailboxes");

@@ -111,6 +111,24 @@ export type PasswordResetRecord = {
   expiresAt: string;
 };
 
+/** Display name and aliases live on the Stalwart account itself, not here. */
+export type SharedMailboxRecord = {
+  username: string;
+  createdBy: string;
+  createdAt: string;
+  mailDailyLimit?: number;
+};
+
+export type RetiredMailboxRecord = {
+  username: string;
+  /** The Stalwart MailingList forwarding this address to the co-presidents. */
+  mailingListId: string;
+  retiredAt: string;
+  /** The sweep destroys the list once this passes. */
+  removeAt: string;
+  removed?: boolean;
+};
+
 export type DayCount = { day: string; count: number };
 
 export type DashboardStats = {

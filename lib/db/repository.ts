@@ -7,6 +7,8 @@ import type {
   eventsTable,
   execsTable,
   passwordResetsTable,
+  retiredMailboxesTable,
+  sharedMailboxesTable,
   signupsTable,
 } from "./schema";
 
@@ -14,7 +16,9 @@ type JsonbTable =
   | typeof eventsTable
   | typeof execsTable
   | typeof signupsTable
-  | typeof passwordResetsTable;
+  | typeof passwordResetsTable
+  | typeof sharedMailboxesTable
+  | typeof retiredMailboxesTable;
 export type Entity<T> = T & { id: string };
 
 /** id last: a stray `id` inside the stored JSON must not shadow the real one. */
