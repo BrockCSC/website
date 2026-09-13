@@ -4,6 +4,7 @@ import { adminAccess } from "./access";
 import { sendMessage } from "./jmap-mail";
 import { domain } from "./provision";
 import { createApprovedSender } from "./oci-senders";
+import { emailBodyToText } from "./sanitize";
 import { createMailbox, listUsers, localPartTaken } from "./stalwart";
 
 const SYSTEM_SENDER = "security";
@@ -54,6 +55,10 @@ const ensureSystemSender = async (): Promise<string> => {
   return user.id;
 };
 
+const htmlBody = (text: string) =>
+  `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:14px;line-height:1.5;color:#111827">${emailBodyToText(text)}</div>`;
+
+/** sendMessage adds the club signature to both the text and HTML parts. */
 export const sendSystemEmail = async (msg: {
   to: string[];
   subject: string;
@@ -66,5 +71,6 @@ export const sendSystemEmail = async (msg: {
     to,
     subject: msg.subject,
     text: msg.text,
+    html: htmlBody(msg.text),
   });
 };
