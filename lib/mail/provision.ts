@@ -158,13 +158,17 @@ export const provisionMailbox = async (exec: {
 
 /**
  * Destroys the mailbox for good rather than keeping it around read-only.
- * Reversible steps run first, so a failure part-way through leaves the
- * account intact instead of gone with nothing to show for it.
+ * Stalwart shares one address namespace between accounts and mailing lists,
+ * so the forwarding list can't claim this name until the account holding it
+ * is gone — the destroy has to come first. If creating the list then fails,
+ * the address is already gone but not yet retired: mail falls through to the
+ * domain catch-all until this is retried by hand.
  */
 export const retireMailbox = async (username: string): Promise<void> => {
   if (isProtectedMailbox(username)) return;
   await revokeAppPasswords(username);
   await deleteApprovedSender(`${username}@${domain()}`);
+  await destroyAccount(username);
 
   const retiredAt = new Date();
   const removeAt = new Date(retiredAt);
@@ -181,6 +185,4 @@ export const retireMailbox = async (username: string): Promise<void> => {
     retiredAt: retiredAt.toISOString(),
     removeAt: removeAt.toISOString(),
   });
-
-  await destroyAccount(username);
 };
