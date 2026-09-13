@@ -6,7 +6,6 @@ import { findSignupByUserId } from "@/lib/db/signups";
 import { update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
-import { syncMailPassword } from "@/lib/mail/password";
 import { badJson, jsonObject } from "@/lib/json";
 import { rateLimit } from "@/lib/rate-limit";
 import { MIN_PASSWORD_LENGTH } from "@/lib/signups/validation";
@@ -49,7 +48,6 @@ export const POST = async (req: NextRequest) => {
       { status: 502 },
     );
   }
-  if (signup.username) await syncMailPassword(signup.username, newPassword);
   await update<SignupRecord>(signupsTable, signup.id, {
     passwordResetRequired: false,
   });

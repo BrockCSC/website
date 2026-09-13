@@ -6,7 +6,6 @@ import { findById, remove, update } from "@/lib/db/repository";
 import type { SignupRecord } from "@/lib/api/types";
 import { passwordResetsTable, signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
-import { syncMailPassword } from "@/lib/mail/password";
 import { badJson, jsonObject } from "@/lib/json";
 import { rateLimit } from "@/lib/rate-limit";
 import { MIN_PASSWORD_LENGTH } from "@/lib/signups/validation";
@@ -52,7 +51,6 @@ export const POST = async (req: NextRequest) => {
   // Spent only once the password actually changed, so a Keycloak hiccup
   // leaves the link usable for the retry the error message invites.
   await remove(passwordResetsTable, record.id);
-  await syncMailPassword(signup.username, password);
   // A password they chose through their own inbox satisfies a pending
   // admin-issued reset too; otherwise their next sign-in would demand another.
   if (signup.passwordResetRequired && ownsIdentities()) {

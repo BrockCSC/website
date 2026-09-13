@@ -27,6 +27,11 @@ const escapes: Record<string, string> = {
 
 const xml = (value: string) => value.replace(/[&<>]/g, (c) => escapes[c]);
 
+/**
+ * Deliberately carries no password: the device prompts for one on install,
+ * and it has to be an app password. Minting one here would leave a secret in
+ * the downloaded file and a new app password on every download.
+ */
 const profile = (
   username: string,
   address: string,
@@ -41,7 +46,7 @@ const profile = (
   <key>PayloadUUID</key><string>${uuidFor(address)}</string>
   <key>PayloadDisplayName</key><string>Brock CSC Mail</string>
   <key>PayloadOrganization</key><string>Brock Computer Science Club</string>
-  <key>PayloadDescription</key><string>Sets up ${xml(address)} in Mail.</string>
+  <key>PayloadDescription</key><string>Sets up ${xml(address)} in Mail. When asked for a password, paste an app password from the portal's mail setup page.</string>
   <key>PayloadContent</key>
   <array>
     <dict>

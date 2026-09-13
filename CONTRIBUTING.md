@@ -204,11 +204,14 @@ idempotent, so run it as often as you like. Install it on the VPS beside `drop-d
 daily timer - nothing runs it automatically from this repo, and the certificate goes stale roughly
 every sixty days without it.
 
-**Outside mail apps.** A portal sign-in sets the Stalwart password to the one just used
-(`syncMailPassword` in `lib/mail/password.ts`, from the login route, production only), so IMAP and
-SMTP take the portal password; anyone whose last sign-in predates that needs one more. `/admin/mail/setup`
-hands Apple devices an unsigned `.mobileconfig` from `/api/mail/setup/profile`, and app passwords stay
-there as an optional per-device alternative — `makeMailboxReadOnly` revokes every one of them. Outlook
+**Outside mail apps.** Stalwart authenticates accounts through its OIDC directory on Keycloak, so a
+portal password never works over IMAP or SMTP. Stalwart also refuses to store a password for an
+account in an external directory, so there is nothing to mirror. Mail apps sign in with Stalwart app
+passwords, which members make at `/admin/mail/setup` (`app/api/mail/app-passwords/`). The same page hands Apple devices an
+unsigned `.mobileconfig` from `/api/mail/setup/profile`, with no password in it, so the device prompts
+for the app password. `makeMailboxReadOnly` and a co-president's password reset
+(`app/api/signups/[id]/reset-password/route.ts`) revoke every app password; a self-service reset
+leaves them alone. Outlook
 and Thunderbird find the servers through `autodiscover.brockcsc.ca` and `autoconfig.brockcsc.ca`, and
 `app/.well-known/` proxies Stalwart's user-agent-configuration and autoconfig XML onto `brockcsc.ca`
 for clients that only look there. IMAP is `mail.brockcsc.ca:993` and submission `:465`, both SSL,
