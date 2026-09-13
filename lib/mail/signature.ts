@@ -10,7 +10,7 @@ const SITE_URL = () => process.env.MAIL_SITE_URL ?? `https://${SITE}`;
 const DISCLAIMER =
   "BrockCSC is a student club at Brock University. Views expressed are the sender's own and are not those of Brock University. This message may be confidential. If you have received it in error, please notify the sender immediately and delete it from your system.";
 
-export type Signer = { name: string; title?: string; photo?: string };
+export type Signer = { name: string; title?: string };
 
 /** Shared mailboxes speak for the club, not a person. */
 const GENERIC: Signer = { name: "BrockCSC" };
@@ -30,12 +30,7 @@ export const signerFor = async (account: string): Promise<Signer> => {
     [signup.firstName, signup.lastName].filter(Boolean).join(" ").trim();
   if (!name) return GENERIC;
 
-  const image = exec?.image?.url;
-  return {
-    name,
-    title: exec?.title,
-    photo: image?.startsWith("/") ? `${SITE_URL()}${image}` : image,
-  };
+  return { name, title: exec?.title };
 };
 
 const lines = ({ name, title }: Signer): string[] =>
@@ -46,7 +41,6 @@ export const textSignature = (signer: Signer): string =>
 
 export const htmlSignature = (signer: Signer): string => {
   const site = SITE_URL();
-  const avatar = signer.photo ?? `${site}/email-logo.png`;
   const detail = [signer.title, CLUB]
     .filter(Boolean)
     .map(
@@ -59,7 +53,7 @@ export const htmlSignature = (signer: Signer): string => {
     `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;margin-top:18px;font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif">` +
     `<tr>` +
     `<td valign="middle" style="padding-right:14px;vertical-align:middle">` +
-    `<img src="${escapeHtml(avatar)}" width="52" height="52" alt="" style="width:52px;height:52px;border-radius:10px;border:0" />` +
+    `<img src="${site}/email-logo.png" width="52" height="52" alt="BrockCSC" style="display:block;width:52px;height:52px;border-radius:10px;border:0" />` +
     `</td>` +
     `<td valign="middle" style="vertical-align:middle;border-left:3px solid #9A4440;padding-left:14px">` +
     `<div style="font-size:14px;font-weight:700;line-height:1.45;color:#9A4440">${escapeHtml(signer.name)}</div>` +
