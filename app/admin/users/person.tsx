@@ -5,21 +5,28 @@ import Link from "next/link";
 import { Inbox } from "lucide-react";
 import { withAs } from "../mail/inbox-picker";
 import {
+  abortPersonMigration,
   applyToPerson,
   deleteAccount,
   deleteTile,
   fetchPerson,
+  previewPersonRename,
   resetPersonPassword,
+  resumeMigration,
+  startPersonRename,
   type ApplyResult,
   type PasswordResetResult,
   type Person,
   type PersonDetail,
+  type RenameNames,
 } from "./api";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
+import type { RenamePreview } from "@/lib/api/types";
 import { useSession } from "../session";
 import Confirm, { type ConfirmItem } from "./confirm";
 import DetailsForm from "./details-form";
+import MigrationSteps, { statusLabel } from "./migration-steps";
 import ProfileForm from "./profile-form";
 import { Note, Panel, Pill, Rows } from "./ui";
 import { ask } from "../ask";
@@ -27,6 +34,12 @@ import { capabilitiesOf, impliedBy } from "@/lib/auth/capabilities";
 
 const date = (value?: string) =>
   value ? new Date(value).toLocaleDateString() : "—";
+
+const MIGRATION_POLL_MS = 5_000;
+
+const isLive = (migration: PersonDetail["migrations"][number]) =>
+  migration.mode === "real" &&
+  ["planned", "running", "cut-over"].includes(migration.status);
 
 const summary = (result: ApplyResult) =>
   [
@@ -52,16 +65,21 @@ export default function PersonView({
   onChanged: () => Promise<void>;
 }) {
   const [detail, setDetail] = useState<PersonDetail | null>(null);
+  const signup = detail?.signup;
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<ApplyResult | null>(null);
   const [open, setOpen] = useState<"transition" | "delete" | null>(null);
   const [working, setWorking] = useState<string | null>(null);
   const [editingDetails, setEditingDetails] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [resetResult, setResetResult] = useState<PasswordResetResult | null>(
-    null,
-  );
+  const [resetResult, setResetResult] = useState<
+    (PasswordResetResult & { rename?: boolean }) | null
+  >(null);
   const [copied, setCopied] = useState<boolean | null>(null);
+  const [renamePreview, setRenamePreview] = useState<
+    (RenamePreview & { names: RenameNames }) | null
+  >(null);
+  const [migrationBusy, setMigrationBusy] = useState<string | null>(null);
   const { user } = useSession();
 
   const load = useCallback(async () => {
@@ -78,6 +96,80 @@ export default function PersonView({
       await load();
     })();
   }, [load]);
+
+  const migrating = detail?.migrations.some(isLive) ?? false;
+  useEffect(() => {
+    if (!migrating) return;
+    const timer = setInterval(() => void load(), MIGRATION_POLL_MS);
+    return () => clearInterval(timer);
+  }, [migrating, load]);
+
+  const requestRename = async (names: RenameNames) => {
+    if (!signup) return;
+    setError(null);
+    try {
+      const preview = await previewPersonRename(signup.$key, names);
+      setRenamePreview({ ...preview, names });
+      setEditingDetails(false);
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not work out what renaming them would involve.",
+      );
+    }
+  };
+
+  const confirmRename = async () => {
+    if (!signup || !renamePreview) return;
+    setError(null);
+    try {
+      const started = await startPersonRename(signup.$key, renamePreview.names);
+      setRenamePreview(null);
+      setResetResult({
+        tempPassword: started.tempPassword,
+        rehearsed: started.rehearsed,
+        rename: true,
+      });
+      setCopied(null);
+      await load();
+      await onChanged();
+    } catch (err) {
+      setRenamePreview(null);
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not start the rename.",
+      );
+    }
+  };
+
+  const driveMigration = async (id: string, action: "resume" | "abort") => {
+    if (action === "abort") {
+      const ok = await ask({
+        title: "Abort this username change?",
+        detail:
+          "Nothing has been taken away yet, so this removes the new login and mailbox that were being prepared.",
+        confirmLabel: "Abort",
+        destructive: true,
+      });
+      if (ok === null) return;
+    }
+    setMigrationBusy(`${id}:${action}`);
+    setError(null);
+    try {
+      await (action === "resume"
+        ? resumeMigration(id)
+        : abortPersonMigration(id));
+      await load();
+      await onChanged();
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          `Could not ${action} that change.`,
+      );
+    } finally {
+      setMigrationBusy(null);
+    }
+  };
 
   const confirmRole = async (
     item: { id: string; title: string },
@@ -133,7 +225,6 @@ export default function PersonView({
     }
   };
 
-  const signup = detail?.signup;
   const isSelf =
     !!signup?.keycloakUserId && signup.keycloakUserId === user?.sub;
 
@@ -266,10 +357,24 @@ export default function PersonView({
             title="Account"
           >
             {signup ? (
-              editingDetails ? (
+              renamePreview ? (
+                <Confirm
+                  confirmLabel={renamePreview.rehearsal ? "Rehearse" : "Rename"}
+                  intro={
+                    renamePreview.rehearsal
+                      ? "This environment only rehearses: nothing below would actually happen here."
+                      : `Renaming ${person.name} to ${renamePreview.to} does all of this. It takes a few minutes and cannot be undone once their old login is disabled.`
+                  }
+                  items={renamePreview.preview}
+                  onApply={confirmRename}
+                  onCancel={() => setRenamePreview(null)}
+                  title={`Rename to ${renamePreview.to}`}
+                />
+              ) : editingDetails ? (
                 <DetailsForm
                   identitiesEditable={detail.identitiesEditable}
                   onCancel={() => setEditingDetails(false)}
+                  onRename={migrating || isSelf ? undefined : requestRename}
                   onSaved={async () => {
                     setEditingDetails(false);
                     await load();
@@ -283,8 +388,15 @@ export default function PersonView({
                     items={[
                       [
                         "Username",
-                        <span className="font-mono" key="u">
-                          {signup.username ?? "—"}
+                        <span key="u">
+                          <span className="font-mono">
+                            {signup.username ?? "—"}
+                          </span>
+                          {signup.previousUsernames?.length ? (
+                            <span className="ml-2 text-subtle">
+                              was {signup.previousUsernames.join(", ")}
+                            </span>
+                          ) : null}
                         </span>,
                       ],
                       [
@@ -360,7 +472,9 @@ export default function PersonView({
                       <p className="mt-3 text-sm text-ink">
                         {resetResult.rehearsed
                           ? "Rehearsed only: this environment shares the live Keycloak realm and mail server, so nothing was changed and nothing was emailed."
-                          : `Also emailed to ${[signup.email, detail.mailbox.address].filter(Boolean).join(" and ")}. This is the only time it's shown here.`}
+                          : resetResult.rename
+                            ? "For their new login once the change completes; it is also in the cut-over email. This is the only time it's shown here."
+                            : `Also emailed to ${[signup.email, detail.mailbox.address].filter(Boolean).join(" and ")}. This is the only time it's shown here.`}
                       </p>
                     </div>
                   )}
@@ -515,6 +629,91 @@ export default function PersonView({
               </p>
             )}
           </Panel>
+
+          {detail.migrations.length > 0 && (
+            <Panel
+              note="Username changes: the login and mailbox are copied, verified, then the old ones retired."
+              title="Identity changes"
+            >
+              <div className="flex flex-col gap-4">
+                {detail.migrations.map((migration, at) => (
+                  <div
+                    className="rounded-[10px] border-2 border-line bg-raised p-3"
+                    key={migration.$key}
+                  >
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="font-mono text-sm font-bold text-ink">
+                        {migration.from} → {migration.to}
+                      </span>
+                      <Pill
+                        tone={migration.status === "failed" ? "accent" : "flat"}
+                      >
+                        {statusLabel(migration)}
+                      </Pill>
+                      <span className="text-xs text-subtle">
+                        {migration.requestedBy === "self"
+                          ? "asked for by them"
+                          : "started by a co-president"}{" "}
+                        · {date(migration.requestedAt)}
+                        {migration.forwardUntil
+                          ? ` · old address forwards until ${date(migration.forwardUntil)}`
+                          : ""}
+                      </span>
+                    </div>
+                    {migration.error && (
+                      <p className="mt-2 text-sm font-bold text-destructive">
+                        {migration.error}
+                      </p>
+                    )}
+                    {(at === 0 || isLive(migration)) && (
+                      <div className="mt-3">
+                        <MigrationSteps migration={migration} />
+                      </div>
+                    )}
+                    {(migration.canResume || migration.canAbort) && (
+                      <div className="mt-3 flex flex-wrap items-center gap-3">
+                        {migration.canResume && (
+                          <Button
+                            disabled={!!migrationBusy}
+                            onClick={() =>
+                              void driveMigration(migration.$key, "resume")
+                            }
+                            size="sm"
+                            type="button"
+                            variant="primary"
+                          >
+                            {migrationBusy === `${migration.$key}:resume`
+                              ? "Resuming..."
+                              : "Resume"}
+                          </Button>
+                        )}
+                        {migration.canAbort && (
+                          <Button
+                            disabled={!!migrationBusy}
+                            onClick={() =>
+                              void driveMigration(migration.$key, "abort")
+                            }
+                            size="sm"
+                            type="button"
+                            variant="destructive"
+                          >
+                            {migrationBusy === `${migration.$key}:abort`
+                              ? "Aborting..."
+                              : "Abort"}
+                          </Button>
+                        )}
+                        <span className="text-sm text-subtle">
+                          {migration.status === "failed"
+                            ? "Fix the cause, then resume; the failed step runs again."
+                            : "The runner lost its lease, probably a deploy. Resume picks it back up."}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          )}
 
           <Panel
             note="Exactly what the team page shows."
