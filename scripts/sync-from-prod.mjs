@@ -26,7 +26,9 @@ if (prodSchemaExists.rowCount === 0) {
   process.exit(0);
 }
 
-for (const table of ["events", "execs", "signups"]) {
+// retired_usernames rides along so a preview can never reissue a name prod
+// has retired; identity_migrations stays prod-only, previews only rehearse.
+for (const table of ["events", "execs", "signups", "retired_usernames"]) {
   await pool.query(`TRUNCATE TABLE "${schema}"."${table}"`);
   await pool.query(
     `INSERT INTO "${schema}"."${table}" SELECT * FROM "prod"."${table}"`,
