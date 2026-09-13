@@ -64,7 +64,7 @@ export function Panel({
     <section
       className={`animate-fade-in rounded-[20px] border-2 border-line ${
         tone ? "bg-tint" : "bg-surface"
-      } p-5 shadow-brut`}
+      } p-5 shadow-brut transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[6px_6px_0_0_var(--brand)]`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>

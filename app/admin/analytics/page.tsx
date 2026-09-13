@@ -1,17 +1,15 @@
 "use client";
 
-import { DashboardStats, DayCount, fetchDashboardStats } from "@/lib/api";
+import { DashboardStats, fetchDashboardStats } from "@/lib/api";
 import { DEDICATED_VM, type CostLine, type CostReport } from "@/lib/costs";
+import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "../session";
 import { Panel } from "../users/ui";
-import { BarList, formatDay, SplitBar, TrendChart } from "./charts";
+import { BarList, formatDay, plural, SplitBar, TrendChart } from "./charts";
 
 type MailStats = { sent: number; received: number };
-
-const plural = (count: number, noun: string) =>
-  `${count.toLocaleString()} ${noun}${count === 1 ? "" : "s"}`;
 
 const usd = (amount: number) => `$${amount.toFixed(2)}`;
 
@@ -48,13 +46,25 @@ const Stat = ({
 }) => {
   const tile = (
     <div
-      className={`h-full animate-rise-in rounded-[20px] border-2 border-line p-4 shadow-brut-sm ${hero ? "bg-raised" : "bg-surface"}`}
+      className={`relative h-full animate-rise-in rounded-[20px] border-2 border-line p-4 shadow-brut-sm transition duration-[var(--dur)] ease-smooth ${
+        href
+          ? "group-hover:-translate-y-0.5 group-hover:bg-tint group-hover:shadow-[3px_5px_0_0_var(--shade)] motion-reduce:group-hover:translate-y-0"
+          : "hover:shadow-[3px_3px_0_0_var(--brand)]"
+      } ${hero ? "bg-raised" : "bg-surface"}`}
     >
-      <div className="text-xs font-bold uppercase tracking-wide text-subtle">
+      {href && (
+        <ArrowUpRight
+          aria-hidden
+          className="absolute top-3 right-3 size-4 text-subtle transition duration-[var(--dur)] ease-smooth group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
+        />
+      )}
+      <div
+        className={`text-xs font-bold uppercase tracking-wide text-subtle ${href ? "pr-5" : ""}`}
+      >
         {label}
       </div>
       <div
-        className={`mt-1 font-extrabold text-brand ${hero ? "text-4xl" : "text-3xl"}`}
+        className={`mt-1 font-extrabold tabular-nums text-brand ${hero ? "text-4xl" : "text-3xl"}`}
       >
         {value}
       </div>
@@ -62,10 +72,7 @@ const Stat = ({
     </div>
   );
   return href ? (
-    <Link
-      href={href}
-      className="block hover:-translate-y-0.5 motion-reduce:hover:translate-y-0"
-    >
+    <Link href={href} className="group block rounded-[20px]">
       {tile}
     </Link>
   ) : (
@@ -88,13 +95,15 @@ const Note = ({ children }: { children: React.ReactNode }) => (
   </p>
 );
 
-const DayAxis = ({ points }: { points: DayCount[] }) => (
-  <div className="mt-2 flex justify-between text-xs text-subtle">
-    {[points[0], points[Math.floor(points.length / 2)], points.at(-1)].map(
-      (point, index) =>
-        point && <span key={index}>{formatDay(point.day)}</span>,
-    )}
-  </div>
+const HealthRow = ({ label, value }: { label: string; value: number }) => (
+  <li className="group flex justify-between gap-3 border-b-2 border-line/20 pb-2 transition-colors duration-[var(--dur-fast)] ease-smooth hover:border-brand">
+    <span className="text-subtle transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-ink">
+      {label}
+    </span>
+    <span className="font-bold tabular-nums text-ink transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-brand">
+      {value}
+    </span>
+  </li>
 );
 
 export default function AnalyticsPage() {
@@ -245,10 +254,7 @@ export default function AnalyticsPage() {
                   zero — check that the public site is reporting views.
                 </Note>
               ) : (
-                <>
-                  <TrendChart points={views.daily} unit="views" />
-                  <DayAxis points={views.daily} />
-                </>
+                <TrendChart points={views.daily} unit="view" />
               )}
             </Card>
 
@@ -260,6 +266,8 @@ export default function AnalyticsPage() {
                       label: entry.path,
                       value: entry.views,
                     }))}
+                    total={views.last30Days}
+                    of="of all views"
                   />
                 ) : (
                   <Note>No page views were recorded in this window.</Note>
@@ -315,10 +323,7 @@ export default function AnalyticsPage() {
                   hint={`${plural(signupsThisMonth, "request")} in the last 30 days`}
                 >
                   {signupsThisMonth > 0 ? (
-                    <>
-                      <TrendChart points={signups.daily} unit="sign-ups" />
-                      <DayAxis points={signups.daily} />
-                    </>
+                    <TrendChart points={signups.daily} unit="sign-up" />
                   ) : (
                     <Note>
                       No new sign-ups in the last 30 days. Invite codes are
@@ -332,40 +337,25 @@ export default function AnalyticsPage() {
 
             <Card title="Team and content health">
               <ul className="grid gap-2 text-sm sm:grid-cols-2">
-                <li className="flex justify-between gap-3 border-b-2 border-line/20 pb-2">
-                  <span className="text-subtle">Current executives</span>
-                  <span className="font-bold tabular-nums text-ink">
-                    {stats.execs.current}
-                  </span>
-                </li>
-                <li className="flex justify-between gap-3 border-b-2 border-line/20 pb-2">
-                  <span className="text-subtle">Past executives</span>
-                  <span className="font-bold tabular-nums text-ink">
-                    {stats.execs.past}
-                  </span>
-                </li>
-                <li className="flex justify-between gap-3 border-b-2 border-line/20 pb-2">
-                  <span className="text-subtle">Missing a photo or bio</span>
-                  <span className="font-bold tabular-nums text-ink">
-                    {stats.execs.incompleteProfiles}
-                  </span>
-                </li>
+                <HealthRow
+                  label="Current executives"
+                  value={stats.execs.current}
+                />
+                <HealthRow label="Past executives" value={stats.execs.past} />
+                <HealthRow
+                  label="Missing a photo or bio"
+                  value={stats.execs.incompleteProfiles}
+                />
                 {stats.unclaimedTiles !== null && (
-                  <li className="flex justify-between gap-3 border-b-2 border-line/20 pb-2">
-                    <span className="text-subtle">
-                      Profiles without a login
-                    </span>
-                    <span className="font-bold tabular-nums text-ink">
-                      {stats.unclaimedTiles}
-                    </span>
-                  </li>
+                  <HealthRow
+                    label="Profiles without a login"
+                    value={stats.unclaimedTiles}
+                  />
                 )}
-                <li className="flex justify-between gap-3 border-b-2 border-line/20 pb-2">
-                  <span className="text-subtle">Events run so far</span>
-                  <span className="font-bold tabular-nums text-ink">
-                    {stats.events.past}
-                  </span>
-                </li>
+                <HealthRow
+                  label="Events run so far"
+                  value={stats.events.past}
+                />
               </ul>
             </Card>
           </div>
@@ -422,10 +412,12 @@ export default function AnalyticsPage() {
                 ].map((row) => (
                   <div
                     key={row.label}
-                    className="flex flex-wrap justify-between gap-x-4"
+                    className="group flex flex-wrap justify-between gap-x-4"
                   >
-                    <dt className="text-subtle">{row.label}</dt>
-                    <dd className="font-bold tabular-nums text-ink">
+                    <dt className="text-subtle transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-ink">
+                      {row.label}
+                    </dt>
+                    <dd className="font-bold tabular-nums text-ink transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-brand">
                       {usd(row.value)} / month
                     </dd>
                   </div>
@@ -459,7 +451,7 @@ export default function AnalyticsPage() {
                         {costs.last30.lines.map((line) => (
                           <tr
                             key={line.key}
-                            className="border-t-2 border-line/20"
+                            className="border-t-2 border-line/20 transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-tint"
                           >
                             <td className="py-2 pr-3">
                               <a
@@ -512,6 +504,8 @@ export default function AnalyticsPage() {
                         label: account.name,
                         value: account.sent,
                       }))}
+                      total={costs.usage.totals.sent}
+                      of="of club mail sent"
                     />
                   ) : (
                     <Note>Nobody sent any mail in this window.</Note>

@@ -30,7 +30,7 @@ const Tile = ({
   detail: string;
   children?: React.ReactNode;
 }) => (
-  <div className="animate-rise-in rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm">
+  <div className="animate-rise-in rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[3px_3px_0_0_var(--brand)]">
     <div className="text-xs font-bold uppercase tracking-wide text-subtle">
       {label}
     </div>
@@ -348,7 +348,7 @@ export default function AliasesPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             {directory.aliases.map((alias, index) => (
               <button
-                className="flex animate-rise-in flex-col items-start gap-3 rounded-[20px] border-2 border-line bg-surface p-5 text-left shadow-brut hover:-translate-y-0.5 hover:bg-tint motion-reduce:hover:translate-y-0"
+                className="flex animate-rise-in flex-col items-start gap-3 rounded-[20px] border-2 border-line bg-surface p-5 text-left shadow-brut hover:-translate-y-0.5 hover:bg-tint hover:shadow-[6px_8px_0_0_var(--shade)] motion-reduce:hover:translate-y-0"
                 key={alias.id}
                 onClick={() => {
                   setNotice(null);

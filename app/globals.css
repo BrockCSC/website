@@ -122,6 +122,8 @@
       border-color var(--dur-fast) var(--ease-smooth),
       box-shadow var(--dur) var(--ease-smooth),
       transform var(--dur) var(--ease-smooth),
+      translate var(--dur) var(--ease-smooth),
+      scale var(--dur) var(--ease-smooth),
       opacity var(--dur-fast) var(--ease-smooth);
   }
   button:not(:disabled):active,
@@ -145,7 +147,8 @@
     input,
     select,
     textarea,
-    summary
+    summary,
+    [tabindex]:not([tabindex="-1"])
   ):focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
