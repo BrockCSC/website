@@ -40,7 +40,9 @@ export function ImageFocus({
     <div>
       <div className="flex flex-wrap items-start gap-4">
         <button
-          className="relative h-40 w-32 shrink-0 touch-none cursor-crosshair overflow-hidden rounded-[12px] border-2 border-line active:cursor-grabbing"
+          className="relative h-40 w-32 shrink-0 touch-none cursor-crosshair select-none overflow-hidden rounded-[12px] border-2 border-line active:cursor-grabbing"
+          // A native image drag fires pointercancel and ends the pick mid-gesture.
+          onDragStart={(e) => e.preventDefault()}
           onLostPointerCapture={() => {
             dragging.current = false;
           }}
@@ -74,7 +76,8 @@ export function ImageFocus({
         >
           <Image
             alt=""
-            className="object-cover"
+            className="pointer-events-none object-cover"
+            draggable={false}
             fill
             src={url}
             style={{ objectPosition: `${x}% ${y}%` }}

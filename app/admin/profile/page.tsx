@@ -20,6 +20,7 @@ import {
   type SocialKey,
 } from "@/lib/execs/socials";
 import { academicTerms } from "@/lib/execs/terms";
+import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { useSession } from "../session";
 import { Panel, fieldOn, labelClass, type PanelProps } from "../users/ui";
 import { ask } from "../ask";
@@ -70,7 +71,8 @@ export default function ProfilePage() {
   const [steppingDown, setSteppingDown] = useState(false);
   const [stepDownNote, setStepDownNote] = useState<string | null>(null);
   const { user, refresh } = useSession();
-  const isApprover = !!user?.isApprover;
+  // Owners and bare approvers pass isApprover but have no co-president seat to give up.
+  const isCoPresident = !!user?.roles?.includes(CO_PRESIDENT);
   const canStepDown = user?.identitiesEditable !== false;
 
   useEffect(() => {
@@ -364,7 +366,7 @@ export default function ProfilePage() {
             </label>
           </Section>
 
-          {isApprover && (
+          {isCoPresident && (
             <Section
               note="Approving sign-ups and managing the executive team."
               title="Co-president"
