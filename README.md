@@ -77,10 +77,10 @@ unless you ask for them.
 
 ### Outside mail apps
 
-Your mailbox works in any IMAP app, and the password is the one you sign in with here — it is set on
-every portal sign-in, so sign in once more if you have not since this landed. Apple devices get a
-one-tap profile from **[/admin/mail/setup](https://brockcsc.ca/admin/mail/setup)**; Outlook and
-Thunderbird find the servers by themselves. App passwords are still there if you want one per device.
+Your mailbox works in any IMAP app, but not with your portal password. Make an app password at
+**[/admin/mail/setup](https://brockcsc.ca/admin/mail/setup)**, one per device, and use it as the
+password with your full club address as the username. Apple devices get a one-tap profile from the
+same page; Outlook and Thunderbird find the servers by themselves.
 
 ### Sending limits
 

@@ -145,10 +145,10 @@ export default function PersonView({
     const ok = await ask({
       title: `Reset ${person.name}'s password?`,
       detail:
-        `Their current password stops working immediately, for both the portal and their mailbox. ` +
+        `Their current password stops working immediately, and every app password is revoked, so any mail apps they connected are signed out too. ` +
         `You'll see a temporary password to give them` +
         (recipients ? `, and it's emailed to ${recipients}` : "") +
-        `. The temporary password only works at the portal sign-in, where they have to choose a new one; their mailbox stays locked until they do.`,
+        `. They have to choose a new password at the portal sign-in, then make a new app password on the mail setup page for each mail app.`,
       confirmLabel: "Reset password",
       destructive: true,
     });

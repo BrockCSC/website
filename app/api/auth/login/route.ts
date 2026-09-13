@@ -3,7 +3,6 @@ import { exchangeCredentials } from "@/lib/auth/keycloak";
 import { REFRESH_COOKIE, refreshCookieOptions } from "@/lib/auth/mail-token";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { ownsIdentities } from "@/lib/env";
-import { syncMailPassword } from "@/lib/mail/password";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import {
@@ -75,8 +74,6 @@ export const POST = async (req: NextRequest) => {
       resetToken: signForcedResetToken({ sub: identity.sub, username }),
     });
   }
-
-  await syncMailPassword(username, password);
 
   const response = NextResponse.json({
     sub: identity.sub,

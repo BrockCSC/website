@@ -1,4 +1,4 @@
-import { randomBytes, randomInt } from "node:crypto";
+import { randomInt } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SignupRecord } from "@/lib/api/types";
 import { requireApprover } from "@/lib/auth/session";
@@ -6,7 +6,7 @@ import { resetUserPassword } from "@/lib/auth/keycloak-admin";
 import { findById, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
-import { syncMailPassword } from "@/lib/mail/password";
+import { revokeAppPasswords } from "@/lib/mail/stalwart";
 import { sendSystemEmail, siteUrl } from "@/lib/mail/system-mail";
 import { notAuthorized, notFound } from "@/lib/json";
 
@@ -59,15 +59,15 @@ export const POST = async (
         { status: 422 },
       );
     }
-    // The mailbox gets an unguessable throwaway, not the temp password. The
-    // temp password travels in plaintext email and Stalwart can't force a
-    // change, so letting it open IMAP/SMTP would dodge the forced reset for
-    // good. Mail unlocks when they choose their own password in the portal.
+    // Mail apps sign in with app passwords, which a Keycloak reset leaves
+    // alone. Revoke them so the reset cuts off every connected device too.
+    // Best-effort: the Keycloak password has already changed.
     if (signup.username) {
-      await syncMailPassword(
-        signup.username,
-        randomBytes(32).toString("base64url"),
-      );
+      await revokeAppPasswords(signup.username).catch((err) => {
+        console.error(
+          `app password revoke failed for signup ${id}: ${err instanceof Error ? err.message : err}`,
+        );
+      });
     }
     await update<SignupRecord>(signupsTable, id, {
       passwordResetRequired: true,
@@ -88,7 +88,7 @@ export const POST = async (
         ``,
         `Sign in at ${siteUrl()}/admin with your username and this password — you'll be asked to choose a new one right away.`,
         ``,
-        `Your mailbox (Outlook, phone mail apps) stays locked until you've done that, then works with your new password.`,
+        `Any mail apps connected to your club address (Outlook, phone mail apps) were disconnected. Once you've chosen your new password, make a new app password on the mail setup page (${siteUrl()}/admin/mail/setup) and enter it in each app.`,
         ``,
         `If you didn't expect this, contact a co-president.`,
       ].join("\n"),

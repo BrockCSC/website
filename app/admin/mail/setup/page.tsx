@@ -4,8 +4,7 @@ import { AtSign, Download, KeyRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useSession } from "../../session";
-import { Note, Panel } from "../../users/ui";
+import { Panel } from "../../users/ui";
 import { AppPasswords } from "./app-passwords";
 import { CLIENT_GUIDES, SERVER_SETTINGS } from "./clients";
 
@@ -29,7 +28,6 @@ const Step = ({
 
 export default function MailSetupPage() {
   const [address, setAddress] = useState<string | null>(null);
-  const { user } = useSession();
 
   useEffect(() => {
     fetch("/api/mail/me")
@@ -67,13 +65,13 @@ export default function MailSetupPage() {
       </p>
 
       <div className="mt-8 grid gap-4 sm:grid-cols-3">
-        <Step icon={KeyRound} title="Use your usual password">
-          The password you sign in here with works in any mail app. It follows
-          your portal password each time you sign in, so if your last sign-in
-          was before this change, sign out and in once.
+        <Step icon={KeyRound} title="Make an app password">
+          Your portal password does not work in mail apps. Create an app
+          password below and paste it wherever the app asks for a password.
         </Step>
-        <Step icon={AtSign} title="Type your address, done">
-          Outlook, Thunderbird and most apps fetch the servers on their own.
+        <Step icon={AtSign} title="Type your address">
+          Your username is your full club address. Outlook, Thunderbird and most
+          apps fetch the servers on their own.
         </Step>
         <Step icon={Download} title="One tap on Apple devices">
           <Button asChild size="sm">
@@ -82,18 +80,19 @@ export default function MailSetupPage() {
             </a>
           </Button>
           <span className="mt-2 block text-xs">
-            Apple calls the profile unsigned and unverified. That is expected.
+            Paste your app password when the device asks for one. Apple calls
+            the profile unsigned and unverified. That is expected.
           </span>
         </Step>
       </div>
 
       <div className="mt-6 flex flex-col gap-6">
-        {user?.identitiesEditable === false && (
-          <Note>
-            Password syncing is only rehearsed in this environment, so your
-            portal password will not reach the mail server here.
-          </Note>
-        )}
+        <Panel
+          note="It is shown once, so copy it before you leave the page."
+          title="Start here: make an app password"
+        >
+          <AppPasswords />
+        </Panel>
 
         <Panel
           note="Most apps fill these in once you enter your address. Reach for them if yours asks."
@@ -134,25 +133,15 @@ export default function MailSetupPage() {
           </div>
         </Panel>
 
-        <Panel
-          note="Still works, and handy for a shared device. Make one per device and revoke it if that device goes missing."
-          title="Prefer a separate password per device?"
-        >
-          <details className="rounded-[14px] border-2 border-line bg-raised p-4">
-            <summary className="cursor-pointer text-sm font-extrabold text-ink">
-              App passwords
-            </summary>
-            <div className="mt-4">
-              <AppPasswords />
-            </div>
-          </details>
-        </Panel>
-
         <Panel title="If it stops working">
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink">
             <li>
-              Sign out of the portal and back in once, so your mailbox picks up
-              the password you use now.
+              Lost or revoked an app password? Make a new one above and paste it
+              into the app in place of the old one.
+            </li>
+            <li>
+              A co-president resetting your password revokes all of your app
+              passwords. Once you have chosen your new password, make new ones.
             </li>
             <li>
               Access is revoked when someone steps down, so mail apps stop at

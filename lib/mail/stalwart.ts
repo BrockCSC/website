@@ -232,63 +232,6 @@ export type MailUser = {
   readOnly: boolean;
 };
 
-type Credential = Record<string, unknown> & { "@type": string };
-
-/** Replaces the account password, keeping app passwords and API keys. */
-export const setPassword = async (
-  localPart: string,
-  password: string,
-): Promise<boolean> => {
-  const target = (await accounts()).find(
-    (a) => a["@type"] === "User" && a.name === localPart,
-  );
-  if (!target) return false;
-  const [res] = await jmap<{
-    list: { credentials?: Record<string, Credential> }[];
-  }>([["x:Account/get", { ids: [target.id] }, "c0"]]);
-  // Stalwart keys credentials by list index. App passwords and API keys can't
-  // be written through Account/set, so patch only the Password entry's index.
-  const entries = Object.entries(res.list[0]?.credentials ?? {});
-  const index =
-    entries.find(([, one]) => one["@type"] === "Password")?.[0] ??
-    String(entries.reduce((next, [key]) => Math.max(next, Number(key) + 1), 0));
-  const [set] = await jmap<{
-    updated?: Record<string, unknown>;
-    notUpdated?: Record<string, unknown>;
-  }>([
-    [
-      "x:Account/set",
-      {
-        update: {
-          [target.id]: {
-            [`credentials/${index}`]: { "@type": "Password", secret: password },
-          },
-        },
-      },
-      "c1",
-    ],
-  ]);
-  if (set.notUpdated?.[target.id]) {
-    throw new Error(
-      `Stalwart refused the password: ${JSON.stringify(set.notUpdated[target.id])}`,
-    );
-  }
-  return Boolean(set.updated && target.id in set.updated);
-};
-
-/** Whether Stalwart accepts this password for the login name. */
-export const passwordAccepted = async (
-  login: string,
-  password: string,
-): Promise<boolean> => {
-  const res = await fetch(`${config().url}/jmap/session`, {
-    headers: {
-      authorization: `Basic ${Buffer.from(`${login}:${password}`).toString("base64")}`,
-    },
-  });
-  return res.ok;
-};
-
 export const listUsers = async (): Promise<MailUser[]> =>
   (await accounts())
     .filter((a) => a["@type"] === "User")
