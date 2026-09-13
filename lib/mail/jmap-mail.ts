@@ -136,7 +136,7 @@ type Session = {
   uploadUrl?: string;
 };
 
-const mailSession = async (
+export const mailSession = async (
   access: Access,
 ): Promise<{ session: Session; accountId: string }> => {
   const { url } = config();
@@ -540,7 +540,7 @@ export const moveMessages = async (
 
 const BLOB_MAX_BYTES = 25 * 1024 * 1024;
 
-const internalUrl = (advertised: string) =>
+export const internalUrl = (advertised: string) =>
   config().url + advertised.replace(/^[a-z][a-z0-9+.-]*:\/\/[^/]+/i, "");
 
 export const downloadBlob = async (

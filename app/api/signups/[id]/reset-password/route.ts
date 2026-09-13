@@ -1,8 +1,8 @@
-import { randomInt } from "node:crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import type { SignupRecord } from "@/lib/api/types";
 import { requireApprover } from "@/lib/auth/session";
 import { resetUserPassword } from "@/lib/auth/keycloak-admin";
+import { generateTempPassword } from "@/lib/auth/temp-password";
 import { findById, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
@@ -11,16 +11,6 @@ import { sendSystemEmail, siteUrl } from "@/lib/mail/system-mail";
 import { notAuthorized, notFound } from "@/lib/json";
 
 const domain = () => process.env.MAIL_DOMAIN ?? "brockcsc.ca";
-
-/** No 0/O/1/l/I — an admin may need to read this out loud or retype it. */
-const TEMP_PASSWORD_ALPHABET =
-  "23456789ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz";
-
-const generateTempPassword = (length = 12) =>
-  Array.from(
-    { length },
-    () => TEMP_PASSWORD_ALPHABET[randomInt(TEMP_PASSWORD_ALPHABET.length)],
-  ).join("");
 
 /**
  * Sets a temporary password an approver can hand to someone directly. Always

@@ -24,7 +24,7 @@ export const domain = () => process.env.MAIL_DOMAIN ?? "brockcsc.ca";
 export const coPresidentsList = () =>
   process.env.CO_PRESIDENTS_LIST ?? "co-presidents";
 
-const coPresidentsAddress = () => `${coPresidentsList()}@${domain()}`;
+export const coPresidentsAddress = () => `${coPresidentsList()}@${domain()}`;
 
 const protectedMailboxes = (): string[] =>
   (process.env.PROTECTED_MAIL_USERS ?? "alaqmargandhi")
@@ -35,11 +35,14 @@ const protectedMailboxes = (): string[] =>
 export const isProtectedMailbox = (username: string): boolean =>
   protectedMailboxes().includes(username);
 
+/** A disabled holder is one being renamed: their old login must not stay on admin@. */
 const approvers = async (): Promise<string[]> => {
   const holders = await usersWithRealmRole("co-president");
   return [
     ...new Set([
-      ...holders.map((holder) => holder.username),
+      ...holders
+        .filter((holder) => holder.enabled !== false)
+        .map((holder) => holder.username),
       ...protectedMailboxes(),
     ]),
   ];
@@ -65,8 +68,18 @@ const syncCoPresidentsList = async (recipients: string[]): Promise<void> => {
   }
 };
 
+/** A mailbox mid-rename carries its own redirect to the successor; leave it be. */
+const migrating = async (): Promise<string[]> => {
+  const { activeMigrations } = await import("@/lib/db/identity-migrations");
+  return (await activeMigrations()).map((record) => record.from.username);
+};
+
 const syncForwarding = async (holders: string[]): Promise<void> => {
-  const exempt = new Set([...holders, ...protectedMailboxes()]);
+  const exempt = new Set([
+    ...holders,
+    ...protectedMailboxes(),
+    ...(await migrating()),
+  ]);
   const forwarding = await forwardingAccounts();
   for (const user of await listUsers()) {
     const wanted = user.readOnly && !exempt.has(user.name);

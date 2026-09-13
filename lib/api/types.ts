@@ -205,7 +205,8 @@ export type IdentityMigrationRecord = {
   };
   status: MigrationStatus;
   step: string;
-  lease?: { until: string; by: string };
+  /** Null rather than absent: a jsonb merge cannot drop a key. */
+  lease?: { until: string; by: string } | null;
   steps: Record<string, MigrationStepState>;
   /** Old mailbox id -> its counterpart on the new account. */
   mailboxes: Record<string, MigrationMailbox>;
@@ -221,7 +222,7 @@ export type IdentityMigrationRecord = {
   notified: Partial<
     Record<"requested" | "cutover" | "done" | "failed", string>
   >;
-  error?: string;
+  error?: string | null;
 };
 
 /** What the browser sees of a migration: no ids, no copied map. */
