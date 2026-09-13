@@ -13,10 +13,13 @@ import { create, findAll } from "@/lib/db/repository";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import { signupsTable } from "@/lib/db/schema";
+import {
+  EMAIL_PATTERN,
+  MIN_PASSWORD_LENGTH,
+  STUDENT_ID_PATTERN,
+} from "@/lib/signups/validation";
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BROCK_EMAIL_PATTERN = /@(?:[a-z0-9-]+\.)*brocku\.ca$/i;
-const STUDENT_ID_PATTERN = /^\d{6,10}$/;
 const MAX_NAME = 60;
 const MAX_EMAIL = 200;
 const MAX_PHONE = 30;
@@ -83,8 +86,10 @@ export const POST = async (req: NextRequest) => {
   } else if (studentId && !STUDENT_ID_PATTERN.test(studentId)) {
     return badRequest("That student number does not look right.");
   }
-  if (password.length < 8) {
-    return badRequest("Password must be at least 8 characters.");
+  if (password.length < MIN_PASSWORD_LENGTH) {
+    return badRequest(
+      `Password must be at least ${MIN_PASSWORD_LENGTH} characters.`,
+    );
   }
   if (password !== body.confirmPassword) {
     return badRequest("Passwords do not match.");

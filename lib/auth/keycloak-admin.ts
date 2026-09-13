@@ -219,6 +219,47 @@ export const setUserEnabled = async (userId: string, enabled: boolean) => {
   if (!res.ok) throw new Error(`Keycloak user update failed (${res.status}).`);
 };
 
+/** Only the fields passed are touched; everything else on the user is left alone. */
+export const updateUser = async (
+  userId: string,
+  fields: { firstName?: string; lastName?: string; email?: string },
+): Promise<void> => {
+  const res = await adminFetch(userPath(userId), {
+    method: "PUT",
+    body: JSON.stringify(fields),
+  });
+  if (res.status === 409) {
+    throw new Error("That email is already used by another account.");
+  }
+  if (!res.ok) {
+    throw new Error(`Keycloak user update failed (${res.status}).`);
+  }
+};
+
+/**
+ * Sets a brand-new password outright, via Keycloak's dedicated reset endpoint
+ * (not the generic user PUT, which cannot touch credentials). Always
+ * non-temporary: this app has no hosted Keycloak login page to satisfy a
+ * pending UPDATE_PASSWORD required action, so "must change password" is
+ * enforced at the app level instead (see signup.passwordResetRequired).
+ */
+export const resetUserPassword = async (
+  userId: string,
+  password: string,
+): Promise<void> => {
+  const res = await adminFetch(userPath(userId, "/reset-password"), {
+    method: "PUT",
+    body: JSON.stringify({
+      type: "password",
+      value: password,
+      temporary: false,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error(`Keycloak password reset failed (${res.status}).`);
+  }
+};
+
 export const deleteUser = async (userId: string) => {
   const res = await adminFetch(userPath(userId), { method: "DELETE" });
   if (!res.ok && res.status !== 404) {

@@ -9,13 +9,17 @@ import {
   deleteAccount,
   deleteTile,
   fetchPerson,
+  resetPersonPassword,
   type ApplyResult,
+  type PasswordResetResult,
   type Person,
   type PersonDetail,
 } from "./api";
 import { Button } from "@/components/ui/button";
+import { ApiError } from "@/lib/api/client";
 import { useSession } from "../session";
 import Confirm, { type ConfirmItem } from "./confirm";
+import DetailsForm from "./details-form";
 import ProfileForm from "./profile-form";
 import { Note, Panel, Pill, Rows } from "./ui";
 import { ask } from "../ask";
@@ -52,6 +56,12 @@ export default function PersonView({
   const [result, setResult] = useState<ApplyResult | null>(null);
   const [open, setOpen] = useState<"transition" | "delete" | null>(null);
   const [working, setWorking] = useState<string | null>(null);
+  const [editingDetails, setEditingDetails] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetResult, setResetResult] = useState<PasswordResetResult | null>(
+    null,
+  );
+  const [copied, setCopied] = useState<boolean | null>(null);
   const { user } = useSession();
 
   const load = useCallback(async () => {
@@ -126,6 +136,47 @@ export default function PersonView({
   const signup = detail?.signup;
   const isSelf =
     !!signup?.keycloakUserId && signup.keycloakUserId === user?.sub;
+
+  const resetPassword = async () => {
+    if (!signup) return;
+    const recipients = [signup.email, detail?.mailbox.address]
+      .filter(Boolean)
+      .join(" and ");
+    const ok = await ask({
+      title: `Reset ${person.name}'s password?`,
+      detail:
+        `Their current password stops working immediately, for both the portal and their mailbox. ` +
+        `You'll see a temporary password to give them` +
+        (recipients ? `, and it's emailed to ${recipients}` : "") +
+        `. The temporary password only works at the portal sign-in, where they have to choose a new one; their mailbox stays locked until they do.`,
+      confirmLabel: "Reset password",
+      destructive: true,
+    });
+    if (ok === null) return;
+    setResetting(true);
+    setResetResult(null);
+    setCopied(null);
+    setError(null);
+    try {
+      setResetResult(await resetPersonPassword(signup.$key));
+      await load();
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not reset this password.",
+      );
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const copyTempPassword = () => {
+    if (!resetResult || !navigator.clipboard) return setCopied(false);
+    navigator.clipboard
+      .writeText(resetResult.tempPassword)
+      .then(() => setCopied(true))
+      .catch(() => setCopied(false));
+  };
   const roleItems =
     detail?.consequences.filter((c) => c.group === "role") ?? [];
   const mailItems =
@@ -188,8 +239,9 @@ export default function PersonView({
         <Note>
           This environment shares the live Keycloak realm and mail server, so
           role and mailbox changes are rehearsed here, not written: you see
-          exactly what would happen, and nothing reaches a real account. Tile
-          changes are real.
+          exactly what would happen, and nothing reaches a real account. Editing
+          account details or the tile still saves here — only the matching
+          Keycloak account is left untouched.
         </Note>
       )}
 
@@ -197,30 +249,123 @@ export default function PersonView({
 
       {detail && (
         <>
-          <Panel note="How they sign in." title="Account">
+          <Panel
+            action={
+              signup && !editingDetails ? (
+                <Button
+                  onClick={() => setEditingDetails(true)}
+                  size="sm"
+                  type="button"
+                  variant="secondary"
+                >
+                  Edit
+                </Button>
+              ) : undefined
+            }
+            note="How they sign in."
+            title="Account"
+          >
             {signup ? (
-              <Rows
-                items={[
-                  [
-                    "Username",
-                    <span className="font-mono" key="u">
-                      {signup.username ?? "—"}
-                    </span>,
-                  ],
-                  ["Email", signup.email ?? "—"],
-                  ["Phone", signup.phone ?? "—"],
-                  ["Student ID", signup.studentId ?? "—"],
-                  ["Status", signup.status ?? "—"],
-                  ["Signed up", date(signup.submittedAt)],
-                  [
-                    "Reviewed",
-                    signup.reviewedBy
-                      ? `${signup.reviewedBy} · ${date(signup.reviewedAt)}`
-                      : "—",
-                  ],
-                  ["Keycloak", signup.keycloakUserId ? "Linked" : "Not linked"],
-                ]}
-              />
+              editingDetails ? (
+                <DetailsForm
+                  identitiesEditable={detail.identitiesEditable}
+                  onCancel={() => setEditingDetails(false)}
+                  onSaved={async () => {
+                    setEditingDetails(false);
+                    await load();
+                    await onChanged();
+                  }}
+                  signup={signup}
+                />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  <Rows
+                    items={[
+                      [
+                        "Username",
+                        <span className="font-mono" key="u">
+                          {signup.username ?? "—"}
+                        </span>,
+                      ],
+                      [
+                        "Name",
+                        [signup.firstName, signup.lastName]
+                          .filter(Boolean)
+                          .join(" ") || "—",
+                      ],
+                      ["Email", signup.email ?? "—"],
+                      ["Phone", signup.phone ?? "—"],
+                      ["Student ID", signup.studentId ?? "—"],
+                      ["Access card ID", signup.accessCardId ?? "—"],
+                      ["Status", signup.status ?? "—"],
+                      ["Signed up", date(signup.submittedAt)],
+                      [
+                        "Reviewed",
+                        signup.reviewedBy
+                          ? `${signup.reviewedBy} · ${date(signup.reviewedAt)}`
+                          : "—",
+                      ],
+                      [
+                        "Keycloak",
+                        signup.keycloakUserId ? "Linked" : "Not linked",
+                      ],
+                      [
+                        "Password",
+                        signup.passwordResetRequired
+                          ? "Temporary — must change at next sign-in"
+                          : "Set by them",
+                      ],
+                    ]}
+                  />
+
+                  {signup.keycloakUserId && (
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Button
+                        disabled={resetting}
+                        onClick={() => void resetPassword()}
+                        size="sm"
+                        type="button"
+                        variant="secondary"
+                      >
+                        {resetting ? "Resetting..." : "Reset password..."}
+                      </Button>
+                      <span className="min-w-0 flex-1 text-sm text-subtle">
+                        Issues a temporary password they must change at next
+                        sign-in.
+                      </span>
+                    </div>
+                  )}
+
+                  {resetResult && (
+                    <div className="animate-rise-in rounded-[12px] border-2 border-line bg-tint p-4">
+                      <div className="text-xs font-semibold uppercase tracking-wide text-subtle">
+                        Temporary password
+                      </div>
+                      <div className="my-1 break-all font-mono text-2xl font-extrabold tracking-wider text-brand">
+                        {resetResult.tempPassword}
+                      </div>
+                      <Button
+                        onClick={copyTempPassword}
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        {copied ? "Copied" : "Copy"}
+                      </Button>
+                      {copied === false && (
+                        <p className="mt-2 text-xs text-subtle">
+                          Copying failed — select it above and copy by hand.
+                        </p>
+                      )}
+                      <p className="mt-3 text-sm text-ink">
+                        {resetResult.rehearsed
+                          ? "Rehearsed only: this environment shares the live Keycloak realm and mail server, so nothing was changed and nothing was emailed."
+                          : `Also emailed to ${[signup.email, detail.mailbox.address].filter(Boolean).join(" and ")}. This is the only time it's shown here.`}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )
             ) : (
               <p className="text-sm text-subtle">
                 No login account. This is a team page tile on its own; an

@@ -83,6 +83,8 @@ export type SignupRecord = {
   email?: string;
   phone?: string;
   studentId?: string;
+  /** 5-digit number printed on the physical access card. Optional. */
+  accessCardId?: string;
   /** Alumni have no Brock email or student number any more. */
   isFormerExec?: boolean;
   keycloakUserId?: string;
@@ -98,6 +100,15 @@ export type SignupRecord = {
   submittedAt?: string;
   reviewedBy?: string;
   reviewedAt?: string;
+  /** Set by an admin-triggered password reset; cleared once they set their own. */
+  passwordResetRequired?: boolean;
+};
+
+export type PasswordResetRecord = {
+  signupId: string;
+  /** sha256 of the raw token mailed to the user; the raw value is never stored. */
+  tokenHash: string;
+  expiresAt: string;
 };
 
 export type DayCount = { day: string; count: number };

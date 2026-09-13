@@ -5,6 +5,7 @@ import { ImageUpload } from "@/components/ui/image-upload";
 import { ImageFocus } from "@/components/ui/image-focus";
 import {
   ExecRecord,
+  ProfileRecord,
   WithKey,
   fetchProfile,
   stepDownAsCoPresident,
@@ -27,6 +28,8 @@ import { ApiError } from "@/lib/api/client";
 
 type TeamMember = WithKey<ExecRecord>;
 
+const ACCESS_CARD_PATTERN = /^\d{5}$/;
+
 type Form = {
   description: string;
   term: string;
@@ -34,9 +37,10 @@ type Form = {
   photoUrl: string;
   photoPosition: string;
   handles: Record<SocialKey, string>;
+  accessCardId: string;
 };
 
-const formFor = (exec: TeamMember | null): Form => ({
+const formFor = (exec: ProfileRecord | null): Form => ({
   description: exec?.description ?? "",
   term: exec?.term ?? "",
   hidden: exec?.hidden ?? false,
@@ -48,6 +52,7 @@ const formFor = (exec: TeamMember | null): Form => ({
     instagram: handleFromUrl("instagram", exec?.socials?.instagram),
     x: handleFromUrl("x", exec?.socials?.x),
   },
+  accessCardId: exec?.accessCardId ?? "",
 });
 
 const page = "mx-auto w-full max-w-[1060px] px-5 py-10";
@@ -56,7 +61,7 @@ const field = fieldOn("bg-surface");
 const Section = (props: PanelProps) => <Panel {...props} accent />;
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<TeamMember | null>(null);
+  const [profile, setProfile] = useState<ProfileRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,12 +106,15 @@ export default function ProfilePage() {
     ({ key }) =>
       form.handles[key].trim() && !isValidHandle(key, form.handles[key].trim()),
   );
+  const cardInvalid =
+    form.accessCardId.trim() !== "" &&
+    !ACCESS_CARD_PATTERN.test(form.accessCardId.trim());
 
   const dirty = JSON.stringify(form) !== JSON.stringify(saved);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!dirty || invalid.length) return;
+    if (!dirty || invalid.length || cardInvalid) return;
     setSaving(true);
     setError(null);
     try {
@@ -116,6 +124,7 @@ export default function ProfilePage() {
         hidden: form.hidden,
         image: { url: form.photoUrl, position: form.photoPosition },
         socials,
+        accessCardId: form.accessCardId.trim(),
       });
       setSaved(form);
     } catch (err) {
@@ -305,6 +314,36 @@ export default function ProfilePage() {
             </div>
           </Section>
 
+          <Section
+            note="The 5-digit number printed on your physical access card."
+            title="Access card"
+          >
+            <label className={labelClass} htmlFor="access-card">
+              Card ID
+            </label>
+            <input
+              aria-invalid={cardInvalid}
+              className={`${field} max-w-[10rem]`}
+              id="access-card"
+              inputMode="numeric"
+              maxLength={5}
+              onChange={(e) =>
+                set("accessCardId", e.target.value.replace(/\D/g, ""))
+              }
+              placeholder="e.g. 01234"
+              value={form.accessCardId}
+            />
+            <p
+              className={`mt-1 text-xs ${
+                cardInvalid ? "font-bold text-destructive" : "text-subtle"
+              }`}
+            >
+              {cardInvalid
+                ? "Must be exactly 5 digits."
+                : "Leave blank if you don't have one yet."}
+            </p>
+          </Section>
+
           <Section title="Visibility">
             <label className="flex items-start gap-3 text-sm">
               <input
@@ -388,7 +427,7 @@ export default function ProfilePage() {
             {dirty ? (
               <>
                 <Button
-                  disabled={saving || invalid.length > 0}
+                  disabled={saving || invalid.length > 0 || cardInvalid}
                   type="submit"
                   variant="primary"
                 >
@@ -405,9 +444,14 @@ export default function ProfilePage() {
                 >
                   Discard
                 </Button>
-                {invalid.length > 0 && (
+                {(invalid.length > 0 || cardInvalid) && (
                   <span className="text-sm font-bold text-destructive">
-                    Fix {invalid.map((p) => p.label).join(" and ")} first.
+                    Fix{" "}
+                    {[
+                      ...invalid.map((p) => p.label),
+                      ...(cardInvalid ? ["the access card ID"] : []),
+                    ].join(" and ")}{" "}
+                    first.
                   </span>
                 )}
               </>

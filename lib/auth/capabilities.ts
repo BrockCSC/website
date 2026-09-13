@@ -21,7 +21,10 @@ const EXEC: Capability[] = [
 
 const APPROVER: Capability[] = [
   { label: "Sign-ups", detail: "Approves or rejects account requests." },
-  { label: "People", detail: "Changes roles, mailboxes and public tiles." },
+  {
+    label: "People",
+    detail: "Changes roles, mailboxes, personal details and public tiles.",
+  },
   { label: "Requests", detail: "Grants send limits and permanent deletions." },
 ];
 

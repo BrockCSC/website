@@ -12,17 +12,47 @@ export const fetchCurrentUser = async (): Promise<SessionUser | null> => {
   }
 };
 
+export type LoginResult =
+  SessionUser | { requiresPasswordReset: true; resetToken: string };
+
 export const login = async (
   username: string,
   password: string,
-): Promise<SessionUser> =>
-  apiFetch<SessionUser>("/api/auth/login", {
+): Promise<LoginResult> =>
+  apiFetch<LoginResult>("/api/auth/login", {
     method: "POST",
     body: JSON.stringify({ username, password }),
   });
 
 export const logout = async (): Promise<void> => {
   await apiFetch("/api/auth/logout", { method: "POST" });
+};
+
+export const requestPasswordReset = async (email: string): Promise<void> => {
+  await apiFetch("/api/auth/forgot-password", {
+    method: "POST",
+    body: JSON.stringify({ email }),
+  });
+};
+
+export const resetPassword = async (
+  token: string,
+  password: string,
+): Promise<void> => {
+  await apiFetch("/api/auth/reset-password", {
+    method: "POST",
+    body: JSON.stringify({ token, password }),
+  });
+};
+
+export const completeForcedReset = async (
+  resetToken: string,
+  newPassword: string,
+): Promise<void> => {
+  await apiFetch("/api/auth/complete-forced-reset", {
+    method: "POST",
+    body: JSON.stringify({ resetToken, newPassword }),
+  });
 };
 
 /** Not apiFetch: the sign-up form shows the server's rejection reason. */

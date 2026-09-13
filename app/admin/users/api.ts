@@ -62,6 +62,24 @@ export const reviewMailDeletion = (
     body: JSON.stringify({ action, requestId }),
   });
 
+export type SignupDetails = Pick<
+  SignupRecord,
+  "firstName" | "lastName" | "email" | "phone" | "studentId" | "accessCardId"
+>;
+
+export const updatePersonDetails = (id: string, details: SignupDetails) =>
+  apiFetch<Signup>(`/api/signups/${id}/details`, {
+    method: "PATCH",
+    body: JSON.stringify(details),
+  });
+
+export type PasswordResetResult = { tempPassword: string; rehearsed: boolean };
+
+export const resetPersonPassword = (id: string) =>
+  apiFetch<PasswordResetResult>(`/api/signups/${id}/reset-password`, {
+    method: "POST",
+  });
+
 export const createTile = (exec: ExecRecord) =>
   apiFetch<Exec>("/api/execs", { method: "POST", body: JSON.stringify(exec) });
 
