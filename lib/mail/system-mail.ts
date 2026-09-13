@@ -6,8 +6,7 @@ import { domain } from "./provision";
 import { createApprovedSender } from "./oci-senders";
 import { createMailbox, listUsers, localPartTaken } from "./stalwart";
 
-const systemSenderLocalPart = () =>
-  process.env.SYSTEM_MAIL_SENDER ?? "security";
+const SYSTEM_SENDER = "security";
 
 /**
  * Links in these emails come from config, never the request's Host header —
@@ -27,7 +26,7 @@ let approvedSender = false;
  * credential, acting as this account), not the mailbox's own credentials.
  */
 const ensureSystemSender = async (): Promise<string> => {
-  const localPart = systemSenderLocalPart();
+  const localPart = SYSTEM_SENDER;
   const address = `${localPart}@${domain()}`;
   if (!(await localPartTaken(localPart))) {
     await createMailbox({
