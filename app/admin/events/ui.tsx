@@ -7,7 +7,7 @@ const base =
 
 export const btn = {
   primary: `${base} bg-brand text-brand-ink shadow-brut-sm hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`,
-  secondary: `${base} bg-surface text-ink shadow-brut-sm hover:bg-tint`,
+  secondary: `${base} bg-surface text-ink shadow-brut-sm hover:-translate-y-0.5 hover:bg-tint motion-reduce:hover:translate-y-0`,
   danger: `${base} border-destructive bg-destructive text-surface shadow-brut-sm hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`,
   quiet: `${base} border-transparent px-2.5 py-1.5 text-destructive hover:bg-tint`,
 };

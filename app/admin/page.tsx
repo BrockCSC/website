@@ -43,10 +43,10 @@ export default function AdminMenu() {
               key={section.href}
               href={section.href}
               style={{ animationDelay: `${index * 20}ms` }}
-              className="group flex animate-rise-in items-start gap-4 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut hover:-translate-y-0.5 hover:bg-tint motion-reduce:hover:translate-y-0"
+              className="group flex animate-rise-in items-start gap-4 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut hover:-translate-y-0.5 hover:bg-tint hover:shadow-[6px_8px_0_0_var(--shade)] motion-reduce:hover:translate-y-0"
             >
               {Icon && (
-                <span className="grid size-11 shrink-0 place-items-center rounded-[12px] border-2 border-line bg-tint text-brand">
+                <span className="grid size-11 shrink-0 place-items-center rounded-[12px] border-2 border-line bg-tint text-brand transition duration-[var(--dur)] ease-smooth group-hover:-rotate-6 group-hover:bg-brand group-hover:text-brand-ink motion-reduce:group-hover:rotate-0">
                   <Icon className="size-6" />
                 </span>
               )}

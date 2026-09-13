@@ -110,9 +110,15 @@ function AdminShell({ children }: { children: React.ReactNode }) {
           ) : (
             <Link
               href="/admin"
-              className="flex items-center gap-2 rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
+              className="group flex items-center gap-2 rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
             >
-              <span aria-hidden>←</span> Menu
+              <span
+                aria-hidden
+                className="transition-[translate] duration-[var(--dur)] ease-smooth group-hover:-translate-x-0.5 motion-reduce:group-hover:translate-x-0"
+              >
+                ←
+              </span>{" "}
+              Menu
             </Link>
           )}
           {section && (

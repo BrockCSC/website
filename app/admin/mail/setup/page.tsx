@@ -18,7 +18,7 @@ const Step = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut">
+  <div className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[6px_6px_0_0_var(--brand)]">
     <Icon aria-hidden className="size-5 text-brand" />
     <h2 className="mt-2 text-sm font-extrabold uppercase tracking-wide text-ink">
       {title}
