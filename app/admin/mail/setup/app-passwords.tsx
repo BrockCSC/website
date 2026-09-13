@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { field, labelClass } from "../../users/ui";
 
@@ -21,7 +21,11 @@ const created = (value: string) => {
       });
 };
 
-export function AppPasswords() {
+export function AppPasswords({
+  endpoint = "/api/mail/app-passwords",
+}: {
+  endpoint?: string;
+}) {
   const [list, setList] = useState<AppPassword[] | null>(null);
   const [description, setDescription] = useState("");
   const [secret, setSecret] = useState<string | null>(null);
@@ -29,10 +33,10 @@ export function AppPasswords() {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const load = async () => {
-    const res = await fetch("/api/mail/app-passwords");
+  const load = useCallback(async () => {
+    const res = await fetch(endpoint);
     setList(res.ok ? ((await res.json()) as AppPassword[]) : []);
-  };
+  }, [endpoint]);
 
   useEffect(() => {
     void (async () => {
@@ -42,7 +46,7 @@ export function AppPasswords() {
         setList([]);
       }
     })();
-  }, []);
+  }, [load]);
 
   const create = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +55,7 @@ export function AppPasswords() {
     setError(null);
     setSecret(null);
     try {
-      const res = await fetch("/api/mail/app-passwords", {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ description: description.trim() }),
@@ -75,7 +79,7 @@ export function AppPasswords() {
 
   const revoke = async (id: string) => {
     setBusy(true);
-    await fetch(`/api/mail/app-passwords/${encodeURIComponent(id)}`, {
+    await fetch(`${endpoint}/${encodeURIComponent(id)}`, {
       method: "DELETE",
     }).catch(() => null);
     await load().catch(() => {});

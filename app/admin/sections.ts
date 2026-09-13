@@ -22,6 +22,12 @@ export const SECTIONS: Section[] = [
     mailAdminOnly: true,
   },
   {
+    name: "Shared mailboxes",
+    href: "/admin/mail/shared",
+    blurb: "Role addresses like sponsorship@ that aren't tied to a member.",
+    approverOnly: true,
+  },
+  {
     name: "Analytics",
     href: "/admin/analytics",
     blurb: "Traffic, sign-ups and mail volume.",
