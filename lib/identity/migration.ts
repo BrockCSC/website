@@ -866,7 +866,7 @@ export const recordHandoff = async (
 export const resumeIfStale = (record: Entity<IdentityMigrationRecord>) => {
   if (
     record.mode === "real" &&
-    ["running", "cut-over"].includes(record.status) &&
+    ["planned", "running", "cut-over"].includes(record.status) &&
     leaseExpired(record)
   ) {
     void runSteps(record.id);

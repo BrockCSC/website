@@ -271,60 +271,6 @@ export default function UsersPage() {
               <Panel
                 action={
                   <Button
-                    onClick={() => setAdding(!adding)}
-                    size="sm"
-                    type="button"
-                    variant="secondary"
-                  >
-                    {adding ? "Cancel" : "Add a tile"}
-                  </Button>
-                }
-                note="Search by name, username, email, role or status."
-                title="Find someone"
-              >
-                <input
-                  aria-label="Search people"
-                  className={field}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="e.g. treasurer, pending, @brocku"
-                  type="search"
-                  value={query}
-                />
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {SCOPES.map((option) => (
-                    <Button
-                      key={option.id}
-                      onClick={() => setScope(option.id)}
-                      size="xs"
-                      type="button"
-                      variant={scope === option.id ? "primary" : "secondary"}
-                    >
-                      {option.label} ({people.filter(option.match).length})
-                    </Button>
-                  ))}
-                </div>
-                {adding && (
-                  <div className="mt-4 animate-rise-in rounded-[10px] border-2 border-line bg-raised p-4">
-                    <ProfileForm
-                      onCancel={() => setAdding(false)}
-                      onSaved={async (saved) => {
-                        setAdding(false);
-                        await load();
-                        setSelected(saved.$key);
-                      }}
-                    />
-                  </div>
-                )}
-              </Panel>
-
-              {loading && <p className="text-subtle">Loading...</p>}
-              {!loading && !shown.length && (
-                <p className="text-subtle">Nobody matches that.</p>
-              )}
-
-              <Panel
-                action={
-                  <Button
                     disabled={preflighting || preflight?.available === false}
                     onClick={() => void checkPreflight()}
                     size="sm"
@@ -393,6 +339,59 @@ export default function UsersPage() {
                   </p>
                 )}
               </Panel>
+              <Panel
+                action={
+                  <Button
+                    onClick={() => setAdding(!adding)}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {adding ? "Cancel" : "Add a tile"}
+                  </Button>
+                }
+                note="Search by name, username, email, role or status."
+                title="Find someone"
+              >
+                <input
+                  aria-label="Search people"
+                  className={field}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="e.g. treasurer, pending, @brocku"
+                  type="search"
+                  value={query}
+                />
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {SCOPES.map((option) => (
+                    <Button
+                      key={option.id}
+                      onClick={() => setScope(option.id)}
+                      size="xs"
+                      type="button"
+                      variant={scope === option.id ? "primary" : "secondary"}
+                    >
+                      {option.label} ({people.filter(option.match).length})
+                    </Button>
+                  ))}
+                </div>
+                {adding && (
+                  <div className="mt-4 animate-rise-in rounded-[10px] border-2 border-line bg-raised p-4">
+                    <ProfileForm
+                      onCancel={() => setAdding(false)}
+                      onSaved={async (saved) => {
+                        setAdding(false);
+                        await load();
+                        setSelected(saved.$key);
+                      }}
+                    />
+                  </div>
+                )}
+              </Panel>
+
+              {loading && <p className="text-subtle">Loading...</p>}
+              {!loading && !shown.length && (
+                <p className="text-subtle">Nobody matches that.</p>
+              )}
 
               <ul className="flex animate-fade-in flex-col gap-2" key={scope}>
                 {shown.map((entry) => (
