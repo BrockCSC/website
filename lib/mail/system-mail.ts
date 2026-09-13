@@ -5,9 +5,8 @@ import { sendMessage } from "./jmap-mail";
 import { domain } from "./provision";
 import { createApprovedSender } from "./oci-senders";
 import { emailBodyToText } from "./sanitize";
+import { SYSTEM_SENDER } from "./signature";
 import { createMailbox, listUsers, localPartTaken } from "./stalwart";
-
-const SYSTEM_SENDER = "security";
 
 /**
  * Links in these emails come from config, never the request's Host header —
