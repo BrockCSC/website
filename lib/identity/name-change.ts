@@ -1,6 +1,10 @@
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 import { updateUser } from "@/lib/auth/keycloak-admin";
 import { dottedAliasFor } from "@/lib/auth/username";
+import {
+  isUsernameReserved,
+  retireUsername,
+} from "@/lib/db/identity-migrations";
 import { findById, update, type Entity } from "@/lib/db/repository";
 import { execsTable } from "@/lib/db/schema";
 import { domain } from "@/lib/mail/provision";
@@ -11,7 +15,7 @@ import {
   setAccountAliases,
   setDescription,
 } from "@/lib/mail/stalwart";
-import { sameSet } from "./context";
+import { FORWARD_DAYS } from "./step-list";
 
 type Names = { firstName: string; lastName: string };
 
@@ -23,7 +27,10 @@ const fullName = ({ firstName, lastName }: Names) =>
 
 /**
  * A name change that keeps the username: Keycloak, the mailbox's display
- * name and its dotted alias follow. Production only; the caller checks.
+ * name and its dotted alias follow. The old dotted alias is retired like a
+ * username: it keeps delivering for the forwarding period, then the sweep
+ * moves it to the sink, and it is never reissued. Production only; the
+ * caller checks.
  */
 export const syncNameChange = async (
   signup: Entity<SignupRecord>,
@@ -39,17 +46,28 @@ export const syncNameChange = async (
   const after = dottedAliasFor(names.firstName, names.lastName);
   if (before === after) return;
   const current = await accountAliases(signup.username);
-  const next = current.filter((alias) => alias !== before);
+  if (before && current.includes(before)) {
+    const now = new Date();
+    await retireUsername({
+      localPart: before,
+      aliases: [],
+      signupId: signup.id,
+      successor: signup.username,
+      includedScript: null,
+      retiredAt: now.toISOString(),
+      forwardUntil: new Date(
+        now.getTime() + FORWARD_DAYS * 86_400_000,
+      ).toISOString(),
+    });
+  }
   if (
     after &&
-    !next.includes(after) &&
+    !current.includes(after) &&
+    !(await isUsernameReserved(after)) &&
     !(await aliasTaken(after)) &&
     !(await localPartTaken(after))
   ) {
-    next.push(after);
-  }
-  if (!sameSet(current, next)) {
-    await setAccountAliases(signup.username, next, domain());
+    await setAccountAliases(signup.username, [...current, after], domain());
   }
 };
 

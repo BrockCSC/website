@@ -7,6 +7,22 @@
 
 export const RETIRED_NOTICE_SCRIPT = "retired-address-notice";
 
+/**
+ * Once the 90 days are up, retired addresses move onto a sink account that
+ * runs this: every message is refused with a bounce, instead of falling
+ * through to the domain catch-all and landing with the co-presidents.
+ */
+export const RETIRED_SINK = "retired-addresses";
+export const RETIRED_REJECT_SCRIPT = "reject-retired";
+
+export const retiredRejectScript = (): string =>
+  [
+    'require ["reject"];',
+    "",
+    'reject "This BrockCSC address has been retired and no longer accepts mail.";',
+    "",
+  ].join("\n");
+
 const quote = (value: string) => value.replace(/[\\"]/g, "\\$&");
 
 const list = (values: string[]) =>

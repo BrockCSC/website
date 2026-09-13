@@ -165,12 +165,15 @@ export const emailFacts = async (
   return out;
 };
 
-/** Message-ID -> Email id, for whatever of the given ids the account holds. */
+/**
+ * Message-ID -> every message the account holds with it. Senders choose
+ * Message-IDs, so the caller decides which hit, if any, stands for a copy.
+ */
 export const emailsByMessageIds = async (
   accountId: string,
   messageIds: string[],
-): Promise<Map<string, string>> => {
-  const found = new Map<string, string>();
+): Promise<Map<string, EmailFacts[]>> => {
+  const found = new Map<string, EmailFacts[]>();
   if (!messageIds.length) return found;
   const conditions = messageIds.map((value) => ({
     header: ["Message-ID", value],
@@ -193,14 +196,16 @@ export const emailsByMessageIds = async (
       {
         accountId,
         "#ids": { resultOf: "q0", name: "Email/query", path: "/ids" },
-        properties: ["id", "messageId"],
+        properties: FACTS,
       },
       "g0",
     ],
-  ])) as [unknown, { list: { id: string; messageId: string[] | null }[] }];
+  ])) as [unknown, { list: EmailFacts[] }];
   for (const email of get.list) {
     for (const value of email.messageId ?? []) {
-      if (!found.has(value)) found.set(value, email.id);
+      const hits = found.get(value);
+      if (hits) hits.push(email);
+      else found.set(value, [email]);
     }
   }
   return found;

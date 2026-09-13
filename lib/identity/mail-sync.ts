@@ -127,9 +127,11 @@ const mapBoxes = (
 };
 
 /**
- * Copies what the target does not already hold. Message-ID is checked on the
- * target first, which absorbs a crash between copy and persist and mail a
- * list delivered to both addresses meanwhile.
+ * Copies what the target does not already hold. A target message counts as
+ * the copy of an old one only when its Message-ID, size and receivedAt all
+ * match and no other old message has claimed it: that absorbs a crash
+ * between copy and persist, but not a sender reusing a Message-ID, nor two
+ * old messages (Sent and delivered copies, say) that share one.
  */
 const copyFresh = async (
   ctx: MigrationCtx,
@@ -142,13 +144,23 @@ const copyFresh = async (
     to,
     fresh.flatMap((email) => email.messageId?.[0] ?? []),
   );
+  const claimed = new Set(Object.values(copied));
   const wanted: EmailFacts[] = [];
   for (const email of fresh) {
     const hit = email.messageId?.[0]
-      ? present.get(email.messageId[0])
+      ? present
+          .get(email.messageId[0])
+          ?.find(
+            (candidate) =>
+              !claimed.has(candidate.id) &&
+              candidate.size === email.size &&
+              candidate.receivedAt === email.receivedAt,
+          )
       : undefined;
-    if (hit) copied[email.id] = hit;
-    else wanted.push(email);
+    if (hit) {
+      copied[email.id] = hit.id;
+      claimed.add(hit.id);
+    } else wanted.push(email);
   }
   for (const batch of chunked(wanted, COPY_BATCH)) {
     let created: Record<string, string> = {};
@@ -280,9 +292,16 @@ export type MailVerification = Pick<
   | "notes"
 > & { ok: boolean };
 
-/** Compares every copied message and every folder; the old side is frozen by now. */
+/**
+ * Compares every copied message and every folder. Strict while both sides
+ * are quiet: flags, folder membership and counts must match. After the
+ * cut-over the member is using the new mailbox, so only what they cannot
+ * have changed is checked: nothing on the old side is uncopied, and every
+ * copy that still exists has the original's size, Message-ID and date.
+ */
 export const verifyMail = async (
   ctx: MigrationCtx,
+  strict: boolean,
 ): Promise<MailVerification> => {
   const { from, to } = accountsOf(ctx);
   const [oldTree, newTree] = await Promise.all([
@@ -333,10 +352,10 @@ export const verifyMail = async (
       }
       const copy = newFacts.get(newId);
       if (!copy) {
-        otherMismatches++;
+        if (strict) otherMismatches++;
         continue;
       }
-      if (!sameSet(on(original.keywords), on(copy.keywords))) {
+      if (strict && !sameSet(on(original.keywords), on(copy.keywords))) {
         keywordMismatches++;
       }
       if (original.receivedAt !== copy.receivedAt) receivedAtMismatches++;
@@ -359,6 +378,7 @@ export const verifyMail = async (
       old: [box.totalEmails, box.unreadEmails, bytes.get(box.id) ?? 0],
       new: mirror ? [mirror.totalEmails, mirror.unreadEmails] : [-1, -1],
     };
+    if (!strict) continue;
     if (!mirror) {
       foldersOk = false;
       notes.push(`Folder "${box.name}" has no counterpart on the new mailbox.`);

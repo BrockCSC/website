@@ -179,13 +179,21 @@ derived username differs from the current one is not saved: it goes through a mi
 folder, message, flag and sieve script, cuts over, verifies, and only then deletes the old pair. The
 record lives in `identity_migrations`; the old local part goes into `retired_usernames`, stays an
 alias on the new mailbox for 90 days with an auto-reply and subject tag (`lib/identity/retired-notice.ts`),
-and is never reissued. An approver can rename someone from People; they get a temporary password.
+and is never reissued: the sweep moves it onto the `retired-addresses` sink account, whose sieve
+script bounces everything, so it never falls through to the co-presidents catch-all. A dotted alias
+dropped by a plain name edit is retired the same way. Usernames a name must never derive into
+(`postmaster`, `hostmaster`, the club's service names) are listed in `lib/identity/reserved.ts`.
+An approver can rename someone from People; they get a temporary password.
 
 Every Stalwart call the migration makes was new to this codebase, so a real rename refuses to
 start until an approver has run the preflight (People → Run migration preflight) on the current
 deploy. Outside production the whole thing is rehearsed: the record is written, nothing else moves.
-`instrumentation.ts` resumes an interrupted migration after a restart and sweeps expired retired
-addresses every six hours.
+`instrumentation.ts` resumes an interrupted migration after a restart, rescans every five minutes
+for one whose lease lapsed, and sweeps expired retired addresses every six hours. The runner and
+the route handlers are separate module graphs, so state they share (`lib/identity/shared.ts`)
+lives on `globalThis`. While a migration is running, role changes, step-down, password resets and
+detail edits for that member are refused; abort queues and the runner tears down before the
+cut-over.
 
 ## Mail
 

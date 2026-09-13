@@ -538,7 +538,15 @@ export type SieveScript = {
 
 export const listSieveScripts = (accountId: string): Promise<SieveScript[]> =>
   jmap<{ list: SieveScript[] }>([
-    ["SieveScript/get", { accountId, ids: null }, "c0"],
+    [
+      "SieveScript/get",
+      {
+        accountId,
+        ids: null,
+        properties: ["id", "name", "isActive", "blobId"],
+      },
+      "c0",
+    ],
   ]).then(([res]) => res.list);
 
 const forwardScript = (accountId: string) =>
@@ -595,21 +603,31 @@ export const putSieveScript = async (
   return created.id;
 };
 
+/**
+ * Destroys the named script. An active script cannot be destroyed, so it is
+ * first swapped for `thenActivate` when that script exists on the account,
+ * and simply deactivated otherwise.
+ */
 export const removeSieveScript = async (
   accountId: string,
   name: string,
+  thenActivate?: string | null,
 ): Promise<void> => {
-  const existing = (await listSieveScripts(accountId)).find(
-    (s) => s.name === name,
-  );
+  const scripts = await listSieveScripts(accountId);
+  const existing = scripts.find((s) => s.name === name);
   if (!existing) return;
   const calls: Call[] = [
     ["SieveScript/set", { accountId, destroy: [existing.id] }, "c1"],
   ];
   if (existing.isActive) {
+    const next = thenActivate
+      ? scripts.find((s) => s.name === thenActivate)
+      : undefined;
     calls.unshift([
       "SieveScript/set",
-      { accountId, onSuccessDeactivateScript: true },
+      next
+        ? { accountId, onSuccessActivateScript: next.id }
+        : { accountId, onSuccessDeactivateScript: true },
       "c0",
     ]);
   }
