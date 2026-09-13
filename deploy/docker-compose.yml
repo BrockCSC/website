@@ -15,6 +15,7 @@ services:
     networks: [wayfarer-net]
     volumes:
       - uploads:/data/uploads
+      - documents:/data/documents
     environment:
       - DATABASE_URL=${DATABASE_URL}
       - DB_SCHEMA=${DB_SCHEMA}
@@ -32,6 +33,7 @@ services:
       - INVITE_CODE_SECRET=${INVITE_CODE_SECRET}
       - PORT=3000
       - UPLOAD_DIR=/data/uploads
+      - DOCUMENTS_DIR=/data/documents
       - MAIL_DOMAIN=${MAIL_DOMAIN}
       - STALWART_URL=${STALWART_URL}
       - STALWART_ADMIN_USER=${STALWART_ADMIN_USER}
@@ -61,3 +63,10 @@ volumes:
   uploads:
     name: brockcsc-uploads
     external: true
+  # Deliberately NOT external and NOT shared like uploads: document_versions
+  # rows are synced from prod into every preview/uat schema (see
+  # scripts/sync-from-prod.mjs), but these are bank/legal files, not public
+  # images. Each Stack gets its own empty volume, so a synced row 404s on its
+  # bytes in preview/uat instead of serving prod's real documents there.
+  documents:
+    name: ${PROJECT_NAME}-documents

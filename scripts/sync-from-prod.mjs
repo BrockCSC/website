@@ -26,9 +26,6 @@ if (prodSchemaExists.rowCount === 0) {
   process.exit(0);
 }
 
-// shared_mailboxes and retired_mailboxes describe real Stalwart state, so a
-// preview rides along rather than diverging from what prod actually has.
-//
 // A table can exist on this branch (and so in this schema, freshly migrated)
 // before prod has ever run that migration — every branch that adds a table
 // hits this until it merges and a prod release actually creates it there.
@@ -43,6 +40,10 @@ for (const table of [
   "signups",
   "shared_mailboxes",
   "retired_mailboxes",
+  "documents",
+  "document_versions",
+  "signing_requests",
+  "pending_document_actions",
 ]) {
   if (!prodTableNames.has(table)) {
     console.log(`prod has no "${table}" table yet; skipping.`);

@@ -162,6 +162,165 @@ export type DashboardStats = {
   unclaimedTiles: number | null;
 };
 
+/** Free-text; the 3 bank-checklist categories are offered as quick-create shortcuts. */
+export type DocumentRecord = {
+  category: string;
+  title: string;
+  description?: string;
+  currentVersionId: string | null;
+  createdBy: string;
+  createdByName?: string;
+  createdAt: string;
+};
+
+export type DocumentVersionRecord = {
+  documentId: string;
+  storedFilename: string;
+  originalFilename: string;
+  contentType: string;
+  size: number;
+  sha256: string;
+  uploadedBy: string;
+  uploadedByName?: string;
+  uploadedAt: string;
+  note?: string;
+  /** Set when this version is a generated signing-completion record. */
+  producedBySigningRequestId?: string;
+};
+
+type SignerKind = "member" | "external";
+type SignerStatus = "pending" | "viewed" | "signed" | "declined";
+
+export type Signer = {
+  id: string;
+  kind: SignerKind;
+  order: number;
+  /** Member signers only: the signups row id. */
+  signupId?: string;
+  name?: string;
+  /** External signers only. */
+  email?: string;
+  status: SignerStatus;
+  /** Cleared once spent (signed/declined) or on cancel/resend rotation. */
+  tokenHash?: string | null;
+  tokenExpiresAt?: string | null;
+  /** Set once their invite/notice email goes out, so a re-run of the eligibility sweep doesn't re-send it. */
+  notifiedAt?: string;
+  viewedAt?: string;
+  signedAt?: string;
+  declinedAt?: string;
+  declineReason?: string;
+  signatureText?: string;
+  ip?: string;
+  userAgent?: string;
+};
+
+type SigningRequestStatus =
+  "draft" | "sent" | "completed" | "cancelled" | "declined";
+
+export type SigningRequestRecord = {
+  documentId: string;
+  /** The version being signed, pinned at creation so edits mid-flight can't swap the bytes. */
+  sourceVersionId: string;
+  title: string;
+  mode: "ordered" | "parallel";
+  createdBy: string;
+  createdByName?: string;
+  /** So a completion notice can reach the requester without a signups lookup by keycloak id. */
+  createdByEmail?: string;
+  createdAt: string;
+  status: SigningRequestStatus;
+  signers: Signer[];
+  completedAt?: string;
+  resultingVersionId?: string;
+  /** sha256 of the resulting completion record, for tamper detection only. */
+  sha256?: string;
+  cancelledAt?: string;
+  cancelledBy?: string;
+};
+
+export type PendingDocumentActionKind =
+  | "upload"
+  | "replace"
+  | "delete"
+  | "start-signing"
+  | "add-signer"
+  | "remove-signer"
+  | "cancel-signing";
+
+type PendingDocumentActionStatus = "pending" | "approved" | "rejected";
+
+export type UploadPayload = {
+  category: string;
+  title: string;
+  description?: string;
+  storedFilename: string;
+  originalFilename: string;
+  contentType: string;
+  size: number;
+  sha256: string;
+};
+
+export type ReplacePayload = {
+  documentId: string;
+  storedFilename: string;
+  originalFilename: string;
+  contentType: string;
+  size: number;
+  sha256: string;
+  note?: string;
+};
+
+export type DeletePayload = { documentId: string };
+
+export type SignerInput =
+  | { kind: "member"; signupId: string }
+  | { kind: "external"; name: string; email: string };
+
+export type StartSigningPayload = {
+  documentId: string;
+  title: string;
+  mode: "ordered" | "parallel";
+  signers: SignerInput[];
+};
+
+export type AddSignerPayload = {
+  signingRequestId: string;
+  signer: SignerInput;
+};
+
+export type RemoveSignerPayload = {
+  signingRequestId: string;
+  signerId: string;
+};
+
+export type CancelSigningPayload = { signingRequestId: string };
+
+export type PendingActionPayload =
+  | UploadPayload
+  | ReplacePayload
+  | DeletePayload
+  | StartSigningPayload
+  | AddSignerPayload
+  | RemoveSignerPayload
+  | CancelSigningPayload;
+
+export type PendingDocumentActionRecord = {
+  kind: PendingDocumentActionKind;
+  proposedBy: string;
+  proposedByName?: string;
+  proposedByEmail?: string;
+  proposedAt: string;
+  payload: PendingActionPayload;
+  status: PendingDocumentActionStatus;
+  reviewedBy?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  rejectionReason?: string;
+  targetDocumentId?: string;
+  targetSigningRequestId?: string;
+};
+
 export type EventRecord = {
   title?: string;
   presenter?: string;

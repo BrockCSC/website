@@ -1,0 +1,490 @@
+"use client";
+
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ApiError } from "@/lib/api/client";
+import {
+  addSigner,
+  cancelSigningRequest,
+  fetchMemberOptions,
+  fetchMySignature,
+  fetchSigningRequest,
+  removeSigner,
+  resendSignerLink,
+  respondToMySignature,
+  documentFileUrl,
+  type DocumentItem,
+  type MemberOption,
+  type SigningRequestItem,
+} from "@/lib/api/documents";
+import type { SafeSigner } from "@/lib/api/documents";
+import { useSession } from "../../../session";
+import { ask } from "../../../ask";
+import { Note, Panel, Pill, Rows, field } from "../../../users/ui";
+
+const statusTone = (status: string) =>
+  status === "signed" ? "accent" : "flat";
+
+function MySignaturePanel({
+  signingRequestId,
+  onChanged,
+}: {
+  signingRequestId: string;
+  onChanged: () => void;
+}) {
+  const [view, setView] = useState<{
+    document: { title: string; category: string } | null;
+    versionId: string;
+    signer: SafeSigner;
+    canRespond: boolean;
+  } | null>(null);
+  const [applicable, setApplicable] = useState(true);
+  const [signatureText, setSignatureText] = useState("");
+  const [declining, setDeclining] = useState(false);
+  const [declineReason, setDeclineReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchMySignature(signingRequestId)
+      .then(setView)
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) setApplicable(false);
+      });
+  }, [signingRequestId]);
+
+  if (!applicable || !view) return null;
+
+  const sign = async () => {
+    if (!signatureText.trim()) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await respondToMySignature(signingRequestId, {
+        action: "sign",
+        signatureText: signatureText.trim(),
+      });
+      onChanged();
+      setView(null);
+      setApplicable(false);
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not record your signature.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const decline = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await respondToMySignature(signingRequestId, {
+        action: "decline",
+        reason: declineReason.trim() || undefined,
+      });
+      onChanged();
+      setView(null);
+      setApplicable(false);
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) || "Could not record that.",
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Panel title="Your signature" tone="danger">
+      <a
+        className="font-bold text-brand underline underline-offset-4"
+        href={documentFileUrl(view.versionId)}
+        rel="noreferrer"
+        target="_blank"
+      >
+        Open the document to review
+      </a>
+      <p className="mt-2 text-sm text-subtle">Status: {view.signer.status}</p>
+
+      {view.canRespond && (
+        <div className="mt-4">
+          {declining ? (
+            <div>
+              <textarea
+                className={`${field} min-h-[70px]`}
+                onChange={(e) => setDeclineReason(e.target.value)}
+                placeholder="Reason (optional)"
+                value={declineReason}
+              />
+              <div className="mt-3 flex gap-2">
+                <Button
+                  disabled={busy}
+                  onClick={decline}
+                  type="button"
+                  variant="destructive"
+                >
+                  Confirm decline
+                </Button>
+                <Button
+                  disabled={busy}
+                  onClick={() => setDeclining(false)}
+                  type="button"
+                  variant="secondary"
+                >
+                  Back
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <input
+                className={field}
+                onChange={(e) => setSignatureText(e.target.value)}
+                placeholder="Type your full name to sign"
+                value={signatureText}
+              />
+              <div className="mt-3 flex gap-2">
+                <Button
+                  disabled={busy || !signatureText.trim()}
+                  onClick={sign}
+                  type="button"
+                  variant="primary"
+                >
+                  Sign
+                </Button>
+                <Button
+                  disabled={busy}
+                  onClick={() => setDeclining(true)}
+                  type="button"
+                  variant="outline"
+                >
+                  Decline
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+      {error && (
+        <p className="mt-3 text-sm font-bold text-destructive">{error}</p>
+      )}
+    </Panel>
+  );
+}
+
+export default function SigningRequestPage() {
+  const id = useParams().id as string;
+  const { user } = useSession();
+  const [signingRequest, setSigningRequest] =
+    useState<SigningRequestItem | null>(null);
+  const [document, setDocument] = useState<DocumentItem | null>(null);
+  const [members, setMembers] = useState<MemberOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [note, setNote] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [externalName, setExternalName] = useState("");
+  const [externalEmail, setExternalEmail] = useState("");
+
+  const load = useCallback(async () => {
+    try {
+      const detail = await fetchSigningRequest(id);
+      setSigningRequest(detail.signingRequest);
+      setDocument(detail.document);
+      setError(null);
+    } catch {
+      setError("Could not load this signing request.");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    void (async () => {
+      await load();
+    })();
+    void fetchMemberOptions()
+      .then(setMembers)
+      .catch(() => {});
+  }, [load]);
+
+  const run = async (
+    key: string,
+    work: () => Promise<unknown>,
+    failure: string,
+  ) => {
+    setBusy(key);
+    setError(null);
+    setNote(null);
+    try {
+      const result = await work();
+      if (result && typeof result === "object" && "pending" in result) {
+        setNote("Submitted for a co-president to approve.");
+      }
+      await load();
+    } catch (err) {
+      setError((err instanceof ApiError && err.detail) || failure);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const cancel = async () => {
+    const confirmed = await ask({
+      title: "Cancel this signing request?",
+      detail: "Every outstanding link stops working.",
+      confirmLabel: "Cancel request",
+      destructive: true,
+    });
+    if (confirmed === null) return;
+    await run("cancel", () => cancelSigningRequest(id), "Could not cancel.");
+  };
+
+  const removeSignerRow = (signerId: string) =>
+    run(
+      `remove:${signerId}`,
+      () => removeSigner(id, signerId),
+      "Could not remove that signer.",
+    );
+
+  const resend = (signerId: string) =>
+    run(
+      `resend:${signerId}`,
+      () => resendSignerLink(id, signerId),
+      "Could not resend.",
+    );
+
+  const addMember = (signupId: string) => {
+    if (!signupId) return;
+    void run(
+      "add",
+      () => addSigner(id, { kind: "member", signupId }),
+      "Could not add that signer.",
+    );
+  };
+
+  const addExternal = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!externalName.trim() || !externalEmail.trim()) return;
+    await run(
+      "add",
+      () =>
+        addSigner(id, {
+          kind: "external",
+          name: externalName.trim(),
+          email: externalEmail.trim(),
+        }),
+      "Could not add that signer.",
+    );
+    setExternalName("");
+    setExternalEmail("");
+  };
+
+  if (!user?.isExecutive) {
+    return (
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <Note>Only signed-in execs can see signing requests.</Note>
+      </div>
+    );
+  }
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <p className="font-bold text-subtle">Loading...</p>
+      </div>
+    );
+  }
+  if (!signingRequest) {
+    return (
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <Note>That signing request doesn&apos;t exist.</Note>
+      </div>
+    );
+  }
+
+  const active = signingRequest.status === "sent";
+
+  return (
+    <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-6 px-5 py-8">
+      <div>
+        {document && (
+          <Link
+            className="text-sm font-bold text-subtle hover:text-ink"
+            href={`/admin/documents/${document.$key}`}
+          >
+            ← {document.title}
+          </Link>
+        )}
+        <h1 className="mt-2 text-2xl font-extrabold text-ink">
+          {signingRequest.title}
+        </h1>
+        <p className="text-subtle">
+          {signingRequest.mode === "ordered"
+            ? "Signs in order"
+            : "Signs in parallel"}
+        </p>
+      </div>
+
+      {note && <p className="text-sm font-bold text-brand">{note}</p>}
+      {error && <p className="text-sm font-bold text-destructive">{error}</p>}
+
+      <MySignaturePanel onChanged={load} signingRequestId={id} />
+
+      <Panel
+        action={
+          active ? (
+            <Button
+              onClick={cancel}
+              size="sm"
+              type="button"
+              variant="destructive"
+            >
+              Cancel request
+            </Button>
+          ) : undefined
+        }
+        title="Status"
+      >
+        <Rows
+          items={[
+            [
+              "Status",
+              <Pill key="s" tone={statusTone(signingRequest.status)}>
+                {signingRequest.status}
+              </Pill>,
+            ],
+            [
+              "Requested by",
+              signingRequest.createdByName || signingRequest.createdBy,
+            ],
+            ["Requested", new Date(signingRequest.createdAt).toLocaleString()],
+            ...(signingRequest.completedAt
+              ? [
+                  [
+                    "Completed",
+                    new Date(signingRequest.completedAt).toLocaleString(),
+                  ] as [string, React.ReactNode],
+                ]
+              : []),
+          ]}
+        />
+      </Panel>
+
+      <Panel title="Signers">
+        <ul className="flex flex-col gap-3">
+          {signingRequest.signers
+            .slice()
+            .sort((a, b) => a.order - b.order)
+            .map((signer) => (
+              <li
+                className="rounded-[14px] border-2 border-line bg-surface p-3"
+                key={signer.id}
+              >
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p className="font-bold text-ink">
+                      {signer.name ?? "Signer"}{" "}
+                      <span className="font-normal text-subtle">
+                        ({signer.kind === "member" ? "member" : signer.email})
+                      </span>
+                    </p>
+                    {signer.status === "signed" && (
+                      <p className="text-xs text-subtle">
+                        Signed &quot;{signer.signatureText}&quot; at{" "}
+                        {signer.signedAt} from {signer.ip}
+                      </p>
+                    )}
+                    {signer.status === "declined" && (
+                      <p className="text-xs text-subtle">
+                        Declined at {signer.declinedAt}
+                        {signer.declineReason
+                          ? `: ${signer.declineReason}`
+                          : ""}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Pill tone={statusTone(signer.status)}>
+                      {signer.status}
+                    </Pill>
+                    {active && signer.status !== "signed" && (
+                      <>
+                        {user.isApprover && signer.notifiedAt && (
+                          <Button
+                            disabled={busy === `resend:${signer.id}`}
+                            onClick={() => resend(signer.id)}
+                            size="xs"
+                            type="button"
+                            variant="secondary"
+                          >
+                            Resend
+                          </Button>
+                        )}
+                        <Button
+                          disabled={busy === `remove:${signer.id}`}
+                          onClick={() => removeSignerRow(signer.id)}
+                          size="xs"
+                          type="button"
+                          variant="ghost"
+                        >
+                          Remove
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </li>
+            ))}
+        </ul>
+
+        {active && (
+          <div className="mt-5 flex flex-col gap-3 border-t-2 border-line pt-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <select
+                className={field}
+                onChange={(e) => addMember(e.target.value)}
+                value=""
+              >
+                <option value="">Add a member signer...</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <form
+              className="flex flex-wrap items-center gap-2"
+              onSubmit={addExternal}
+            >
+              <input
+                className={field}
+                onChange={(e) => setExternalName(e.target.value)}
+                placeholder="External signer name"
+                value={externalName}
+              />
+              <input
+                className={field}
+                onChange={(e) => setExternalEmail(e.target.value)}
+                placeholder="Email"
+                value={externalEmail}
+              />
+              <Button
+                disabled={busy === "add"}
+                type="submit"
+                variant="secondary"
+              >
+                Add
+              </Button>
+            </form>
+          </div>
+        )}
+      </Panel>
+    </div>
+  );
+}

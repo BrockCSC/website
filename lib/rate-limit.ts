@@ -5,7 +5,7 @@ const windows = new Map<string, { count: number; resetAt: number }>();
 const MAX_WINDOWS = 10_000;
 
 /** Last hop only: earlier entries are client-supplied. */
-const clientIp = (req: NextRequest): string => {
+export const clientIp = (req: NextRequest): string => {
   const chain = req.headers
     .get("x-forwarded-for")
     ?.split(",")

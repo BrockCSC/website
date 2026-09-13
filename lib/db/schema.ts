@@ -17,3 +17,9 @@ export const mailAliasesTable = jsonbTable("mail_aliases");
 export const passwordResetsTable = jsonbTable("password_resets");
 export const sharedMailboxesTable = jsonbTable("shared_mailboxes");
 export const retiredMailboxesTable = jsonbTable("retired_mailboxes");
+export const documentsTable = jsonbTable("documents");
+export const documentVersionsTable = jsonbTable("document_versions");
+export const signingRequestsTable = jsonbTable("signing_requests");
+export const pendingDocumentActionsTable = jsonbTable(
+  "pending_document_actions",
+);

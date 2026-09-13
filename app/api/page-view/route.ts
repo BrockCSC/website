@@ -4,12 +4,17 @@ import { rateLimit } from "@/lib/rate-limit";
 import { pageViewsTable } from "@/lib/db/schema";
 import { jsonObject } from "@/lib/json";
 
-/** Admin traffic is the club's own work, so it is not a visit to the website. */
+/**
+ * Admin traffic is the club's own work, so it is not a visit to the website.
+ * /sign/<token> carries a secret signing token in the path itself — recording
+ * it would leak the token into the page_views table and admin analytics.
+ */
 const isPublicPath = (path: unknown): path is string =>
   typeof path === "string" &&
   path.startsWith("/") &&
   path.length <= 200 &&
-  !path.startsWith("/admin");
+  !path.startsWith("/admin") &&
+  !path.startsWith("/sign/");
 
 export const POST = async (req: NextRequest) => {
   // The count is a vanity metric, but the table it writes to is not free.
