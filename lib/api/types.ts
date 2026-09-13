@@ -109,7 +109,6 @@ export type PasswordResetRecord = {
   /** sha256 of the raw token mailed to the user; the raw value is never stored. */
   tokenHash: string;
   expiresAt: string;
-  usedAt?: string | null;
 };
 
 export type DayCount = { day: string; count: number };

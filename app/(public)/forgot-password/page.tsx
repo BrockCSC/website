@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { requestPasswordReset } from "@/lib/api";
+import { ApiError } from "@/lib/api/client";
 
 const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink";
@@ -12,17 +13,25 @@ export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(null);
     try {
+      // The server answers identically whether or not the email matched, so
+      // success here says nothing about whether an account exists.
       await requestPasswordReset(email);
-    } finally {
-      // Always show the same result, whether or not the email matched an
-      // account — the point of asking the server for a generic answer.
-      setSubmitting(false);
       setSent(true);
+    } catch (err) {
+      setError(
+        err instanceof ApiError && err.status === 429
+          ? "Too many requests from here. Wait a while, then try again."
+          : "Couldn't send that right now. Try again in a moment.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -65,6 +74,14 @@ export default function ForgotPasswordPage() {
               type="email"
               value={email}
             />
+            {error && (
+              <p
+                className="mt-4 rounded-[10px] border-2 border-destructive p-3 text-sm font-bold text-destructive"
+                role="alert"
+              >
+                {error}
+              </p>
+            )}
             <Button className="mt-6 w-full" disabled={submitting} type="submit">
               {submitting ? "Sending..." : "Send reset instructions"}
             </Button>

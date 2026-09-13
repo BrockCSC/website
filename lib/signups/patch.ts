@@ -28,6 +28,15 @@ export const cleanSignupDetails = (
   ) {
     return { error: "Expected text." };
   }
+  // Omitting a field leaves it alone, but these three can't be blanked: name
+  // and email are pushed to Keycloak, and sign-up requires all of them.
+  if (
+    [body.firstName, body.lastName, body.email].some(
+      (value) => value !== undefined && !value.trim(),
+    )
+  ) {
+    return { error: "First name, last name and email can't be empty." };
+  }
   const email = body.email?.trim() ?? "";
   if (email && !EMAIL_PATTERN.test(email)) {
     return { error: "That doesn't look like a valid email." };

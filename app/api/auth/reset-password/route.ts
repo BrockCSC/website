@@ -39,9 +39,6 @@ export const POST = async (req: NextRequest) => {
   const signup = await findById<SignupRecord>(signupsTable, record.signupId);
   if (!signup?.keycloakUserId || !signup.username) return INVALID();
 
-  // One-time use: gone the moment it's spent, valid attempt or not.
-  await remove(passwordResetsTable, record.id);
-
   if (ownsIdentities()) {
     try {
       await resetUserPassword(signup.keycloakUserId, password);
@@ -52,6 +49,9 @@ export const POST = async (req: NextRequest) => {
       );
     }
   }
+  // Spent only once the password actually changed, so a Keycloak hiccup
+  // leaves the link usable for the retry the error message invites.
+  await remove(passwordResetsTable, record.id);
   await syncMailPassword(signup.username, password);
   // A password they chose through their own inbox satisfies a pending
   // admin-issued reset too; otherwise their next sign-in would demand another.

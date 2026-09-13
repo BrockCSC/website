@@ -24,7 +24,6 @@ export {
   resetPassword,
   completeForcedReset,
 } from "./auth";
-export type { LoginResult } from "./auth";
 export type {
   DashboardStats,
   DayCount,

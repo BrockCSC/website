@@ -81,6 +81,7 @@ export default function DetailsForm({
             className={field}
             id="details-first-name"
             onChange={(e) => set("firstName", e.target.value)}
+            required
             value={form.firstName}
           />
         </div>
@@ -90,6 +91,7 @@ export default function DetailsForm({
             className={field}
             id="details-last-name"
             onChange={(e) => set("lastName", e.target.value)}
+            required
             value={form.lastName}
           />
         </div>
@@ -99,6 +101,7 @@ export default function DetailsForm({
             className={field}
             id="details-email"
             onChange={(e) => set("email", e.target.value)}
+            required
             type="email"
             value={form.email}
           />
