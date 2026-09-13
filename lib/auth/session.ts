@@ -43,6 +43,42 @@ export const signSession = (identity: KeycloakIdentity): string => {
   });
 };
 
+export type ForcedResetToken = { sub: string; username: string };
+
+const FORCED_RESET_PURPOSE = "forced-password-reset";
+
+/**
+ * Proves "this login just supplied the correct temporary password" across the
+ * gap between the failed ROPC attempt and the follow-up set-new-password
+ * call, without a real session existing yet. Short-lived and purpose-tagged
+ * so it can never be replayed as, or confused with, a real session token.
+ */
+export const signForcedResetToken = (payload: ForcedResetToken): string =>
+  jwt.sign({ ...payload, purpose: FORCED_RESET_PURPOSE }, getSessionSecret(), {
+    algorithm: "HS256",
+    expiresIn: "10m",
+  });
+
+export const verifyForcedResetToken = (
+  token: string,
+): ForcedResetToken | null => {
+  try {
+    const payload = jwt.verify(token, getSessionSecret(), {
+      algorithms: ["HS256"],
+    }) as jwt.JwtPayload & Partial<ForcedResetToken> & { purpose?: string };
+    if (
+      payload.purpose !== FORCED_RESET_PURPOSE ||
+      !payload.sub ||
+      !payload.username
+    ) {
+      return null;
+    }
+    return { sub: payload.sub, username: payload.username };
+  } catch {
+    return null;
+  }
+};
+
 export const getSessionUser = (req: NextRequest): SessionUser | null => {
   const token = req.cookies.get(SESSION_COOKIE)?.value;
   if (!token) return null;

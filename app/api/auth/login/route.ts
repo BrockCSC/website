@@ -1,11 +1,14 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { exchangeCredentials } from "@/lib/auth/keycloak";
 import { REFRESH_COOKIE, refreshCookieOptions } from "@/lib/auth/mail-token";
+import { findSignupByUserId } from "@/lib/db/signups";
+import { ownsIdentities } from "@/lib/env";
 import { syncMailPassword } from "@/lib/mail/password";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import {
   sessionCookieOptions,
+  signForcedResetToken,
   signSession,
   SESSION_COOKIE,
 } from "@/lib/auth/session";
@@ -56,6 +59,21 @@ export const POST = async (req: NextRequest) => {
     !identity.roles.includes(SUPERUSER_ROLE)
   ) {
     return NextResponse.json({ error: "Not authorized" }, { status: 403 });
+  }
+
+  // The password was just proven correct, so this is the one safe place to
+  // hand out a short-lived token letting them set a new one. There's no
+  // hosted Keycloak login page to enforce this the normal way — see
+  // resetUserPassword's comment. Prod only: other environments copy signups
+  // from prod but can't write Keycloak, so they could never finish the reset.
+  const signup = ownsIdentities()
+    ? await findSignupByUserId(identity.sub)
+    : null;
+  if (signup?.passwordResetRequired) {
+    return NextResponse.json({
+      requiresPasswordReset: true,
+      resetToken: signForcedResetToken({ sub: identity.sub, username }),
+    });
   }
 
   await syncMailPassword(username, password);

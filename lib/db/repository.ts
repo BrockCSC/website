@@ -3,9 +3,18 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/session";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { db } from "./index";
-import type { eventsTable, execsTable, signupsTable } from "./schema";
+import type {
+  eventsTable,
+  execsTable,
+  passwordResetsTable,
+  signupsTable,
+} from "./schema";
 
-type JsonbTable = typeof eventsTable | typeof execsTable | typeof signupsTable;
+type JsonbTable =
+  | typeof eventsTable
+  | typeof execsTable
+  | typeof signupsTable
+  | typeof passwordResetsTable;
 export type Entity<T> = T & { id: string };
 
 /** id last: a stray `id` inside the stored JSON must not shadow the real one. */

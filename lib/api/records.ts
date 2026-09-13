@@ -10,11 +10,13 @@ export const fetchCurrentExecs = async (): Promise<WithKey<ExecRecord>[]> =>
 export const fetchPreviousExecs = async (): Promise<WithKey<ExecRecord>[]> =>
   (await fetchAllExecs()).filter((exec) => exec.isCurrentExec === false);
 
-export const fetchProfile = async (): Promise<WithKey<ExecRecord> | null> =>
-  apiFetch<WithKey<ExecRecord> | null>("/api/profile");
+export type ProfileRecord = WithKey<ExecRecord> & { accessCardId?: string };
+
+export const fetchProfile = async (): Promise<ProfileRecord | null> =>
+  apiFetch<ProfileRecord | null>("/api/profile");
 
 export const updateProfile = async (
-  exec: Partial<ExecRecord>,
+  exec: Partial<ExecRecord> & { accessCardId?: string },
 ): Promise<void> => {
   await apiFetch("/api/profile", {
     method: "PATCH",

@@ -14,7 +14,17 @@ export {
   fetchDashboardStats,
   recordPageView,
 } from "./records";
-export { fetchCurrentUser, login, logout, signup } from "./auth";
+export type { ProfileRecord } from "./records";
+export {
+  fetchCurrentUser,
+  login,
+  logout,
+  signup,
+  requestPasswordReset,
+  resetPassword,
+  completeForcedReset,
+} from "./auth";
+export type { LoginResult } from "./auth";
 export type {
   DashboardStats,
   DayCount,
