@@ -14,11 +14,12 @@ import {
   update,
 } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
+import { findActiveRetiredMailbox } from "@/lib/db/retired-mailboxes";
 import { ownsIdentities } from "@/lib/env";
 import {
   isProtectedMailbox,
-  makeMailboxReadOnly,
   provisionMailbox,
+  retireMailbox,
   syncMailRouting,
   syncExpungeRights,
 } from "@/lib/mail/provision";
@@ -131,18 +132,15 @@ const mailboxItems = (
 
   return [
     {
-      id: "mailbox:readonly",
+      id: "mailbox:retire",
       group: "mailbox",
-      title: `Make ${address} read-only`,
-      detail: "They keep the inbox and everything in it, but cannot send.",
+      title: `Retire ${address}`,
+      detail:
+        "The mailbox is destroyed for good. Mail sent to it forwards to the co-presidents for 30 days, then that stops too.",
       blocked:
         shielded ??
-        (provisioned === false
-          ? "There is no mailbox yet."
-          : readOnly
-            ? `${address} is already read-only.`
-            : undefined),
-      run: () => makeMailboxReadOnly(username),
+        (provisioned === false ? "There is no mailbox yet." : undefined),
+      run: () => retireMailbox(username),
     },
     {
       id: "mailbox:provision",
@@ -192,7 +190,8 @@ export type PersonDetail = {
     address: string | null;
     provisioned: boolean | null;
     protected: boolean;
-    readOnly: boolean;
+    /** Set once retired: mail forwards to the co-presidents until this date. */
+    retiredUntil: string | null;
   };
   identitiesEditable: boolean;
   consequences: Consequence[];
@@ -203,7 +202,7 @@ type Plan = {
   items: Item[];
   held: string[] | null;
   provisioned: boolean | null;
-  readOnly: boolean | null;
+  retiredUntil: string | null;
 };
 
 const plan = async ({ signup, exec }: Person): Promise<Plan> => {
@@ -212,38 +211,37 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
       items: tileItems(exec),
       held: null,
       provisioned: null,
-      readOnly: null,
+      retiredUntil: null,
     };
   }
 
-  const [held, coPresidents, provisioned, readOnly] = await Promise.all([
-    signup.keycloakUserId
-      ? effectiveRealmRoles(signup.keycloakUserId).catch(() => null)
-      : null,
-    usersWithRealmRole(CO_PRESIDENT).catch(() => null),
-    mailboxProvisioned(signup),
-    signup.username
-      ? isReadOnly(signup.username).catch(() => null)
-      : Promise.resolve(null),
-  ]);
+  const [held, coPresidents, provisioned, readOnly, retired] =
+    await Promise.all([
+      signup.keycloakUserId
+        ? effectiveRealmRoles(signup.keycloakUserId).catch(() => null)
+        : null,
+      usersWithRealmRole(CO_PRESIDENT).catch(() => null),
+      mailboxProvisioned(signup),
+      signup.username
+        ? isReadOnly(signup.username).catch(() => null)
+        : Promise.resolve(null),
+      signup.username
+        ? findActiveRetiredMailbox(signup.username).catch(() => null)
+        : Promise.resolve(null),
+    ]);
   const address = mailAddress(signup);
 
   return {
     items: [
       ...(held ? roleItems(signup, held, coPresidents) : []),
       ...(address
-        ? mailboxItems(
-            signup,
-            address,
-            provisioned,
-            readOnly ?? exec?.isCurrentExec === false,
-          )
+        ? mailboxItems(signup, address, provisioned, readOnly === true)
         : []),
       ...tileItems(exec),
     ],
     held,
     provisioned,
-    readOnly,
+    retiredUntil: retired?.removeAt ?? null,
   };
 };
 
@@ -272,7 +270,7 @@ const transitionFor = (
       ]
     : [
         "tile:past",
-        "mailbox:readonly",
+        "mailbox:retire",
         `role:${execRole()}:remove`,
         `role:${alumniRole()}:add`,
         `role:${CO_PRESIDENT}:remove`,
@@ -293,7 +291,7 @@ const wire = <T>(entity: Entity<T> | null) =>
 
 export const describePerson = async (person: Person): Promise<PersonDetail> => {
   const { signup, exec } = person;
-  const { items, held, provisioned, readOnly } = await plan(person);
+  const { items, held, provisioned, retiredUntil } = await plan(person);
 
   return {
     signup: wire(signup),
@@ -304,7 +302,7 @@ export const describePerson = async (person: Person): Promise<PersonDetail> => {
       address: signup ? mailAddress(signup) : null,
       provisioned,
       protected: !!signup?.username && isProtectedMailbox(signup.username),
-      readOnly: readOnly ?? exec?.isCurrentExec === false,
+      retiredUntil,
     },
     identitiesEditable: ownsIdentities(),
     consequences: items.map(stated),

@@ -1,16 +1,21 @@
+import type { RetiredMailboxRecord } from "@/lib/api/types";
 import { usersWithRealmRole } from "@/lib/auth/keycloak-admin";
 import { dottedAliasFor } from "@/lib/auth/username";
+import { create, update } from "@/lib/db/repository";
+import { retiredMailboxesTable } from "@/lib/db/schema";
+import { findActiveRetiredMailbox } from "@/lib/db/retired-mailboxes";
 import { createApprovedSender, deleteApprovedSender } from "./oci-senders";
 import {
   clearReadOnly,
   createMailbox,
   createMailingList,
+  deleteMailingList,
+  destroyAccount,
   forwardingAccounts,
   getCatchAll,
   listMailingLists,
   listUsers,
   localPartTaken,
-  makeReadOnly,
   revokeAppPasswords,
   setCatchAll,
   setExpungeAllowed,
@@ -18,6 +23,9 @@ import {
   setGroupMembers,
   updateMailingList,
 } from "./stalwart";
+
+/** How long a retired mailbox keeps forwarding to the co-presidents. */
+const RETENTION_DAYS = 30;
 
 export const domain = () => process.env.MAIL_DOMAIN ?? "brockcsc.ca";
 
@@ -122,6 +130,18 @@ export const provisionMailbox = async (exec: {
   firstName: string;
   lastName: string;
 }): Promise<void> => {
+  // A returning exec may still be mid-forward from a previous retirement;
+  // that list holds the name they need back, so it has to go first.
+  const stale = await findActiveRetiredMailbox(exec.username);
+  if (stale) {
+    await deleteMailingList(stale.mailingListId).catch((err) => {
+      console.warn(
+        `could not remove ${exec.username}'s retirement forwarding before re-provisioning: ${err instanceof Error ? err.message : err}`,
+      );
+    });
+    await update(retiredMailboxesTable, stale.id, { removed: true });
+  }
+
   if (!(await localPartTaken(exec.username))) {
     await createMailbox({
       localPart: exec.username,
@@ -136,10 +156,31 @@ export const provisionMailbox = async (exec: {
   await createApprovedSender(`${exec.username}@${domain()}`);
 };
 
-export const makeMailboxReadOnly = async (username: string): Promise<void> => {
+/**
+ * Destroys the mailbox for good rather than keeping it around read-only.
+ * Reversible steps run first, so a failure part-way through leaves the
+ * account intact instead of gone with nothing to show for it.
+ */
+export const retireMailbox = async (username: string): Promise<void> => {
   if (isProtectedMailbox(username)) return;
-  await makeReadOnly(username);
-  await setForwarding(username, coPresidentsAddress());
   await revokeAppPasswords(username);
   await deleteApprovedSender(`${username}@${domain()}`);
+
+  const retiredAt = new Date();
+  const removeAt = new Date(retiredAt);
+  removeAt.setDate(removeAt.getDate() + RETENTION_DAYS);
+  const mailingListId = await createMailingList({
+    name: username,
+    domain: domain(),
+    description: `${username}@${domain()} is retired. Mail forwards to the co-presidents until ${removeAt.toDateString()}, then this list is removed automatically.`,
+    recipients: [coPresidentsAddress()],
+  });
+  await create<RetiredMailboxRecord>(retiredMailboxesTable, {
+    username,
+    mailingListId,
+    retiredAt: retiredAt.toISOString(),
+    removeAt: removeAt.toISOString(),
+  });
+
+  await destroyAccount(username);
 };

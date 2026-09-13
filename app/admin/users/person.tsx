@@ -196,9 +196,9 @@ export default function PersonView({
           },
           {
             id: "mailbox",
-            title: "Their mailbox is kept, read-only",
+            title: "Their mailbox is destroyed",
             detail:
-              "Mail is never deleted here, and the address is never reissued.",
+              "Mail sent to their address forwards to the co-presidents for 30 days, then stops.",
             fixed: true,
           },
         ]
@@ -460,8 +460,8 @@ export default function PersonView({
                     ],
                     [
                       "Sending",
-                      detail.mailbox.readOnly
-                        ? "Read-only (past executive)"
+                      detail.mailbox.retiredUntil
+                        ? `Retired — forwards to the co-presidents until ${date(detail.mailbox.retiredUntil)}`
                         : "Allowed",
                     ],
                   ]}

@@ -14,8 +14,8 @@ import { findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
 import {
   isProtectedMailbox,
-  makeMailboxReadOnly,
   provisionMailbox,
+  retireMailbox,
   syncMailRouting,
   syncExpungeRights,
 } from "@/lib/mail/provision";
@@ -195,7 +195,7 @@ export const DELETE = async (
 
   if (ownsIdentities()) {
     if (signup.keycloakUserId) await deleteUser(signup.keycloakUserId);
-    if (signup.username) await makeMailboxReadOnly(signup.username);
+    if (signup.username) await retireMailbox(signup.username);
   }
   if (deleteExec && signup.execKey) {
     await remove(execsTable, signup.execKey);
