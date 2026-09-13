@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { removeRealmRole, usersWithRealmRole } from "@/lib/auth/keycloak-admin";
 import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { requireApprover } from "@/lib/auth/session";
+import { findActiveMigrationForSub } from "@/lib/db/identity-migrations";
 import { syncMailRouting, syncExpungeRights } from "@/lib/mail/provision";
 import { ownsIdentities } from "@/lib/env";
 import { notAuthorized } from "@/lib/json";
@@ -23,6 +24,17 @@ export const POST = async (req: NextRequest) => {
       {
         error:
           "You are the only co-president. Make someone else a co-president first.",
+      },
+      { status: 409 },
+    );
+  }
+  // The rename copies roles as they were when it started, so a change now
+  // would land on the login about to be deleted.
+  if (await findActiveMigrationForSub(user.sub)) {
+    return NextResponse.json(
+      {
+        error:
+          "Your username change is in progress; step down once it has finished.",
       },
       { status: 409 },
     );

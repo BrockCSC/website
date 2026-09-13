@@ -3,6 +3,10 @@ import type { SignupRecord } from "@/lib/api/types";
 import { requireApprover } from "@/lib/auth/session";
 import { resetUserPassword } from "@/lib/auth/keycloak-admin";
 import { generateTempPassword } from "@/lib/auth/temp-password";
+import {
+  renameHoldsPassword,
+  renameInProgress,
+} from "@/lib/identity/password-hold";
 import { findById, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
@@ -31,6 +35,7 @@ export const POST = async (
       { status: 422 },
     );
   }
+  if (await renameHoldsPassword(signup)) return renameInProgress();
 
   const tempPassword = generateTempPassword();
   const rehearsed = !ownsIdentities();

@@ -86,18 +86,23 @@ export const findPerson = async (id: string): Promise<Person | null> => {
   return exec ? { signup: null, exec } : null;
 };
 
+const MIGRATING_ROLES =
+  "A username change is in progress; roles are copied as they were when it started.";
+
 const roleItems = (
   signup: Entity<SignupRecord>,
   held: string[],
   coPresidents: { id: string }[] | null,
+  migrating: boolean,
 ): Item[] => {
   const userId = signup.keycloakUserId;
   if (!userId) return [];
 
   return managedRoles().map(({ name, label, grants, revokes }) => {
     const has = held.includes(name);
-    const last =
-      has && name === CO_PRESIDENT
+    const last = migrating
+      ? MIGRATING_ROLES
+      : has && name === CO_PRESIDENT
         ? coPresidents === null
           ? "Keycloak could not say how many co-presidents there are."
           : coPresidents.length <= 1 &&
@@ -249,7 +254,7 @@ const plan = async ({ signup, exec }: Person): Promise<Plan> => {
 
   return {
     items: [
-      ...(held ? roleItems(signup, held, coPresidents) : []),
+      ...(held ? roleItems(signup, held, coPresidents, migrating) : []),
       ...(address
         ? mailboxItems(
             signup,

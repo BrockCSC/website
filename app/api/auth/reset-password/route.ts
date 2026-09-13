@@ -6,6 +6,10 @@ import { findById, remove, update } from "@/lib/db/repository";
 import type { SignupRecord } from "@/lib/api/types";
 import { passwordResetsTable, signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
+import {
+  renameHoldsPassword,
+  renameInProgress,
+} from "@/lib/identity/password-hold";
 import { badJson, jsonObject } from "@/lib/json";
 import { rateLimit } from "@/lib/rate-limit";
 import { MIN_PASSWORD_LENGTH } from "@/lib/signups/validation";
@@ -37,6 +41,8 @@ export const POST = async (req: NextRequest) => {
 
   const signup = await findById<SignupRecord>(signupsTable, record.signupId);
   if (!signup?.keycloakUserId || !signup.username) return INVALID();
+  // The link stays valid: nothing was spent, and it works once the rename is through.
+  if (await renameHoldsPassword(signup)) return renameInProgress();
 
   if (ownsIdentities()) {
     try {

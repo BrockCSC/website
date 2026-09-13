@@ -8,7 +8,7 @@ import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
 import { syncNameChange } from "@/lib/identity/name-change";
-import { usernameBase } from "@/lib/identity/plan";
+import { usernameChanges } from "@/lib/identity/plan";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 
 /**
@@ -47,11 +47,7 @@ export const PATCH = async (
   const namesChanged =
     names.firstName !== (signup.firstName ?? "") ||
     names.lastName !== (signup.lastName ?? "");
-  if (
-    namesChanged &&
-    signup.username &&
-    usernameBase(names.firstName, names.lastName) !== signup.username
-  ) {
+  if (namesChanged && signup.username && usernameChanges(signup, names)) {
     return NextResponse.json(
       {
         error: "That name changes the username. Use Rename instead.",

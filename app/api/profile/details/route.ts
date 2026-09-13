@@ -12,7 +12,7 @@ import { signupsTable } from "@/lib/db/schema";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { ownsIdentities } from "@/lib/env";
 import { syncExecName, syncNameChange } from "@/lib/identity/name-change";
-import { isRefusal, planRename, usernameBase } from "@/lib/identity/plan";
+import { isRefusal, planRename, usernameChanges } from "@/lib/identity/plan";
 import { domain } from "@/lib/mail/provision";
 import { sendSystemEmail } from "@/lib/mail/system-mail";
 import { cleanMemberDetails } from "@/lib/signups/patch";
@@ -120,10 +120,7 @@ export const PATCH = async (req: NextRequest) => {
     firstName: changed.firstName ?? signup.firstName ?? "",
     lastName: changed.lastName ?? signup.lastName ?? "",
   };
-  if (
-    namesChanged &&
-    usernameBase(names.firstName, names.lastName) !== signup.username
-  ) {
+  if (namesChanged && usernameChanges(signup, names)) {
     const plan = await planRename(signup, names, {
       sub: user.sub,
       kind: "self",
@@ -165,7 +162,9 @@ export const PATCH = async (req: NextRequest) => {
   const saved = await update<SignupRecord>(signupsTable, signup.id, changed);
   if (!saved) return notFound();
 
-  if (emailChanged) {
+  // Only where Keycloak was actually changed: elsewhere the addresses are
+  // real copies of prod and the notice would be both false and spoofable.
+  if (emailChanged && ownsIdentities()) {
     void sendSystemEmail({
       to: [
         signup.email ?? "",

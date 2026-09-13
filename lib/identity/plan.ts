@@ -13,7 +13,10 @@ import {
   getUser,
 } from "@/lib/auth/keycloak-admin";
 import { dottedAliasFor, fold, usernameFor } from "@/lib/auth/username";
-import { findActiveMigrationForSignup } from "@/lib/db/identity-migrations";
+import {
+  findActiveMigrationForSignup,
+  isUsernameReserved,
+} from "@/lib/db/identity-migrations";
 import type { Entity } from "@/lib/db/repository";
 import { ownsIdentities } from "@/lib/env";
 import { listMailboxTree } from "@/lib/mail/migrate-mail";
@@ -44,6 +47,22 @@ export const isRefusal = (value: unknown): value is Refusal =>
 /** Same derivation as sign-up, so a name maps to one username everywhere. */
 export const usernameBase = (firstName: string, lastName: string): string =>
   usernameFor(firstName, lastName) || fold(anyAscii(`${firstName}${lastName}`));
+
+/**
+ * Whether a new name derives a different username from the current name.
+ * Compared against the old name's base, not the username itself: a member
+ * allocated johnsmith2 keeps it through a capitalisation fix.
+ */
+export const usernameChanges = (
+  signup: SignupRecord,
+  names: { firstName: string; lastName: string },
+): boolean => {
+  const before =
+    usernameBase(signup.firstName ?? "", signup.lastName ?? "") ||
+    signup.username ||
+    "";
+  return usernameBase(names.firstName, names.lastName) !== before;
+};
 
 const refuse = (status: number, error: string): Refusal => ({ status, error });
 
@@ -177,7 +196,7 @@ export const planRename = async (
   const base = usernameBase(firstName, lastName);
   if (!base)
     return refuse(400, "We could not build a username from that name.");
-  if (base === username) {
+  if (base === username || !usernameChanges(signup, { firstName, lastName })) {
     return refuse(
       400,
       "That name keeps the same username; nothing to migrate.",
@@ -219,7 +238,10 @@ export const planRename = async (
     ]);
   const dotted = dottedAliasFor(firstName, lastName);
   const dottedAlias =
-    dotted && !(await aliasTaken(dotted)) && !(await localPartTaken(dotted))
+    dotted &&
+    !(await isUsernameReserved(dotted)) &&
+    !(await aliasTaken(dotted)) &&
+    !(await localPartTaken(dotted))
       ? dotted
       : null;
   const tree = mailboxId ? await listMailboxTree(mailboxId) : [];
