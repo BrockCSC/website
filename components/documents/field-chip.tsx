@@ -1,13 +1,23 @@
 "use client";
 
-import { Calendar, PenLine, Trash2, Type, type LucideIcon } from "lucide-react";
+import {
+  Calendar,
+  CaseSensitive,
+  PenLine,
+  Signature,
+  Trash2,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import { useRef } from "react";
 import type { SigningFieldType } from "@/lib/api/types";
 
 const ICON: Record<SigningFieldType, LucideIcon> = {
-  signature: PenLine,
+  signature: Signature,
+  initials: PenLine,
   date: Calendar,
-  text: Type,
+  name: UserRound,
+  text: CaseSensitive,
 };
 
 const clamp = (n: number) => Math.min(100, Math.max(0, n));
