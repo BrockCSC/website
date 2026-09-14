@@ -9,11 +9,11 @@ import {
   drawCenteredLine,
   drawSignatureMark,
   embedSigningFonts,
-  fontFor,
   formatSigningDate,
   signatureShortId,
   singleLine,
-  wrapText,
+  typedMark,
+  wrapRuns,
 } from "./signature-marks";
 
 export type StampSigner = {
@@ -80,8 +80,7 @@ export const markContent = async (
     kind === "signature" ? signer.fullName : signer.initials,
   );
   if (!text) return null;
-  const script = await fonts.script(signer.font);
-  return { kind: "typed", text, font: fontFor(script, fonts.sans, text) };
+  return typedMark(fonts, text, signer.font);
 };
 
 /** The source PDF with every field stamped in place and the envelope id on each page. */
@@ -119,11 +118,25 @@ export const buildSignedPdf = async (
         .filter((f) => f.page === index + 1 && signers.has(f.signerId))
         .map(async (field) => {
           const signer = signers.get(field.signerId)!;
-          const content =
-            field.type === "signature" || field.type === "initials"
-              ? await markContent(doc, fonts, images, signer, field.type)
-              : null;
-          return { field, signer, content };
+          if (field.type === "signature" || field.type === "initials") {
+            const content = await markContent(
+              doc,
+              fonts,
+              images,
+              signer,
+              field.type,
+            );
+            return { field, signer, content, text: "" };
+          }
+          const text = singleLine(
+            field.type === "date"
+              ? field.value || formatSigningDate(signer.signedAt)
+              : field.type === "name"
+                ? signer.fullName
+                : (field.value ?? ""),
+          );
+          await fonts.prepare([text]);
+          return { field, signer, content: null, text };
         }),
     );
 
@@ -143,7 +156,7 @@ export const buildSignedPdf = async (
         });
       }
 
-      for (const { field, signer, content } of stamps) {
+      for (const { field, signer, content, text } of stamps) {
         const cx = (field.xPercent / 100) * frame.width;
         const cy = (1 - field.yPercent / 100) * frame.height;
 
@@ -165,15 +178,8 @@ export const buildSignedPdf = async (
           continue;
         }
 
-        const text = singleLine(
-          field.type === "date"
-            ? field.value || formatSigningDate(signer.signedAt)
-            : field.type === "name"
-              ? signer.fullName
-              : (field.value ?? ""),
-        );
         if (!text) continue;
-        const font = fonts.sans;
+        const runs = [{ text }];
         const maxWidth = Math.min(240, frame.width - 2 * EDGE);
         // Date and name shrink to stay on one line; free text wraps first.
         let size =
@@ -184,18 +190,16 @@ export const buildSignedPdf = async (
                 Math.min(
                   TEXT_SIZE,
                   (TEXT_SIZE * maxWidth) /
-                    font.pdf.widthOfTextAtSize(text, TEXT_SIZE),
+                    wrapRuns(fonts, runs, TEXT_SIZE, Infinity)[0].width,
                 ),
               );
-        let lines = wrapText(font.pdf, text, size, maxWidth);
+        let lines = wrapRuns(fonts, runs, size, maxWidth);
         while (lines.length > 3 && size > 7) {
           size -= 1;
-          lines = wrapText(font.pdf, text, size, maxWidth);
+          lines = wrapRuns(fonts, runs, size, maxWidth);
         }
         const leading = size * 1.25;
-        const widest = Math.max(
-          ...lines.map((line) => font.pdf.widthOfTextAtSize(line, size)),
-        );
+        const widest = Math.max(...lines.map((line) => line.width));
         const blockHeight = leading * lines.length;
         const x = clamp(cx, EDGE + widest / 2, frame.width - EDGE - widest / 2);
         const top = clamp(
@@ -206,7 +210,7 @@ export const buildSignedPdf = async (
         lines.forEach((line, i) => {
           drawCenteredLine(
             page,
-            font,
+            fonts,
             line,
             x,
             top - leading / 2 - i * leading,

@@ -6,14 +6,15 @@ import { BRAND_COLOR, CLUB_NAME } from "@/lib/brand";
 import { SIGNATURE_FONTS, SIGNING_TIME_ZONE } from "./fields";
 import { type StampSigner, markContent } from "./signed-pdf";
 import {
-  type EmbeddedFont,
   MUTED,
   type SigningFonts,
   drawSignatureMark,
+  drawTextLine,
   embedSigningFonts,
   formatSigningTimestamp,
   signatureShortId,
   singleLine,
+  wrapRuns,
   wrapText,
 } from "./signature-marks";
 
@@ -153,50 +154,12 @@ type Layout = {
   afterLayout: ((pageCount: number) => void)[];
 };
 
-const fontOf = (layout: Layout, run: Run): EmbeddedFont =>
-  run.bold ? layout.fonts.bold : layout.fonts.sans;
-
-type Token = { text: string; run: Run };
-
-/** Greedy wrap across styled runs; a token wider than the line is broken by character. */
-const wrapRuns = (
-  layout: Layout,
-  runs: Run[],
-  size: number,
-  width: number,
-): Token[][] => {
-  const lines: Token[][] = [];
-  let line: Token[] = [];
-  let lineWidth = 0;
-  const space = layout.fonts.sans.pdf.widthOfTextAtSize(" ", size);
-  const measure = (token: Token) =>
-    fontOf(layout, token.run).pdf.widthOfTextAtSize(token.text, size);
-  for (const run of runs) {
-    for (const word of singleLine(run.text).split(" ").filter(Boolean)) {
-      const pieces = wrapText(fontOf(layout, run).pdf, word, size, width);
-      for (const piece of pieces) {
-        const token = { text: piece, run };
-        const tokenWidth = measure(token);
-        const extra = line.length ? space : 0;
-        if (line.length && lineWidth + extra + tokenWidth > width) {
-          lines.push(line);
-          line = [token];
-          lineWidth = tokenWidth;
-        } else {
-          line.push(token);
-          lineWidth += extra + tokenWidth;
-        }
-      }
-    }
-  }
-  if (line.length) lines.push(line);
-  return lines;
-};
-
 const blockHeight = (layout: Layout, block: Block, width: number) => {
   if (block.kind === "gap" || block.kind === "draw") return block.height;
   const size = block.size ?? BODY;
-  return wrapRuns(layout, block.runs, size, width).length * leadingFor(size);
+  return (
+    wrapRuns(layout.fonts, block.runs, size, width).length * leadingFor(size)
+  );
 };
 
 const cellHeight = (layout: Layout, cell: Cell) =>
@@ -216,21 +179,16 @@ const drawCell = (layout: Layout, cell: Cell, top: number) => {
     }
     const size = block.size ?? BODY;
     const leading = leadingFor(size);
-    const space = layout.fonts.sans.pdf.widthOfTextAtSize(" ", size);
-    for (const line of wrapRuns(layout, block.runs, size, cell.width)) {
-      const baseline = y - size;
-      let x = cell.x;
-      for (const token of line) {
-        const font = fontOf(layout, token.run);
-        layout.page.drawText(token.text, {
-          x,
-          y: baseline,
-          size,
-          font: font.pdf,
-          color: token.run.muted ? MUTED : TEXT,
-        });
-        x += font.pdf.widthOfTextAtSize(token.text, size) + space;
-      }
+    for (const line of wrapRuns(layout.fonts, block.runs, size, cell.width)) {
+      drawTextLine(
+        layout.page,
+        layout.fonts,
+        line,
+        cell.x,
+        y - size,
+        size,
+        (run) => (run.muted ? MUTED : TEXT),
+      );
       y -= leading;
     }
   }
@@ -382,6 +340,14 @@ export const buildCertificatePdf = async (
     readFile(join(process.cwd(), "public/email-logo.png")),
   ]);
   const logo = await doc.embedPng(logoBytes);
+  await fonts.prepare([
+    input.subject,
+    input.documentTitle,
+    input.sourceFilename,
+    input.originator.name,
+    input.originator.email ?? "",
+    ...input.signers.flatMap((s) => [s.fullName, s.email ?? ""]),
+  ]);
   const signers = [...input.signers].sort((a, b) => a.order - b.order);
   const images = new Map<Uint8Array, Promise<PDFImage>>();
   const marks = await Promise.all(
@@ -730,7 +696,7 @@ export const buildCertificatePdf = async (
     { gapAfter: 6 },
   );
   for (const paragraph of paragraphs) {
-    const lines = wrapText(fonts.sans.pdf, paragraph, BODY, CONTENT_WIDTH - 12);
+    const lines = wrapText(fonts.sans, paragraph, BODY, CONTENT_WIDTH - 12);
     ensureSpace(layout, Math.min(lines.length * leadingFor(BODY), 160));
     lines.forEach((line, i) => {
       ensureSpace(layout, leadingFor(BODY) + (i === lines.length - 1 ? 6 : 0));
