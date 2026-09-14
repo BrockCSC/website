@@ -20,6 +20,7 @@ RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 RUN mkdir -p /data/uploads /data/documents && chown -R nextjs:nodejs /data
 
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/lib/documents/fonts ./lib/documents/fonts
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/drizzle ./drizzle
