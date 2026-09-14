@@ -32,7 +32,11 @@ import {
   withFreshRequest,
 } from "./envelope";
 import { MAX_SIGNERS } from "./fields";
-import { type FinalizeOutcome, finalizeIfComplete } from "./finalize";
+import {
+  type FinalizeOutcome,
+  finalizeIfComplete,
+  retryStuckCompletion,
+} from "./finalize";
 import { type Actor, signingRequestsForDocument } from "./mutations";
 import {
   notifyDeclined,
@@ -148,7 +152,34 @@ const notifyEligible = async (
     }
     current = await loadSigningRequest(request.id);
   }
+  // Not thrown: the change that got here is already committed, and a retry of
+  // it would fail or duplicate it. retryStuckRequest picks this up on a read.
+  console.error(
+    `documents: kept losing the commit notifying signers on signing request ${request.id}; a later read will retry`,
+  );
   return current;
+};
+
+/**
+ * For read paths: retries a completion that failed earlier, and notifies a
+ * signer whose turn came while notifyEligible kept losing its commit.
+ */
+export const retryStuckRequest = async (
+  request: SigningRequest,
+): Promise<SigningRequest> => {
+  const current = await retryStuckCompletion(request);
+  const stranded =
+    current.status === "sent" &&
+    current.signers.some((s) => isEligible(s, current.signers, current.mode));
+  if (!stranded) return current;
+  try {
+    return await notifyEligible(current);
+  } catch (err) {
+    console.error(
+      `documents: could not notify signers on signing request ${current.id}: ${err instanceof Error ? err.message : err}`,
+    );
+    return current;
+  }
 };
 
 type SafeSigner = Omit<Signer, "tokenHash" | "viewTokenHash">;

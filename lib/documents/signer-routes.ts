@@ -19,13 +19,13 @@ import {
   isSignersTurn,
   sanitizeCertificateText,
 } from "./envelope";
-import { retryStuckCompletion } from "./finalize";
 import { parseSignSubmission } from "./sign-submission";
 import {
   declineAsSigner,
   fieldsForSigner,
   recordSignerConsent,
   recordSignerView,
+  retryStuckRequest,
   signAsSigner,
 } from "./signing";
 
@@ -172,7 +172,7 @@ export const signerSessionResponse = async (
       signer.id,
       requestMeta(req),
     );
-    if (access.kind === "member") current = await retryStuckCompletion(current);
+    if (access.kind === "member") current = await retryStuckRequest(current);
     const mine = current.signers.find((s) => s.id === signer.id);
     if (!mine) return notFound();
     return NextResponse.json(await sessionView(current, mine, access));
@@ -217,7 +217,7 @@ export const signerSignResponse = async (
     // A repeat POST after signing (a retry, or a second tab) is a chance to
     // finish a completion that failed earlier.
     if (signer.status === "signed") {
-      const current = await retryStuckCompletion(request);
+      const current = await retryStuckRequest(request);
       if (current.status === "sent" || current.status === "completed") {
         const result: SignResult = {
           signerStatus: "signed",
