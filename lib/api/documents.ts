@@ -15,7 +15,6 @@ export type DocumentItem = WithKey<DocumentRecord>;
 export type DocumentVersionItem = WithKey<DocumentVersionRecord>;
 type PendingActionTarget = {
   documentTitle?: string;
-  documentCategory?: string;
   signingRequestTitle?: string;
   signingRequestMode?: "ordered" | "parallel";
   signers?: { name: string; kind: "member" | "external" }[];
@@ -59,13 +58,11 @@ const postForm = async <T>(path: string, form: FormData): Promise<T> => {
 };
 
 export const uploadDocument = (input: {
-  category: string;
   title: string;
   description?: string;
   file: File;
 }) => {
   const form = new FormData();
-  form.set("category", input.category);
   form.set("title", input.title);
   if (input.description) form.set("description", input.description);
   form.set("file", input.file);
@@ -75,17 +72,8 @@ export const uploadDocument = (input: {
   );
 };
 
-export const createDocumentFromTemplate = (input: {
-  templateId: string;
-  category: string;
-  title: string;
-  description?: string;
-  bodyHtml: string;
-}) =>
-  apiFetch<DocumentItem | { pending: PendingActionItem }>(
-    "/api/documents/from-template",
-    { method: "POST", body: JSON.stringify(input) },
-  );
+export const templateFileUrl = (templateId: string, format: "docx" | "pdf") =>
+  `/api/documents/templates/${templateId}?format=${format}`;
 
 export const addDocumentVersion = (
   documentId: string,
@@ -166,7 +154,7 @@ export const resendSignerLink = (signingRequestId: string, signerId: string) =>
 
 export const fetchMySignature = (signingRequestId: string) =>
   apiFetch<{
-    document: { title: string; category: string } | null;
+    document: { title: string } | null;
     version: { contentType: string } | null;
     signingRequestId: string;
     signingRequestStatus: string;
@@ -219,7 +207,7 @@ export const pendingFileUrl = (pendingId: string) =>
 /** Public, unauthenticated: the external signer's own view. */
 export const fetchSignerView = (token: string) =>
   apiFetch<{
-    document: { title: string; category: string } | null;
+    document: { title: string } | null;
     version: { contentType: string } | null;
     signingRequestTitle: string;
     signingRequestStatus: string;
