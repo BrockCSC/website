@@ -31,6 +31,10 @@ const EMAIL_PATTERN = /^[^\s@"\\<>$]+@[^\s@"\\<>$]+\.[^\s@"\\<>$]+$/;
  *
  * addheader writes decoded header text back raw, so only a printable-ASCII
  * display name is reused; anything else falls back to the bare address.
+ *
+ * Stalwart's Sieve lexer treats any quote after a backslash as escaped, even
+ * an escaped backslash, so a string literal must never end in `\\"`; quotes
+ * and backslashes are matched as regex \x22 and \x5c instead.
  */
 const personalForwardingScript = (
   clubAddress: string,
@@ -63,7 +67,7 @@ const personalForwardingScript = (
     'if address :all :matches "From" "*" {',
     '  set "sender" "${1}";',
     "}",
-    'if anyof (string :regex "${sender}" "[^!-~]", string :contains "${sender}" ["\\"", "\\\\"]) {',
+    'if string :regex "${sender}" "[^!-~]|[\\\\x22\\\\x5c]" {',
     '  set "sender" "";',
     "}",
     'set "name" "";',
@@ -74,8 +78,7 @@ const personalForwardingScript = (
     "}",
     'set :length "namelength" "${name}";',
     'if anyof (string :is "${name}" "",',
-    '          string :regex "${name}" "[^ -~]",',
-    '          string :contains "${name}" ["\\"", "\\\\"],',
+    '          string :regex "${name}" "[^ -~]|[\\\\x22\\\\x5c]",',
     '          string :value "gt" :comparator "i;ascii-numeric" "${namelength}" "64") {',
     '  set "name" "${sender}";',
     "}",
