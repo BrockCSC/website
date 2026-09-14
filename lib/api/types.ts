@@ -310,6 +310,8 @@ export type SigningRequestRecord = {
   /** New requests only: the Certificate of Completion PDF version. */
   certificateVersionId?: string;
   certificateSha256?: string;
+  /** True from the commit that completes it until the document has moved onto the signed copy and everyone has been emailed; reads retry that while it's set. */
+  completionFollowUpPending?: boolean;
   /** Uppercase UUID shown on every stamped page and the certificate. Old rows: derive from the request id. */
   envelopeId?: string;
   events?: SigningEvent[];

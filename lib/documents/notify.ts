@@ -31,8 +31,10 @@ export const memberClubAddress = async (
   return signup?.username ? `${signup.username}@${mailDomain()}` : undefined;
 };
 
+type SystemEmail = Parameters<typeof sendSystemEmail>[0];
+
 /** No mail failure here should ever block a state change that already happened. */
-const safeSend = (msg: Parameters<typeof sendSystemEmail>[0]) =>
+const safeSend = (msg: SystemEmail) =>
   void sendSystemEmail(msg).catch((err) => {
     console.error(
       `documents: notification email failed: ${err instanceof Error ? err.message : err}`,
@@ -93,18 +95,21 @@ export const notifyExternalSigner = async (
  * One email per requester and signer, each linking to an in-browser view of
  * the signed document and its certificate. Nothing is attached. An address
  * already mailed is skipped, so a requester who also signed hears once.
+ * Only builds them: every address is looked up first, so a failed lookup
+ * sends nothing and the whole notice can be retried.
  */
-export const notifyEnvelopeCompleted = async (
+export const envelopeCompletedEmails = async (
   document: DocumentRecord,
   request: SigningRequest,
   viewTokens: Map<string, string>,
-): Promise<void> => {
+): Promise<SystemEmail[]> => {
+  const emails: SystemEmail[] = [];
   const mailed = new Set<string>();
-  const send = (to: string[], text: string[]) => {
+  const queue = (to: string[], text: string[]) => {
     const fresh = to.filter((a) => a && !mailed.has(a.toLowerCase()));
     if (!fresh.length) return;
     for (const address of fresh) mailed.add(address.toLowerCase());
-    safeSend({
+    emails.push({
       to: fresh,
       subject: `Completed: ${document.title}`,
       text: text.join("\n"),
@@ -121,17 +126,17 @@ export const notifyEnvelopeCompleted = async (
   ];
 
   if (request.createdByEmail) {
-    send([request.createdByEmail], memberText(request.createdByName));
+    queue([request.createdByEmail], memberText(request.createdByName));
   }
   const ordered = request.signers.slice().sort((a, b) => a.order - b.order);
   for (const signer of ordered) {
     if (signer.kind === "member" && signer.signupId) {
-      send(await memberAddresses(signer.signupId), memberText(signer.name));
+      queue(await memberAddresses(signer.signupId), memberText(signer.name));
       continue;
     }
     const raw = viewTokens.get(signer.id);
     if (signer.kind !== "external" || !signer.email) continue;
-    send(
+    queue(
       [signer.email],
       [
         `${signer.name ?? "Hello"},`,
@@ -148,6 +153,11 @@ export const notifyEnvelopeCompleted = async (
       ],
     );
   }
+  return emails;
+};
+
+export const sendNotifications = (emails: SystemEmail[]): void => {
+  for (const email of emails) safeSend(email);
 };
 
 export const notifyDeclined = async (

@@ -84,10 +84,11 @@ export const completedVersionIds = (
 };
 
 /**
- * Compare-and-swap on signers and status: two responses racing on one request
- * can never overwrite each other's signer entry. Events are appended in SQL,
- * never rewritten from a stale copy. Null means someone else changed the
- * request first; re-read and try again.
+ * Compare-and-swap on signers, status and the completion follow-up flag: two
+ * responses racing on one request can never overwrite each other's signer
+ * entry, and two follow-ups can't both clear the flag and email everyone.
+ * Events are appended in SQL, never rewritten from a stale copy. Null means
+ * someone else changed the request first; re-read and try again.
  */
 export const commitRequest = async (
   current: SigningRequest,
@@ -108,6 +109,7 @@ export const commitRequest = async (
         eq(table.id, current.id),
         sql`${table.data}->'signers' = ${JSON.stringify(current.signers)}::jsonb`,
         sql`${table.data}->>'status' = ${current.status}`,
+        sql`coalesce(${table.data}->>'completionFollowUpPending', 'false') = ${current.completionFollowUpPending ? "true" : "false"}`,
       ),
     )
     .returning();

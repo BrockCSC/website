@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { and, eq, sql } from "drizzle-orm";
 import { PDFDocument } from "pdf-lib";
 import {
   SIGNATURE_FONT_IDS,
@@ -8,13 +9,8 @@ import {
   type SigningEvent,
   type SigningRequestRecord,
 } from "@/lib/api/types";
-import {
-  type Entity,
-  create,
-  findById,
-  remove,
-  update,
-} from "@/lib/db/repository";
+import { db } from "@/lib/db";
+import { type Entity, create, findById, remove } from "@/lib/db/repository";
 import { documentsTable, documentVersionsTable } from "@/lib/db/schema";
 import { buildCompletionCertificate } from "./certificate";
 import { type CertificateSigner, buildCertificatePdf } from "./certificate-pdf";
@@ -25,7 +21,11 @@ import {
   loadSigningRequest,
   signingEvent,
 } from "./envelope";
-import { memberClubAddress, notifyEnvelopeCompleted } from "./notify";
+import {
+  envelopeCompletedEmails,
+  memberClubAddress,
+  sendNotifications,
+} from "./notify";
 import {
   type StampField,
   type StampSigner,
@@ -62,6 +62,18 @@ const isFullySigned = (request: SigningRequestRecord) =>
   request.status === "sent" &&
   request.signers.length > 0 &&
   request.signers.every((s) => s.status === "signed");
+
+const isFollowUpPending = (request: SigningRequestRecord) =>
+  request.status === "completed" && request.completionFollowUpPending === true;
+
+/** Fresh read-only view tokens for every external signer; the raw values land in `into`. */
+const withViewTokens = (signers: Signer[], into: Map<string, string>) =>
+  signers.map((signer) => {
+    if (signer.kind !== "external") return signer;
+    const { raw, viewTokenHash, viewTokenExpiresAt } = issueViewToken();
+    into.set(signer.id, raw);
+    return { ...signer, viewTokenHash, viewTokenExpiresAt };
+  });
 
 const initialsOf = (fullName: string) =>
   fullName
@@ -281,11 +293,9 @@ export const finalizeIfComplete = async (
   const completedEvent = signingEvent("completed");
   const now = completedEvent.at;
   const viewTokens = new Map<string, string>();
-  let document: Entity<DocumentRecord>;
   let completed: SigningRequest | null;
-  let currentVersionId: string;
   try {
-    const foundDocument = await findById<DocumentRecord>(
+    const document = await findById<DocumentRecord>(
       documentsTable,
       request.documentId,
     );
@@ -293,10 +303,9 @@ export const finalizeIfComplete = async (
       documentVersionsTable,
       request.sourceVersionId,
     );
-    if (!foundDocument || !source) {
+    if (!document || !source) {
       throw new Error("the document or its source version is missing");
     }
-    document = foundDocument;
 
     let patch: Partial<SigningRequestRecord>;
     if (source.contentType === "application/pdf") {
@@ -318,7 +327,6 @@ export const finalizeIfComplete = async (
         certificateVersionId: certificate.id,
         certificateSha256: certificate.sha256,
       };
-      currentVersionId = signed.id;
     } else {
       const record = await storeVersion(
         document.id,
@@ -326,18 +334,17 @@ export const finalizeIfComplete = async (
         now,
       );
       patch = { resultingVersionId: record.id, sha256: record.sha256 };
-      currentVersionId = record.id;
     }
 
-    const signers = request.signers.map((signer) => {
-      if (signer.kind !== "external") return signer;
-      const { raw, viewTokenHash, viewTokenExpiresAt } = issueViewToken();
-      viewTokens.set(signer.id, raw);
-      return { ...signer, viewTokenHash, viewTokenExpiresAt };
-    });
     completed = await commitRequest(
       request,
-      { ...patch, signers, status: "completed", completedAt: now },
+      {
+        ...patch,
+        signers: withViewTokens(request.signers, viewTokens),
+        status: "completed",
+        completedAt: now,
+        completionFollowUpPending: true,
+      },
       [completedEvent],
     );
   } catch (err) {
@@ -357,26 +364,79 @@ export const finalizeIfComplete = async (
     };
   }
 
-  lastAttemptAt.delete(request.id);
-  try {
-    await update<DocumentRecord>(documentsTable, document.id, {
-      currentVersionId,
-    });
-    await notifyEnvelopeCompleted(document, completed, viewTokens);
-  } catch (err) {
-    console.error(
-      `documents: signing request ${request.id} completed, but a follow-up step failed: ${err instanceof Error ? err.message : err}`,
-    );
-  }
-  return { request: completed, viewTokens };
+  return { request: await finishFollowUp(completed, viewTokens), viewTokens };
 };
 
-/** For read paths: retries a completion that failed earlier, at most once a minute per request. */
+/** Guarded on the source version, so a late retry never rolls back a version uploaded since. */
+const moveDocumentOntoResult = async (request: SigningRequestRecord) => {
+  if (!request.resultingVersionId) return;
+  const table = documentsTable;
+  const patch = { currentVersionId: request.resultingVersionId };
+  await db
+    .update(table)
+    .set({ data: sql`${table.data} || ${JSON.stringify(patch)}::jsonb` })
+    .where(
+      and(
+        eq(table.id, request.documentId),
+        sql`${table.data}->>'currentVersionId' = ${request.sourceVersionId}`,
+      ),
+    );
+};
+
+/**
+ * After the completing commit: moves the document onto the signed copy,
+ * emails everyone, then clears completionFollowUpPending. Nothing is sent
+ * until every address is looked up and the flag is cleared, so a failure
+ * sends nothing and a later read retries the lot. Raw view tokens only live
+ * in the call that completed it, so a retry mints fresh ones for the emails.
+ */
+const finishFollowUp = async (
+  request: SigningRequest,
+  issued?: Map<string, string>,
+): Promise<SigningRequest> => {
+  lastAttemptAt.set(request.id, Date.now());
+  try {
+    await moveDocumentOntoResult(request);
+    const viewTokens = issued ?? new Map<string, string>();
+    const signers = issued
+      ? request.signers
+      : withViewTokens(request.signers, viewTokens);
+    const document = await findById<DocumentRecord>(
+      documentsTable,
+      request.documentId,
+    );
+    const emails = document
+      ? await envelopeCompletedEmails(
+          document,
+          { ...request, signers },
+          viewTokens,
+        )
+      : [];
+    const done = await commitRequest(request, {
+      signers,
+      completionFollowUpPending: false,
+    });
+    if (!done) return await loadSigningRequest(request.id);
+    lastAttemptAt.delete(request.id);
+    sendNotifications(emails);
+    return done;
+  } catch (err) {
+    console.error(
+      `documents: signing request ${request.id} completed, but moving the document or emailing everyone failed, will retry: ${err instanceof Error ? (err.stack ?? err.message) : err}`,
+    );
+    return request;
+  }
+};
+
+/** For read paths: retries a completion, or its follow-up, that failed earlier; at most once a minute per request. */
 export const retryStuckCompletion = async (
   request: SigningRequest,
 ): Promise<SigningRequest> => {
-  if (!isFullySigned(request)) return request;
+  const followUp = isFollowUpPending(request);
+  if (!followUp && !isFullySigned(request)) return request;
   const last = lastAttemptAt.get(request.id);
   if (last && Date.now() - last < RETRY_INTERVAL_MS) return request;
-  return (await finalizeIfComplete(request)).request;
+  return followUp
+    ? finishFollowUp(request)
+    : (await finalizeIfComplete(request)).request;
 };
