@@ -3,255 +3,35 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
-import { DocumentPreview } from "@/components/documents/document-preview";
-import { FillableField } from "@/components/documents/fillable-field";
+import { CompletedDocuments } from "@/components/documents/completed-documents";
+import { SignerSwatch } from "@/components/documents/placement-tools";
+import {
+  SignerActivity,
+  signerStatusLabel,
+} from "@/components/documents/signer-activity";
+import { MemberSigningPanel } from "@/components/documents/signing/signing-flow";
+import { SigningTimeline } from "@/components/documents/signing-timeline";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import {
   addSigner,
   cancelSigningRequest,
   fetchMemberOptions,
-  fetchMySignature,
   fetchSigningRequest,
   removeSigner,
   resendSignerLink,
-  respondToMySignature,
-  documentFileUrl,
   type DocumentItem,
   type MemberOption,
   type SigningRequestItem,
 } from "@/lib/api/documents";
-import type { SafeSigner } from "@/lib/api/documents";
-import type { SigningField } from "@/lib/api/types";
-import {
-  SIGNING_FIELD_DEFAULT_LABEL,
-  todayIsoLocal,
-} from "@/lib/documents/fields";
+import { signerColor } from "@/lib/documents/signer-colors";
+import { formatSigningTime } from "@/lib/documents/signing-time";
 import { useSession } from "../../../session";
 import { ask } from "../../../ask";
 import { Note, Panel, Pill, Rows, field } from "../../../users/ui";
 
 const statusTone = (status: string) =>
-  status === "signed" ? "accent" : "flat";
-
-function MySignaturePanel({
-  signingRequestId,
-  onChanged,
-}: {
-  signingRequestId: string;
-  onChanged: () => void;
-}) {
-  const [view, setView] = useState<{
-    document: { title: string } | null;
-    version: { contentType: string } | null;
-    versionId: string;
-    signer: SafeSigner;
-    fields: SigningField[];
-    canRespond: boolean;
-  } | null>(null);
-  const [applicable, setApplicable] = useState(true);
-  const [signatureText, setSignatureText] = useState("");
-  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
-  const [declining, setDeclining] = useState(false);
-  const [declineReason, setDeclineReason] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void fetchMySignature(signingRequestId)
-      .then((data) => {
-        setView(data);
-        setFieldValues(
-          Object.fromEntries(
-            data.fields
-              .filter((f) => f.type === "date")
-              .map((f) => [f.id, todayIsoLocal()]),
-          ),
-        );
-      })
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 404) setApplicable(false);
-      });
-  }, [signingRequestId]);
-
-  if (!applicable || !view) return null;
-
-  const missingRequiredField = view.fields.some(
-    (f) => f.required && f.type !== "signature" && !fieldValues[f.id]?.trim(),
-  );
-
-  const sign = async () => {
-    if (!signatureText.trim() || missingRequiredField) return;
-    setBusy(true);
-    setError(null);
-    try {
-      const values = Object.fromEntries(
-        view.fields.map((f) => [
-          f.id,
-          f.type === "signature"
-            ? signatureText.trim()
-            : (fieldValues[f.id]?.trim() ?? ""),
-        ]),
-      );
-      await respondToMySignature(signingRequestId, {
-        action: "sign",
-        signatureText: signatureText.trim(),
-        fieldValues: values,
-      });
-      onChanged();
-      setView(null);
-      setApplicable(false);
-    } catch (err) {
-      setError(
-        (err instanceof ApiError && err.detail) ||
-          "Could not record your signature.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const decline = async () => {
-    setBusy(true);
-    setError(null);
-    try {
-      await respondToMySignature(signingRequestId, {
-        action: "decline",
-        reason: declineReason.trim() || undefined,
-      });
-      onChanged();
-      setView(null);
-      setApplicable(false);
-    } catch (err) {
-      setError(
-        (err instanceof ApiError && err.detail) || "Could not record that.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  return (
-    <Panel title="Your signature" tone="danger">
-      <a
-        className="font-bold text-brand underline underline-offset-4"
-        href={documentFileUrl(view.versionId)}
-        rel="noreferrer"
-        target="_blank"
-      >
-        Open the document to review
-      </a>
-      <p className="mt-2 text-sm text-subtle">Status: {view.signer.status}</p>
-
-      {view.canRespond && (
-        <div className="mt-4">
-          {declining ? (
-            <div>
-              <textarea
-                className={`${field} min-h-[70px]`}
-                onChange={(e) => setDeclineReason(e.target.value)}
-                placeholder="Reason (optional)"
-                value={declineReason}
-              />
-              <div className="mt-3 flex gap-2">
-                <Button
-                  disabled={busy}
-                  onClick={decline}
-                  type="button"
-                  variant="destructive"
-                >
-                  Confirm decline
-                </Button>
-                <Button
-                  disabled={busy}
-                  onClick={() => setDeclining(false)}
-                  type="button"
-                  variant="secondary"
-                >
-                  Back
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div>
-              {!!view.fields.length && view.version && (
-                <div className="mb-4">
-                  <p className="mb-2 text-xs text-subtle">
-                    Your fields are marked below. Signature fields show the name
-                    you type further down.
-                  </p>
-                  <DocumentPreview
-                    contentType={view.version.contentType}
-                    fileUrl={documentFileUrl(view.versionId)}
-                    key={view.versionId}
-                    overlay={(page) => (
-                      <>
-                        {view.fields
-                          .filter((f) => f.page === page)
-                          .map((f) => (
-                            <FillableField
-                              key={f.id}
-                              label={
-                                f.label ?? SIGNING_FIELD_DEFAULT_LABEL[f.type]
-                              }
-                              onChange={(v) =>
-                                setFieldValues((prev) => ({
-                                  ...prev,
-                                  [f.id]: v,
-                                }))
-                              }
-                              required={f.required}
-                              type={f.type}
-                              value={
-                                f.type === "signature"
-                                  ? signatureText
-                                  : (fieldValues[f.id] ?? "")
-                              }
-                              xPercent={f.xPercent}
-                              yPercent={f.yPercent}
-                            />
-                          ))}
-                      </>
-                    )}
-                  />
-                </div>
-              )}
-              <input
-                className={field}
-                onChange={(e) => setSignatureText(e.target.value)}
-                placeholder="Type your full name to sign"
-                value={signatureText}
-              />
-              <div className="mt-3 flex gap-2">
-                <Button
-                  disabled={
-                    busy || !signatureText.trim() || missingRequiredField
-                  }
-                  onClick={sign}
-                  type="button"
-                  variant="primary"
-                >
-                  Sign
-                </Button>
-                <Button
-                  disabled={busy}
-                  onClick={() => setDeclining(true)}
-                  type="button"
-                  variant="outline"
-                >
-                  Decline
-                </Button>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-      {error && (
-        <p className="mt-3 text-sm font-bold text-destructive">{error}</p>
-      )}
-    </Panel>
-  );
-}
+  status === "signed" || status === "completed" ? "accent" : "flat";
 
 export default function SigningRequestPage() {
   const id = useParams().id as string;
@@ -378,7 +158,7 @@ export default function SigningRequestPage() {
   if (!user.isExecutive) {
     return (
       <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
-        <MySignaturePanel onChanged={() => {}} signingRequestId={id} />
+        <MemberSigningPanel onChanged={() => {}} signingRequestId={id} />
       </div>
     );
   }
@@ -423,7 +203,11 @@ export default function SigningRequestPage() {
       {note && <p className="text-sm font-bold text-brand">{note}</p>}
       {error && <p className="text-sm font-bold text-destructive">{error}</p>}
 
-      <MySignaturePanel onChanged={load} signingRequestId={id} />
+      <MemberSigningPanel
+        hideCompletedFiles
+        onChanged={load}
+        signingRequestId={id}
+      />
 
       <Panel
         action={
@@ -452,18 +236,36 @@ export default function SigningRequestPage() {
               "Requested by",
               signingRequest.createdByName || signingRequest.createdBy,
             ],
-            ["Requested", new Date(signingRequest.createdAt).toLocaleString()],
+            ["Requested", formatSigningTime(signingRequest.createdAt)],
             ...(signingRequest.completedAt
               ? [
                   [
                     "Completed",
-                    new Date(signingRequest.completedAt).toLocaleString(),
+                    formatSigningTime(signingRequest.completedAt),
+                  ] as [string, React.ReactNode],
+                ]
+              : []),
+            ...(signingRequest.cancelledAt
+              ? [
+                  [
+                    "Cancelled",
+                    formatSigningTime(signingRequest.cancelledAt),
                   ] as [string, React.ReactNode],
                 ]
               : []),
           ]}
         />
       </Panel>
+
+      {signingRequest.status === "completed" &&
+        signingRequest.resultingVersionId && (
+          <Panel
+            note="A SHA-256 fingerprint changes if even one byte of its file does."
+            title="Completed documents"
+          >
+            <CompletedDocuments request={signingRequest} />
+          </Panel>
+        )}
 
       <Panel title="Signers">
         <ul className="flex flex-col gap-3">
@@ -476,57 +278,19 @@ export default function SigningRequestPage() {
                 key={signer.id}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-ink">
+                  <div className="min-w-0">
+                    <p className="flex flex-wrap items-center gap-x-2 font-bold text-ink">
+                      <SignerSwatch color={signerColor(signer.order)} />
                       {signer.name ?? "Signer"}{" "}
-                      <span className="font-normal text-subtle">
+                      <span className="font-normal break-all text-subtle">
                         ({signer.kind === "member" ? "member" : signer.email})
                       </span>
                     </p>
-                    {signer.status === "signed" && (
-                      <p className="text-xs text-subtle">
-                        Signed &quot;{signer.signatureText}&quot; at{" "}
-                        {signer.signedAt} from {signer.ip}
-                      </p>
-                    )}
-                    {signer.status === "signed" &&
-                      !!signer.fieldValues &&
-                      signingRequest.fields
-                        ?.filter((f) => f.signerId === signer.id)
-                        .map(
-                          (f) =>
-                            signer.fieldValues![f.id] && (
-                              <p className="text-xs text-subtle" key={f.id}>
-                                {f.label ?? SIGNING_FIELD_DEFAULT_LABEL[f.type]}
-                                : &quot;{signer.fieldValues![f.id]}&quot;
-                              </p>
-                            ),
-                        )}
-                    {signer.status !== "signed" &&
-                      !!signingRequest.fields?.some(
-                        (f) => f.signerId === signer.id,
-                      ) && (
-                        <p className="text-xs text-subtle">
-                          {
-                            signingRequest.fields.filter(
-                              (f) => f.signerId === signer.id,
-                            ).length
-                          }{" "}
-                          field(s) placed for them
-                        </p>
-                      )}
-                    {signer.status === "declined" && (
-                      <p className="text-xs text-subtle">
-                        Declined at {signer.declinedAt}
-                        {signer.declineReason
-                          ? `: ${signer.declineReason}`
-                          : ""}
-                      </p>
-                    )}
+                    <SignerActivity request={signingRequest} signer={signer} />
                   </div>
                   <div className="flex items-center gap-2">
                     <Pill tone={statusTone(signer.status)}>
-                      {signer.status}
+                      {signerStatusLabel(signer)}
                     </Pill>
                     {active && signer.status !== "signed" && (
                       <>
@@ -600,6 +364,10 @@ export default function SigningRequestPage() {
             </form>
           </div>
         )}
+      </Panel>
+
+      <Panel note="Oldest first, in Toronto time." title="History">
+        <SigningTimeline request={signingRequest} />
       </Panel>
     </div>
   );

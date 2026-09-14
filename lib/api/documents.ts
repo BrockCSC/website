@@ -5,7 +5,6 @@ import type {
   PendingDocumentActionRecord,
   Signer,
   SignerInput,
-  SigningField,
   SigningFieldInput,
   SigningRequestRecord,
   WithKey,
@@ -23,7 +22,7 @@ type PendingActionTarget = {
 export type PendingActionItem = WithKey<PendingDocumentActionRecord> & {
   target?: PendingActionTarget;
 };
-export type SafeSigner = Omit<Signer, "tokenHash">;
+export type SafeSigner = Omit<Signer, "tokenHash" | "viewTokenHash">;
 export type SigningRequestItem = WithKey<
   Omit<SigningRequestRecord, "signers">
 > & {
@@ -152,36 +151,6 @@ export const resendSignerLink = (signingRequestId: string, signerId: string) =>
     },
   );
 
-export const fetchMySignature = (signingRequestId: string) =>
-  apiFetch<{
-    document: { title: string } | null;
-    version: { contentType: string } | null;
-    signingRequestId: string;
-    signingRequestStatus: string;
-    versionId: string;
-    signer: SafeSigner;
-    fields: SigningField[];
-    canRespond: boolean;
-  }>(`/api/documents/signing/${signingRequestId}/my-signature`);
-
-export const respondToMySignature = (
-  signingRequestId: string,
-  body:
-    | {
-        action: "sign";
-        signatureText: string;
-        fieldValues?: Record<string, string>;
-      }
-    | { action: "decline"; reason?: string },
-) =>
-  apiFetch<{ success: true }>(
-    `/api/documents/signing/${signingRequestId}/my-signature`,
-    {
-      method: "POST",
-      body: JSON.stringify(body),
-    },
-  );
-
 export const fetchPendingActions = () =>
   apiFetch<PendingActionItem[]>("/api/documents/pending");
 
@@ -203,35 +172,3 @@ export const documentFileUrl = (versionId: string) =>
   `/api/documents/files/${versionId}`;
 export const pendingFileUrl = (pendingId: string) =>
   `/api/documents/pending/${pendingId}/file`;
-
-/** Public, unauthenticated: the external signer's own view. */
-export const fetchSignerView = (token: string) =>
-  apiFetch<{
-    document: { title: string } | null;
-    version: { contentType: string } | null;
-    signingRequestTitle: string;
-    signingRequestStatus: string;
-    mode: "ordered" | "parallel";
-    signer: SafeSigner;
-    fields: SigningField[];
-    otherSigners: { order: number; status: string }[];
-    canRespond: boolean;
-  }>(`/api/documents/sign/${token}`);
-
-export const respondAsSigner = (
-  token: string,
-  body:
-    | {
-        action: "sign";
-        signatureText: string;
-        fieldValues?: Record<string, string>;
-      }
-    | { action: "decline"; reason?: string },
-) =>
-  apiFetch<{ success: true }>(`/api/documents/sign/${token}`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
-
-export const signerFileUrl = (token: string) =>
-  `/api/documents/sign/${token}/file`;

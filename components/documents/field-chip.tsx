@@ -1,13 +1,23 @@
 "use client";
 
-import { Calendar, PenLine, Trash2, Type, type LucideIcon } from "lucide-react";
+import {
+  Calendar,
+  CaseSensitive,
+  PenLine,
+  Signature,
+  Trash2,
+  UserRound,
+  type LucideIcon,
+} from "lucide-react";
 import { useRef } from "react";
 import type { SigningFieldType } from "@/lib/api/types";
 
-const ICON: Record<SigningFieldType, LucideIcon> = {
-  signature: PenLine,
+export const FIELD_ICON: Record<SigningFieldType, LucideIcon> = {
+  signature: Signature,
+  initials: PenLine,
   date: Calendar,
-  text: Type,
+  name: UserRound,
+  text: CaseSensitive,
 };
 
 const clamp = (n: number) => Math.min(100, Math.max(0, n));
@@ -24,6 +34,7 @@ export function PlaceableField({
   xPercent,
   yPercent,
   caption,
+  color,
   onMove,
   onDelete,
 }: {
@@ -31,16 +42,18 @@ export function PlaceableField({
   xPercent: number;
   yPercent: number;
   caption: string;
+  /** The signer's colour; needs 4.5:1 contrast with white text. Brand colours when omitted. */
+  color?: string;
   onMove: (xPercent: number, yPercent: number) => void;
   onDelete: () => void;
 }) {
   const dragging = useRef(false);
-  const Icon = ICON[type];
+  const Icon = FIELD_ICON[type];
 
   return (
     <div
       aria-label={`${caption} field. Drag to move, arrow keys to nudge, Delete to remove.`}
-      className="pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none items-center gap-1 rounded-[10px] border-2 border-line bg-brand px-2 py-1 text-xs font-bold whitespace-nowrap text-brand-ink shadow-brut-sm select-none active:cursor-grabbing"
+      className={`pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none items-center gap-1 rounded-[10px] border-2 border-line px-2 py-1 text-xs font-bold whitespace-nowrap shadow-brut-sm select-none active:cursor-grabbing ${color ? "text-white" : "bg-brand text-brand-ink"}`}
       onClick={(e) => e.stopPropagation()}
       onDragStart={(e) => e.preventDefault()}
       onKeyDown={(e) => {
@@ -83,7 +96,11 @@ export function PlaceableField({
         e.currentTarget.releasePointerCapture(e.pointerId);
       }}
       role="button"
-      style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
+      style={{
+        left: `${xPercent}%`,
+        top: `${yPercent}%`,
+        backgroundColor: color,
+      }}
       tabIndex={0}
       title={`${caption} — drag to move, Delete to remove`}
     >
@@ -91,7 +108,7 @@ export function PlaceableField({
       {caption}
       <button
         aria-label={`Delete ${caption} field`}
-        className="ml-1 rounded-full p-0.5 hover:bg-black/10"
+        className="ml-1 rounded-full p-0.5 hover:bg-black/20"
         onClick={(e) => {
           e.stopPropagation();
           onDelete();

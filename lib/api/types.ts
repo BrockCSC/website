@@ -199,7 +199,7 @@ export type Signer = {
   /** External signers only. */
   email?: string;
   status: SignerStatus;
-  /** Cleared once spent (signed/declined) or on cancel/resend rotation. */
+  /** Kept after they sign or decline, so the link still shows their status. Cleared if the request stops before they respond; replaced on resend. */
   tokenHash?: string | null;
   tokenExpiresAt?: string | null;
   /** Set once their invite/notice email goes out, so a re-run of the eligibility sweep doesn't re-send it. */
@@ -213,12 +213,66 @@ export type Signer = {
   userAgent?: string;
   /** Set on sign, when the request has fields: this signer's own field id -> typed value. */
   fieldValues?: Record<string, string>;
+  /** When they accepted the electronic record and signature disclosure; signing is refused without it. */
+  consentedAt?: string;
+  consentIp?: string;
+  /** The signature and initials they adopted at signing time. */
+  adopted?: AdoptedSignature;
+  /** External signers only: hashed read-only link to the completed envelope. */
+  viewTokenHash?: string | null;
+  viewTokenExpiresAt?: string | null;
+};
+
+export const SIGNATURE_FONT_IDS = [
+  "dancing-script",
+  "great-vibes",
+  "caveat",
+  "homemade-apple",
+] as const;
+
+export type SignatureFontId = (typeof SIGNATURE_FONT_IDS)[number];
+
+export type AdoptedSignature = {
+  fullName: string;
+  initials: string;
+  style: "typed" | "drawn";
+  /** Typed style only. */
+  font?: SignatureFontId;
+  /** Drawn style only: storedFilename (under DOCUMENTS_DIR) of the trimmed transparent PNG. Never a data URL. */
+  signatureImage?: string;
+  initialsImage?: string;
+  adoptedAt: string;
+};
+
+export type SigningEventType =
+  | "created"
+  | "sent"
+  | "viewed"
+  | "consented"
+  | "signed"
+  | "declined"
+  | "completed"
+  | "cancelled"
+  | "resent"
+  | "signer-added"
+  | "signer-removed";
+
+/** Append-only audit trail; the certificate of completion is built from these. */
+export type SigningEvent = {
+  type: SigningEventType;
+  at: string;
+  signerId?: string;
+  actorName?: string;
+  ip?: string;
+  userAgent?: string;
 };
 
 type SigningRequestStatus =
   "draft" | "sent" | "completed" | "cancelled" | "declined";
 
-export type SigningFieldType = "signature" | "date" | "text";
+/** "date" is Date Signed (server-stamped at signing); "name" is the adopted full name (server-filled). */
+export type SigningFieldType =
+  "signature" | "initials" | "date" | "name" | "text";
 
 /** Where to sign: placed on the rendered preview, one per required action. */
 export type SigningField = {
@@ -249,11 +303,79 @@ export type SigningRequestRecord = {
   /** Set once, by the preparer, at start-signing time — never edited afterward. */
   fields?: SigningField[];
   completedAt?: string;
+  /** New requests: the signed (stamped) PDF version. Old requests: the .txt completion record. */
   resultingVersionId?: string;
-  /** sha256 of the resulting completion record, for tamper detection only. */
+  /** sha256 of resultingVersionId's bytes. */
   sha256?: string;
+  /** New requests only: the Certificate of Completion PDF version. */
+  certificateVersionId?: string;
+  certificateSha256?: string;
+  /** True from the commit that completes it until the document has moved onto the signed copy and everyone has been emailed; reads retry that while it's set. */
+  completionFollowUpPending?: boolean;
+  /** Uppercase UUID shown on every stamped page and the certificate. Old rows: derive from the request id. */
+  envelopeId?: string;
+  events?: SigningEvent[];
+  createdByIp?: string;
   cancelledAt?: string;
   cancelledBy?: string;
+};
+
+/** GET /api/documents/sign/[token] and GET /api/documents/signing/[id]/my-signature. */
+export type SignerSessionView = {
+  envelopeId: string;
+  requestTitle: string;
+  documentTitle: string;
+  requesterName: string;
+  requestStatus: "sent" | "completed" | "cancelled" | "declined";
+  signer: {
+    id: string;
+    name?: string;
+    email?: string;
+    kind: "member" | "external";
+    status: "pending" | "viewed" | "signed" | "declined";
+    consentedAt?: string;
+    signedAt?: string;
+  };
+  /** This signer's own fields only. */
+  fields: SigningField[];
+  /** Inline source PDF, same access check as today's /file routes. */
+  fileUrl: string;
+  canSign: boolean;
+  /** e.g. "Waiting for Holly Young to sign first." when canSign is false. */
+  waitingReason?: string;
+  /** Present once the whole envelope is completed. */
+  completed?: { signedFileUrl: string; certificateUrl: string };
+};
+
+/** POST body to the same two routes (and nothing else signs). Date, name and signature values are computed server-side. */
+export type SignSubmission = {
+  adopted: {
+    fullName: string;
+    initials: string;
+    style: "typed" | "drawn";
+    font?: SignatureFontId;
+    /** data:image/png;base64,... drawn style only, <= 300KB decoded each. */
+    signaturePng?: string;
+    initialsPng?: string;
+  };
+  /** Text fields only, keyed by field id. */
+  fieldValues: Record<string, string>;
+};
+
+export type SignResult = {
+  signerStatus: "signed";
+  requestStatus: "sent" | "completed";
+  completed?: { signedFileUrl: string; certificateUrl: string };
+};
+
+/** GET /api/documents/signed/[token] — an external signer's read-only link to the completed envelope. */
+export type CompletedEnvelopeView = {
+  envelopeId: string;
+  documentTitle: string;
+  requestTitle: string;
+  completedAt: string;
+  signedFileUrl: string;
+  certificateUrl: string;
 };
 
 export type PendingDocumentActionKind =

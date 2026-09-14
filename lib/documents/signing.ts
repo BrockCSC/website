@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type {
   AddSignerPayload,
+  AdoptedSignature,
   CancelSigningPayload,
   DocumentRecord,
   DocumentVersionRecord,
@@ -12,24 +13,44 @@ import type {
   SignupRecord,
   StartSigningPayload,
 } from "@/lib/api/types";
-import { type Entity, create, findById, update } from "@/lib/db/repository";
+import { type Entity, create, findById } from "@/lib/db/repository";
 import {
   documentsTable,
   documentVersionsTable,
   signingRequestsTable,
   signupsTable,
 } from "@/lib/db/schema";
-import { type Actor, signingRequestsForDocument } from "./mutations";
-import { buildCompletionCertificate } from "./certificate";
 import {
-  notifyCompletion,
+  type EventMeta,
+  SigningError,
+  commitRequest,
+  envelopeIdFor,
+  isSignersTurn,
+  loadSigningRequest,
+  newEnvelopeId,
+  signingEvent,
+  withFreshRequest,
+} from "./envelope";
+import { MAX_SIGNERS } from "./fields";
+import {
+  type FinalizeOutcome,
+  finalizeIfComplete,
+  retryStuckCompletion,
+} from "./finalize";
+import { type Actor, signingRequestsForDocument } from "./mutations";
+import {
   notifyDeclined,
   notifyExternalSigner,
   notifyMemberSigner,
-  signerEmailAddresses,
 } from "./notify";
-import { storeDocumentBytes } from "./storage";
+import { type ParsedSubmission, resolveFieldValues } from "./sign-submission";
+import { deleteDocumentFile, storeDocumentBytes } from "./storage";
 import { issueSignerToken } from "./tokens";
+
+type SigningRequest = Entity<SigningRequestRecord>;
+
+/** The proposer's IP rides in the payload, so a request queued for approval still records its originator. */
+export type StartSigningInput = StartSigningPayload & { createdByIp?: string };
 
 const displayNameForSignup = (signup: SignupRecord) =>
   [signup.firstName, signup.lastName].filter(Boolean).join(" ") ||
@@ -42,7 +63,7 @@ const buildSigner = async (
 ): Promise<Signer> => {
   if (input.kind === "member") {
     const signup = await findById<SignupRecord>(signupsTable, input.signupId);
-    if (!signup) throw new Error("Unknown member signer.");
+    if (!signup) throw new SigningError(400, "Unknown member signer.");
     return {
       id: randomUUID(),
       kind: "member",
@@ -55,7 +76,7 @@ const buildSigner = async (
   const name = input.name.trim();
   const email = input.email.trim();
   if (!name || !email) {
-    throw new Error("External signers need a name and an email.");
+    throw new SigningError(400, "External signers need a name and an email.");
   }
   return {
     id: randomUUID(),
@@ -73,113 +94,201 @@ const isEligible = (
   all: Signer[],
   mode: "ordered" | "parallel",
 ): boolean => {
-  if (signer.status !== "pending" || signer.notifiedAt) return false;
+  if (signer.notifiedAt) return false;
+  // Older rows can be "viewed" by a signer who opened the request before their turn.
+  if (signer.status !== "pending" && signer.status !== "viewed") return false;
   if (mode === "parallel") return true;
   return all
     .filter((s) => s.order < signer.order)
     .every((s) => s.status === "signed");
 };
 
-/** Notifies whichever signers just became eligible. Idempotent via notifiedAt. */
+/**
+ * Notifies whichever signers just became eligible, once each (notifiedAt).
+ * Mail goes out only after the commit wins, so a lost race never double-sends.
+ */
 const notifyEligible = async (
-  request: Entity<SigningRequestRecord>,
-  document: DocumentRecord,
-): Promise<Entity<SigningRequestRecord>> => {
-  const next = request.signers.map((s) => ({ ...s }));
-  let changed = false;
-  for (const signer of next) {
-    if (!isEligible(signer, next, request.mode)) continue;
-    if (signer.kind === "external") {
-      const { raw, tokenHash, tokenExpiresAt } = issueSignerToken();
-      signer.tokenHash = tokenHash;
-      signer.tokenExpiresAt = tokenExpiresAt;
-      await notifyExternalSigner(signer, raw, document);
-    } else {
-      await notifyMemberSigner(signer, document, request.id);
-    }
-    signer.notifiedAt = new Date().toISOString();
-    changed = true;
-  }
-  if (!changed) return request;
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      signers: next,
-    },
+  request: SigningRequest,
+): Promise<SigningRequest> => {
+  const document = await findById<DocumentRecord>(
+    documentsTable,
+    request.documentId,
   );
-  return updated ?? request;
+  if (!document) return request;
+  let current = request;
+  for (let tries = 0; tries < 5; tries++) {
+    if (current.status !== "sent") return current;
+    const now = new Date().toISOString();
+    const outgoing: { signer: Signer; rawToken?: string }[] = [];
+    const signers = current.signers.map((s) => {
+      if (!isEligible(s, current.signers, current.mode)) return s;
+      const next: Signer = { ...s, notifiedAt: now };
+      let rawToken: string | undefined;
+      if (s.kind === "external") {
+        const token = issueSignerToken();
+        next.tokenHash = token.tokenHash;
+        next.tokenExpiresAt = token.tokenExpiresAt;
+        rawToken = token.raw;
+      }
+      outgoing.push({ signer: next, rawToken });
+      return next;
+    });
+    if (!outgoing.length) return current;
+
+    const updated = await commitRequest(
+      current,
+      { signers },
+      outgoing.map(({ signer }) =>
+        signingEvent("sent", { signerId: signer.id }, now),
+      ),
+    );
+    if (updated) {
+      for (const { signer, rawToken } of outgoing) {
+        if (rawToken) {
+          await notifyExternalSigner(signer, rawToken, document, updated);
+        } else {
+          await notifyMemberSigner(signer, document, updated);
+        }
+      }
+      return updated;
+    }
+    current = await loadSigningRequest(request.id);
+  }
+  // Not thrown: the change that got here is already committed, and a retry of
+  // it would fail or duplicate it. retryStuckRequest picks this up on a read.
+  console.error(
+    `documents: kept losing the commit notifying signers on signing request ${request.id}; a later read will retry`,
+  );
+  return current;
 };
 
-/** Never send a signer's tokenHash to any client — it has no legitimate UI use. */
-export const redactSigner = (signer: Signer): Omit<Signer, "tokenHash"> => {
-  const { tokenHash: _tokenHash, ...rest } = signer;
+/**
+ * For read paths: retries a completion that failed earlier, and notifies a
+ * signer whose turn came while notifyEligible kept losing its commit.
+ */
+export const retryStuckRequest = async (
+  request: SigningRequest,
+): Promise<SigningRequest> => {
+  const current = await retryStuckCompletion(request);
+  const stranded =
+    current.status === "sent" &&
+    current.signers.some((s) => isEligible(s, current.signers, current.mode));
+  if (!stranded) return current;
+  try {
+    return await notifyEligible(current);
+  } catch (err) {
+    console.error(
+      `documents: could not notify signers on signing request ${current.id}: ${err instanceof Error ? err.message : err}`,
+    );
+    return current;
+  }
+};
+
+type SafeSigner = Omit<Signer, "tokenHash" | "viewTokenHash">;
+
+/** Never send a signer's token hashes to any client — they have no legitimate UI use. */
+const redactSigner = (signer: Signer): SafeSigner => {
+  const {
+    tokenHash: _tokenHash,
+    viewTokenHash: _viewTokenHash,
+    ...rest
+  } = signer;
   return rest;
 };
 
+/** Also fills envelopeId for rows from before it was stored, so every client sees one. */
 export const redactSigningRequest = (
-  request: Entity<SigningRequestRecord>,
-): Omit<Entity<SigningRequestRecord>, "signers"> & {
-  signers: Omit<Signer, "tokenHash">[];
-} => ({ ...request, signers: request.signers.map(redactSigner) });
+  request: SigningRequest,
+): Omit<SigningRequest, "signers"> & { signers: SafeSigner[] } => ({
+  ...request,
+  envelopeId: envelopeIdFor(request),
+  signers: request.signers.map(redactSigner),
+});
 
 /** A signer's own fields only — never another signer's, whose label could name them. */
 export const fieldsForSigner = (
-  request: Entity<SigningRequestRecord>,
+  request: SigningRequestRecord,
   signerId: string,
 ): SigningField[] =>
   request.fields?.filter((f) => f.signerId === signerId) ?? [];
 
 /**
- * Signer- and preparer-supplied strings end up embedded verbatim, one per
- * line, in the plain-text completion certificate (certificate.ts). Strip
- * control and line/paragraph-separator characters so a value can never
- * inject a fake extra line — e.g. a forged signer entry — into that record.
+ * Checked by the start route before a proposal is queued, and again when it
+ * applies: one envelope at a time, only PDFs can be stamped, and every signer
+ * needs somewhere to sign.
  */
-export const sanitizeCertificateText = (value: string): string =>
-  value.replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, " ").trim();
-
-/** Loose shape validation; resolveFieldValues (in recordSignerResponse) does the real per-signer filtering. */
-export const parseFieldValuesInput = (
-  raw: unknown,
-): Record<string, string> | undefined => {
-  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
-  const values: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (typeof value === "string" && value.trim()) {
-      const clean = sanitizeCertificateText(value).slice(0, 500);
-      if (clean) values[key] = clean;
-    }
+export const assertSignable = async (
+  payload: StartSigningPayload,
+): Promise<void> => {
+  const existing = await signingRequestsForDocument(payload.documentId);
+  if (existing.some((r) => r.status === "sent")) {
+    throw new SigningError(
+      409,
+      "A signing request is already in progress for this document.",
+    );
   }
-  return values;
+  const version = await findById<DocumentVersionRecord>(
+    documentVersionsTable,
+    payload.sourceVersionId,
+  );
+  if (!version) {
+    throw new SigningError(400, "This document has no version to sign yet.");
+  }
+  if (version.contentType !== "application/pdf") {
+    throw new SigningError(
+      400,
+      "Only PDFs can be sent for signing. Upload the document as a PDF first.",
+    );
+  }
+  if (!payload.signers.length) {
+    throw new SigningError(400, "Add at least one signer.");
+  }
+  if (payload.signers.length > MAX_SIGNERS) {
+    throw new SigningError(
+      400,
+      `A signing request can have at most ${MAX_SIGNERS} signers.`,
+    );
+  }
+  const fields = payload.fields ?? [];
+  if (fields.some((f) => !payload.signers[f.signerIndex])) {
+    throw new SigningError(400, "A field references an unknown signer.");
+  }
+  const missing = payload.signers.findIndex(
+    (_, index) =>
+      !fields.some((f) => f.signerIndex === index && f.type === "signature"),
+  );
+  if (missing !== -1) {
+    const input = payload.signers[missing];
+    const who =
+      input.kind === "external" ? input.name : `signer ${missing + 1}`;
+    throw new SigningError(
+      400,
+      `Place at least one Signature field for ${who}.`,
+    );
+  }
 };
 
 export const startSigningRequest = async (
   actor: Actor & { email?: string },
-  payload: StartSigningPayload,
-): Promise<Entity<SigningRequestRecord>> => {
+  payload: StartSigningInput,
+  meta: EventMeta = {},
+): Promise<SigningRequest> => {
   const document = await findById<DocumentRecord>(
     documentsTable,
     payload.documentId,
   );
   if (!document?.currentVersionId) {
-    throw new Error("This document has no version to sign yet.");
+    throw new SigningError(400, "This document has no version to sign yet.");
   }
   // The proposer pinned a version when they reviewed it; if it's since been
   // replaced, apply nothing rather than silently sign a version nobody chose.
   if (payload.sourceVersionId !== document.currentVersionId) {
-    throw new Error(
+    throw new SigningError(
+      409,
       "The document has changed since this was proposed. Start the signing request again.",
     );
   }
-  const existing = await signingRequestsForDocument(document.id);
-  if (existing.some((r) => r.status === "sent")) {
-    throw new Error(
-      "A signing request is already in progress for this document.",
-    );
-  }
-  if (!payload.signers.length) throw new Error("Add at least one signer.");
-  if (payload.signers.length > 25) throw new Error("Too many signers.");
+  await assertSignable(payload);
 
   const signers: Signer[] = [];
   for (const [index, input] of payload.signers.entries()) {
@@ -189,21 +298,19 @@ export const startSigningRequest = async (
   // Fields are drafted against the signer's position in the array (buildSigner
   // above is what actually mints each signer's id) — resolve that here, once,
   // rather than threading ids back through the pending-approval payload.
-  const fields: SigningField[] | undefined = payload.fields?.map((f) => {
-    const signer = signers[f.signerIndex];
-    if (!signer) throw new Error("A field references an unknown signer.");
-    return {
-      id: randomUUID(),
-      type: f.type,
-      page: f.page,
-      xPercent: f.xPercent,
-      yPercent: f.yPercent,
-      signerId: signer.id,
-      required: f.required,
-      label: f.label,
-    };
-  });
+  const fields: SigningField[] = (payload.fields ?? []).map((f) => ({
+    id: randomUUID(),
+    type: f.type,
+    page: f.page,
+    xPercent: f.xPercent,
+    yPercent: f.yPercent,
+    signerId: signers[f.signerIndex].id,
+    required: f.required,
+    label: f.label,
+  }));
 
+  const createdAt = new Date().toISOString();
+  const createdByIp = payload.createdByIp ?? meta.ip;
   const created = await create<SigningRequestRecord>(signingRequestsTable, {
     documentId: document.id,
     sourceVersionId: payload.sourceVersionId,
@@ -212,415 +319,381 @@ export const startSigningRequest = async (
     createdBy: actor.sub,
     createdByName: actor.name,
     createdByEmail: actor.email,
-    createdAt: new Date().toISOString(),
+    createdByIp,
+    createdAt,
     status: "sent",
     signers,
     fields,
+    envelopeId: newEnvelopeId(),
+    events: [
+      signingEvent(
+        "created",
+        { actorName: actor.name, ip: createdByIp, userAgent: meta.userAgent },
+        createdAt,
+      ),
+    ],
   });
 
-  return notifyEligible(created, document);
+  return notifyEligible(created);
 };
 
-export const addSignerToRequest = async (
+/** A signer added mid-flight has no placed fields; their signature is recorded on the certificate. */
+export const addSignerToRequest = (
   payload: AddSignerPayload,
-): Promise<Entity<SigningRequestRecord>> => {
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    payload.signingRequestId,
-  );
-  if (!request) throw new Error("Signing request not found.");
-  if (request.status !== "sent") {
-    throw new Error("This signing request is no longer active.");
-  }
-  const document = await findById<DocumentRecord>(
-    documentsTable,
-    request.documentId,
-  );
-  if (!document) throw new Error("Document not found.");
-
-  const nextOrder = request.signers.length
-    ? Math.max(...request.signers.map((s) => s.order)) + 1
-    : 0;
-  const signer = await buildSigner(payload.signer, nextOrder);
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      signers: [...request.signers, signer],
-    },
-  );
-  if (!updated) throw new Error("Signing request not found.");
-  return notifyEligible(updated, document);
-};
-
-/**
- * Materializes the completion certificate once every signer has signed —
- * shared by recordSignerResponse (the usual path) and removeSignerFromRequest
- * (removing the last unresponsive signer can also complete a request).
- * Returns null if `signers` isn't actually all-signed yet.
- */
-const finalizeIfComplete = async (
-  request: Entity<SigningRequestRecord>,
-  signers: Signer[],
-): Promise<Entity<SigningRequestRecord> | null> => {
-  if (!signers.length || !signers.every((s) => s.status === "signed")) {
-    return null;
-  }
-  const document = await findById<DocumentRecord>(
-    documentsTable,
-    request.documentId,
-  );
-  if (!document) throw new Error("Document not found.");
-  const sourceVersion = await findById<DocumentVersionRecord>(
-    documentVersionsTable,
-    request.sourceVersionId,
-  );
-  if (!sourceVersion) throw new Error("The original version is missing.");
-
-  const now = new Date().toISOString();
-  const certificateText = buildCompletionCertificate(document, sourceVersion, {
-    ...request,
-    signers,
-  });
-  const bytes = new TextEncoder().encode(certificateText);
-  const { storedFilename, sha256 } = await storeDocumentBytes(
-    bytes,
-    "text/plain",
-  );
-  const version = await create<DocumentVersionRecord>(documentVersionsTable, {
-    documentId: document.id,
-    storedFilename,
-    originalFilename: `${request.title} - signing certificate.txt`,
-    contentType: "text/plain",
-    size: bytes.byteLength,
-    sha256,
-    uploadedBy: request.createdBy,
-    uploadedByName: request.createdByName,
-    uploadedAt: now,
-    note: "Generated signing completion record.",
-    producedBySigningRequestId: request.id,
-  });
-  await update<DocumentRecord>(documentsTable, document.id, {
-    currentVersionId: version.id,
+  meta: EventMeta = {},
+): Promise<SigningRequest> =>
+  withFreshRequest(payload.signingRequestId, async (request) => {
+    if (request.status !== "sent") {
+      throw new SigningError(409, "This signing request is no longer active.");
+    }
+    const nextOrder = request.signers.length
+      ? Math.max(...request.signers.map((s) => s.order)) + 1
+      : 0;
+    const signer = await buildSigner(payload.signer, nextOrder);
+    const updated = await commitRequest(
+      request,
+      { signers: [...request.signers, signer] },
+      [signingEvent("signer-added", { ...meta, signerId: signer.id })],
+    );
+    return updated ? notifyEligible(updated) : null;
   });
 
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      signers,
-      status: "completed",
-      completedAt: now,
-      resultingVersionId: version.id,
-      sha256,
-    },
-  );
-  if (updated) {
-    const addressGroups = await Promise.all(signers.map(signerEmailAddresses));
-    const addresses = [
-      request.createdByEmail ?? "",
-      ...addressGroups.flat(),
-    ].filter(Boolean);
-    await notifyCompletion([...new Set(addresses)], document);
-  }
-  return updated;
-};
-
-export const removeSignerFromRequest = async (
+export const removeSignerFromRequest = (
   payload: RemoveSignerPayload,
-): Promise<Entity<SigningRequestRecord>> => {
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    payload.signingRequestId,
-  );
-  if (!request) throw new Error("Signing request not found.");
-  if (request.status !== "sent") {
-    throw new Error("This signing request is no longer active.");
-  }
-  const target = request.signers.find((s) => s.id === payload.signerId);
-  if (!target) throw new Error("Signer not found.");
-  if (target.status === "signed") {
-    throw new Error("This signer has already signed and cannot be removed.");
-  }
+  meta: EventMeta = {},
+): Promise<SigningRequest> =>
+  withFreshRequest(payload.signingRequestId, async (request) => {
+    if (request.status !== "sent") {
+      throw new SigningError(409, "This signing request is no longer active.");
+    }
+    const target = request.signers.find((s) => s.id === payload.signerId);
+    if (!target) throw new SigningError(404, "Signer not found.");
+    if (target.status === "signed") {
+      throw new SigningError(
+        409,
+        "This signer has already signed and cannot be removed.",
+      );
+    }
+    const remaining = request.signers.filter((s) => s.id !== target.id);
+    if (!remaining.length) {
+      throw new SigningError(
+        409,
+        "A signing request needs at least one signer.",
+      );
+    }
+    const updated = await commitRequest(request, { signers: remaining }, [
+      signingEvent("signer-removed", { ...meta, signerId: target.id }),
+    ]);
+    if (!updated) return null;
 
-  const remaining = request.signers.filter((s) => s.id !== payload.signerId);
-  if (!remaining.length) {
-    throw new Error("A signing request needs at least one signer.");
-  }
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      signers: remaining,
-    },
-  );
-  if (!updated) throw new Error("Signing request not found.");
+    // Removing the last unresponsive signer can leave everyone else already
+    // signed, which should complete the request exactly like a normal sign does.
+    const { request: after } = await finalizeIfComplete(updated);
+    return after.status === "completed" ? after : notifyEligible(after);
+  });
 
-  // Removing the last unresponsive signer can leave everyone else already
-  // signed, which should complete the request exactly like a normal sign does.
-  const completed = await finalizeIfComplete(updated, remaining);
-  if (completed) return completed;
-
-  const document = await findById<DocumentRecord>(
-    documentsTable,
-    request.documentId,
-  );
-  return document ? notifyEligible(updated, document) : updated;
-};
-
-export const cancelSigningRequest = async (
+export const cancelSigningRequest = (
   payload: CancelSigningPayload,
   actor: Actor,
-): Promise<Entity<SigningRequestRecord>> => {
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    payload.signingRequestId,
-  );
-  if (!request) throw new Error("Signing request not found.");
-  if (request.status !== "sent") {
-    throw new Error("This signing request is not active.");
-  }
-  const revoked = request.signers.map((s) =>
-    s.status === "pending" || s.status === "viewed"
-      ? { ...s, tokenHash: null, tokenExpiresAt: null }
-      : s,
-  );
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      status: "cancelled",
-      cancelledAt: new Date().toISOString(),
-      cancelledBy: actor.sub,
-      signers: revoked,
-    },
-  );
-  if (!updated) throw new Error("Signing request not found.");
-  return updated;
-};
+  meta: EventMeta = {},
+): Promise<SigningRequest> =>
+  withFreshRequest(payload.signingRequestId, async (request) => {
+    if (request.status !== "sent") {
+      throw new SigningError(409, "This signing request is not active.");
+    }
+    const now = new Date().toISOString();
+    const revoked = request.signers.map((s) =>
+      s.status === "pending" || s.status === "viewed"
+        ? { ...s, tokenHash: null, tokenExpiresAt: null }
+        : s,
+    );
+    return commitRequest(
+      request,
+      {
+        status: "cancelled",
+        cancelledAt: now,
+        cancelledBy: actor.sub,
+        signers: revoked,
+      },
+      [signingEvent("cancelled", { ...meta, actorName: actor.name }, now)],
+    );
+  });
 
 /** Approver-only (see route): resend never itself waits on co-president approval. */
 export const resendSignerToken = async (
   requestId: string,
   signerId: string,
+  meta: EventMeta = {},
 ): Promise<void> => {
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    requestId,
-  );
-  if (!request) throw new Error("Signing request not found.");
-  if (request.status !== "sent") {
-    throw new Error("This signing request is not active.");
-  }
-  const signer = request.signers.find((s) => s.id === signerId);
-  if (!signer) throw new Error("Signer not found.");
-  if (signer.status === "signed" || signer.status === "declined") {
-    throw new Error("This signer has already responded.");
-  }
-  if (!signer.notifiedAt) {
-    throw new Error("It is not this signer's turn yet.");
-  }
-  const document = await findById<DocumentRecord>(
-    documentsTable,
-    request.documentId,
-  );
-  if (!document) throw new Error("Document not found.");
+  await withFreshRequest(requestId, async (request) => {
+    if (request.status !== "sent") {
+      throw new SigningError(409, "This signing request is not active.");
+    }
+    const signer = request.signers.find((s) => s.id === signerId);
+    if (!signer) throw new SigningError(404, "Signer not found.");
+    if (signer.status === "signed" || signer.status === "declined") {
+      throw new SigningError(409, "This signer has already responded.");
+    }
+    if (!signer.notifiedAt) {
+      throw new SigningError(409, "It is not this signer's turn yet.");
+    }
+    const document = await findById<DocumentRecord>(
+      documentsTable,
+      request.documentId,
+    );
+    if (!document) throw new SigningError(404, "Document not found.");
 
-  const next = request.signers.map((s) => ({ ...s }));
-  const target = next.find((s) => s.id === signerId)!;
-  if (target.kind === "external") {
-    const { raw, tokenHash, tokenExpiresAt } = issueSignerToken();
-    target.tokenHash = tokenHash;
-    target.tokenExpiresAt = tokenExpiresAt;
-    await notifyExternalSigner(target, raw, document);
-  } else {
-    await notifyMemberSigner(target, document, request.id);
-  }
-  await update<SigningRequestRecord>(signingRequestsTable, request.id, {
-    signers: next,
+    const target: Signer = { ...signer };
+    const token = target.kind === "external" ? issueSignerToken() : null;
+    if (token) {
+      target.tokenHash = token.tokenHash;
+      target.tokenExpiresAt = token.tokenExpiresAt;
+    }
+    const updated = await commitRequest(
+      request,
+      { signers: request.signers.map((s) => (s.id === signerId ? target : s)) },
+      [signingEvent("resent", { ...meta, signerId })],
+    );
+    if (!updated) return null;
+    if (token) {
+      await notifyExternalSigner(target, token.raw, document, updated);
+    } else {
+      await notifyMemberSigner(target, document, updated);
+    }
+    return updated;
   });
 };
-
-export const recordSignerView = async (
-  requestId: string,
-  signerId: string,
-): Promise<Entity<SigningRequestRecord>> => {
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    requestId,
-  );
-  if (!request) throw new Error("Not found.");
-  const signer = request.signers.find((s) => s.id === signerId);
-  if (!signer || signer.status !== "pending") return request;
-  const next = request.signers.map((s) =>
-    s.id === signerId
-      ? { ...s, status: "viewed" as const, viewedAt: new Date().toISOString() }
-      : s,
-  );
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      signers: next,
-    },
-  );
-  return updated ?? request;
-};
-
-export type SignerResponse =
-  | {
-      action: "sign";
-      signatureText: string;
-      ip: string;
-      userAgent: string;
-      /** Raw client field id -> typed value; sanitized against this signer's own fields below. */
-      fieldValues?: Record<string, string>;
-    }
-  | { action: "decline"; reason?: string; ip: string; userAgent: string };
 
 /**
- * Only this signer's own fields, in case a value for someone else's field id
- * slipped into the request body — and Signature fields always resolve to the
- * signatureText already captured by the existing flow rather than a second,
- * independently-typed value.
+ * Marks the signer viewed and logs it, the first time only. A member who
+ * opens the request before their turn hasn't been sent it yet, so that look
+ * doesn't count, and they still get notified when their turn comes.
  */
-const resolveFieldValues = (
-  request: Entity<SigningRequestRecord>,
-  signerId: string,
-  signatureText: string,
-  submitted: Record<string, string> | undefined,
-): Record<string, string> | undefined => {
-  const mine = request.fields?.filter((f) => f.signerId === signerId);
-  if (!mine?.length) return undefined;
-  const values: Record<string, string> = {};
-  for (const f of mine) {
-    const value =
-      f.type === "signature"
-        ? signatureText
-        : (submitted?.[f.id]?.trim() ?? "");
-    if (value) values[f.id] = value;
-  }
-  return values;
-};
-
-/** The heart of the flow: records a response, advances ordering, and materializes the completion record once every signer is done. */
-export const recordSignerResponse = async (
+export const recordSignerView = (
   requestId: string,
   signerId: string,
-  response: SignerResponse,
-): Promise<Entity<SigningRequestRecord>> => {
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    requestId,
-  );
-  if (!request) throw new Error("Not found.");
-  if (request.status !== "sent") {
-    throw new Error("This signing request is no longer open.");
-  }
-  const signer = request.signers.find((s) => s.id === signerId);
-  if (!signer) throw new Error("Not found.");
-  if (signer.status === "signed" || signer.status === "declined") {
-    throw new Error("You have already responded to this request.");
-  }
-  if (
-    request.mode === "ordered" &&
-    request.signers.some((s) => s.order < signer.order && s.status !== "signed")
-  ) {
-    throw new Error("It is not your turn yet.");
-  }
-
-  if (response.action === "sign") {
-    const missingRequired = request.fields?.some(
-      (f) =>
-        f.signerId === signerId &&
-        f.required &&
-        f.type !== "signature" &&
-        !response.fieldValues?.[f.id]?.trim(),
-    );
-    if (missingRequired) {
-      throw new Error("Fill in every required field before signing.");
-    }
-  }
-
-  const now = new Date().toISOString();
-  const updatedSigner: Signer =
-    response.action === "sign"
-      ? {
-          ...signer,
-          status: "signed",
-          signedAt: now,
-          signatureText: response.signatureText,
-          ip: response.ip,
-          userAgent: response.userAgent,
-          tokenHash: null,
-          tokenExpiresAt: null,
-          fieldValues: resolveFieldValues(
-            request,
-            signerId,
-            response.signatureText,
-            response.fieldValues,
-          ),
-        }
-      : {
-          ...signer,
-          status: "declined",
-          declinedAt: now,
-          declineReason: response.reason,
-          ip: response.ip,
-          userAgent: response.userAgent,
-          tokenHash: null,
-          tokenExpiresAt: null,
-        };
-  // A decline halts the whole request, so every other outstanding link is
-  // revoked too — not just the declining signer's own.
-  const nextSigners = request.signers.map((s) => {
-    if (s.id === signerId) return updatedSigner;
+  meta: EventMeta,
+): Promise<SigningRequest> =>
+  withFreshRequest(requestId, async (request) => {
+    const signer = request.signers.find((s) => s.id === signerId);
     if (
-      response.action === "decline" &&
-      (s.status === "pending" || s.status === "viewed")
+      !signer ||
+      signer.viewedAt ||
+      request.status !== "sent" ||
+      signer.status === "signed" ||
+      signer.status === "declined" ||
+      !isSignersTurn(request, signerId)
     ) {
-      return { ...s, tokenHash: null, tokenExpiresAt: null };
+      return request;
     }
-    return s;
+    const now = new Date().toISOString();
+    const signers = request.signers.map((s) =>
+      s.id === signerId
+        ? { ...s, status: "viewed" as const, viewedAt: now }
+        : s,
+    );
+    return commitRequest(request, { signers }, [
+      signingEvent("viewed", { ...meta, signerId }, now),
+    ]);
   });
+
+/** Idempotent: a second call returns the first consent's timestamp. */
+export const recordSignerConsent = (
+  requestId: string,
+  signerId: string,
+  meta: EventMeta,
+): Promise<{ consentedAt: string }> =>
+  withFreshRequest(requestId, async (request) => {
+    const signer = request.signers.find((s) => s.id === signerId);
+    if (!signer) throw new SigningError(404, "Not found.");
+    if (signer.consentedAt) return { consentedAt: signer.consentedAt };
+    assertCanRespond(request, signer, { turn: false });
+    const now = new Date().toISOString();
+    const signers = request.signers.map((s) =>
+      s.id === signerId ? { ...s, consentedAt: now, consentIp: meta.ip } : s,
+    );
+    const updated = await commitRequest(request, { signers }, [
+      signingEvent("consented", { ...meta, signerId }, now),
+    ]);
+    return updated ? { consentedAt: now } : null;
+  });
+
+const assertCanRespond = (
+  request: SigningRequestRecord,
+  signer: Signer,
+  { turn }: { turn: boolean },
+) => {
+  if (request.status !== "sent") {
+    throw new SigningError(409, "This signing request is no longer open.");
+  }
+  if (signer.status === "signed" || signer.status === "declined") {
+    throw new SigningError(409, "You have already responded to this request.");
+  }
+  if (turn && !isSignersTurn(request, signer.id)) {
+    throw new SigningError(409, "It is not your turn to sign yet.");
+  }
+};
+
+const signerIn = (request: SigningRequestRecord, signerId: string) => {
+  const signer = request.signers.find((s) => s.id === signerId);
+  if (!signer) throw new SigningError(404, "Not found.");
+  return signer;
+};
+
+/** Everything but the commit: throws exactly what the commit would. */
+const checkSignable = (
+  request: SigningRequestRecord,
+  signerId: string,
+  submission: ParsedSubmission,
+  signedAt: string,
+) => {
+  const signer = signerIn(request, signerId);
+  assertCanRespond(request, signer, { turn: true });
+  if (!signer.consentedAt) {
+    throw new SigningError(
+      409,
+      "Agree to the Electronic Record and Signature Disclosure before signing.",
+    );
+  }
+  return {
+    signer,
+    fieldValues: resolveFieldValues(
+      fieldsForSigner(request, signerId),
+      submission,
+      signedAt,
+    ),
+  };
+};
+
+/**
+ * Records a signature, then completes the request if that was the last one,
+ * or notifies whoever is next. Drawn images are stored once, up front, so a
+ * commit retry never writes them twice.
+ */
+export const signAsSigner = async (
+  requestId: string,
+  signerId: string,
+  submission: ParsedSubmission,
+  meta: EventMeta,
+): Promise<FinalizeOutcome> => {
+  checkSignable(
+    await loadSigningRequest(requestId),
+    signerId,
+    submission,
+    new Date().toISOString(),
+  );
+
+  const images: Pick<AdoptedSignature, "signatureImage" | "initialsImage"> = {};
+  if (submission.style === "drawn") {
+    if (submission.signaturePng) {
+      images.signatureImage = (
+        await storeDocumentBytes(submission.signaturePng, "image/png")
+      ).storedFilename;
+    }
+    if (submission.initialsPng) {
+      images.initialsImage = (
+        await storeDocumentBytes(submission.initialsPng, "image/png")
+      ).storedFilename;
+    }
+  }
+
+  let signed: SigningRequest;
+  try {
+    signed = await withFreshRequest(requestId, async (request) => {
+      const now = new Date().toISOString();
+      const { signer, fieldValues } = checkSignable(
+        request,
+        signerId,
+        submission,
+        now,
+      );
+      const updatedSigner: Signer = {
+        ...signer,
+        status: "signed",
+        signedAt: now,
+        signatureText: submission.fullName,
+        ip: meta.ip,
+        userAgent: meta.userAgent,
+        fieldValues: Object.keys(fieldValues).length ? fieldValues : undefined,
+        adopted: {
+          fullName: submission.fullName,
+          initials: submission.initials,
+          style: submission.style,
+          font: submission.style === "typed" ? submission.font : undefined,
+          ...images,
+          adoptedAt: now,
+        },
+      };
+      return commitRequest(
+        request,
+        {
+          signers: request.signers.map((s) =>
+            s.id === signerId ? updatedSigner : s,
+          ),
+        },
+        [signingEvent("signed", { ...meta, signerId }, now)],
+      );
+    });
+  } catch (err) {
+    for (const file of Object.values(images)) {
+      if (file) await deleteDocumentFile(file);
+    }
+    throw err;
+  }
+
+  const outcome = await finalizeIfComplete(signed);
+  if (outcome.request.status === "completed") return outcome;
+  return {
+    request: await notifyEligible(outcome.request),
+    viewTokens: new Map(),
+  };
+};
+
+/**
+ * A decline halts the whole request, so the links of everyone who hadn't
+ * responded are revoked. The decliner keeps theirs, to see that they declined.
+ */
+export const declineAsSigner = async (
+  requestId: string,
+  signerId: string,
+  reason: string | undefined,
+  meta: EventMeta,
+): Promise<SigningRequest> => {
+  const declined = await withFreshRequest(requestId, async (request) => {
+    const signer = signerIn(request, signerId);
+    assertCanRespond(request, signer, { turn: true });
+    const now = new Date().toISOString();
+    const signers = request.signers.map((s) => {
+      if (s.id === signerId) {
+        return {
+          ...s,
+          status: "declined" as const,
+          declinedAt: now,
+          declineReason: reason,
+          ip: meta.ip,
+          userAgent: meta.userAgent,
+        };
+      }
+      return s.status === "pending" || s.status === "viewed"
+        ? { ...s, tokenHash: null, tokenExpiresAt: null }
+        : s;
+    });
+    return commitRequest(request, { signers, status: "declined" }, [
+      signingEvent("declined", { ...meta, signerId }, now),
+    ]);
+  });
+
   const document = await findById<DocumentRecord>(
     documentsTable,
-    request.documentId,
+    declined.documentId,
   );
-
-  if (response.action === "decline") {
-    const updated = await update<SigningRequestRecord>(
-      signingRequestsTable,
-      request.id,
-      {
-        signers: nextSigners,
-        status: "declined",
-      },
+  const signer = declined.signers.find((s) => s.id === signerId);
+  if (document && signer) {
+    await notifyDeclined(
+      [declined.createdByEmail ?? ""].filter(Boolean),
+      document,
+      signer,
     );
-    if (updated && document) {
-      await notifyDeclined(
-        [request.createdByEmail ?? ""].filter(Boolean),
-        document,
-        updatedSigner,
-      );
-    }
-    return updated ?? request;
   }
-
-  const allSigned = nextSigners.every((s) => s.status === "signed");
-  if (!allSigned) {
-    const updated = await update<SigningRequestRecord>(
-      signingRequestsTable,
-      request.id,
-      {
-        signers: nextSigners,
-      },
-    );
-    if (!updated) return request;
-    return document ? notifyEligible(updated, document) : updated;
-  }
-
-  const completed = await finalizeIfComplete(request, nextSigners);
-  if (!completed) throw new Error("Could not complete this signing request.");
-  return completed;
+  return declined;
 };

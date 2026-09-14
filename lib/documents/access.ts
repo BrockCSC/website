@@ -5,7 +5,8 @@ import type {
 import { type Entity, findAll, findById } from "@/lib/db/repository";
 import { documentVersionsTable, signingRequestsTable } from "@/lib/db/schema";
 import { findSignupByUserId } from "@/lib/db/signups";
-import { findValidSignerToken } from "./tokens";
+import { completedVersionIds } from "./envelope";
+import { findValidSignerToken, findValidViewToken } from "./tokens";
 
 /**
  * The one door external signers get: only the exact version pinned to their
@@ -23,11 +24,23 @@ export const versionReadableByToken = async (
   );
 };
 
+/** After completion, an external signer's view token opens the signed copy and the certificate, nothing else. */
+export const versionReadableByViewToken = async (
+  rawToken: string,
+  which: "signed" | "certificate",
+): Promise<Entity<DocumentVersionRecord> | null> => {
+  const lookup = await findValidViewToken(rawToken);
+  const ids = lookup && completedVersionIds(lookup.request);
+  if (!ids) return null;
+  return findById<DocumentVersionRecord>(documentVersionsTable, ids[which]);
+};
+
 /**
  * The other door: an internal member signer (who may hold no exec role at
  * all — an alumni named on a request) may fetch exactly the version pinned
- * to a still-open signing request they're named on, same scoping as the
- * token door above but keyed by signup id instead of a mailed token.
+ * to a still-open signing request they're named on, and once it completes,
+ * its signed copy and certificate too. Keyed by signup id instead of a
+ * mailed token.
  */
 export const versionReadableByMemberSigner = async (
   keycloakUserId: string,
@@ -36,10 +49,14 @@ export const versionReadableByMemberSigner = async (
   const signup = await findSignupByUserId(keycloakUserId);
   if (!signup) return false;
   const requests = await findAll<SigningRequestRecord>(signingRequestsTable);
-  return requests.some(
-    (r) =>
-      r.status === "sent" &&
-      r.sourceVersionId === versionId &&
-      r.signers.some((s) => s.kind === "member" && s.signupId === signup.id),
-  );
+  return requests.some((r) => {
+    if (!r.signers.some((s) => s.kind === "member" && s.signupId === signup.id))
+      return false;
+    if (r.status === "sent") return r.sourceVersionId === versionId;
+    const ids = completedVersionIds(r);
+    return (
+      !!ids &&
+      [r.sourceVersionId, ids.signed, ids.certificate].includes(versionId)
+    );
+  });
 };

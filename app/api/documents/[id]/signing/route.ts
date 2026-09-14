@@ -4,14 +4,20 @@ import type {
   SigningFieldInput,
   SigningFieldType,
   SignerInput,
-  StartSigningPayload,
 } from "@/lib/api/types";
 import { requireAdmin } from "@/lib/auth/session";
 import { findById, toWireRecord } from "@/lib/db/repository";
 import { documentsTable } from "@/lib/db/schema";
 import {
-  redactSigningRequest,
+  SigningError,
   sanitizeCertificateText,
+} from "@/lib/documents/envelope";
+import { SIGNING_FIELD_TYPES } from "@/lib/documents/fields";
+import { requestMeta } from "@/lib/documents/signer-routes";
+import {
+  type StartSigningInput,
+  assertSignable,
+  redactSigningRequest,
   startSigningRequest,
 } from "@/lib/documents/signing";
 import { proposeOrApply } from "@/lib/documents/pending";
@@ -24,7 +30,7 @@ type Body = {
   fields?: unknown;
 };
 
-const FIELD_TYPES = new Set<SigningFieldType>(["signature", "date", "text"]);
+const FIELD_TYPES = new Set<string>(SIGNING_FIELD_TYPES.map((t) => t.value));
 
 /**
  * signerIndex is checked against `signerCount` here; startSigningRequest
@@ -48,7 +54,7 @@ const parseFields = (
     const signerIndex = Number(e.signerIndex);
     if (
       typeof e.type !== "string" ||
-      !FIELD_TYPES.has(e.type as SigningFieldType) ||
+      !FIELD_TYPES.has(e.type) ||
       !Number.isInteger(page) ||
       page < 1 ||
       !Number.isFinite(xPercent) ||
@@ -142,15 +148,21 @@ export const POST = async (
     );
   }
 
-  const payload: StartSigningPayload = {
+  const meta = requestMeta(req);
+  const payload: StartSigningInput = {
     documentId: id,
     sourceVersionId: document.currentVersionId,
     title,
     mode,
     signers,
     fields,
+    createdByIp: meta.ip,
   };
   try {
+    // Checked before queueing too, so a proposer hears about an in-progress
+    // request or a missing Signature field now, not when a co-president
+    // approves.
+    await assertSignable(payload);
     const outcome = await proposeOrApply(
       user,
       "start-signing",
@@ -160,6 +172,7 @@ export const POST = async (
         startSigningRequest(
           { sub: user.sub, name: user.name, email: user.email },
           payload,
+          meta,
         ),
     );
     return outcome.applied
@@ -175,7 +188,7 @@ export const POST = async (
       {
         error: err instanceof Error ? err.message : "Could not start signing.",
       },
-      { status: 400 },
+      { status: err instanceof SigningError ? err.status : 400 },
     );
   }
 };
