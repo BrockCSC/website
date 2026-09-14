@@ -104,6 +104,19 @@ export type SignupRecord = {
   passwordResetRequired?: boolean;
 };
 
+export type MailForwardingBlocker =
+  "no-mailbox" | "read-only" | "no-personal-email" | "club-address";
+
+export type MailForwardingView = {
+  enabled: boolean;
+  /** Why forwarding can't be turned on; null when it can. Turning it off is always allowed. */
+  blocker: MailForwardingBlocker | null;
+  personalEmail: string | null;
+  clubAddress: string | null;
+  /** This environment shares the live mail server, so a change isn't applied. */
+  rehearsed?: boolean;
+};
+
 export type PasswordResetRecord = {
   signupId: string;
   /** sha256 of the raw token mailed to the user; the raw value is never stored. */

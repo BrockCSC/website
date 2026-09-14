@@ -518,12 +518,15 @@ export const revokeAppPasswords = async (localPart: string): Promise<void> => {
 
 const FORWARD_SCRIPT = "forward-to-co-presidents";
 
+/** A member's own opt-in forward to their personal address. */
+const PERSONAL_SCRIPT = "forward-to-personal";
+
 type SieveScript = { id: string; name: string; isActive: boolean };
 
-const forwardScript = (accountId: string) =>
+const scriptNamed = (accountId: string, name: string) =>
   jmap<{ list: SieveScript[] }>([
     ["SieveScript/get", { accountId, ids: null }, "c0"],
-  ]).then(([res]) => res.list.find((s) => s.name === FORWARD_SCRIPT));
+  ]).then(([res]) => res.list.find((s) => s.name === name));
 
 /** Local parts whose mail is currently forwarded; an account whose call failed counts as not forwarding. */
 export const forwardingAccounts = async (): Promise<Set<string>> => {
@@ -584,16 +587,22 @@ const uploadSieve = async (
   return blob.blobId;
 };
 
-export const setForwarding = async (
+/**
+ * Uploads `script` under `name` and makes it the account's active script, or
+ * removes it when `script` is null. Stalwart runs one active script per
+ * account, so activating one deactivates whichever was active before.
+ */
+const putScript = async (
   localPart: string,
-  target: string | null,
+  name: string,
+  script: string | null,
 ): Promise<void> => {
   const account = await accountNamed(localPart);
   if (!account) return;
   const accountId = account.id;
-  const existing = await forwardScript(accountId);
+  const existing = await scriptNamed(accountId, name);
 
-  if (!target) {
+  if (!script) {
     if (!existing) return;
     const calls: Call[] = [
       ["SieveScript/set", { accountId, destroy: [existing.id] }, "c1"],
@@ -609,12 +618,11 @@ export const setForwarding = async (
     return;
   }
 
-  const quoted = target.replace(/[\\"]/g, "\\$&");
-  const blobId = await uploadSieve(
-    accountId,
-    `require ["copy"];\nredirect :copy "${quoted}";\n`,
-  );
-  await jmap([
+  const blobId = await uploadSieve(accountId, script);
+  const [res] = await jmap<{
+    notCreated?: Record<string, unknown>;
+    notUpdated?: Record<string, unknown>;
+  }>([
     [
       "SieveScript/set",
       existing
@@ -625,10 +633,60 @@ export const setForwarding = async (
           }
         : {
             accountId,
-            create: { fwd: { name: FORWARD_SCRIPT, blobId } },
+            create: { fwd: { name, blobId } },
             onSuccessActivateScript: "#fwd",
           },
       "c0",
     ],
   ]);
+  const problem = res.notCreated ?? res.notUpdated;
+  if (problem && Object.keys(problem).length) {
+    throw new Error(`Stalwart refused the script: ${JSON.stringify(problem)}`);
+  }
 };
+
+/** A Sieve quoted string. */
+export const sieveString = (value: string): string =>
+  `"${value.replace(/[\\"]/g, "\\$&")}"`;
+
+export const setForwarding = (
+  localPart: string,
+  target: string | null,
+): Promise<void> =>
+  putScript(
+    localPart,
+    FORWARD_SCRIPT,
+    target && `require ["copy"];\nredirect :copy ${sieveString(target)};\n`,
+  );
+
+/** Null when the account doesn't exist. */
+export const personalForwardingActive = async (
+  localPart: string,
+): Promise<boolean | null> => {
+  const account = await accountNamed(localPart);
+  if (!account) return null;
+  return (await scriptNamed(account.id, PERSONAL_SCRIPT))?.isActive === true;
+};
+
+/** Compiles a script against the account without storing or activating it. Throws with Stalwart's reason if it doesn't compile. */
+export const validateSieve = async (
+  localPart: string,
+  script: string,
+): Promise<void> => {
+  const account = await accountNamed(localPart);
+  if (!account) throw new Error(`Stalwart has no account "${localPart}".`);
+  const blobId = await uploadSieve(account.id, script);
+  const [res] = await jmap<{ error?: unknown }>([
+    ["SieveScript/validate", { accountId: account.id, blobId }, "c0"],
+  ]);
+  if (res.error) {
+    throw new Error(
+      `Stalwart rejected the script: ${JSON.stringify(res.error)}`,
+    );
+  }
+};
+
+export const setPersonalForwarding = (
+  localPart: string,
+  script: string | null,
+): Promise<void> => putScript(localPart, PERSONAL_SCRIPT, script);

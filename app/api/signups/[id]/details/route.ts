@@ -7,6 +7,7 @@ import { findById, toWireRecord, update } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
+import { followPersonalEmail } from "@/lib/mail/personal-forwarding";
 
 /**
  * Edits a person's roster details (name, email, phone, student number,
@@ -53,5 +54,8 @@ export const PATCH = async (
 
   const entity = await update<SignupRecord>(signupsTable, id, cleaned.patch);
   if (!entity) return notFound();
+  if (email !== undefined && email !== signup.email) {
+    await followPersonalEmail(entity);
+  }
   return NextResponse.json(toWireRecord(entity));
 };

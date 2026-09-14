@@ -24,6 +24,7 @@ import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { useSession } from "../session";
 import { Panel, fieldOn, labelClass, type PanelProps } from "../users/ui";
 import { ask } from "../ask";
+import { MailForwarding } from "./forwarding";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "@/lib/api/client";
 
@@ -155,6 +156,9 @@ export default function ProfilePage() {
           {error ??
             "Your account isn't linked to a team page tile. Ask a co-president to link it — that happens when an account is approved."}
         </p>
+        <div className="mt-8 max-w-[640px]">
+          <MailForwarding />
+        </div>
       </div>
     );
   }
@@ -171,7 +175,8 @@ export default function ProfilePage() {
     <div className={page}>
       <h1 className="text-3xl font-extrabold text-ink">Your profile</h1>
       <p className="mt-2 text-subtle">
-        Everything here is public. The card is exactly what visitors see.
+        Your card is public and the preview is exactly what visitors see. Email
+        forwarding is private to you.
       </p>
 
       <form
@@ -365,6 +370,8 @@ export default function ProfilePage() {
               </span>
             </label>
           </Section>
+
+          <MailForwarding />
 
           {isCoPresident && (
             <Section

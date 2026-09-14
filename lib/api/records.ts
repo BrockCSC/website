@@ -1,5 +1,11 @@
 import { apiFetch } from "./client";
-import type { DashboardStats, EventRecord, ExecRecord, WithKey } from "./types";
+import type {
+  DashboardStats,
+  EventRecord,
+  ExecRecord,
+  MailForwardingView,
+  WithKey,
+} from "./types";
 
 const fetchAllExecs = async (): Promise<WithKey<ExecRecord>[]> =>
   apiFetch<WithKey<ExecRecord>[]>("/api/execs");
@@ -72,6 +78,17 @@ export const fetchInviteCode = async (): Promise<{
   code: string;
   expiresInMs: number;
 }> => apiFetch("/api/invite-code");
+
+export const fetchMailForwarding = async (): Promise<MailForwardingView> =>
+  apiFetch<MailForwardingView>("/api/profile/forwarding");
+
+export const updateMailForwarding = async (
+  enabled: boolean,
+): Promise<MailForwardingView> =>
+  apiFetch<MailForwardingView>("/api/profile/forwarding", {
+    method: "PUT",
+    body: JSON.stringify({ enabled }),
+  });
 
 export const stepDownAsCoPresident = async (): Promise<void> => {
   await apiFetch("/api/profile/step-down", { method: "POST" });
