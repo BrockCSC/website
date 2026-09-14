@@ -28,6 +28,15 @@ if (prodSchemaExists.rowCount === 0) {
 
 // shared_mailboxes and retired_mailboxes describe real Stalwart state, so a
 // preview rides along rather than diverging from what prod actually has.
+//
+// A table can exist on this branch (and so in this schema, freshly migrated)
+// before prod has ever run that migration — every branch that adds a table
+// hits this until it merges and a prod release actually creates it there.
+const prodTables = await pool.query(
+  `SELECT table_name FROM information_schema.tables WHERE table_schema = 'prod'`,
+);
+const prodTableNames = new Set(prodTables.rows.map((row) => row.table_name));
+
 for (const table of [
   "events",
   "execs",
@@ -35,6 +44,10 @@ for (const table of [
   "shared_mailboxes",
   "retired_mailboxes",
 ]) {
+  if (!prodTableNames.has(table)) {
+    console.log(`prod has no "${table}" table yet; skipping.`);
+    continue;
+  }
   await pool.query(`TRUNCATE TABLE "${schema}"."${table}"`);
   await pool.query(
     `INSERT INTO "${schema}"."${table}" SELECT * FROM "prod"."${table}"`,
