@@ -25,15 +25,23 @@ const kindForContentType = (contentType: string): Kind => {
  * percentage-based fields can be positioned on top of. Paging only for
  * multi-page PDFs — no zoom, search or annotation beyond that, per the brief.
  *
- * The HTML case stays in `<iframe sandbox="" srcDoc>` (same convention as the
- * mail body viewer) rather than `dangerouslySetInnerHTML`: write-time
- * sanitizing (lib/documents/letterhead.ts) is the only guard for injected
- * markup, but the stored document also carries its own `<meta>` CSP that only
- * takes effect when it's actually parsed as a standalone document — inlined
- * via innerHTML, `<head>` is dropped and that CSP never applies. Click-to-place
- * still works: the overlay below is a parent-document layer stacked *above*
- * the iframe, not something living inside it, so it never needs the iframe's
- * own clicks to bubble anywhere.
+ * The HTML case stays in `<iframe sandbox srcDoc>` rather than
+ * `dangerouslySetInnerHTML`: write-time sanitizing (lib/documents/letterhead.ts)
+ * is the only guard for injected markup, but the stored document also carries
+ * its own `<meta>` CSP that only takes effect when it's actually parsed as a
+ * standalone document — inlined via innerHTML, `<head>` is dropped and that
+ * CSP never applies. Click-to-place still works: the overlay below is a
+ * parent-document layer stacked *above* the iframe, not something living
+ * inside it, so it never needs the iframe's own clicks to bubble anywhere.
+ *
+ * `sandbox="allow-same-origin"` (never paired with `allow-scripts`, which
+ * this deliberately omits) — without it, srcDoc gives the frame a unique
+ * opaque origin and `contentDocument` from the parent reads back `null`,
+ * which is what we need to measure real content height for a long letterhead
+ * document (below). Granting same-origin without scripts costs nothing here:
+ * the letterhead's CSP has no `script-src`, so scripts stay inert either way,
+ * and every other capability same-origin unlocks (document.cookie, storage,
+ * form submission) needs a script to use.
  *
  * Pass `key={fileUrl}` from the caller when the URL can change under a
  * mounted instance (e.g. picking a different version) — internal state
@@ -68,6 +76,7 @@ export function DocumentPreview({
     import("pdfjs-dist").PDFDocumentProxy | null
   >(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
     if (kind === "html" || kind === "text") {
@@ -165,6 +174,20 @@ export function DocumentPreview({
     [pdfDoc],
   );
 
+  // Plain-text content (the completion certificate, mainly) has no fixed page
+  // size of its own — grow the box to fit it, the same way the pdf/image
+  // effects above size to their real content, instead of leaving it clipped
+  // at the default page height.
+  useEffect(() => {
+    if (kind !== "text" || textBody === null) return;
+    const el = preRef.current;
+    if (!el) return;
+    setPageSize({
+      width: LETTERHEAD_PAGE_WIDTH,
+      height: Math.max(LETTERHEAD_PAGE_MIN_HEIGHT, el.scrollHeight),
+    });
+  }, [kind, textBody]);
+
   const handleSurfaceClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!placing || !onPlace) return;
     // A child field chip that didn't stop propagation shouldn't also drop a new field.
@@ -227,7 +250,20 @@ export function DocumentPreview({
               (htmlText !== null ? (
                 <iframe
                   className="size-full border-0"
-                  sandbox=""
+                  onLoad={(e) => {
+                    // Same-origin (no scripts) so the parent can read the
+                    // framed document's real height — see the docblock above.
+                    const measured =
+                      e.currentTarget.contentDocument?.documentElement
+                        .scrollHeight;
+                    if (measured) {
+                      setPageSize({
+                        width: LETTERHEAD_PAGE_WIDTH,
+                        height: Math.max(LETTERHEAD_PAGE_MIN_HEIGHT, measured),
+                      });
+                    }
+                  }}
+                  sandbox="allow-same-origin"
                   srcDoc={htmlText}
                   title="Document preview"
                 />
@@ -236,17 +272,27 @@ export function DocumentPreview({
               ))}
             {kind === "text" &&
               (textBody !== null ? (
-                <pre className="size-full overflow-auto whitespace-pre-wrap p-6 font-mono text-xs text-ink">
+                <pre
+                  className="size-full overflow-auto whitespace-pre-wrap p-6 font-mono text-xs text-ink"
+                  ref={preRef}
+                >
                   {textBody}
                 </pre>
               ) : (
                 <p className="p-4 text-sm text-subtle">Loading...</p>
               ))}
 
+            {/* pointer-events off except while actively placing a field: a
+                sibling of the iframe/pre above, so left on it would swallow
+                their own scrollbar/wheel input for no reason the rest of the
+                time. Field chips opt back in with pointer-events-auto. */}
             <div
               className="absolute inset-0"
               onClick={handleSurfaceClick}
-              style={{ cursor: placing ? "crosshair" : "default" }}
+              style={{
+                cursor: placing ? "crosshair" : "default",
+                pointerEvents: placing ? "auto" : "none",
+              }}
             >
               {overlay?.(page)}
             </div>

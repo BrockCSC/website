@@ -40,7 +40,7 @@ export function PlaceableField({
   return (
     <div
       aria-label={`${caption} field. Drag to move, arrow keys to nudge, Delete to remove.`}
-      className="absolute flex -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none items-center gap-1 rounded-[10px] border-2 border-line bg-brand px-2 py-1 text-xs font-bold whitespace-nowrap text-brand-ink shadow-brut-sm select-none active:cursor-grabbing"
+      className="pointer-events-auto absolute flex -translate-x-1/2 -translate-y-1/2 cursor-grab touch-none items-center gap-1 rounded-[10px] border-2 border-line bg-brand px-2 py-1 text-xs font-bold whitespace-nowrap text-brand-ink shadow-brut-sm select-none active:cursor-grabbing"
       onClick={(e) => e.stopPropagation()}
       onDragStart={(e) => e.preventDefault()}
       onKeyDown={(e) => {

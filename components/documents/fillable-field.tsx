@@ -31,7 +31,7 @@ export function FillableField({
 
   return (
     <div
-      className="absolute w-[200px] max-w-[46%] -translate-x-1/2 -translate-y-1/2"
+      className="pointer-events-auto absolute w-[200px] max-w-[46%] -translate-x-1/2 -translate-y-1/2"
       onClick={(e) => e.stopPropagation()}
       style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
     >
