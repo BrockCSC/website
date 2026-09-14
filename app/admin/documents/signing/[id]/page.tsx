@@ -41,7 +41,7 @@ import { ask } from "../../../ask";
 import { Note, Panel, Pill, Rows, field } from "../../../users/ui";
 
 const statusTone = (status: string) =>
-  status === "signed" ? "accent" : "flat";
+  status === "signed" || status === "completed" ? "accent" : "flat";
 
 function MySignaturePanel({
   signingRequestId,

@@ -135,7 +135,7 @@ export function FieldLegend({
                     ? counts
                         .map(
                           (c) =>
-                            `${c.count} ${SIGNING_FIELD_DEFAULT_LABEL[c.type]}`,
+                            `${SIGNING_FIELD_DEFAULT_LABEL[c.type]}${c.count > 1 ? ` ×${c.count}` : ""}`,
                         )
                         .join(", ")
                     : "No fields yet"}

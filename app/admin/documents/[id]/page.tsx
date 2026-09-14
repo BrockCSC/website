@@ -609,7 +609,7 @@ export default function DocumentDetailPage() {
                 Delete to remove it. Date Signed and Name fill in on their own
                 when that person signs.
               </p>
-              <div className="grid gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">
                 <div className="flex flex-col gap-5 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
                   <SignerPicker
                     onChange={chooseSigner}

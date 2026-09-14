@@ -4,7 +4,6 @@ import { Award, ExternalLink, FileCheck2, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { documentFileUrl, type SigningRequestItem } from "@/lib/api/documents";
-import { formatSigningTime } from "@/lib/documents/signing-time";
 import { DocumentPreview } from "./document-preview";
 
 type CompletedFile = {
@@ -62,20 +61,12 @@ export function CompletedDocuments({
 
   return (
     <div className="flex flex-col gap-4">
-      <dl className="grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[9rem_1fr]">
-        <dt className="font-semibold text-subtle">Envelope ID</dt>
-        <dd className="min-w-0 font-mono text-xs font-semibold break-all text-ink sm:text-sm">
+      <p className="text-sm">
+        <span className="font-semibold text-subtle">Envelope ID</span>{" "}
+        <span className="font-mono text-xs font-semibold break-all text-ink sm:text-sm">
           {request.envelopeId ?? request.$key.toUpperCase()}
-        </dd>
-        {request.completedAt && (
-          <>
-            <dt className="font-semibold text-subtle">Completed</dt>
-            <dd className="font-semibold text-ink">
-              {formatSigningTime(request.completedAt)}
-            </dd>
-          </>
-        )}
-      </dl>
+        </span>
+      </p>
 
       {!request.certificateVersionId && (
         <p className="text-xs text-subtle">

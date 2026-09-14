@@ -101,7 +101,9 @@ const describe = (event: SigningEvent, signerName: string | undefined) => {
     case "resent":
       return `Link resent to ${who}`;
     case "signer-added":
-      return `${who} added as a signer`;
+      return signerName
+        ? `${signerName} added as a signer`
+        : "A signer was added";
     case "signer-removed":
       return signerName ? `${signerName} removed` : "A signer was removed";
   }
