@@ -1,6 +1,7 @@
 import type { SignupRecord } from "@/lib/api/types";
 import { findAll } from "@/lib/db/repository";
 import { signupsTable } from "@/lib/db/schema";
+import { findSharedMailbox } from "@/lib/db/shared-mailboxes";
 import { isProtectedMailbox } from "./provision";
 import { SYSTEM_SENDER } from "./signature";
 import { addressTaken } from "./stalwart";
@@ -43,6 +44,11 @@ export const validateNewLocalPart = async (
   }
   if (await usedBySignup(name)) {
     return { error: `"${name}" already belongs to a member's account.` };
+  }
+  // Outside prod nothing is ever written to Stalwart, so addressTaken below
+  // can never see a mailbox created here — this table is the only record.
+  if (await findSharedMailbox(name)) {
+    return { error: `"${name}" is already a shared mailbox.` };
   }
   if (await addressTaken(name)) {
     return { error: `${name} is already in use on the mail server.` };
