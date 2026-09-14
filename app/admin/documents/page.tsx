@@ -14,6 +14,7 @@ import {
   type DocumentItem,
   type PendingActionItem,
 } from "@/lib/api/documents";
+import { pdfUploadProblem } from "@/lib/documents/upload-check";
 import { useSession } from "../session";
 import { Note, Panel, Pill, field, labelClass } from "../users/ui";
 
@@ -210,6 +211,7 @@ export default function DocumentsPage() {
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -236,9 +238,15 @@ export default function DocumentsPage() {
 
   const upload = async (e: React.FormEvent) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     if (!title.trim() || !file) return;
+    const problem = pdfUploadProblem(file);
+    if (problem) {
+      setUploadError(problem);
+      return;
+    }
     setUploading(true);
-    setError(null);
+    setUploadError(null);
     setNote(null);
     try {
       const result = await uploadDocument({
@@ -254,11 +262,12 @@ export default function DocumentsPage() {
       setTitle("");
       setDescription("");
       setFile(null);
+      form.reset();
       await load();
     } catch (err) {
-      setError(
+      setUploadError(
         (err instanceof ApiError && err.detail) ||
-          "Could not upload that file.",
+          "Could not upload that file. Check it is a PDF under 15MB.",
       );
     } finally {
       setUploading(false);
@@ -336,20 +345,37 @@ export default function DocumentsPage() {
 
           <div>
             <label className={labelClass} htmlFor="file">
-              File (PDF, PNG, JPEG or DOCX, up to 15MB)
+              File (PDF only, up to 15MB)
             </label>
             <input
-              accept=".pdf,.png,.jpg,.jpeg,.docx"
+              accept="application/pdf"
+              aria-describedby="file-help"
               className={field}
               id="file"
-              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              onChange={(e) => {
+                const picked = e.target.files?.[0] ?? null;
+                setFile(picked);
+                setNote(null);
+                setUploadError(picked && pdfUploadProblem(picked));
+              }}
               type="file"
             />
+            <p className="mt-1 text-xs text-subtle" id="file-help">
+              Made it in Word or Google Docs? Export or save it as a PDF first.
+            </p>
           </div>
+
+          {uploadError && (
+            <p className="text-sm font-bold text-destructive" role="alert">
+              {uploadError}
+            </p>
+          )}
 
           <div className="flex items-center gap-3">
             <Button
-              disabled={uploading || !title.trim() || !file}
+              disabled={
+                uploading || !title.trim() || !file || !!pdfUploadProblem(file)
+              }
               type="submit"
               variant="primary"
             >

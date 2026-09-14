@@ -19,11 +19,20 @@ import {
 } from "@/lib/api/documents";
 import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
 import { useSession } from "../../../session";
+import { CompletedDocuments } from "@/components/documents/completed-documents";
+import {
+  SignerActivity,
+  signerStatusLabel,
+} from "@/components/documents/signer-activity";
+import { SignerSwatch } from "@/components/documents/placement-tools";
+import { SigningTimeline } from "@/components/documents/signing-timeline";
+import { signerColor } from "@/lib/documents/signer-colors";
+import { formatSigningTime } from "@/lib/documents/signing-time";
 import { ask } from "../../../ask";
 import { Note, Panel, Pill, Rows, field } from "../../../users/ui";
 
 const statusTone = (status: string) =>
-  status === "signed" ? "accent" : "flat";
+  status === "signed" || status === "completed" ? "accent" : "flat";
 
 export default function SigningRequestPage() {
   const id = useParams().id as string;
@@ -224,18 +233,36 @@ export default function SigningRequestPage() {
               "Requested by",
               signingRequest.createdByName || signingRequest.createdBy,
             ],
-            ["Requested", new Date(signingRequest.createdAt).toLocaleString()],
+            ["Requested", formatSigningTime(signingRequest.createdAt)],
             ...(signingRequest.completedAt
               ? [
                   [
                     "Completed",
-                    new Date(signingRequest.completedAt).toLocaleString(),
+                    formatSigningTime(signingRequest.completedAt),
+                  ] as [string, React.ReactNode],
+                ]
+              : []),
+            ...(signingRequest.cancelledAt
+              ? [
+                  [
+                    "Cancelled",
+                    formatSigningTime(signingRequest.cancelledAt),
                   ] as [string, React.ReactNode],
                 ]
               : []),
           ]}
         />
       </Panel>
+
+      {signingRequest.status === "completed" &&
+        signingRequest.resultingVersionId && (
+          <Panel
+            note="A SHA-256 fingerprint changes if even one byte of its file does."
+            title="Completed documents"
+          >
+            <CompletedDocuments request={signingRequest} />
+          </Panel>
+        )}
 
       <Panel title="Signers">
         <ul className="flex flex-col gap-3">
@@ -248,57 +275,19 @@ export default function SigningRequestPage() {
                 key={signer.id}
               >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="font-bold text-ink">
+                  <div className="min-w-0">
+                    <p className="flex flex-wrap items-center gap-x-2 font-bold text-ink">
+                      <SignerSwatch color={signerColor(signer.order)} />
                       {signer.name ?? "Signer"}{" "}
-                      <span className="font-normal text-subtle">
+                      <span className="font-normal break-all text-subtle">
                         ({signer.kind === "member" ? "member" : signer.email})
                       </span>
                     </p>
-                    {signer.status === "signed" && (
-                      <p className="text-xs text-subtle">
-                        Signed &quot;{signer.signatureText}&quot; at{" "}
-                        {signer.signedAt} from {signer.ip}
-                      </p>
-                    )}
-                    {signer.status === "signed" &&
-                      !!signer.fieldValues &&
-                      signingRequest.fields
-                        ?.filter((f) => f.signerId === signer.id)
-                        .map(
-                          (f) =>
-                            signer.fieldValues![f.id] && (
-                              <p className="text-xs text-subtle" key={f.id}>
-                                {f.label ?? SIGNING_FIELD_DEFAULT_LABEL[f.type]}
-                                : &quot;{signer.fieldValues![f.id]}&quot;
-                              </p>
-                            ),
-                        )}
-                    {signer.status !== "signed" &&
-                      !!signingRequest.fields?.some(
-                        (f) => f.signerId === signer.id,
-                      ) && (
-                        <p className="text-xs text-subtle">
-                          {
-                            signingRequest.fields.filter(
-                              (f) => f.signerId === signer.id,
-                            ).length
-                          }{" "}
-                          field(s) placed for them
-                        </p>
-                      )}
-                    {signer.status === "declined" && (
-                      <p className="text-xs text-subtle">
-                        Declined at {signer.declinedAt}
-                        {signer.declineReason
-                          ? `: ${signer.declineReason}`
-                          : ""}
-                      </p>
-                    )}
+                    <SignerActivity request={signingRequest} signer={signer} />
                   </div>
                   <div className="flex items-center gap-2">
                     <Pill tone={statusTone(signer.status)}>
-                      {signer.status}
+                      {signerStatusLabel(signer)}
                     </Pill>
                     {active && signer.status !== "signed" && (
                       <>
@@ -372,6 +361,10 @@ export default function SigningRequestPage() {
             </form>
           </div>
         )}
+      </Panel>
+
+      <Panel note="Oldest first, in Toronto time." title="History">
+        <SigningTimeline request={signingRequest} />
       </Panel>
     </div>
   );
