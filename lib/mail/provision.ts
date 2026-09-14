@@ -1,5 +1,6 @@
 import { usersWithRealmRole } from "@/lib/auth/keycloak-admin";
 import { dottedAliasFor } from "@/lib/auth/username";
+import { RETIRED_SINK } from "@/lib/identity/retired-notice";
 import { createApprovedSender, deleteApprovedSender } from "./oci-senders";
 import {
   clearReadOnly,
@@ -24,7 +25,9 @@ export const domain = () => process.env.MAIL_DOMAIN ?? "brockcsc.ca";
 export const coPresidentsList = () =>
   process.env.CO_PRESIDENTS_LIST ?? "co-presidents";
 
-const coPresidentsAddress = () => `${coPresidentsList()}@${domain()}`;
+export const coPresidentsAddress = () => `${coPresidentsList()}@${domain()}`;
+
+export const adminGroup = () => process.env.ADMIN_MAIL_GROUP ?? "admin";
 
 const protectedMailboxes = (): string[] =>
   (process.env.PROTECTED_MAIL_USERS ?? "alaqmargandhi")
@@ -35,11 +38,14 @@ const protectedMailboxes = (): string[] =>
 export const isProtectedMailbox = (username: string): boolean =>
   protectedMailboxes().includes(username);
 
+/** A disabled holder is one being renamed: their old login must not stay on admin@. */
 const approvers = async (): Promise<string[]> => {
   const holders = await usersWithRealmRole("co-president");
   return [
     ...new Set([
-      ...holders.map((holder) => holder.username),
+      ...holders
+        .filter((holder) => holder.enabled !== false)
+        .map((holder) => holder.username),
       ...protectedMailboxes(),
     ]),
   ];
@@ -65,8 +71,20 @@ const syncCoPresidentsList = async (recipients: string[]): Promise<void> => {
   }
 };
 
+/** A mailbox mid-rename carries its own redirect to the successor; leave it be. */
+const migrating = async (): Promise<string[]> => {
+  const { activeMigrations } = await import("@/lib/db/identity-migrations");
+  return (await activeMigrations()).map((record) => record.from.username);
+};
+
+/** The retired-address sink is read-only too, but its script rejects mail rather than forwarding it. */
 const syncForwarding = async (holders: string[]): Promise<void> => {
-  const exempt = new Set([...holders, ...protectedMailboxes()]);
+  const exempt = new Set([
+    ...holders,
+    ...protectedMailboxes(),
+    ...(await migrating()),
+    RETIRED_SINK,
+  ]);
   const forwarding = await forwardingAccounts();
   for (const user of await listUsers()) {
     const wanted = user.readOnly && !exempt.has(user.name);
@@ -99,7 +117,7 @@ const syncRoleAliases = async (): Promise<void> => {
 /** admin@ membership, the co-presidents list, the catch-all and forwarding. */
 export const syncMailRouting = async (): Promise<void> => {
   const holders = await approvers();
-  await setGroupMembers(process.env.ADMIN_MAIL_GROUP ?? "admin", holders);
+  await setGroupMembers(adminGroup(), holders);
   await syncCoPresidentsList(holders.map((name) => `${name}@${domain()}`));
   const catchAll = await getCatchAll(domain());
   if (!catchAll && holders.length) {
@@ -116,6 +134,17 @@ export const syncExpungeRights = async (): Promise<void> => {
   await setExpungeAllowed(await approvers());
 };
 
+/** The dotted form of the name, unless someone retired held it: those are never reissued. */
+const freeDottedAlias = async (
+  firstName: string,
+  lastName: string,
+): Promise<string | undefined> => {
+  const alias = dottedAliasFor(firstName, lastName);
+  if (!alias) return undefined;
+  const { isUsernameReserved } = await import("@/lib/db/identity-migrations");
+  return (await isUsernameReserved(alias)) ? undefined : alias;
+};
+
 /** Idempotent, so a failed approval can be retried. */
 export const provisionMailbox = async (exec: {
   username: string;
@@ -126,7 +155,7 @@ export const provisionMailbox = async (exec: {
     await createMailbox({
       localPart: exec.username,
       displayName: [exec.firstName, exec.lastName].filter(Boolean).join(" "),
-      alias: dottedAliasFor(exec.firstName, exec.lastName) || undefined,
+      alias: await freeDottedAlias(exec.firstName, exec.lastName),
       domain: domain(),
     });
   }

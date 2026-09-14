@@ -101,8 +101,9 @@ deployed by Komodo.
 host rewrites `/` to `/admin` and 308s public paths to `PUBLIC_SUBDOMAIN`; the public host 308s
 `/admin*` back the other way. With neither set (local dev) both live on `localhost:3000`.
 
-**Data model.** Four tables of one shape — `id uuid`, `data jsonb`, `created_at` — from
-`jsonbTable()` in `lib/db/schema.ts`: `events`, `execs`, `signups`, `page_views`.
+**Data model.** Tables of one shape — `id uuid`, `data jsonb`, `created_at` — from
+`jsonbTable()` in `lib/db/schema.ts`: `events`, `execs`, `signups`, `page_views`, `mail_aliases`,
+`password_resets`, `identity_migrations`, `retired_usernames`.
 `createCollectionHandlers` / `createItemHandlers` in `lib/db/repository.ts` generate the CRUD routes,
 so a new collection is a schema entry plus a route file, not a new query layer.
 
@@ -165,9 +166,34 @@ Every environment is a schema in one shared database (`DB_SCHEMA`). Migrations r
 container start: the `Dockerfile` `CMD` runs `migrate.mjs`, then `sync-from-prod.mjs`, then the
 server. Never hand-edit a migration that has already shipped.
 
-`sync-from-prod.mjs` truncates `events`, `execs` and `signups` in the current schema and re-copies
-them from `prod` on every deploy, unless `DB_SCHEMA` is `prod` or no `prod` schema exists. So preview
-and uat data is temporary — and what you write to prod is not.
+`sync-from-prod.mjs` truncates `events`, `execs`, `signups` and `retired_usernames` in the current
+schema and re-copies them from `prod` on every deploy, unless `DB_SCHEMA` is `prod` or no `prod`
+schema exists. So preview and uat data is temporary — and what you write to prod is not.
+
+## Username changes
+
+A member edits their own name, email and student number under Account details on
+`/admin/profile`; name and email need their current password (`lib/auth/reauth.ts`). A name whose
+derived username differs from the current one is not saved: it goes through a migration
+(`lib/identity/migration.ts`) that creates a new Keycloak user and Stalwart account, copies every
+folder, message, flag and sieve script, cuts over, verifies, and only then deletes the old pair. The
+record lives in `identity_migrations`; the old local part goes into `retired_usernames`, stays an
+alias on the new mailbox for 90 days with an auto-reply and subject tag (`lib/identity/retired-notice.ts`),
+and is never reissued: the sweep moves it onto the `retired-addresses` sink account, whose sieve
+script bounces everything, so it never falls through to the co-presidents catch-all. A dotted alias
+dropped by a plain name edit is retired the same way. Usernames a name must never derive into
+(`postmaster`, `hostmaster`, the club's service names) are listed in `lib/identity/reserved.ts`.
+An approver can rename someone from People; they get a temporary password.
+
+Every Stalwart call the migration makes was new to this codebase, so a real rename refuses to
+start until an approver has run the preflight (People → Run migration preflight) on the current
+deploy. Outside production the whole thing is rehearsed: the record is written, nothing else moves.
+`instrumentation.ts` resumes an interrupted migration after a restart, rescans every five minutes
+for one whose lease lapsed, and sweeps expired retired addresses every six hours. The runner and
+the route handlers are separate module graphs, so state they share (`lib/identity/shared.ts`)
+lives on `globalThis`. While a migration is running, role changes, step-down, password resets and
+detail edits for that member are refused; abort queues and the runner tears down before the
+cut-over.
 
 ## Mail
 

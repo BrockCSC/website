@@ -80,7 +80,7 @@ const adminFetch = async (path: string, init: RequestInit = {}) => {
   return res;
 };
 
-const findUserByUsername = async (
+export const findUserByUsername = async (
   username: string,
 ): Promise<{ id: string; enabled: boolean } | null> => {
   const res = await adminFetch(
@@ -142,16 +142,69 @@ export const createDisabledUser = async (
   return id;
 };
 
+export type KeycloakUser = {
+  id: string;
+  username: string;
+  enabled: boolean;
+  emailVerified?: boolean;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  attributes?: Record<string, string[]>;
+};
+
+export const getUser = async (userId: string): Promise<KeycloakUser | null> => {
+  const res = await adminFetch(userPath(userId));
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Keycloak user read failed (${res.status}).`);
+  return (await res.json()) as KeycloakUser;
+};
+
+const namesAt = async (path: string, failure: string): Promise<string[]> => {
+  const res = await adminFetch(path);
+  if (!res.ok) throw new Error(`${failure} (${res.status}).`);
+  const rows = (await res.json()) as { name: string }[];
+  return rows.map((row) => row.name);
+};
+
 /** Effective realm roles, including those inherited from groups and composites. */
-export const effectiveRealmRoles = async (
+export const effectiveRealmRoles = (userId: string): Promise<string[]> =>
+  namesAt(
+    userPath(userId, "/role-mappings/realm/composite"),
+    "Keycloak role lookup failed",
+  );
+
+/**
+ * Only the mappings on the user itself. Replaying the composite set onto a
+ * new user would pin co-president's implied roles as direct mappings, and a
+ * later single-role revoke would no longer remove them.
+ */
+export const directRealmRoles = (userId: string): Promise<string[]> =>
+  namesAt(
+    userPath(userId, "/role-mappings/realm"),
+    "Keycloak direct role lookup failed",
+  );
+
+export const credentialTypes = async (userId: string): Promise<string[]> => {
+  const res = await adminFetch(userPath(userId, "/credentials"));
+  if (!res.ok) {
+    throw new Error(`Keycloak credential lookup failed (${res.status}).`);
+  }
+  const rows = (await res.json()) as { type: string }[];
+  return rows.map((row) => row.type);
+};
+
+export const federatedIdentities = async (
   userId: string,
 ): Promise<string[]> => {
-  const res = await adminFetch(
-    userPath(userId, "/role-mappings/realm/composite"),
-  );
-  if (!res.ok) throw new Error(`Keycloak role lookup failed (${res.status}).`);
-  const roles = (await res.json()) as { name: string }[];
-  return roles.map((role) => role.name);
+  const res = await adminFetch(userPath(userId, "/federated-identity"));
+  if (!res.ok) {
+    throw new Error(
+      `Keycloak federated identity lookup failed (${res.status}).`,
+    );
+  }
+  const rows = (await res.json()) as { identityProvider: string }[];
+  return rows.map((row) => row.identityProvider);
 };
 
 /**
@@ -180,12 +233,16 @@ export const recentRoleEvents = async (
 
 export const usersWithRealmRole = async (
   roleName: string,
-): Promise<{ id: string; username: string }[]> => {
+): Promise<{ id: string; username: string; enabled?: boolean }[]> => {
   const res = await adminFetch(
     `/roles/${encodeURIComponent(roleName)}/users?max=200`,
   );
   if (!res.ok) throw new Error(`Keycloak role holders failed (${res.status}).`);
-  return (await res.json()) as { id: string; username: string }[];
+  return (await res.json()) as {
+    id: string;
+    username: string;
+    enabled?: boolean;
+  }[];
 };
 
 const mapRealmRole = async (

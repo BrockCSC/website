@@ -6,15 +6,19 @@ import { grantsApproval } from "@/lib/execs/titles";
 import { Button } from "@/components/ui/button";
 import { useSession } from "../session";
 import { useHandoff } from "../palette";
+import { ApiError } from "@/lib/api/client";
 import {
   buildPeople,
   fetchExecs,
   fetchPeopleSignups,
+  fetchPreflight,
   reviewMailDeletion,
   reviewMailLimit,
+  runPreflight,
   searchPeople,
   type Exec,
   type Person,
+  type PreflightState,
   type Signup,
 } from "./api";
 import Confirm from "./confirm";
@@ -72,6 +76,28 @@ export default function UsersPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<string | null>(null);
+  const [preflight, setPreflight] = useState<PreflightState | null>(null);
+  const [preflightNote, setPreflightNote] = useState<string | null>(null);
+  const [preflighting, setPreflighting] = useState(false);
+
+  const checkPreflight = async () => {
+    setPreflighting(true);
+    setPreflightNote(null);
+    try {
+      const report = await runPreflight();
+      setPreflight((current) => ({
+        available: current?.available ?? true,
+        report,
+      }));
+    } catch (err) {
+      setPreflightNote(
+        (err instanceof ApiError && err.detail) ||
+          "The preflight could not be run.",
+      );
+    } finally {
+      setPreflighting(false);
+    }
+  };
 
   const load = useCallback(async () => {
     try {
@@ -93,6 +119,7 @@ export default function UsersPage() {
     void (async () => {
       await load();
       setInvite(await fetchInviteCode().catch(() => null));
+      setPreflight(await fetchPreflight().catch(() => null));
     })();
   }, [load]);
 
@@ -240,6 +267,77 @@ export default function UsersPage() {
                 <span className="font-mono text-3xl font-extrabold tracking-[0.2em] text-brand">
                   {invite?.code ?? "————"}
                 </span>
+              </Panel>
+              <Panel
+                action={
+                  <Button
+                    disabled={preflighting || preflight?.available === false}
+                    onClick={() => void checkPreflight()}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    {preflighting ? "Running..." : "Run migration preflight"}
+                  </Button>
+                }
+                note="Before anyone's username can be changed, every mail-server call a rename makes is tried on a throwaway account pair. It has to pass once per deploy."
+                smallNote
+                title="Migration preflight"
+              >
+                {preflight?.available === false ? (
+                  <p className="text-sm text-subtle">
+                    Only in production. Renames here are rehearsed and need no
+                    preflight.
+                  </p>
+                ) : preflight?.report ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-sm font-bold text-ink">
+                      {preflight.report.ok ? "Passed" : "Failed"} ·{" "}
+                      <span className="font-normal text-subtle">
+                        {new Date(preflight.report.at).toLocaleString()}
+                      </span>
+                    </p>
+                    <ul className="flex flex-col gap-1">
+                      {preflight.report.checks.map((check) => (
+                        <li
+                          className={`flex items-start gap-2 text-sm ${
+                            check.ok
+                              ? "text-ink"
+                              : check.skipped
+                                ? "text-subtle"
+                                : "text-destructive"
+                          }`}
+                          key={check.id}
+                        >
+                          <span
+                            aria-hidden
+                            className="w-4 shrink-0 text-center font-mono font-bold"
+                          >
+                            {check.ok ? "✓" : check.skipped ? "–" : "✕"}
+                          </span>
+                          <span className="min-w-0">
+                            {check.label}
+                            {check.error && (
+                              <span className="block text-xs">
+                                {check.error}
+                              </span>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <p className="text-sm text-subtle">
+                    Not run since the last deploy. Renames refuse to start until
+                    it passes.
+                  </p>
+                )}
+                {preflightNote && (
+                  <p className="mt-2 text-sm font-bold text-destructive">
+                    {preflightNote}
+                  </p>
+                )}
               </Panel>
               <Panel
                 action={

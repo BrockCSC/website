@@ -60,6 +60,8 @@ const jmap = async <T>(calls: Call[]): Promise<T[]> =>
     return payload as T;
   });
 
+type AliasEntry = { name: string; domainId?: string; enabled?: boolean };
+
 type Account = {
   id: string;
   name: string;
@@ -68,7 +70,12 @@ type Account = {
   description?: string;
   memberGroupIds?: Record<string, boolean>;
   permissions?: { disabledPermissions?: Record<string, boolean> };
+  /** Index-keyed on the wire ("0", "1", ...), never a plain array. */
+  aliases?: Record<string, AliasEntry> | AliasEntry[];
 };
+
+const aliasNames = (raw: Account["aliases"]): string[] =>
+  (Array.isArray(raw) ? raw : Object.values(raw ?? {})).map((a) => a.name);
 
 const EXPUNGE = "imapExpunge";
 
@@ -223,6 +230,76 @@ export const deleteMailingList = async (id: string): Promise<void> => {
 
 export const localPartTaken = async (localPart: string): Promise<boolean> =>
   (await accounts()).some((a) => a.name === localPart);
+
+/** Any account's alias, or any mailing list's name or alias. */
+export const aliasTaken = async (localPart: string): Promise<boolean> => {
+  const [all, lists] = await Promise.all([accounts(), listMailingLists()]);
+  return (
+    all.some((a) => aliasNames(a.aliases).includes(localPart)) ||
+    lists.some(
+      (list) => list.name === localPart || list.aliases.includes(localPart),
+    )
+  );
+};
+
+export const accountIdOf = async (localPart: string): Promise<string | null> =>
+  (await accounts()).find((a) => a.name === localPart)?.id ?? null;
+
+export const accountAliases = async (localPart: string): Promise<string[]> => {
+  const account = (await accounts()).find((a) => a.name === localPart);
+  return account ? aliasNames(account.aliases) : [];
+};
+
+/** Replaces the whole alias map; there is no per-entry add. */
+export const setAccountAliases = async (
+  localPart: string,
+  names: string[],
+  domain: string,
+): Promise<void> => {
+  const account = (await accounts()).find((a) => a.name === localPart);
+  if (!account) throw new Error(`Stalwart has no account "${localPart}".`);
+  const [res] = await jmap<{ notUpdated?: Record<string, unknown> }>([
+    [
+      "x:Account/set",
+      {
+        update: {
+          [account.id]: {
+            aliases: aliasEntries([...new Set(names)], await domainId(domain)),
+          },
+        },
+      },
+      "c0",
+    ],
+  ]);
+  refused(res);
+};
+
+export const setDescription = async (
+  localPart: string,
+  description: string,
+): Promise<void> => {
+  const account = (await accounts()).find((a) => a.name === localPart);
+  if (!account) return;
+  const [res] = await jmap<{ notUpdated?: Record<string, unknown> }>([
+    ["x:Account/set", { update: { [account.id]: { description } } }, "c0"],
+  ]);
+  refused(res);
+};
+
+/** False when there was nothing to destroy. */
+export const destroyAccount = async (localPart: string): Promise<boolean> => {
+  const account = (await accounts()).find((a) => a.name === localPart);
+  if (!account) return false;
+  const [res] = await jmap<{
+    destroyed?: string[];
+    notDestroyed?: Record<string, unknown>;
+  }>([["x:Account/set", { destroy: [account.id] }, "c0"]]);
+  refused(res);
+  if (!res.destroyed?.includes(account.id)) {
+    throw new Error(`Stalwart did not destroy "${localPart}".`);
+  }
+  return true;
+};
 
 export type MailUser = {
   id: string;
@@ -450,14 +527,112 @@ export const revokeAppPasswords = async (localPart: string): Promise<void> => {
   ]);
 };
 
-const FORWARD_SCRIPT = "forward-to-co-presidents";
+export const FORWARD_SCRIPT = "forward-to-co-presidents";
 
-type SieveScript = { id: string; name: string; isActive: boolean };
+export type SieveScript = {
+  id: string;
+  name: string;
+  isActive: boolean;
+  blobId?: string;
+};
+
+export const listSieveScripts = (accountId: string): Promise<SieveScript[]> =>
+  jmap<{ list: SieveScript[] }>([
+    [
+      "SieveScript/get",
+      {
+        accountId,
+        ids: null,
+        properties: ["id", "name", "isActive", "blobId"],
+      },
+      "c0",
+    ],
+  ]).then(([res]) => res.list);
 
 const forwardScript = (accountId: string) =>
-  jmap<{ list: SieveScript[] }>([
-    ["SieveScript/get", { accountId, ids: null }, "c0"],
-  ]).then(([res]) => res.list.find((s) => s.name === FORWARD_SCRIPT));
+  listSieveScripts(accountId).then((list) =>
+    list.find((s) => s.name === FORWARD_SCRIPT),
+  );
+
+/** Creates or replaces the named script. Activating it deactivates any other. */
+export const putSieveScript = async (
+  accountId: string,
+  name: string,
+  script: string,
+  activate: boolean,
+): Promise<string> => {
+  const existing = (await listSieveScripts(accountId)).find(
+    (s) => s.name === name,
+  );
+  const blobId = await uploadSieve(accountId, script);
+  if (existing) {
+    const [res] = await jmap<{ notUpdated?: Record<string, unknown> }>([
+      [
+        "SieveScript/set",
+        {
+          accountId,
+          update: { [existing.id]: { blobId } },
+          ...(activate ? { onSuccessActivateScript: existing.id } : {}),
+        },
+        "c0",
+      ],
+    ]);
+    refused(res);
+    return existing.id;
+  }
+  const [res] = await jmap<{
+    created?: Record<string, { id: string }>;
+    notCreated?: unknown;
+  }>([
+    [
+      "SieveScript/set",
+      {
+        accountId,
+        create: { s: { name, blobId } },
+        ...(activate ? { onSuccessActivateScript: "#s" } : {}),
+      },
+      "c0",
+    ],
+  ]);
+  const created = res.created?.s;
+  if (!created) {
+    throw new Error(
+      `Stalwart did not create sieve script ${name}: ${JSON.stringify(res.notCreated)}`,
+    );
+  }
+  return created.id;
+};
+
+/**
+ * Destroys the named script. An active script cannot be destroyed, so it is
+ * first swapped for `thenActivate` when that script exists on the account,
+ * and simply deactivated otherwise.
+ */
+export const removeSieveScript = async (
+  accountId: string,
+  name: string,
+  thenActivate?: string | null,
+): Promise<void> => {
+  const scripts = await listSieveScripts(accountId);
+  const existing = scripts.find((s) => s.name === name);
+  if (!existing) return;
+  const calls: Call[] = [
+    ["SieveScript/set", { accountId, destroy: [existing.id] }, "c1"],
+  ];
+  if (existing.isActive) {
+    const next = thenActivate
+      ? scripts.find((s) => s.name === thenActivate)
+      : undefined;
+    calls.unshift([
+      "SieveScript/set",
+      next
+        ? { accountId, onSuccessActivateScript: next.id }
+        : { accountId, onSuccessDeactivateScript: true },
+      "c0",
+    ]);
+  }
+  await jmap(calls);
+};
 
 /** Local parts whose mail is currently forwarded; an account whose call failed counts as not forwarding. */
 export const forwardingAccounts = async (): Promise<Set<string>> => {

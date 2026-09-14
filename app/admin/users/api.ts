@@ -3,7 +3,14 @@ import type {
   PersonDetail,
 } from "@/app/api/signups/[id]/consequences";
 import { apiFetch } from "@/lib/api/client";
-import type { ExecRecord, SignupRecord, WithKey } from "@/lib/api/types";
+import type {
+  ExecRecord,
+  IdentityMigrationView,
+  PreflightReport,
+  RenamePreview,
+  SignupRecord,
+  WithKey,
+} from "@/lib/api/types";
 import { sortExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
 
 export type { ApplyResult, PersonDetail };
@@ -77,6 +84,49 @@ export type PasswordResetResult = { tempPassword: string; rehearsed: boolean };
 
 export const resetPersonPassword = (id: string) =>
   apiFetch<PasswordResetResult>(`/api/signups/${id}/reset-password`, {
+    method: "POST",
+  });
+
+export type RenameNames = { firstName: string; lastName: string };
+
+export const previewPersonRename = (id: string, names: RenameNames) =>
+  apiFetch<RenamePreview>(`/api/signups/${id}/rename`, {
+    method: "POST",
+    body: JSON.stringify(names),
+  });
+
+export type RenameStarted = {
+  migrationId: string;
+  tempPassword: string;
+  rehearsed: boolean;
+};
+
+export const startPersonRename = (id: string, names: RenameNames) =>
+  apiFetch<RenameStarted>(`/api/signups/${id}/rename`, {
+    method: "POST",
+    body: JSON.stringify({ ...names, confirm: true }),
+  });
+
+export const resumeMigration = (id: string) =>
+  apiFetch<IdentityMigrationView>(`/api/identity-migrations/${id}/resume`, {
+    method: "POST",
+  });
+
+export const abortPersonMigration = (id: string) =>
+  apiFetch<IdentityMigrationView>(`/api/identity-migrations/${id}/abort`, {
+    method: "POST",
+  });
+
+export type PreflightState = {
+  available: boolean;
+  report: PreflightReport | null;
+};
+
+export const fetchPreflight = () =>
+  apiFetch<PreflightState>("/api/identity-migrations/preflight");
+
+export const runPreflight = () =>
+  apiFetch<PreflightReport>("/api/identity-migrations/preflight", {
     method: "POST",
   });
 

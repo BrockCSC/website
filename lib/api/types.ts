@@ -102,6 +102,10 @@ export type SignupRecord = {
   reviewedAt?: string;
   /** Set by an admin-triggered password reset; cleared once they set their own. */
   passwordResetRequired?: boolean;
+  /** Usernames this account held before, oldest first. Never reissued. */
+  previousUsernames?: string[];
+  /** The rename that last moved this account, for the audit trail. */
+  identityMigrationId?: string;
 };
 
 export type PasswordResetRecord = {
@@ -109,6 +113,179 @@ export type PasswordResetRecord = {
   /** sha256 of the raw token mailed to the user; the raw value is never stored. */
   tokenHash: string;
   expiresAt: string;
+};
+
+/**
+ * A local part that used to be someone's username. It stays an alias on the
+ * successor mailbox until forwardUntil, then the sweep detaches it. The local
+ * part itself is never handed to anyone else.
+ */
+export type RetiredUsernameRecord = {
+  localPart: string;
+  /** Other aliases the old account carried; they follow the successor too. */
+  aliases: string[];
+  signupId: string;
+  successor: string;
+  /** Absent for a dotted alias retired by a name edit that kept the username. */
+  migrationId?: string;
+  /** The member's own sieve script the retired-address notice includes; reactivated when the notice goes. */
+  includedScript?: string | null;
+  retiredAt: string;
+  forwardUntil: string;
+  sweptAt?: string;
+};
+
+type MigrationMode = "real" | "rehearsal";
+
+export type MigrationStatus =
+  "planned" | "running" | "cut-over" | "failed" | "done" | "aborted";
+
+export type MigrationStepStatus =
+  "pending" | "done" | "failed" | "skipped" | "rehearsed";
+
+export type MigrationStepState = {
+  status: MigrationStepStatus;
+  at?: string;
+  attempts: number;
+  error?: string;
+};
+
+export type MigrationMailbox = {
+  name: string;
+  role: string | null;
+  parentId: string | null;
+  newId?: string;
+  cursor: number;
+  old: { total: number; unread: number };
+};
+
+export type MigrationVerification = {
+  at: string;
+  ok: boolean;
+  /** Per old folder: [total, unread, bytes] on each side. */
+  folders: Record<
+    string,
+    { name: string; old: [number, number, number]; new: [number, number] }
+  >;
+  messagesChecked: number;
+  keywordMismatches: number;
+  receivedAtMismatches: number;
+  otherMismatches: number;
+  sieveOk: boolean;
+  rolesOk: boolean;
+  aliasesOk: boolean;
+  senderOk: boolean;
+  notes: string[];
+};
+
+export type IdentityMigrationRecord = {
+  signupId: string;
+  mode: MigrationMode;
+  requestedBy: { sub: string; kind: "self" | "approver" };
+  requestedAt: string;
+  /** confirmed: the member's own password, held in memory only. temp: a generated one they must change. */
+  passwordSource: "confirmed" | "temp";
+  from: {
+    username: string;
+    keycloakUserId: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    mailboxId: string | null;
+    aliases: string[];
+    readOnly: boolean;
+    appPasswords: { description: string; createdAt: string }[];
+  };
+  to: {
+    username: string;
+    keycloakUserId?: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    mailboxId?: string;
+    dottedAlias: string | null;
+  };
+  status: MigrationStatus;
+  step: string;
+  /** Null rather than absent: a jsonb merge cannot drop a key. */
+  lease?: { until: string; by: string } | null;
+  /** Set by abort while a runner holds the lease; the runner tears down before the cut-over. */
+  cancelRequested?: string | null;
+  steps: Record<string, MigrationStepState>;
+  /** Old mailbox id -> its counterpart on the new account. */
+  mailboxes: Record<string, MigrationMailbox>;
+  /** Old Email id -> new Email id. */
+  copied: Record<string, string>;
+  sieve: { name: string; isActive: boolean; newId?: string }[];
+  roles: { direct: string[]; effectiveBefore: string[] };
+  lists: { id: string; name: string; updated: boolean }[];
+  verification?: MigrationVerification;
+  cutOverAt?: string;
+  forwardUntil?: string;
+  handoff?: { at: string; how: "session" | "relogin" };
+  notified: Partial<
+    Record<"requested" | "cutover" | "done" | "failed", string>
+  >;
+  error?: string | null;
+};
+
+/** What the browser sees of a migration: no ids, no copied map. */
+export type IdentityMigrationView = {
+  $key: string;
+  signupId: string;
+  mode: MigrationMode;
+  status: MigrationStatus;
+  step: string;
+  requestedAt: string;
+  requestedBy: "self" | "approver";
+  passwordSource: "confirmed" | "temp";
+  from: string;
+  to: string;
+  cutOverAt?: string;
+  forwardUntil?: string;
+  handoff?: { at: string; how: "session" | "relogin" };
+  verification?: MigrationVerification;
+  error?: string;
+  steps: ({
+    id: string;
+    label: string;
+    phase: "A" | "B" | "C";
+  } & MigrationStepState)[];
+  messages: { copied: number; total: number };
+  leaseExpired: boolean;
+  /** An abort is queued; the runner stops at its next step. */
+  aborting: boolean;
+  canAbort: boolean;
+  canResume: boolean;
+};
+
+/** One line of the rename confirmation. Every item is fixed: there is nothing to untick. */
+export type RenamePreviewItem = {
+  id: string;
+  title: string;
+  detail: string;
+  fixed: true;
+};
+
+export type RenamePreview = {
+  preview: RenamePreviewItem[];
+  to: string;
+  rehearsal: boolean;
+};
+
+export type PreflightCheck = {
+  id: string;
+  label: string;
+  ok: boolean;
+  skipped?: boolean;
+  error?: string;
+};
+
+export type PreflightReport = {
+  at: string;
+  ok: boolean;
+  checks: PreflightCheck[];
 };
 
 export type DayCount = { day: string; count: number };

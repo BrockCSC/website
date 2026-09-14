@@ -24,6 +24,7 @@ import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { useSession } from "../session";
 import { Panel, fieldOn, labelClass, type PanelProps } from "../users/ui";
 import { ask } from "../ask";
+import AccountDetails from "./account-details";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "@/lib/api/client";
 
@@ -155,6 +156,9 @@ export default function ProfilePage() {
           {error ??
             "Your account isn't linked to a team page tile. Ask a co-president to link it — that happens when an account is approved."}
         </p>
+        <div className="mt-8 max-w-[640px]">
+          <AccountDetails />
+        </div>
       </div>
     );
   }
@@ -206,7 +210,7 @@ export default function ProfilePage() {
 
         <div className="flex flex-col gap-6">
           <Section
-            note="Only a co-president can change these."
+            note="The name and title on your tile. A co-president sets the title; the name follows your account details below unless they've customised it."
             title="Identity"
           >
             <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
@@ -216,6 +220,8 @@ export default function ProfilePage() {
               <dd className="font-bold text-ink">{profile.title ?? "—"}</dd>
             </dl>
           </Section>
+
+          <AccountDetails />
 
           <Section title="Photo">
             <ImageUpload

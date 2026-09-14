@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
-import { updatePersonDetails, type Signup } from "./api";
+import { usernameFor } from "@/lib/auth/username";
+import { updatePersonDetails, type RenameNames, type Signup } from "./api";
 import { Label, field } from "./ui";
 
 const ACCESS_CARD_PATTERN = /^\d{5}$/;
@@ -31,11 +32,14 @@ export default function DetailsForm({
   identitiesEditable,
   onSaved,
   onCancel,
+  onRename,
 }: {
   signup: Signup;
   identitiesEditable: boolean;
   onSaved: () => void | Promise<void>;
   onCancel: () => void;
+  /** A name that would change the username goes here instead of being saved. */
+  onRename?: (names: RenameNames) => void | Promise<void>;
 }) {
   const [form, setForm] = useState<Details>(detailsFrom(signup));
   const [saving, setSaving] = useState(false);
@@ -48,9 +52,22 @@ export default function DetailsForm({
     form.accessCardId.trim() !== "" &&
     !ACCESS_CARD_PATTERN.test(form.accessCardId.trim());
 
+  const firstName = form.firstName.trim();
+  const lastName = form.lastName.trim();
+  const namesChanged =
+    firstName !== (signup.firstName ?? "") ||
+    lastName !== (signup.lastName ?? "");
+  const base = firstName && lastName ? usernameFor(firstName, lastName) : "";
+  const wouldRename =
+    !!onRename && !!signup.username && namesChanged && base !== signup.username;
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     if (cardInvalid) return;
+    if (wouldRename) {
+      await onRename({ firstName, lastName });
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -95,6 +112,23 @@ export default function DetailsForm({
             value={form.lastName}
           />
         </div>
+        {signup.username && (
+          <p className="text-sm text-subtle sm:col-span-2">
+            Username{" "}
+            <span className="font-mono text-ink">{signup.username}</span>
+            {wouldRename && (
+              <>
+                {" "}
+                → would become{" "}
+                <span className="font-mono text-ink">
+                  {base || "(computed on save)"}
+                </span>
+                . Renaming moves their login and mailbox; save the other fields
+                separately.
+              </>
+            )}
+          </p>
+        )}
         <div>
           <Label htmlFor="details-email">Email</Label>
           <input
@@ -153,7 +187,7 @@ export default function DetailsForm({
           type="submit"
           variant="primary"
         >
-          {saving ? "Saving..." : "Save details"}
+          {saving ? "Saving..." : wouldRename ? "Rename..." : "Save details"}
         </Button>
         <Button
           disabled={saving}

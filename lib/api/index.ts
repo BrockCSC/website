@@ -5,6 +5,12 @@ export {
   fetchPreviousExecs,
   fetchProfile,
   updateProfile,
+  fetchOwnDetails,
+  updateOwnDetails,
+  startRename,
+  fetchMigration,
+  handoffMigrationSession,
+  abortMigration,
   stepDownAsCoPresident,
   createEvent,
   editEvent,
@@ -14,7 +20,7 @@ export {
   fetchDashboardStats,
   recordPageView,
 } from "./records";
-export type { ProfileRecord } from "./records";
+export type { OwnDetails, ProfileRecord } from "./records";
 export {
   fetchCurrentUser,
   login,
@@ -29,6 +35,8 @@ export type {
   DayCount,
   EventRecord,
   ExecRecord,
+  IdentityMigrationView,
+  RenamePreview,
   SessionUser,
   WithKey,
 } from "./types";

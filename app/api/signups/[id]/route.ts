@@ -11,6 +11,7 @@ import { describePerson, findPerson } from "./consequences";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { findExecMatchingName } from "@/lib/db/execs";
+import { findActiveMigrationForSignup } from "@/lib/db/identity-migrations";
 import { grantsApproval } from "@/lib/execs/titles";
 import {
   isProtectedMailbox,
@@ -187,6 +188,12 @@ export const DELETE = async (
       {
         error: `"${signup.username}" is a service account and cannot be removed.`,
       },
+      { status: 409 },
+    );
+  }
+  if (await findActiveMigrationForSignup(id)) {
+    return NextResponse.json(
+      { error: "A username change is in progress; wait for it to finish." },
       { status: 409 },
     );
   }

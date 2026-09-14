@@ -50,6 +50,15 @@ export const createApprovedSender = async (
   }
 };
 
+export const isApprovedSender = async (
+  emailAddress: string,
+): Promise<boolean> => {
+  const { compartmentId } = config();
+  const email = await client();
+  const { items } = await email.listSenders({ compartmentId, emailAddress });
+  return items.some((s) => s.emailAddress === emailAddress);
+};
+
 export const deleteApprovedSender = async (
   emailAddress: string,
 ): Promise<void> => {

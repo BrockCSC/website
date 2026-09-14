@@ -26,7 +26,22 @@ if (prodSchemaExists.rowCount === 0) {
   process.exit(0);
 }
 
-for (const table of ["events", "execs", "signups"]) {
+// retired_usernames rides along so a preview can never reissue a name prod
+// has retired; identity_migrations stays prod-only, previews only rehearse.
+//
+// A table can exist on this branch (and so in this schema, freshly migrated)
+// before prod has ever run that migration — every branch that adds a table
+// hits this until it merges and a prod release actually creates it there.
+const prodTables = await pool.query(
+  `SELECT table_name FROM information_schema.tables WHERE table_schema = 'prod'`,
+);
+const prodTableNames = new Set(prodTables.rows.map((row) => row.table_name));
+
+for (const table of ["events", "execs", "signups", "retired_usernames"]) {
+  if (!prodTableNames.has(table)) {
+    console.log(`prod has no "${table}" table yet; skipping.`);
+    continue;
+  }
   await pool.query(`TRUNCATE TABLE "${schema}"."${table}"`);
   await pool.query(
     `INSERT INTO "${schema}"."${table}" SELECT * FROM "prod"."${table}"`,
