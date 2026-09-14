@@ -8,45 +8,23 @@ import {
 } from "@/lib/documents/page-size";
 import { PageBox } from "./page-box";
 
-type Kind = "pdf" | "image" | "html" | "text" | "unsupported";
+type Kind = "pdf" | "image" | "text" | "unsupported";
 
 const kindForContentType = (contentType: string): Kind => {
   if (contentType === "application/pdf") return "pdf";
   if (contentType === "image/png" || contentType === "image/jpeg")
     return "image";
-  if (contentType === "text/html") return "html";
   if (contentType === "text/plain") return "text";
   return "unsupported";
 };
 
 /**
- * Renders a document version (PDF via pdfjs-dist, an image directly, or an
- * HTML-origin document in a sandboxed iframe) as a fixed-size page that
- * percentage-based fields can be positioned on top of. Paging only for
+ * Renders a document version (PDF via pdfjs-dist, an image directly, or
+ * plain text such as a signing-completion certificate) as a fixed-size page
+ * that percentage-based fields can be positioned on top of. Paging only for
  * multi-page PDFs — no zoom, search or annotation beyond that, per the brief.
- *
- * The HTML case stays in `<iframe sandbox srcDoc>` rather than
- * `dangerouslySetInnerHTML`: write-time sanitizing (lib/documents/letterhead.ts)
- * is the only guard for injected markup, but the stored document also carries
- * its own `<meta>` CSP that only takes effect when it's actually parsed as a
- * standalone document — inlined via innerHTML, `<head>` is dropped and that
- * CSP never applies. Click-to-place still works: the overlay below is a
- * parent-document layer stacked *above* the iframe, not something living
- * inside it, so it never needs the iframe's own clicks to bubble anywhere.
- *
- * `sandbox="allow-same-origin"` (never paired with `allow-scripts`, which
- * this deliberately omits) — without it, srcDoc gives the frame a unique
- * opaque origin and `contentDocument` from the parent reads back `null`,
- * which is what we need to measure real content height for a long letterhead
- * document (below). The one real cost: with an opaque origin, the frame's
- * own subresource requests (an exec-authored `<img src>` in the body) are
- * cross-site and carry no `SameSite=Lax` cookies; same-origin makes them
- * same-site again, so a same-origin image load now goes out with the
- * viewer's session cookie attached (nothing in the frame can read the
- * response either way — no script execution). That's why
- * `renderLetterheadDocument` (lib/documents/letterhead.ts) pins its CSP
- * `img-src` to the public site's own host instead of `'self'` or a bare
- * `https:` — 'self' here would otherwise mean the *admin* origin.
+ * A docx version has no inline preview (falls through to "unsupported"),
+ * same as before this component supported anything besides PDF and images.
  *
  * Pass `key={fileUrl}` from the caller when the URL can change under a
  * mounted instance (e.g. picking a different version) — internal state
@@ -74,7 +52,6 @@ export function DocumentPreview({
     width: LETTERHEAD_PAGE_WIDTH,
     height: LETTERHEAD_PAGE_MIN_HEIGHT,
   });
-  const [htmlText, setHtmlText] = useState<string | null>(null);
   const [textBody, setTextBody] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pdfDoc, setPdfDoc] = useState<
@@ -84,7 +61,7 @@ export function DocumentPreview({
   const preRef = useRef<HTMLPreElement>(null);
 
   useEffect(() => {
-    if (kind === "html" || kind === "text") {
+    if (kind === "text") {
       let cancelled = false;
       fetch(fileUrl, { credentials: "same-origin" })
         .then((res) => {
@@ -92,9 +69,7 @@ export function DocumentPreview({
           return res.text();
         })
         .then((text) => {
-          if (cancelled) return;
-          if (kind === "html") setHtmlText(text);
-          else setTextBody(text);
+          if (!cancelled) setTextBody(text);
         })
         .catch(() => {
           if (!cancelled) setError("Could not load this document.");
@@ -251,30 +226,6 @@ export function DocumentPreview({
                 }}
               />
             )}
-            {kind === "html" &&
-              (htmlText !== null ? (
-                <iframe
-                  className="size-full border-0"
-                  onLoad={(e) => {
-                    // Same-origin (no scripts) so the parent can read the
-                    // framed document's real height — see the docblock above.
-                    const measured =
-                      e.currentTarget.contentDocument?.documentElement
-                        .scrollHeight;
-                    if (measured) {
-                      setPageSize({
-                        width: LETTERHEAD_PAGE_WIDTH,
-                        height: Math.max(LETTERHEAD_PAGE_MIN_HEIGHT, measured),
-                      });
-                    }
-                  }}
-                  sandbox="allow-same-origin"
-                  srcDoc={htmlText}
-                  title="Document preview"
-                />
-              ) : (
-                <p className="p-4 text-sm text-subtle">Loading...</p>
-              ))}
             {kind === "text" &&
               (textBody !== null ? (
                 <pre
