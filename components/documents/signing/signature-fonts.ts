@@ -26,5 +26,5 @@ export const SIGNATURE_FONT_FAMILY: Record<SignatureFontId, string> = {
   "homemade-apple": homemadeApple.style.fontFamily,
 };
 
-/** Pen ink on paper, identical in both themes: the page behind it is always white. */
-export const SIGNATURE_INK = "#1f2a5a";
+/** The stamped PDF's ink, identical in both themes: the page behind it is always white. */
+export const SIGNATURE_INK = "#1b2a4e";
