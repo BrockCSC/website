@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { DocumentRecord } from "@/lib/api/types";
+import type { DocumentRecord, DocumentVersionRecord } from "@/lib/api/types";
 import { findById } from "@/lib/db/repository";
-import { documentsTable } from "@/lib/db/schema";
+import { documentVersionsTable, documentsTable } from "@/lib/db/schema";
 import {
+  fieldsForSigner,
+  parseFieldValuesInput,
   recordSignerResponse,
   recordSignerView,
   redactSigner,
@@ -39,6 +41,10 @@ export const GET = async (
     documentsTable,
     viewed.documentId,
   );
+  const version = await findById<DocumentVersionRecord>(
+    documentVersionsTable,
+    viewed.sourceVersionId,
+  );
   const canRespond =
     viewed.status === "sent" &&
     mine.status !== "signed" &&
@@ -52,10 +58,12 @@ export const GET = async (
     document: document
       ? { title: document.title, category: document.category }
       : null,
+    version: version ? { contentType: version.contentType } : null,
     signingRequestTitle: viewed.title,
     signingRequestStatus: viewed.status,
     mode: viewed.mode,
     signer: redactSigner(mine),
+    fields: fieldsForSigner(viewed, mine.id),
     // Ordering only, never another signer's name or email.
     otherSigners: viewed.signers
       .filter((s) => s.id !== mine.id)
@@ -79,6 +87,7 @@ export const POST = async (
     action?: string;
     signatureText?: string;
     reason?: string;
+    fieldValues?: unknown;
   }>(req);
   if (!body) return badJson();
 
@@ -99,6 +108,7 @@ export const POST = async (
         signatureText,
         ip,
         userAgent,
+        fieldValues: parseFieldValuesInput(body.fieldValues),
       });
       return NextResponse.json({ success: true });
     }

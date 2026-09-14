@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
+import { DocumentPreview } from "@/components/documents/document-preview";
+import { FillableField } from "@/components/documents/fillable-field";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -10,16 +12,22 @@ import {
   signerFileUrl,
   type SafeSigner,
 } from "@/lib/api/documents";
+import type { SigningField } from "@/lib/api/types";
+import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
 
 const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink";
 
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
 type View = {
   document: { title: string; category: string } | null;
+  version: { contentType: string } | null;
   signingRequestTitle: string;
   signingRequestStatus: string;
   mode: "ordered" | "parallel";
   signer: SafeSigner;
+  fields: SigningField[];
   otherSigners: { order: number; status: string }[];
   canRespond: boolean;
 };
@@ -30,6 +38,7 @@ export default function SignPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [signatureText, setSignatureText] = useState("");
+  const [fieldValues, setFieldValues] = useState<Record<string, string>>({});
   const [declining, setDeclining] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -38,7 +47,15 @@ export default function SignPage() {
   useEffect(() => {
     void (async () => {
       try {
-        setView(await fetchSignerView(token));
+        const data = await fetchSignerView(token);
+        setView(data);
+        setFieldValues(
+          Object.fromEntries(
+            data.fields
+              .filter((f) => f.type === "date")
+              .map((f) => [f.id, todayIso()]),
+          ),
+        );
       } catch (err) {
         setError(
           (err instanceof ApiError && err.detail) ||
@@ -50,15 +67,28 @@ export default function SignPage() {
     })();
   }, [token]);
 
+  const missingRequiredField = view?.fields.some(
+    (f) => f.required && f.type !== "signature" && !fieldValues[f.id]?.trim(),
+  );
+
   const sign = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signatureText.trim()) return;
+    if (!signatureText.trim() || missingRequiredField) return;
     setSubmitting(true);
     setError(null);
     try {
+      const values = Object.fromEntries(
+        (view?.fields ?? []).map((f) => [
+          f.id,
+          f.type === "signature"
+            ? signatureText.trim()
+            : (fieldValues[f.id]?.trim() ?? ""),
+        ]),
+      );
       await respondAsSigner(token, {
         action: "sign",
         signatureText: signatureText.trim(),
+        fieldValues: values,
       });
       setDone("signed");
     } catch (err) {
@@ -89,8 +119,12 @@ export default function SignPage() {
     }
   };
 
+  const hasFields = !!view?.fields.length;
+
   return (
-    <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-stretch justify-center gap-6 py-10">
+    <main
+      className={`mx-auto flex min-h-[70vh] ${hasFields ? "max-w-3xl" : "max-w-2xl"} flex-col items-stretch justify-center gap-6 py-10`}
+    >
       <div className="rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8">
         {loading ? (
           <p className="text-center text-sm text-subtle">Loading...</p>
@@ -185,6 +219,48 @@ export default function SignPage() {
               </div>
             ) : (
               <form onSubmit={sign}>
+                {hasFields && view.version && (
+                  <div className="mb-4">
+                    <p className="mb-2 text-xs text-subtle">
+                      Your fields are marked below. Signature fields show the
+                      name you type further down.
+                    </p>
+                    <DocumentPreview
+                      contentType={view.version.contentType}
+                      fileUrl={signerFileUrl(token)}
+                      key={token}
+                      overlay={(page) => (
+                        <>
+                          {view.fields
+                            .filter((f) => f.page === page)
+                            .map((f) => (
+                              <FillableField
+                                key={f.id}
+                                label={
+                                  f.label ?? SIGNING_FIELD_DEFAULT_LABEL[f.type]
+                                }
+                                onChange={(v) =>
+                                  setFieldValues((prev) => ({
+                                    ...prev,
+                                    [f.id]: v,
+                                  }))
+                                }
+                                required={f.required}
+                                type={f.type}
+                                value={
+                                  f.type === "signature"
+                                    ? signatureText
+                                    : (fieldValues[f.id] ?? "")
+                                }
+                                xPercent={f.xPercent}
+                                yPercent={f.yPercent}
+                              />
+                            ))}
+                        </>
+                      )}
+                    />
+                  </div>
+                )}
                 <label
                   className="mb-1 block text-sm font-bold"
                   htmlFor="signature"
@@ -205,7 +281,11 @@ export default function SignPage() {
                 </p>
                 <div className="mt-4 flex gap-3">
                   <Button
-                    disabled={submitting || !signatureText.trim()}
+                    disabled={
+                      submitting ||
+                      !signatureText.trim() ||
+                      missingRequiredField
+                    }
                     type="submit"
                     variant="primary"
                   >

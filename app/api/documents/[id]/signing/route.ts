@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import type {
   DocumentRecord,
+  SigningFieldInput,
+  SigningFieldType,
   SignerInput,
   StartSigningPayload,
 } from "@/lib/api/types";
@@ -18,6 +20,62 @@ type Body = {
   title?: string;
   mode?: string;
   signers?: unknown;
+  fields?: unknown;
+};
+
+const FIELD_TYPES = new Set<SigningFieldType>(["signature", "date", "text"]);
+
+/**
+ * signerIndex is checked against `signerCount` here; startSigningRequest
+ * resolves it to a real signer id once signers actually exist. `undefined`
+ * (fields omitted) is valid and distinct from `null` (fields present but
+ * invalid).
+ */
+const parseFields = (
+  raw: unknown,
+  signerCount: number,
+): SigningFieldInput[] | null | undefined => {
+  if (raw === undefined) return undefined;
+  if (!Array.isArray(raw)) return null;
+  const fields: SigningFieldInput[] = [];
+  for (const entry of raw) {
+    if (!entry || typeof entry !== "object") return null;
+    const e = entry as Record<string, unknown>;
+    const page = Number(e.page);
+    const xPercent = Number(e.xPercent);
+    const yPercent = Number(e.yPercent);
+    const signerIndex = Number(e.signerIndex);
+    if (
+      typeof e.type !== "string" ||
+      !FIELD_TYPES.has(e.type as SigningFieldType) ||
+      !Number.isInteger(page) ||
+      page < 1 ||
+      !Number.isFinite(xPercent) ||
+      xPercent < 0 ||
+      xPercent > 100 ||
+      !Number.isFinite(yPercent) ||
+      yPercent < 0 ||
+      yPercent > 100 ||
+      !Number.isInteger(signerIndex) ||
+      signerIndex < 0 ||
+      signerIndex >= signerCount
+    ) {
+      return null;
+    }
+    fields.push({
+      type: e.type as SigningFieldType,
+      page,
+      xPercent,
+      yPercent,
+      signerIndex,
+      required: e.required !== false,
+      label:
+        typeof e.label === "string" && e.label.trim()
+          ? e.label.trim().slice(0, 80)
+          : undefined,
+    });
+  }
+  return fields;
 };
 
 const parseSigners = (raw: unknown): SignerInput[] | null => {
@@ -75,6 +133,13 @@ export const POST = async (
       { status: 400 },
     );
   }
+  const fields = parseFields(body.fields, signers.length);
+  if (fields === null) {
+    return NextResponse.json(
+      { error: "One of the placed fields is invalid." },
+      { status: 400 },
+    );
+  }
 
   const payload: StartSigningPayload = {
     documentId: id,
@@ -82,6 +147,7 @@ export const POST = async (
     title,
     mode,
     signers,
+    fields,
   };
   try {
     const outcome = await proposeOrApply(

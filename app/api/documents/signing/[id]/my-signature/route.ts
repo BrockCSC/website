@@ -1,11 +1,21 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { DocumentRecord, SigningRequestRecord } from "@/lib/api/types";
+import type {
+  DocumentRecord,
+  DocumentVersionRecord,
+  SigningRequestRecord,
+} from "@/lib/api/types";
 import { requireMember } from "@/lib/auth/session";
 import { findById } from "@/lib/db/repository";
 import { findSignupByUserId } from "@/lib/db/signups";
-import { documentsTable, signingRequestsTable } from "@/lib/db/schema";
+import {
+  documentVersionsTable,
+  documentsTable,
+  signingRequestsTable,
+} from "@/lib/db/schema";
 import { clientIp } from "@/lib/rate-limit";
 import {
+  fieldsForSigner,
+  parseFieldValuesInput,
   recordSignerResponse,
   recordSignerView,
   redactSigner,
@@ -43,6 +53,10 @@ export const GET = async (
     documentsTable,
     request.documentId,
   );
+  const version = await findById<DocumentVersionRecord>(
+    documentVersionsTable,
+    request.sourceVersionId,
+  );
   const canRespond =
     request.status === "sent" &&
     mine.status !== "signed" &&
@@ -56,10 +70,12 @@ export const GET = async (
     document: document
       ? { title: document.title, category: document.category }
       : null,
+    version: version ? { contentType: version.contentType } : null,
     signingRequestId: request.id,
     signingRequestStatus: request.status,
     versionId: request.sourceVersionId,
     signer: redactSigner(mine),
+    fields: fieldsForSigner(viewed, mine.id),
     canRespond,
   });
 };
@@ -78,6 +94,7 @@ export const POST = async (
     action?: string;
     signatureText?: string;
     reason?: string;
+    fieldValues?: unknown;
   }>(req);
   if (!body) return badJson();
 
@@ -98,6 +115,7 @@ export const POST = async (
         signatureText,
         ip,
         userAgent,
+        fieldValues: parseFieldValuesInput(body.fieldValues),
       });
       return NextResponse.json({ success: true });
     }

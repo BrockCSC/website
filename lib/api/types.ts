@@ -213,10 +213,27 @@ export type Signer = {
   signatureText?: string;
   ip?: string;
   userAgent?: string;
+  /** Set on sign, when the request has fields: this signer's own field id -> typed value. */
+  fieldValues?: Record<string, string>;
 };
 
 type SigningRequestStatus =
   "draft" | "sent" | "completed" | "cancelled" | "declined";
+
+export type SigningFieldType = "signature" | "date" | "text";
+
+/** Where to sign: placed on the rendered preview, one per required action. */
+export type SigningField = {
+  id: string;
+  type: SigningFieldType;
+  /** 1-indexed; always 1 for an image- or HTML-origin version. */
+  page: number;
+  xPercent: number;
+  yPercent: number;
+  signerId: string;
+  required: boolean;
+  label?: string;
+};
 
 export type SigningRequestRecord = {
   documentId: string;
@@ -231,6 +248,8 @@ export type SigningRequestRecord = {
   createdAt: string;
   status: SigningRequestStatus;
   signers: Signer[];
+  /** Set once, by the preparer, at start-signing time — never edited afterward. */
+  fields?: SigningField[];
   completedAt?: string;
   resultingVersionId?: string;
   /** sha256 of the resulting completion record, for tamper detection only. */
@@ -279,6 +298,21 @@ export type SignerInput =
   | { kind: "member"; signupId: string }
   | { kind: "external"; name: string; email: string };
 
+/**
+ * Signers don't have an id yet at this point (buildSigner assigns one when
+ * the request is actually created) — reference the drafted signer by its
+ * position in `StartSigningPayload.signers` instead.
+ */
+export type SigningFieldInput = {
+  type: SigningFieldType;
+  page: number;
+  xPercent: number;
+  yPercent: number;
+  signerIndex: number;
+  required: boolean;
+  label?: string;
+};
+
 export type StartSigningPayload = {
   documentId: string;
   /** The version the proposer actually reviewed, pinned so a later replace can't swap it out from under a queued approval. */
@@ -286,6 +320,7 @@ export type StartSigningPayload = {
   title: string;
   mode: "ordered" | "parallel";
   signers: SignerInput[];
+  fields?: SigningFieldInput[];
 };
 
 export type AddSignerPayload = {

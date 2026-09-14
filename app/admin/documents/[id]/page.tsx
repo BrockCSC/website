@@ -3,9 +3,16 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { DocumentPreview } from "@/components/documents/document-preview";
+import { PlaceableField } from "@/components/documents/field-chip";
 import { Button } from "@/components/ui/button";
+import { ToggleGroup } from "@/components/ui/toggle-group";
 import { ApiError } from "@/lib/api/client";
-import type { SignerInput } from "@/lib/api/types";
+import type {
+  SignerInput,
+  SigningFieldInput,
+  SigningFieldType,
+} from "@/lib/api/types";
 import {
   addDocumentVersion,
   deleteDocument,
@@ -18,13 +25,27 @@ import {
   type MemberOption,
   type SigningRequestItem,
 } from "@/lib/api/documents";
+import {
+  SIGNING_FIELD_DEFAULT_LABEL,
+  SIGNING_FIELD_TYPES,
+} from "@/lib/documents/fields";
 import { useSession } from "../../session";
 import { ask } from "../../ask";
 import { Note, Panel, Pill, field, labelClass } from "../../users/ui";
 
 type SignerDraft =
-  | { kind: "member"; signupId: string }
-  | { kind: "external"; name: string; email: string };
+  | { localId: string; kind: "member"; signupId: string }
+  | { localId: string; kind: "external"; name: string; email: string };
+
+type FieldDraft = {
+  id: string;
+  type: SigningFieldType;
+  page: number;
+  xPercent: number;
+  yPercent: number;
+  signerId: string;
+  required: boolean;
+};
 
 export default function DocumentDetailPage() {
   const id = useParams().id as string;
@@ -48,6 +69,10 @@ export default function DocumentDetailPage() {
   const [mode, setMode] = useState<"ordered" | "parallel">("parallel");
   const [signers, setSigners] = useState<SignerDraft[]>([]);
   const [starting, setStarting] = useState(false);
+
+  const [fieldType, setFieldType] = useState<SigningFieldType>("signature");
+  const [activeSignerId, setActiveSignerId] = useState<string | null>(null);
+  const [placedFields, setPlacedFields] = useState<FieldDraft[]>([]);
 
   const load = useCallback(async () => {
     try {
@@ -131,26 +156,69 @@ export default function DocumentDetailPage() {
       signers.some((s) => s.kind === "member" && s.signupId === signupId)
     )
       return;
-    setSigners((s) => [...s, { kind: "member", signupId }]);
+    const localId = crypto.randomUUID();
+    setSigners((s) => [...s, { localId, kind: "member", signupId }]);
+    setActiveSignerId((current) => current ?? localId);
   };
 
-  const addExternalSigner = () =>
-    setSigners((s) => [...s, { kind: "external", name: "", email: "" }]);
+  const addExternalSigner = () => {
+    const localId = crypto.randomUUID();
+    setSigners((s) => [
+      ...s,
+      { localId, kind: "external", name: "", email: "" },
+    ]);
+    setActiveSignerId((current) => current ?? localId);
+  };
 
   const updateExternal = (
-    index: number,
+    localId: string,
     patch: Partial<{ name: string; email: string }>,
   ) =>
     setSigners((s) =>
-      s.map((signer, i) =>
-        i === index && signer.kind === "external"
+      s.map((signer) =>
+        signer.localId === localId && signer.kind === "external"
           ? { ...signer, ...patch }
           : signer,
       ),
     );
 
-  const removeDraftSigner = (index: number) =>
-    setSigners((s) => s.filter((_, i) => i !== index));
+  const removeDraftSigner = (localId: string) => {
+    setSigners((s) => s.filter((signer) => signer.localId !== localId));
+    setPlacedFields((prev) => prev.filter((f) => f.signerId !== localId));
+    setActiveSignerId((current) => (current === localId ? null : current));
+  };
+
+  const signerLabel = (localId: string) => {
+    const signer = signers.find((s) => s.localId === localId);
+    if (!signer) return "Signer";
+    return signer.kind === "member"
+      ? (members.find((m) => m.id === signer.signupId)?.name ?? "Member")
+      : signer.name.trim() || "External signer";
+  };
+
+  const addField = (page: number, xPercent: number, yPercent: number) => {
+    if (!activeSignerId) return;
+    setPlacedFields((prev) => [
+      ...prev,
+      {
+        id: crypto.randomUUID(),
+        page,
+        required: true,
+        signerId: activeSignerId,
+        type: fieldType,
+        xPercent,
+        yPercent,
+      },
+    ]);
+  };
+
+  const moveField = (id: string, xPercent: number, yPercent: number) =>
+    setPlacedFields((prev) =>
+      prev.map((f) => (f.id === id ? { ...f, xPercent, yPercent } : f)),
+    );
+
+  const deleteField = (id: string) =>
+    setPlacedFields((prev) => prev.filter((f) => f.id !== id));
 
   const startSigning = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -159,15 +227,25 @@ export default function DocumentDetailPage() {
     setError(null);
     setNote(null);
     try {
+      const indexByLocalId = new Map(signers.map((s, i) => [s.localId, i]));
       const input: SignerInput[] = signers.map((s) =>
         s.kind === "member"
           ? { kind: "member", signupId: s.signupId }
           : { kind: "external", name: s.name, email: s.email },
       );
+      const fieldsInput: SigningFieldInput[] = placedFields.map((f) => ({
+        page: f.page,
+        required: f.required,
+        signerIndex: indexByLocalId.get(f.signerId)!,
+        type: f.type,
+        xPercent: f.xPercent,
+        yPercent: f.yPercent,
+      }));
       const result = await startSigningRequest(id, {
         title: signingTitle.trim(),
         mode,
         signers: input,
+        fields: fieldsInput.length ? fieldsInput : undefined,
       });
       setNote(
         "pending" in result
@@ -176,6 +254,8 @@ export default function DocumentDetailPage() {
       );
       setSigningTitle("");
       setSigners([]);
+      setPlacedFields([]);
+      setActiveSignerId(null);
       await load();
     } catch (err) {
       setError(
@@ -207,6 +287,10 @@ export default function DocumentDetailPage() {
       </div>
     );
   }
+
+  const currentVersion = versions.find(
+    (v) => v.$key === document.currentVersionId,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-6 px-5 py-8">
@@ -310,6 +394,16 @@ export default function DocumentDetailPage() {
         </form>
       </Panel>
 
+      {currentVersion && (
+        <Panel title="Preview">
+          <DocumentPreview
+            contentType={currentVersion.contentType}
+            fileUrl={documentFileUrl(currentVersion.$key)}
+            key={currentVersion.$key}
+          />
+        </Panel>
+      )}
+
       <Panel
         note="Signers review the current version and respond by email or in the portal."
         title="Start a signing request"
@@ -330,31 +424,22 @@ export default function DocumentDetailPage() {
 
           <div>
             <span className={labelClass}>Order</span>
-            <div className="flex gap-4 text-sm">
-              <label className="flex items-center gap-2">
-                <input
-                  checked={mode === "parallel"}
-                  onChange={() => setMode("parallel")}
-                  type="radio"
-                />
-                All at once
-              </label>
-              <label className="flex items-center gap-2">
-                <input
-                  checked={mode === "ordered"}
-                  onChange={() => setMode("ordered")}
-                  type="radio"
-                />
-                One at a time, in order
-              </label>
-            </div>
+            <ToggleGroup
+              label="Order"
+              onChange={setMode}
+              options={[
+                { value: "parallel", label: "All at once" },
+                { value: "ordered", label: "One at a time, in order" },
+              ]}
+              value={mode}
+            />
           </div>
 
           <div>
             <span className={labelClass}>Signers</span>
             <ul className="flex flex-col gap-2">
-              {signers.map((signer, i) => (
-                <li className="flex items-center gap-2" key={i}>
+              {signers.map((signer) => (
+                <li className="flex items-center gap-2" key={signer.localId}>
                   {signer.kind === "member" ? (
                     <span className="rounded-[10px] border-2 border-line bg-tint px-3 py-1.5 text-sm font-bold">
                       {members.find((m) => m.id === signer.signupId)?.name ??
@@ -366,7 +451,9 @@ export default function DocumentDetailPage() {
                       <input
                         className={field}
                         onChange={(e) =>
-                          updateExternal(i, { name: e.target.value })
+                          updateExternal(signer.localId, {
+                            name: e.target.value,
+                          })
                         }
                         placeholder="Name"
                         value={signer.name}
@@ -374,7 +461,9 @@ export default function DocumentDetailPage() {
                       <input
                         className={field}
                         onChange={(e) =>
-                          updateExternal(i, { email: e.target.value })
+                          updateExternal(signer.localId, {
+                            email: e.target.value,
+                          })
                         }
                         placeholder="Email"
                         value={signer.email}
@@ -382,7 +471,7 @@ export default function DocumentDetailPage() {
                     </>
                   )}
                   <Button
-                    onClick={() => removeDraftSigner(i)}
+                    onClick={() => removeDraftSigner(signer.localId)}
                     size="xs"
                     type="button"
                     variant="ghost"
@@ -415,6 +504,60 @@ export default function DocumentDetailPage() {
               </Button>
             </div>
           </div>
+
+          {!!signers.length && currentVersion && (
+            <div>
+              <span className={labelClass}>Where to sign (optional)</span>
+              <p className="mb-3 text-sm text-subtle">
+                Pick a field type and a signer, then click on the preview to
+                place it. Drag a placed field to move it, or use its × to remove
+                it.
+              </p>
+              <div className="mb-3 flex flex-wrap gap-4">
+                <ToggleGroup
+                  label="Field type"
+                  onChange={setFieldType}
+                  options={SIGNING_FIELD_TYPES}
+                  value={fieldType}
+                />
+                <ToggleGroup
+                  label="For signer"
+                  onChange={setActiveSignerId}
+                  options={signers.map((s) => ({
+                    value: s.localId,
+                    label: signerLabel(s.localId),
+                  }))}
+                  value={activeSignerId}
+                />
+              </div>
+              <DocumentPreview
+                contentType={currentVersion.contentType}
+                fileUrl={documentFileUrl(currentVersion.$key)}
+                key={currentVersion.$key}
+                onPlace={addField}
+                overlay={(page) => (
+                  <>
+                    {placedFields
+                      .filter((f) => f.page === page)
+                      .map((f) => (
+                        <PlaceableField
+                          caption={`${SIGNING_FIELD_DEFAULT_LABEL[f.type]} · ${signerLabel(f.signerId)}`}
+                          key={f.id}
+                          onDelete={() => deleteField(f.id)}
+                          onMove={(xPercent, yPercent) =>
+                            moveField(f.id, xPercent, yPercent)
+                          }
+                          type={f.type}
+                          xPercent={f.xPercent}
+                          yPercent={f.yPercent}
+                        />
+                      ))}
+                  </>
+                )}
+                placing={!!activeSignerId}
+              />
+            </div>
+          )}
 
           <div>
             <Button
