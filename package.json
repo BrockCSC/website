@@ -35,8 +35,8 @@
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^4.10.38",
     "pg": "^8.23.0",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
     "regenerator-runtime": "^0.14.1",
     "sharp": "^0.35.4",
     "tailwind-merge": "^3.4.0"
