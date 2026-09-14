@@ -45,11 +45,28 @@ export default function TemplatesHelpPage() {
           </ul>
         </Panel>
 
+        <Panel title="Save it as a PDF">
+          <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink">
+            <li>
+              The document library only takes PDFs, so export the filled-in
+              template as one before you upload it.
+            </li>
+            <li>
+              In Word, use File, then Save As, and pick PDF. In Google Docs, use
+              File, then Download, then PDF Document. A PDF editor can save
+              straight to PDF.
+            </li>
+            <li>
+              Open the PDF once to check nothing moved before you upload it.
+            </li>
+          </ul>
+        </Panel>
+
         <Panel title="Upload it back">
           <ul className="list-disc space-y-1.5 pl-5 text-sm text-ink">
             <li>
-              Back in the document library, upload the finished file the same
-              way you&apos;d upload anything else.
+              Back in the document library, upload the PDF the same way
+              you&apos;d upload anything else.
             </li>
             <li>
               If you&apos;re not a co-president, a co-president reviews it
@@ -57,7 +74,8 @@ export default function TemplatesHelpPage() {
             </li>
             <li>
               If it needs signatures, start a signing request on it and place
-              the fields where they should go.
+              each signer&apos;s fields where they should go. Everyone needs at
+              least one Signature field.
             </li>
           </ul>
         </Panel>
