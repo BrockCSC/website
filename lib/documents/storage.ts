@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, sep } from "node:path";
-import { EncryptedPDFError, PDFDocument } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 
 /**
  * Deliberately its own root, never lib/uploads.ts's UPLOAD_ROOT: that pipeline
@@ -50,13 +50,15 @@ export const checkUploadedPdf = async (
     }
     return { ok: true };
   } catch (err) {
+    // pdf-lib is compiled to ES5, so `instanceof EncryptedPDFError` is always
+    // false; its message is the only reliable signal.
+    const encrypted = err instanceof Error && /encrypted/i.test(err.message);
     return {
       ok: false,
       status: 400,
-      error:
-        err instanceof EncryptedPDFError
-          ? "That PDF is password-protected or encrypted. Save an unprotected copy and upload that."
-          : "That PDF could not be read. It may be damaged, so export it again and retry.",
+      error: encrypted
+        ? "That PDF is password-protected or encrypted. Save an unprotected copy and upload that."
+        : "That PDF could not be read. It may be damaged, so export it again and retry.",
     };
   }
 };
