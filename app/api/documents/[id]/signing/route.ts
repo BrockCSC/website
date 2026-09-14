@@ -37,7 +37,7 @@ const parseFields = (
   signerCount: number,
 ): SigningFieldInput[] | null | undefined => {
   if (raw === undefined) return undefined;
-  if (!Array.isArray(raw)) return null;
+  if (!Array.isArray(raw) || raw.length > 200) return null;
   const fields: SigningFieldInput[] = [];
   for (const entry of raw) {
     if (!entry || typeof entry !== "object") return null;
