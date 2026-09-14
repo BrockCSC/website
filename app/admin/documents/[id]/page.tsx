@@ -5,6 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DocumentPreview } from "@/components/documents/document-preview";
 import { PlaceableField } from "@/components/documents/field-chip";
+import {
+  FieldLegend,
+  FieldTypePicker,
+  SignerPicker,
+  SignerSwatch,
+  type PlacementSigner,
+} from "@/components/documents/placement-tools";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup } from "@/components/ui/toggle-group";
 import { ApiError } from "@/lib/api/client";
@@ -25,10 +32,9 @@ import {
   type MemberOption,
   type SigningRequestItem,
 } from "@/lib/api/documents";
-import {
-  SIGNING_FIELD_DEFAULT_LABEL,
-  SIGNING_FIELD_TYPES,
-} from "@/lib/documents/fields";
+import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
+import { signerColor } from "@/lib/documents/signer-colors";
+import { pdfUploadProblem } from "@/lib/documents/upload-check";
 import { useSession } from "../../session";
 import { ask } from "../../ask";
 import { Note, Panel, Pill, field, labelClass } from "../../users/ui";
@@ -63,6 +69,7 @@ export default function DocumentDetailPage() {
 
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
   const [replaceNote, setReplaceNote] = useState("");
+  const [replaceError, setReplaceError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
   const [signingTitle, setSigningTitle] = useState("");
@@ -99,9 +106,15 @@ export default function DocumentDetailPage() {
 
   const replace = async (e: React.FormEvent) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
     if (!replaceFile) return;
+    const problem = pdfUploadProblem(replaceFile);
+    if (problem) {
+      setReplaceError(problem);
+      return;
+    }
     setUploading(true);
-    setError(null);
+    setReplaceError(null);
     setNote(null);
     try {
       const result = await addDocumentVersion(
@@ -116,11 +129,12 @@ export default function DocumentDetailPage() {
       );
       setReplaceFile(null);
       setReplaceNote("");
+      form.reset();
       await load();
     } catch (err) {
-      setError(
+      setReplaceError(
         (err instanceof ApiError && err.detail) ||
-          "Could not upload that version.",
+          "Could not upload that version. Check it is a PDF under 15MB.",
       );
     } finally {
       setUploading(false);
@@ -182,19 +196,37 @@ export default function DocumentDetailPage() {
       ),
     );
 
+  const chooseSigner = (localId: string) => {
+    setActiveSignerId(localId);
+    setFieldType("signature");
+  };
+
   const removeDraftSigner = (localId: string) => {
-    setSigners((s) => s.filter((signer) => signer.localId !== localId));
+    const remaining = signers.filter((signer) => signer.localId !== localId);
+    setSigners(remaining);
     setPlacedFields((prev) => prev.filter((f) => f.signerId !== localId));
-    setActiveSignerId((current) => (current === localId ? null : current));
+    if (activeSignerId === localId) {
+      setActiveSignerId(remaining[0]?.localId ?? null);
+      setFieldType("signature");
+    }
   };
 
   const signerLabel = (localId: string) => {
-    const signer = signers.find((s) => s.localId === localId);
+    const index = signers.findIndex((s) => s.localId === localId);
+    const signer = signers[index];
     if (!signer) return "Signer";
-    return signer.kind === "member"
-      ? (members.find((m) => m.id === signer.signupId)?.name ?? "Member")
-      : signer.name.trim() || "External signer";
+    return (
+      (signer.kind === "member"
+        ? members.find((m) => m.id === signer.signupId)?.name
+        : signer.name.trim()) || `Signer ${index + 1}`
+    );
   };
+
+  const placementSigners: PlacementSigner[] = signers.map((s, index) => ({
+    id: s.localId,
+    label: signerLabel(s.localId),
+    color: signerColor(index),
+  }));
 
   const addField = (page: number, xPercent: number, yPercent: number) => {
     if (!activeSignerId) return;
@@ -220,9 +252,37 @@ export default function DocumentDetailPage() {
   const deleteField = (id: string) =>
     setPlacedFields((prev) => prev.filter((f) => f.id !== id));
 
+  const currentVersion = versions.find(
+    (v) => v.$key === document?.currentVersionId,
+  );
+  const currentIsPdf = currentVersion?.contentType === "application/pdf";
+
+  const startBlockers: string[] = [];
+  if (!currentVersion) startBlockers.push("Upload a PDF version first.");
+  else if (!currentIsPdf)
+    startBlockers.push(
+      "The current version isn't a PDF. Upload the document again as a PDF.",
+    );
+  if (!signingTitle.trim()) startBlockers.push("Give the request a title.");
+  if (!signers.length) startBlockers.push("Add at least one signer.");
+  for (const signer of signers) {
+    const label = signerLabel(signer.localId);
+    if (
+      signer.kind === "external" &&
+      (!signer.name.trim() || !signer.email.trim())
+    )
+      startBlockers.push(`${label} needs a name and an email.`);
+    if (
+      !placedFields.some(
+        (f) => f.signerId === signer.localId && f.type === "signature",
+      )
+    )
+      startBlockers.push(`${label} needs a Signature field.`);
+  }
+
   const startSigning = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!signingTitle.trim() || !signers.length) return;
+    if (starting || startBlockers.length) return;
     setStarting(true);
     setError(null);
     setNote(null);
@@ -245,7 +305,7 @@ export default function DocumentDetailPage() {
         title: signingTitle.trim(),
         mode,
         signers: input,
-        fields: fieldsInput.length ? fieldsInput : undefined,
+        fields: fieldsInput,
       });
       setNote(
         "pending" in result
@@ -287,10 +347,6 @@ export default function DocumentDetailPage() {
       </div>
     );
   }
-
-  const currentVersion = versions.find(
-    (v) => v.$key === document.currentVersionId,
-  );
 
   return (
     <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-6 px-5 py-8">
@@ -351,7 +407,15 @@ export default function DocumentDetailPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   {v.producedBySigningRequestId && (
-                    <Pill tone="accent">Signing certificate</Pill>
+                    <Pill tone="accent">
+                      {signingRequests.some(
+                        (r) => r.certificateVersionId === v.$key,
+                      )
+                        ? "Certificate of Completion"
+                        : v.contentType === "application/pdf"
+                          ? "Signed"
+                          : "Signing certificate"}
+                    </Pill>
                   )}
                   {document.currentVersionId === v.$key && (
                     <Pill tone="accent">Current</Pill>
@@ -365,25 +429,43 @@ export default function DocumentDetailPage() {
           className="mt-5 flex flex-col gap-3 border-t-2 border-line pt-4"
           onSubmit={replace}
         >
-          <label className={labelClass} htmlFor="replace-file">
-            Upload a new version
-          </label>
+          <div>
+            <label className={labelClass} htmlFor="replace-file">
+              Upload a new version
+            </label>
+            <input
+              accept="application/pdf"
+              aria-describedby="replace-file-help"
+              className={field}
+              id="replace-file"
+              onChange={(e) => {
+                const picked = e.target.files?.[0] ?? null;
+                setReplaceFile(picked);
+                setReplaceError(picked && pdfUploadProblem(picked));
+              }}
+              type="file"
+            />
+            <p className="mt-1 text-xs text-subtle" id="replace-file-help">
+              PDF only, up to 15MB.
+            </p>
+          </div>
           <input
-            accept=".pdf,.png,.jpg,.jpeg,.docx"
-            className={field}
-            id="replace-file"
-            onChange={(e) => setReplaceFile(e.target.files?.[0] ?? null)}
-            type="file"
-          />
-          <input
+            aria-label="Note (optional)"
             className={field}
             onChange={(e) => setReplaceNote(e.target.value)}
             placeholder="Note (optional)"
             value={replaceNote}
           />
+          {replaceError && (
+            <p className="text-sm font-bold text-destructive" role="alert">
+              {replaceError}
+            </p>
+          )}
           <div>
             <Button
-              disabled={uploading || !replaceFile}
+              disabled={
+                uploading || !replaceFile || !!pdfUploadProblem(replaceFile)
+              }
               type="submit"
               variant="secondary"
             >
@@ -404,7 +486,7 @@ export default function DocumentDetailPage() {
       )}
 
       <Panel
-        note="Signers review the current version and respond by email or in the portal."
+        note="Each signer gets a link by email or in the portal, reviews the PDF in their browser and signs where you place their fields."
         title="Start a signing request"
       >
         <form className="flex flex-col gap-4" onSubmit={startSigning}>
@@ -437,10 +519,14 @@ export default function DocumentDetailPage() {
           <div>
             <span className={labelClass}>Signers</span>
             <ul className="flex flex-col gap-2">
-              {signers.map((signer) => (
-                <li className="flex items-center gap-2" key={signer.localId}>
+              {signers.map((signer, index) => (
+                <li
+                  className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
+                  key={signer.localId}
+                >
+                  <SignerSwatch color={signerColor(index)} />
                   {signer.kind === "member" ? (
-                    <span className="rounded-[10px] border-2 border-line bg-tint px-3 py-1.5 text-sm font-bold">
+                    <span className="min-w-0 rounded-[10px] border-2 border-line bg-tint px-3 py-1.5 text-sm font-bold">
                       {members.find((m) => m.id === signer.signupId)?.name ??
                         signer.signupId}{" "}
                       (member)
@@ -448,7 +534,8 @@ export default function DocumentDetailPage() {
                   ) : (
                     <>
                       <input
-                        className={field}
+                        aria-label={`Signer ${index + 1} name`}
+                        className={`${field} min-w-0 flex-1 basis-40`}
                         onChange={(e) =>
                           updateExternal(signer.localId, {
                             name: e.target.value,
@@ -458,13 +545,15 @@ export default function DocumentDetailPage() {
                         value={signer.name}
                       />
                       <input
-                        className={field}
+                        aria-label={`Signer ${index + 1} email`}
+                        className={`${field} min-w-0 flex-1 basis-48`}
                         onChange={(e) =>
                           updateExternal(signer.localId, {
                             email: e.target.value,
                           })
                         }
                         placeholder="Email"
+                        type="email"
                         value={signer.email}
                       />
                     </>
@@ -504,78 +593,92 @@ export default function DocumentDetailPage() {
             </div>
           </div>
 
-          {!!signers.length && currentVersion && (
+          {!!signers.length && currentVersion && !currentIsPdf && (
+            <Note>
+              Fields can only be placed on a PDF. Upload this document as a PDF
+              version above, then come back here.
+            </Note>
+          )}
+
+          {!!signers.length && currentVersion && currentIsPdf && (
             <div>
-              <span className={labelClass}>Where to sign (optional)</span>
+              <span className={labelClass}>Where to sign</span>
               <p className="mb-3 text-sm text-subtle">
-                Pick a field type and a signer, then click on the preview to
-                place it. Drag a placed field to move it, or use its × to remove
-                it.
+                Choose a signer and a field, then click the page to place it.
+                Drag a field to move it, nudge it with the arrow keys, or press
+                Delete to remove it. Date Signed and Name fill in on their own
+                when that person signs.
               </p>
-              <div className="mb-3 flex flex-wrap gap-4">
-                <ToggleGroup
-                  label="Field type"
-                  onChange={setFieldType}
-                  options={SIGNING_FIELD_TYPES}
-                  value={fieldType}
-                />
-                <ToggleGroup
-                  label="For signer"
-                  onChange={setActiveSignerId}
-                  options={signers.map((s) => ({
-                    value: s.localId,
-                    label: signerLabel(s.localId),
-                  }))}
-                  value={activeSignerId}
+              <div className="grid gap-4 lg:grid-cols-[13rem_minmax(0,1fr)]">
+                <div className="flex flex-col gap-5 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
+                  <SignerPicker
+                    onChange={chooseSigner}
+                    signers={placementSigners}
+                    value={activeSignerId}
+                  />
+                  <FieldTypePicker onChange={setFieldType} value={fieldType} />
+                  <FieldLegend
+                    fields={placedFields}
+                    signers={placementSigners}
+                  />
+                </div>
+                <DocumentPreview
+                  contentType={currentVersion.contentType}
+                  fileUrl={documentFileUrl(currentVersion.$key)}
+                  key={currentVersion.$key}
+                  onPlace={addField}
+                  overlay={(page) => (
+                    <>
+                      {placedFields
+                        .filter((f) => f.page === page)
+                        .map((f) => (
+                          <PlaceableField
+                            caption={`${SIGNING_FIELD_DEFAULT_LABEL[f.type]} · ${signerLabel(f.signerId)}`}
+                            color={
+                              placementSigners.find((s) => s.id === f.signerId)
+                                ?.color
+                            }
+                            key={f.id}
+                            onDelete={() => deleteField(f.id)}
+                            onMove={(xPercent, yPercent) =>
+                              moveField(f.id, xPercent, yPercent)
+                            }
+                            type={f.type}
+                            xPercent={f.xPercent}
+                            yPercent={f.yPercent}
+                          />
+                        ))}
+                    </>
+                  )}
+                  placing={!!activeSignerId}
                 />
               </div>
-              <DocumentPreview
-                contentType={currentVersion.contentType}
-                fileUrl={documentFileUrl(currentVersion.$key)}
-                key={currentVersion.$key}
-                onPlace={addField}
-                overlay={(page) => (
-                  <>
-                    {placedFields
-                      .filter((f) => f.page === page)
-                      .map((f) => (
-                        <PlaceableField
-                          caption={`${SIGNING_FIELD_DEFAULT_LABEL[f.type]} · ${signerLabel(f.signerId)}`}
-                          key={f.id}
-                          onDelete={() => deleteField(f.id)}
-                          onMove={(xPercent, yPercent) =>
-                            moveField(f.id, xPercent, yPercent)
-                          }
-                          type={f.type}
-                          xPercent={f.xPercent}
-                          yPercent={f.yPercent}
-                        />
-                      ))}
-                  </>
-                )}
-                placing={!!activeSignerId}
-              />
             </div>
           )}
 
           <div>
+            {!!startBlockers.length && (
+              <div className="mb-3" id="start-blockers">
+                <p className="text-sm font-bold text-ink">
+                  Before you can send this:
+                </p>
+                <ul className="mt-1 list-disc space-y-0.5 pl-5 text-sm text-subtle">
+                  {startBlockers.map((reason, i) => (
+                    <li key={i}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
             <Button
-              disabled={
-                starting ||
-                !signingTitle.trim() ||
-                !signers.length ||
-                !document.currentVersionId
+              aria-describedby={
+                startBlockers.length ? "start-blockers" : undefined
               }
+              disabled={starting || !!startBlockers.length}
               type="submit"
               variant="primary"
             >
               {starting ? "Starting..." : "Start signing request"}
             </Button>
-            {!document.currentVersionId && (
-              <p className="mt-2 text-xs text-subtle">
-                Upload a version first.
-              </p>
-            )}
           </div>
         </form>
       </Panel>
