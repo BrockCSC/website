@@ -121,10 +121,12 @@ function SigningFlow({
   base,
   variant,
   onChanged,
+  hideCompletedFiles = false,
 }: {
   base: string;
   variant: Variant;
   onChanged?: () => void;
+  hideCompletedFiles?: boolean;
 }) {
   const heading = variant === "public" ? "h1" : "h2";
   const idPrefix = useId();
@@ -391,7 +393,7 @@ function SigningFlow({
               Envelope ID: {session.envelopeId}
             </p>
           </div>
-          {result.completed && (
+          {result.completed && !hideCompletedFiles && (
             <CompletedDocuments
               certificateUrl={result.completed.certificateUrl}
               signedFileUrl={result.completed.signedFileUrl}
@@ -417,7 +419,7 @@ function SigningFlow({
               {notice.detail}
             </Notice>
           </div>
-          {!declined && session.completed && (
+          {!declined && session.completed && !hideCompletedFiles && (
             <CompletedDocuments
               certificateUrl={session.completed.certificateUrl}
               signedFileUrl={session.completed.signedFileUrl}
@@ -572,13 +574,17 @@ export function TokenSigningFlow({ token }: { token: string }) {
 export function MemberSigningPanel({
   signingRequestId,
   onChanged,
+  hideCompletedFiles,
 }: {
   signingRequestId: string;
   onChanged: () => void;
+  /** The exec view already lists the completed files in its own panel. */
+  hideCompletedFiles?: boolean;
 }) {
   return (
     <SigningFlow
       base={memberSignerBase(signingRequestId)}
+      hideCompletedFiles={hideCompletedFiles}
       onChanged={onChanged}
       variant="portal"
     />

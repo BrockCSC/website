@@ -3,7 +3,14 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { CompletedDocuments } from "@/components/documents/completed-documents";
+import { SignerSwatch } from "@/components/documents/placement-tools";
+import {
+  SignerActivity,
+  signerStatusLabel,
+} from "@/components/documents/signer-activity";
 import { MemberSigningPanel } from "@/components/documents/signing/signing-flow";
+import { SigningTimeline } from "@/components/documents/signing-timeline";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -17,17 +24,9 @@ import {
   type MemberOption,
   type SigningRequestItem,
 } from "@/lib/api/documents";
-import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
-import { useSession } from "../../../session";
-import { CompletedDocuments } from "@/components/documents/completed-documents";
-import {
-  SignerActivity,
-  signerStatusLabel,
-} from "@/components/documents/signer-activity";
-import { SignerSwatch } from "@/components/documents/placement-tools";
-import { SigningTimeline } from "@/components/documents/signing-timeline";
 import { signerColor } from "@/lib/documents/signer-colors";
 import { formatSigningTime } from "@/lib/documents/signing-time";
+import { useSession } from "../../../session";
 import { ask } from "../../../ask";
 import { Note, Panel, Pill, Rows, field } from "../../../users/ui";
 
@@ -204,7 +203,11 @@ export default function SigningRequestPage() {
       {note && <p className="text-sm font-bold text-brand">{note}</p>}
       {error && <p className="text-sm font-bold text-destructive">{error}</p>}
 
-      <MemberSigningPanel onChanged={load} signingRequestId={id} />
+      <MemberSigningPanel
+        hideCompletedFiles
+        onChanged={load}
+        signingRequestId={id}
+      />
 
       <Panel
         action={

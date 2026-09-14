@@ -5,7 +5,7 @@ import {
   type SigningField,
 } from "@/lib/api/types";
 import { SigningError, sanitizeCertificateText } from "./envelope";
-import { SIGNING_TIME_ZONE } from "./fields";
+import { formatSignedDate } from "./signing-time";
 
 const MAX_FULL_NAME = 120;
 const MAX_INITIALS = 8;
@@ -102,15 +102,6 @@ export const parseSignSubmission = (body: unknown): ParsedSubmission => {
   }
   throw invalid("Pick a signature style.");
 };
-
-/** e.g. 9/14/2026, in the club's time zone rather than the server's. */
-const formatSignedDate = (iso: string): string =>
-  new Intl.DateTimeFormat("en-US", {
-    timeZone: SIGNING_TIME_ZONE,
-    year: "numeric",
-    month: "numeric",
-    day: "numeric",
-  }).format(new Date(iso));
 
 /**
  * Only text fields take a submitted value. Date Signed and Name come from the

@@ -22,7 +22,7 @@ type PendingActionTarget = {
 export type PendingActionItem = WithKey<PendingDocumentActionRecord> & {
   target?: PendingActionTarget;
 };
-export type SafeSigner = Omit<Signer, "tokenHash">;
+export type SafeSigner = Omit<Signer, "tokenHash" | "viewTokenHash">;
 export type SigningRequestItem = WithKey<
   Omit<SigningRequestRecord, "signers">
 > & {

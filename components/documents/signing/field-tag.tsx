@@ -2,10 +2,8 @@
 
 import { PenLine, Signature } from "lucide-react";
 import type { SigningField } from "@/lib/api/types";
-import {
-  SIGNING_FIELD_DEFAULT_LABEL,
-  todayIsoLocal,
-} from "@/lib/documents/fields";
+import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
+import { formatSignedDate } from "@/lib/documents/signing-time";
 import type { AdoptedDraft } from "./adopted";
 import { SIGNATURE_FONT_FAMILY, SIGNATURE_INK } from "./signature-fonts";
 
@@ -182,7 +180,7 @@ export function FieldTag({
     const filled = !!adopted;
     const value =
       field.type === "date"
-        ? todayIsoLocal()
+        ? formatSignedDate(new Date().toISOString())
         : adopted?.fullName || SIGNING_FIELD_DEFAULT_LABEL.name;
     return (
       <div
