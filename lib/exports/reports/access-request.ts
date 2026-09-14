@@ -13,7 +13,6 @@ import {
   peopleWarnings,
   teamTerm,
   termWarnings,
-  type ExecPerson,
 } from "../people";
 import { plural } from "../text";
 import type { ExportReport, ReportSigner } from "../types";
@@ -21,7 +20,7 @@ import type { ExportReport, ReportSigner } from "../types";
 type AccessRequestData = ReturnType<typeof splitAccessList> & {
   term: string;
   requesters: ReportSigner[];
-  /** Co-presidents left off the access list, whose signature names print blank. */
+  /** Co-presidents who sign the letter but are left off the access list. */
   unlisted: string[];
   warnings: string[];
   hasCoPresident: boolean;
@@ -50,16 +49,18 @@ export const accessRequestReport: ExportReport<AccessRequestData> = {
   load: async (ctx) => {
     const snapshot = await ctx.people();
     const current = snapshot.people.filter((person) => person.isCurrent);
-    const listed = (person: ExecPerson) => accessGaps(person).length === 0;
     // Requests go in over the summer, so this follows the incoming team's tiles rather than the calendar.
     const term = teamTerm(current, ctx.now);
     return {
       ...splitAccessList(current),
       term,
-      // Anyone left out of the list stays out of the whole letter, signature names included.
-      requesters: coPresidentSigners(current, listed),
+      // Signing as the requester doesn't depend on being on the access list.
+      requesters: coPresidentSigners(current),
       unlisted: current
-        .filter((person) => grantsApproval(person.title) && !listed(person))
+        .filter(
+          (person) =>
+            grantsApproval(person.title) && accessGaps(person).length > 0,
+        )
         .map((person) => person.name),
       warnings: [
         ...peopleWarnings(snapshot, current),
@@ -76,7 +77,7 @@ export const accessRequestReport: ExportReport<AccessRequestData> = {
       ...data.warnings,
       ...data.unlisted.map(
         (name) =>
-          `${name} is left off the access list, so their signature name is blank.`,
+          `${name} signs as a co-president but is left off the access list.`,
       ),
       ...(data.hasCoPresident
         ? []

@@ -197,22 +197,14 @@ export const clubAddress = (username: string) =>
 export const coPresidentsAddress = () =>
   `${process.env.CO_PRESIDENTS_LIST ?? "co-presidents"}@${mailDomain()}`;
 
-/**
- * The current co-presidents as signers, or two blank Co-President signers when
- * there are none. A co-president `named` rejects keeps their signature slot
- * with a blank printed name.
- */
-export const coPresidentSigners = (
-  current: ExecPerson[],
-  named: (person: ExecPerson) => boolean = () => true,
-): ReportSigner[] => {
+/** The current co-presidents as signers, or two blank Co-President signers when there are none. */
+export const coPresidentSigners = (current: ExecPerson[]): ReportSigner[] => {
   const signers = current
     .filter((person) => grantsApproval(person.title))
-    .map((person): ReportSigner =>
-      named(person)
-        ? { name: person.name, title: "Co-President" }
-        : { title: "Co-President" },
-    );
+    .map((person): ReportSigner => ({
+      name: person.name,
+      title: "Co-President",
+    }));
   return signers.length
     ? signers
     : [{ title: "Co-President" }, { title: "Co-President" }];
