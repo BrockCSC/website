@@ -159,8 +159,9 @@ export const POST = async (
     createdByIp: meta.ip,
   };
   try {
-    // Checked before queueing too, so a proposer hears about a missing
-    // Signature field now rather than when a co-president approves.
+    // Checked before queueing too, so a proposer hears about an in-progress
+    // request or a missing Signature field now, not when a co-president
+    // approves.
     await assertSignable(payload);
     const outcome = await proposeOrApply(
       user,

@@ -32,7 +32,10 @@ import {
   type MemberOption,
   type SigningRequestItem,
 } from "@/lib/api/documents";
-import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
+import {
+  MAX_SIGNERS,
+  SIGNING_FIELD_DEFAULT_LABEL,
+} from "@/lib/documents/fields";
 import { signerColor } from "@/lib/documents/signer-colors";
 import { pdfUploadProblem } from "@/lib/documents/upload-check";
 import { useSession } from "../../session";
@@ -258,6 +261,10 @@ export default function DocumentDetailPage() {
   const currentIsPdf = currentVersion?.contentType === "application/pdf";
 
   const startBlockers: string[] = [];
+  if (signingRequests.some((r) => r.status === "sent"))
+    startBlockers.push(
+      "A signing request is already in progress for this document. Wait for it to finish or cancel it first.",
+    );
   if (!currentVersion) startBlockers.push("Upload a PDF version first.");
   else if (!currentIsPdf)
     startBlockers.push(
@@ -265,6 +272,10 @@ export default function DocumentDetailPage() {
     );
   if (!signingTitle.trim()) startBlockers.push("Give the request a title.");
   if (!signers.length) startBlockers.push("Add at least one signer.");
+  if (signers.length > MAX_SIGNERS)
+    startBlockers.push(
+      `A signing request can have at most ${MAX_SIGNERS} signers.`,
+    );
   for (const signer of signers) {
     const label = signerLabel(signer.localId);
     if (

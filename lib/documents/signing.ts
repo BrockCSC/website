@@ -31,6 +31,7 @@ import {
   signingEvent,
   withFreshRequest,
 } from "./envelope";
+import { MAX_SIGNERS } from "./fields";
 import { type FinalizeOutcome, finalizeIfComplete } from "./finalize";
 import { type Actor, signingRequestsForDocument } from "./mutations";
 import {
@@ -180,11 +181,19 @@ export const fieldsForSigner = (
 
 /**
  * Checked by the start route before a proposal is queued, and again when it
- * applies: only PDFs can be stamped, and every signer needs somewhere to sign.
+ * applies: one envelope at a time, only PDFs can be stamped, and every signer
+ * needs somewhere to sign.
  */
 export const assertSignable = async (
   payload: StartSigningPayload,
 ): Promise<void> => {
+  const existing = await signingRequestsForDocument(payload.documentId);
+  if (existing.some((r) => r.status === "sent")) {
+    throw new SigningError(
+      409,
+      "A signing request is already in progress for this document.",
+    );
+  }
   const version = await findById<DocumentVersionRecord>(
     documentVersionsTable,
     payload.sourceVersionId,
@@ -201,8 +210,11 @@ export const assertSignable = async (
   if (!payload.signers.length) {
     throw new SigningError(400, "Add at least one signer.");
   }
-  if (payload.signers.length > 25) {
-    throw new SigningError(400, "Too many signers.");
+  if (payload.signers.length > MAX_SIGNERS) {
+    throw new SigningError(
+      400,
+      `A signing request can have at most ${MAX_SIGNERS} signers.`,
+    );
   }
   const fields = payload.fields ?? [];
   if (fields.some((f) => !payload.signers[f.signerIndex])) {
@@ -241,13 +253,6 @@ export const startSigningRequest = async (
     throw new SigningError(
       409,
       "The document has changed since this was proposed. Start the signing request again.",
-    );
-  }
-  const existing = await signingRequestsForDocument(document.id);
-  if (existing.some((r) => r.status === "sent")) {
-    throw new SigningError(
-      409,
-      "A signing request is already in progress for this document.",
     );
   }
   await assertSignable(payload);

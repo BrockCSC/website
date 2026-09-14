@@ -60,3 +60,5 @@ export const SIGNATURE_FONTS: {
 
 /** Stamped dates and certificate timestamps are shown in the club's local time. */
 export const SIGNING_TIME_ZONE = "America/Toronto";
+
+export const MAX_SIGNERS = 25;
