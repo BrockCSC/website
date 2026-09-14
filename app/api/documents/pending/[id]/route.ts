@@ -15,7 +15,11 @@ import {
   createDocumentWithVersion,
   deleteDocument,
 } from "@/lib/documents/mutations";
-import { findPendingAction, markPendingAction } from "@/lib/documents/pending";
+import {
+  findPendingAction,
+  markPendingAction,
+  revertPendingClaim,
+} from "@/lib/documents/pending";
 import {
   addSignerToRequest,
   cancelSigningRequest,
@@ -48,20 +52,35 @@ export const POST = async (
     );
   }
 
+  // The claim itself is the concurrency guard: it only succeeds if the row is
+  // still "pending", so two co-presidents reviewing it at once can't both win.
   if (body.action === "reject") {
-    if (pending.kind === "upload" || pending.kind === "replace") {
-      await deleteDocumentFile(
-        (pending.payload as UploadPayload | ReplacePayload).storedFilename,
-      );
-    }
-    const updated = await markPendingAction(
+    const claimed = await markPendingAction(
       id,
       approver,
       "rejected",
       body.reason,
     );
-    if (!updated) return notFound();
-    return NextResponse.json(toWireRecord(updated));
+    if (!claimed) {
+      return NextResponse.json(
+        { error: "This request was already reviewed." },
+        { status: 409 },
+      );
+    }
+    if (pending.kind === "upload" || pending.kind === "replace") {
+      await deleteDocumentFile(
+        (pending.payload as UploadPayload | ReplacePayload).storedFilename,
+      );
+    }
+    return NextResponse.json(toWireRecord(claimed));
+  }
+
+  const claimed = await markPendingAction(id, approver, "approved");
+  if (!claimed) {
+    return NextResponse.json(
+      { error: "This request was already reviewed." },
+      { status: 409 },
+    );
   }
 
   const proposer = {
@@ -104,6 +123,9 @@ export const POST = async (
         break;
     }
   } catch (err) {
+    // The claim already flipped this to "approved" — undo it so the action
+    // is reviewable again instead of silently stranded.
+    await revertPendingClaim(id);
     return NextResponse.json(
       {
         error:
@@ -113,7 +135,5 @@ export const POST = async (
     );
   }
 
-  const updated = await markPendingAction(id, approver, "approved");
-  if (!updated) return notFound();
-  return NextResponse.json(toWireRecord(updated));
+  return NextResponse.json(toWireRecord(claimed));
 };

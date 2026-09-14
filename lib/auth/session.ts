@@ -158,5 +158,14 @@ export const requireMember = async (
 export const requireApprover = (req: NextRequest) =>
   requireRole(req, approverRole());
 
+/**
+ * requireAdmin()/requireApprover() return the live-roles session object, which
+ * has no `isApprover` field — that's only ever computed for the /api/auth/me
+ * response. Use this wherever server-side code needs to branch on approver
+ * status from a `roles` array already in hand, without another role check.
+ */
+export const hasApproverRole = (user: { roles: string[] }): boolean =>
+  user.roles.includes(approverRole()) || user.roles.includes(ownerRole());
+
 export const requireMailAdmin = (req: NextRequest) =>
   requireRole(req, mailAdminRole());

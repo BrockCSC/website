@@ -11,7 +11,17 @@ import type {
 
 export type DocumentItem = WithKey<DocumentRecord>;
 export type DocumentVersionItem = WithKey<DocumentVersionRecord>;
-export type PendingActionItem = WithKey<PendingDocumentActionRecord>;
+type PendingActionTarget = {
+  documentTitle?: string;
+  documentCategory?: string;
+  signingRequestTitle?: string;
+  signingRequestMode?: "ordered" | "parallel";
+  signers?: { name: string; kind: "member" | "external" }[];
+  note?: string;
+};
+export type PendingActionItem = WithKey<PendingDocumentActionRecord> & {
+  target?: PendingActionTarget;
+};
 export type SafeSigner = Omit<Signer, "tokenHash">;
 export type SigningRequestItem = WithKey<
   Omit<SigningRequestRecord, "signers">
@@ -165,6 +175,10 @@ export const respondToMySignature = (
 
 export const fetchPendingActions = () =>
   apiFetch<PendingActionItem[]>("/api/documents/pending");
+
+/** Every status, not just pending, scoped to what the caller themselves proposed. */
+export const fetchMyPendingActions = () =>
+  apiFetch<PendingActionItem[]>("/api/documents/pending?mine=1");
 
 export const reviewPendingAction = (
   id: string,

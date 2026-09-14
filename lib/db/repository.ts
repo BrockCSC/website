@@ -30,7 +30,7 @@ type JsonbTable =
 export type Entity<T> = T & { id: string };
 
 /** id last: a stray `id` inside the stored JSON must not shadow the real one. */
-const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
+export const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
   ...(row.data as T),
   id: row.id,
 });

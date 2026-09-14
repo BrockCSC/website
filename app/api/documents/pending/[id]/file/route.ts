@@ -3,7 +3,7 @@ import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { NextResponse, type NextRequest } from "next/server";
 import type { ReplacePayload, UploadPayload } from "@/lib/api/types";
-import { requireAdmin } from "@/lib/auth/session";
+import { hasApproverRole, requireAdmin } from "@/lib/auth/session";
 import { findPendingAction } from "@/lib/documents/pending";
 import { documentFilePath } from "@/lib/documents/storage";
 import { notAuthorized, notFound } from "@/lib/json";
@@ -21,7 +21,7 @@ export const GET = async (
   if (!pending || (pending.kind !== "upload" && pending.kind !== "replace")) {
     return notFound();
   }
-  if (!user.isApprover && pending.proposedBy !== user.sub)
+  if (!hasApproverRole(user) && pending.proposedBy !== user.sub)
     return notAuthorized();
 
   const payload = pending.payload as UploadPayload | ReplacePayload;

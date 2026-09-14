@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import {
   fetchDocuments,
+  fetchMyPendingActions,
   fetchPendingActions,
   pendingFileUrl,
   reviewPendingAction,
@@ -88,6 +89,35 @@ function PendingApprovals({ onChanged }: { onChanged: () => void }) {
                 Proposed by {item.proposedByName || item.proposedBy} at{" "}
                 {new Date(item.proposedAt).toLocaleString()}
               </p>
+              {item.target && (
+                <div className="mt-1 text-xs text-ink">
+                  {item.target.documentTitle && (
+                    <p>
+                      {item.target.documentTitle}
+                      {item.target.documentCategory
+                        ? ` — ${item.target.documentCategory}`
+                        : ""}
+                    </p>
+                  )}
+                  {item.target.signingRequestTitle && (
+                    <p>
+                      &ldquo;{item.target.signingRequestTitle}&rdquo;
+                      {item.target.signingRequestMode
+                        ? item.target.signingRequestMode === "ordered"
+                          ? " (in order)"
+                          : " (parallel)"
+                        : ""}
+                    </p>
+                  )}
+                  {!!item.target.signers?.length && (
+                    <p>
+                      Signers:{" "}
+                      {item.target.signers.map((s) => s.name).join(", ")}
+                    </p>
+                  )}
+                  {item.target.note && <p>Note: {item.target.note}</p>}
+                </div>
+              )}
               {(item.kind === "upload" || item.kind === "replace") && (
                 <a
                   className="text-xs font-bold text-brand underline underline-offset-4"
@@ -125,6 +155,54 @@ function PendingApprovals({ onChanged }: { onChanged: () => void }) {
       {error && (
         <p className="mt-3 text-sm font-bold text-destructive">{error}</p>
       )}
+    </Panel>
+  );
+}
+
+const submissionTone = (status: PendingActionItem["status"]) =>
+  status === "approved" ? "accent" : "flat";
+
+function MySubmissions() {
+  const [items, setItems] = useState<PendingActionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void fetchMyPendingActions()
+      .then(setItems)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !items.length) return null;
+
+  return (
+    <Panel
+      note="What you've submitted, and whether a co-president has reviewed it."
+      title="Your submissions"
+    >
+      <ul className="flex flex-col gap-3">
+        {items.map((item) => (
+          <li
+            className="rounded-[14px] border-2 border-line bg-surface p-3"
+            key={item.$key}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-bold text-ink">
+                {describePendingKind(item.kind)}
+              </p>
+              <Pill tone={submissionTone(item.status)}>{item.status}</Pill>
+            </div>
+            {item.target?.documentTitle && (
+              <p className="text-xs text-subtle">{item.target.documentTitle}</p>
+            )}
+            {item.status === "rejected" && item.rejectionReason && (
+              <p className="mt-1 text-xs font-bold text-destructive">
+                Rejected: {item.rejectionReason}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }
@@ -226,6 +304,7 @@ export default function DocumentsPage() {
       </div>
 
       {user.isApprover && <PendingApprovals onChanged={load} />}
+      {!user.isApprover && <MySubmissions />}
 
       <Panel title="Add a document">
         <form className="flex flex-col gap-4" onSubmit={upload}>
