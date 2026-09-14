@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { PDFDocument, type PDFImage, type PDFPage, rgb } from "pdf-lib";
 import type { SigningEvent, SigningEventType } from "@/lib/api/types";
 import { BRAND_COLOR, CLUB_NAME } from "@/lib/brand";
-import { SIGNING_TIME_ZONE } from "./fields";
+import { SIGNATURE_FONTS, SIGNING_TIME_ZONE } from "./fields";
 import { type StampSigner, markContent } from "./signed-pdf";
 import {
   type EmbeddedFont,
@@ -414,7 +414,7 @@ export const buildCertificatePdf = async (
   drawRow(
     layout,
     [
-      cell(COLUMNS.lead, [pair("Envelope Id", input.envelopeId)]),
+      cell(COLUMNS.lead, [pair("Envelope ID", input.envelopeId)]),
       cell(COLUMNS.third, [
         text([
           { text: "Status:", muted: true },
@@ -432,7 +432,7 @@ export const buildCertificatePdf = async (
     [
       cell(COLUMNS.full, [
         text([
-          { text: "Source Envelope:", muted: true },
+          { text: "Document:", muted: true },
           { text: input.documentTitle },
           { text: `(${input.sourceFilename})`, muted: true },
         ]),
@@ -462,9 +462,9 @@ export const buildCertificatePdf = async (
         },
         pair(
           "Signing Order",
-          input.mode === "ordered" ? "Sequential" : "Parallel",
+          input.mode === "ordered" ? "One at a time" : "All at once",
         ),
-        pair("Envelope ID Stamping", "Enabled"),
+        pair("Envelope ID on Pages", "Yes"),
         pair("Time Zone", SIGNING_TIME_ZONE),
       ]),
       cell(COLUMNS.second, [
@@ -472,7 +472,7 @@ export const buildCertificatePdf = async (
         pair("Initials", String(input.initialsCount)),
       ]),
       cell(COLUMNS.third, [
-        text([{ text: "Envelope Originator:", muted: true }]),
+        text([{ text: "Sent By:", muted: true }]),
         text([{ text: input.originator.name }]),
         ...(input.originator.email
           ? [text([{ text: input.originator.email }])]
@@ -483,23 +483,23 @@ export const buildCertificatePdf = async (
     { gapAfter: 10 },
   );
 
-  startTable(layout, [{ x: LEFT, title: "Record Tracking" }], 30);
+  startTable(layout, [{ x: LEFT, title: "Record" }], 30);
   drawRow(layout, [
     cell(
       COLUMNS.first,
       [
-        pair("Status", "Original"),
+        text([{ text: "Created:", muted: true }]),
         text([{ text: formatSigningTimestamp(input.createdAt, true) }]),
       ],
       6,
     ),
     cell(COLUMNS.second, [
-      pair("Holder", input.originator.name),
+      pair("Kept By", input.originator.name),
       ...(input.originator.email
         ? [text([{ text: input.originator.email }])]
         : []),
     ]),
-    cell(COLUMNS.third, [pair("Location", "BrockCSC Sign")]),
+    cell(COLUMNS.third, [pair("Stored In", "BrockCSC Sign")]),
   ]);
   endTable(layout);
 
@@ -531,10 +531,10 @@ export const buildCertificatePdf = async (
           ]),
           { kind: "gap", height: 4 },
           pair(
-            "Security Level",
+            "Identified By",
             signer.kind === "external"
-              ? "Email, Account Authentication (None)"
-              : "BrockCSC account login",
+              ? "Emailed signing link"
+              : "BrockCSC account sign-in",
             SMALL,
           ),
           { kind: "gap", height: 6 },
@@ -576,13 +576,13 @@ export const buildCertificatePdf = async (
             ]
           : []),
         pair(
-          "Signature Adoption",
+          "Signature Style",
           signer.style === "drawn" && mark?.kind === "image"
-            ? "Drawn on Device"
-            : "Pre-selected Style",
+            ? "Drawn"
+            : `Typed in ${SIGNATURE_FONTS.find((f) => f.id === signer.font)?.label ?? SIGNATURE_FONTS[0].label}`,
           SMALL,
         ),
-        pair("Using IP Address", ip ?? "Not recorded", SMALL),
+        pair("IP Address", ip ?? "Not recorded", SMALL),
         ...(userAgent
           ? [pair("Browser", describeUserAgent(userAgent), SMALL)]
           : []),
@@ -598,7 +598,7 @@ export const buildCertificatePdf = async (
   startTable(
     layout,
     [
-      { x: LEFT, title: "Signer Events" },
+      { x: LEFT, title: "Signers" },
       { x: COLUMNS.second.x, title: "Signature" },
       { x: COLUMNS.third.x, title: "Timestamp" },
     ],
@@ -622,27 +622,28 @@ export const buildCertificatePdf = async (
     ),
   );
   const signingCompleteAt = latest(signers.map((s) => s.signedAt));
-  const summary: [string, string | undefined][] = [
-    ["Envelope Sent", sentAt],
-    ["Certified Delivered", deliveredAt],
-    ["Signing Complete", signingCompleteAt],
-    ["Completed", input.completedAt],
+  const everyone = `${signers.length} of ${signers.length} signer${signers.length === 1 ? "" : "s"}`;
+  const summary: [string, string, string | undefined][] = [
+    ["Sent", `By ${input.originator.name}`, sentAt],
+    ["Viewed by Everyone", everyone, deliveredAt],
+    ["Signed by Everyone", everyone, signingCompleteAt],
+    ["Completed", "Signed copy and certificate created", input.completedAt],
   ];
   startTable(
     layout,
     [
-      { x: LEFT, title: "Envelope Summary Events" },
-      { x: COLUMNS.second.x, title: "Status" },
-      { x: COLUMNS.third.x, title: "Timestamps" },
+      { x: LEFT, title: "Envelope History" },
+      { x: COLUMNS.second.x, title: "Detail" },
+      { x: COLUMNS.third.x, title: "Timestamp" },
     ],
     leadingFor(BODY),
   );
-  for (const [label, at] of summary) {
+  for (const [label, detail, at] of summary) {
     drawRow(
       layout,
       [
         cell(COLUMNS.first, [text([{ text: label }])], 6),
-        cell(COLUMNS.second, [text([{ text: "Security Checked" }])]),
+        cell(COLUMNS.second, [text([{ text: detail }])]),
         cell(COLUMNS.third, [text([{ text: stamp(at) }])]),
       ],
       { gapAfter: 3 },
