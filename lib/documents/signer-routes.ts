@@ -9,7 +9,7 @@ import type {
 import { type Entity, findById } from "@/lib/db/repository";
 import { documentsTable, signingRequestsTable } from "@/lib/db/schema";
 import { findSignupByUserId } from "@/lib/db/signups";
-import { badJson, jsonObject, notFound } from "@/lib/json";
+import { badJson, jsonObjectWithin, notFound } from "@/lib/json";
 import { clientIp } from "@/lib/rate-limit";
 import {
   type EventMeta,
@@ -37,6 +37,9 @@ export type SignerAccess =
 
 /** Two drawn PNGs at 300KB each, base64-encoded, plus text field values. */
 const MAX_SIGN_BODY_BYTES = 1024 * 1024;
+
+/** A 500-character reason, even with every character \u-escaped. */
+const MAX_DECLINE_BODY_BYTES = 16 * 1024;
 
 export const requestMeta = (req: NextRequest): EventMeta => ({
   ip: clientIp(req),
@@ -198,19 +201,21 @@ export const signerSignResponse = async (
   signer: Signer,
   access: SignerAccess,
 ) => {
-  if (Number(req.headers.get("content-length")) > MAX_SIGN_BODY_BYTES) {
+  const { body, tooLarge } = await jsonObjectWithin<unknown>(
+    req,
+    MAX_SIGN_BODY_BYTES,
+  );
+  if (tooLarge) {
     return NextResponse.json(
       { error: "Your drawn signature is too large. Clear it and draw again." },
       { status: 413 },
     );
   }
-  const body = await jsonObject<unknown>(req);
   if (!body) return badJson();
 
   try {
-    // Only a member can POST again after signing (an external's link is spent
-    // by then). If the request is fully signed but completion failed, that
-    // repeat is a chance to finish it.
+    // A repeat POST after signing (a retry, or a second tab) is a chance to
+    // finish a completion that failed earlier.
     if (signer.status === "signed") {
       const current = await retryStuckCompletion(request);
       if (current.status === "sent" || current.status === "completed") {
@@ -250,9 +255,18 @@ export const signerDeclineResponse = async (
   request: SigningRequest,
   signer: Signer,
 ) => {
-  const body = (await jsonObject<{ reason?: unknown }>(req)) ?? {};
+  const { body, tooLarge } = await jsonObjectWithin<{ reason?: unknown }>(
+    req,
+    MAX_DECLINE_BODY_BYTES,
+  );
+  if (tooLarge) {
+    return NextResponse.json(
+      { error: "That reason is too long." },
+      { status: 413 },
+    );
+  }
   const reason =
-    typeof body.reason === "string"
+    typeof body?.reason === "string"
       ? [...sanitizeCertificateText(body.reason)].slice(0, 500).join("").trim()
       : "";
   try {
