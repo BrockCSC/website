@@ -25,12 +25,18 @@ export const renderLetterheadDocument = (input: {
   const safeBody = sanitizeOutboundHtml(input.bodyHtml);
   const site = siteUrl();
 
+  // img-src is pinned to the public site (the club logo's own host) plus
+  // data: — not 'self' or a bare https:. The document-preview iframe grants
+  // allow-same-origin so it can measure content height, which makes 'self'
+  // resolve to the *admin* origin that holds the viewer's session cookie; a
+  // broader img-src would let exec-authored body content trigger blind,
+  // cookie-bearing GETs against admin routes via <img src>.
   return `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https: data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src ${site} data:; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
 <title>${escapeHtml(input.title)}</title>
 </head>
 <body style="margin:0;background:#ffffff;${FONT}">

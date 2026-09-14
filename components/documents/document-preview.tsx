@@ -38,10 +38,15 @@ const kindForContentType = (contentType: string): Kind => {
  * this deliberately omits) — without it, srcDoc gives the frame a unique
  * opaque origin and `contentDocument` from the parent reads back `null`,
  * which is what we need to measure real content height for a long letterhead
- * document (below). Granting same-origin without scripts costs nothing here:
- * the letterhead's CSP has no `script-src`, so scripts stay inert either way,
- * and every other capability same-origin unlocks (document.cookie, storage,
- * form submission) needs a script to use.
+ * document (below). The one real cost: with an opaque origin, the frame's
+ * own subresource requests (an exec-authored `<img src>` in the body) are
+ * cross-site and carry no `SameSite=Lax` cookies; same-origin makes them
+ * same-site again, so a same-origin image load now goes out with the
+ * viewer's session cookie attached (nothing in the frame can read the
+ * response either way — no script execution). That's why
+ * `renderLetterheadDocument` (lib/documents/letterhead.ts) pins its CSP
+ * `img-src` to the public site's own host instead of `'self'` or a bare
+ * `https:` — 'self' here would otherwise mean the *admin* origin.
  *
  * Pass `key={fileUrl}` from the caller when the URL can change under a
  * mounted instance (e.g. picking a different version) — internal state
