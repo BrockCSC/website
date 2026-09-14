@@ -19,7 +19,8 @@ import {
 /** Stamped on every forwarded copy so a forward that finds its way back to a club mailbox isn't forwarded again. */
 const FORWARDED_HEADER = "X-BrockCSC-Forwarded";
 
-const EMAIL_PATTERN = /^[^\s@"\\<>]+@[^\s@"\\<>]+\.[^\s@"\\<>]+$/;
+/** No `$`: the script requires "variables", so `${...}` in an address would expand at delivery. */
+const EMAIL_PATTERN = /^[^\s@"\\<>$]+@[^\s@"\\<>$]+\.[^\s@"\\<>$]+$/;
 
 /**
  * OCI Email Delivery drops anything whose From isn't an approved sender, so the
@@ -27,13 +28,19 @@ const EMAIL_PATTERN = /^[^\s@"\\<>]+@[^\s@"\\<>]+\.[^\s@"\\<>]+$/;
  * sender kept in Reply-To — the way a mailing list rewrites mail it relays.
  * `keep` runs before any header is touched: Sieve actions snapshot the message
  * when they run, so the mailbox copy stays exactly as it arrived.
+ *
+ * addheader writes decoded header text back raw, so only a printable-ASCII
+ * display name is reused; anything else falls back to the bare address.
  */
 const personalForwardingScript = (
   clubAddress: string,
   target: string,
-): string =>
-  [
-    'require ["comparator-i;ascii-numeric", "copy", "editheader", "fileinto", "relational", "spamtestplus", "special-use", "variables"];',
+): string => {
+  if (clubAddress.includes("$") || target.includes("$")) {
+    throw new Error("Forwarding addresses can't contain $.");
+  }
+  return [
+    'require ["comparator-i;ascii-numeric", "copy", "editheader", "envelope", "fileinto", "regex", "relational", "spamtestplus", "special-use", "variables"];',
     "",
     "# With a script active, spam is filed here; it is never forwarded.",
     'if anyof (spamtest :percent :value "ge" :comparator "i;ascii-numeric" "50",',
@@ -44,7 +51,11 @@ const personalForwardingScript = (
     "",
     "keep;",
     "",
-    `if exists ${sieveString(FORWARDED_HEADER)} {`,
+    "# Already-forwarded mail, bounces and auto-replies stay put, so a rejected",
+    "# forward can't bounce back into another forward.",
+    `if anyof (exists ${sieveString(FORWARDED_HEADER)},`,
+    '          envelope :is "from" "",',
+    '          allof (exists "Auto-Submitted", not header :is "Auto-Submitted" "no")) {',
     "  stop;",
     "}",
     "",
@@ -52,23 +63,28 @@ const personalForwardingScript = (
     'if address :all :matches "From" "*" {',
     '  set "sender" "${1}";',
     "}",
+    'if anyof (string :regex "${sender}" "[^!-~]", string :contains "${sender}" ["\\"", "\\\\"]) {',
+    '  set "sender" "";',
+    "}",
     'set "name" "";',
     'if header :matches "From" "\\"*\\" <*>" {',
     '  set "name" "${1}";',
     '} elsif header :matches "From" "* <*>" {',
     '  set "name" "${1}";',
     "}",
-    'if anyof (string :is "${name}" "", string :contains "${name}" ["\\"", "\\\\"]) {',
+    'set :length "namelength" "${name}";',
+    'if anyof (string :is "${name}" "",',
+    '          string :regex "${name}" "[^ -~]",',
+    '          string :contains "${name}" ["\\"", "\\\\"],',
+    '          string :value "gt" :comparator "i;ascii-numeric" "${namelength}" "64") {',
     '  set "name" "${sender}";',
     "}",
-    'if anyof (string :is "${name}" "", string :contains "${name}" ["\\"", "\\\\"]) {',
+    'if string :is "${name}" "" {',
     '  set "name" "Unknown sender";',
     "}",
     "",
-    'if not exists "Reply-To" {',
-    '  if header :matches "From" "*" {',
-    '    addheader "Reply-To" "${1}";',
-    "  }",
+    'if allof (not exists "Reply-To", not string :is "${sender}" "") {',
+    '  addheader "Reply-To" "${sender}";',
     "}",
     'deleteheader "From";',
     'deleteheader "Sender";',
@@ -79,6 +95,7 @@ const personalForwardingScript = (
     `redirect :copy ${sieveString(target)};`,
     "",
   ].join("\n");
+};
 
 const clubAddressOf = (signup: SignupRecord) =>
   signup.username ? `${signup.username}@${domain()}` : null;

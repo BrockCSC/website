@@ -591,19 +591,20 @@ const uploadSieve = async (
  * Uploads `script` under `name` and makes it the account's active script, or
  * removes it when `script` is null. Stalwart runs one active script per
  * account, so activating one deactivates whichever was active before.
+ * Resolves to Stalwart's reason when it refuses to store the script.
  */
 const putScript = async (
   localPart: string,
   name: string,
   script: string | null,
-): Promise<void> => {
+): Promise<string | null> => {
   const account = await accountNamed(localPart);
-  if (!account) return;
+  if (!account) return null;
   const accountId = account.id;
   const existing = await scriptNamed(accountId, name);
 
   if (!script) {
-    if (!existing) return;
+    if (!existing) return null;
     const calls: Call[] = [
       ["SieveScript/set", { accountId, destroy: [existing.id] }, "c1"],
     ];
@@ -615,7 +616,7 @@ const putScript = async (
       ]);
     }
     await jmap(calls);
-    return;
+    return null;
   }
 
   const blobId = await uploadSieve(accountId, script);
@@ -639,25 +640,27 @@ const putScript = async (
       "c0",
     ],
   ]);
-  const problem = res.notCreated ?? res.notUpdated;
-  if (problem && Object.keys(problem).length) {
-    throw new Error(`Stalwart refused the script: ${JSON.stringify(problem)}`);
-  }
+  const problem = existing ? res.notUpdated : res.notCreated;
+  return problem && Object.keys(problem).length
+    ? JSON.stringify(problem)
+    : null;
 };
 
 /** A Sieve quoted string. */
 export const sieveString = (value: string): string =>
   `"${value.replace(/[\\"]/g, "\\$&")}"`;
 
-export const setForwarding = (
+/** A refusal is ignored, as it always was, so one account can't stall syncMailRouting. */
+export const setForwarding = async (
   localPart: string,
   target: string | null,
-): Promise<void> =>
-  putScript(
+): Promise<void> => {
+  await putScript(
     localPart,
     FORWARD_SCRIPT,
     target && `require ["copy"];\nredirect :copy ${sieveString(target)};\n`,
   );
+};
 
 /** Null when the account doesn't exist. */
 export const personalForwardingActive = async (
@@ -686,7 +689,10 @@ export const validateSieve = async (
   }
 };
 
-export const setPersonalForwarding = (
+export const setPersonalForwarding = async (
   localPart: string,
   script: string | null,
-): Promise<void> => putScript(localPart, PERSONAL_SCRIPT, script);
+): Promise<void> => {
+  const refusal = await putScript(localPart, PERSONAL_SCRIPT, script);
+  if (refusal) throw new Error(`Stalwart refused the script: ${refusal}`);
+};

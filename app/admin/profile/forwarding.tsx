@@ -28,11 +28,13 @@ export function MailForwarding() {
   useEffect(() => {
     void fetchMailForwarding()
       .then(setView)
-      .catch(() =>
+      .catch((err) => {
+        // No sign-up behind this login means no mailbox to forward.
+        if (err instanceof ApiError && err.status === 404) return;
         setError(
           "Couldn't load your forwarding setting. Refresh to try again.",
-        ),
-      );
+        );
+      });
   }, []);
 
   if (!view) {
