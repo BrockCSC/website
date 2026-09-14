@@ -6,6 +6,7 @@ import {
   LETTERHEAD_PAGE_MIN_HEIGHT,
   LETTERHEAD_PAGE_WIDTH,
 } from "@/lib/documents/page-size";
+import { loadPdfjs } from "@/lib/documents/load-pdfjs";
 import { PageBox } from "./page-box";
 
 type Kind = "pdf" | "image" | "text" | "unsupported";
@@ -84,11 +85,7 @@ export function DocumentPreview({
       let loadingTask: import("pdfjs-dist").PDFDocumentLoadingTask | undefined;
       void (async () => {
         try {
-          const pdfjs = await import("pdfjs-dist");
-          pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-            "pdfjs-dist/build/pdf.worker.min.mjs",
-            import.meta.url,
-          ).toString();
+          const pdfjs = await loadPdfjs();
           const res = await fetch(fileUrl, { credentials: "same-origin" });
           if (!res.ok) throw new Error("fetch failed");
           const data = await res.arrayBuffer();

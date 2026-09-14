@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
+import { loadPdfjs } from "@/lib/documents/load-pdfjs";
 
 type Size = { width: number; height: number };
 
@@ -43,11 +44,7 @@ const useDocument = (fileUrl: string) => {
         }
         const data = await res.arrayBuffer();
         if (cancelled) return;
-        const pdfjs = await import("pdfjs-dist");
-        pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-          "pdfjs-dist/build/pdf.worker.min.mjs",
-          import.meta.url,
-        ).toString();
+        const pdfjs = await loadPdfjs();
         const opened = await pdfjs.getDocument({ data }).promise;
         doc = opened;
         if (cancelled) return;
