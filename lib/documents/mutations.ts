@@ -77,6 +77,16 @@ export const createDocumentWithVersion = async (
   return { document: updated ?? document, version };
 };
 
+/** Also enforced by startSigningRequest, so this can't be raced from the other side. */
+const refuseWhileSigningInProgress = async (documentId: string) => {
+  const requests = await signingRequestsForDocument(documentId);
+  if (requests.some((r) => r.status === "sent")) {
+    throw new Error(
+      "Cancel the in-progress signing request before uploading a new version.",
+    );
+  }
+};
+
 export const addVersion = async (
   actor: Actor,
   payload: ReplacePayload,
@@ -86,6 +96,9 @@ export const addVersion = async (
     payload.documentId,
   );
   if (!document) throw new Error("Document not found.");
+  // A version being signed is pinned by id, so this is only about not
+  // confusing everyone else about what "current" means mid-signature.
+  await refuseWhileSigningInProgress(payload.documentId);
 
   const version = await create<DocumentVersionRecord>(documentVersionsTable, {
     documentId: payload.documentId,
@@ -105,12 +118,21 @@ export const addVersion = async (
   return version;
 };
 
-/** Refused while a signing request is in flight, so a document can't vanish out from under a signer mid-review. */
+/**
+ * Refused while a signing request is in flight, so a document can't vanish
+ * out from under a signer mid-review, and refused once one has completed,
+ * since that permanently destroys the only record the resolution was signed.
+ */
 export const deleteDocument = async (payload: DeletePayload): Promise<void> => {
   const requests = await signingRequestsForDocument(payload.documentId);
   if (requests.some((r) => r.status === "sent")) {
     throw new Error(
       "Cancel the in-progress signing request before deleting this document.",
+    );
+  }
+  if (requests.some((r) => r.status === "completed")) {
+    throw new Error(
+      "This document has a completed, signed record and cannot be deleted.",
     );
   }
 

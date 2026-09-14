@@ -18,7 +18,7 @@ import {
   signingRequestsTable,
   signupsTable,
 } from "@/lib/db/schema";
-import type { Actor } from "./mutations";
+import { type Actor, signingRequestsForDocument } from "./mutations";
 import { buildCompletionCertificate } from "./certificate";
 import {
   notifyCompletion,
@@ -94,7 +94,7 @@ const notifyEligible = async (
       signer.tokenExpiresAt = tokenExpiresAt;
       await notifyExternalSigner(signer, raw, document);
     } else {
-      await notifyMemberSigner(signer, document);
+      await notifyMemberSigner(signer, document, request.id);
     }
     signer.notifiedAt = new Date().toISOString();
     changed = true;
@@ -133,6 +133,19 @@ export const startSigningRequest = async (
   if (!document?.currentVersionId) {
     throw new Error("This document has no version to sign yet.");
   }
+  // The proposer pinned a version when they reviewed it; if it's since been
+  // replaced, apply nothing rather than silently sign a version nobody chose.
+  if (payload.sourceVersionId !== document.currentVersionId) {
+    throw new Error(
+      "The document has changed since this was proposed. Start the signing request again.",
+    );
+  }
+  const existing = await signingRequestsForDocument(document.id);
+  if (existing.some((r) => r.status === "sent")) {
+    throw new Error(
+      "A signing request is already in progress for this document.",
+    );
+  }
   if (!payload.signers.length) throw new Error("Add at least one signer.");
   if (payload.signers.length > 25) throw new Error("Too many signers.");
 
@@ -143,7 +156,7 @@ export const startSigningRequest = async (
 
   const created = await create<SigningRequestRecord>(signingRequestsTable, {
     documentId: document.id,
-    sourceVersionId: document.currentVersionId,
+    sourceVersionId: payload.sourceVersionId,
     title: payload.title,
     mode: payload.mode,
     createdBy: actor.sub,
@@ -189,6 +202,79 @@ export const addSignerToRequest = async (
   return notifyEligible(updated, document);
 };
 
+/**
+ * Materializes the completion certificate once every signer has signed —
+ * shared by recordSignerResponse (the usual path) and removeSignerFromRequest
+ * (removing the last unresponsive signer can also complete a request).
+ * Returns null if `signers` isn't actually all-signed yet.
+ */
+const finalizeIfComplete = async (
+  request: Entity<SigningRequestRecord>,
+  signers: Signer[],
+): Promise<Entity<SigningRequestRecord> | null> => {
+  if (!signers.length || !signers.every((s) => s.status === "signed")) {
+    return null;
+  }
+  const document = await findById<DocumentRecord>(
+    documentsTable,
+    request.documentId,
+  );
+  if (!document) throw new Error("Document not found.");
+  const sourceVersion = await findById<DocumentVersionRecord>(
+    documentVersionsTable,
+    request.sourceVersionId,
+  );
+  if (!sourceVersion) throw new Error("The original version is missing.");
+
+  const now = new Date().toISOString();
+  const certificateText = buildCompletionCertificate(document, sourceVersion, {
+    ...request,
+    signers,
+  });
+  const bytes = new TextEncoder().encode(certificateText);
+  const { storedFilename, sha256 } = await storeDocumentBytes(
+    bytes,
+    "text/plain",
+  );
+  const version = await create<DocumentVersionRecord>(documentVersionsTable, {
+    documentId: document.id,
+    storedFilename,
+    originalFilename: `${request.title} - signing certificate.txt`,
+    contentType: "text/plain",
+    size: bytes.byteLength,
+    sha256,
+    uploadedBy: request.createdBy,
+    uploadedByName: request.createdByName,
+    uploadedAt: now,
+    note: "Generated signing completion record.",
+    producedBySigningRequestId: request.id,
+  });
+  await update<DocumentRecord>(documentsTable, document.id, {
+    currentVersionId: version.id,
+  });
+
+  const updated = await update<SigningRequestRecord>(
+    signingRequestsTable,
+    request.id,
+    {
+      signers,
+      status: "completed",
+      completedAt: now,
+      resultingVersionId: version.id,
+      sha256,
+    },
+  );
+  if (updated) {
+    const addressGroups = await Promise.all(signers.map(signerEmailAddresses));
+    const addresses = [
+      request.createdByEmail ?? "",
+      ...addressGroups.flat(),
+    ].filter(Boolean);
+    await notifyCompletion([...new Set(addresses)], document);
+  }
+  return updated;
+};
+
 export const removeSignerFromRequest = async (
   payload: RemoveSignerPayload,
 ): Promise<Entity<SigningRequestRecord>> => {
@@ -218,6 +304,12 @@ export const removeSignerFromRequest = async (
     },
   );
   if (!updated) throw new Error("Signing request not found.");
+
+  // Removing the last unresponsive signer can leave everyone else already
+  // signed, which should complete the request exactly like a normal sign does.
+  const completed = await finalizeIfComplete(updated, remaining);
+  if (completed) return completed;
+
   const document = await findById<DocumentRecord>(
     documentsTable,
     request.documentId,
@@ -291,7 +383,7 @@ export const resendSignerToken = async (
     target.tokenExpiresAt = tokenExpiresAt;
     await notifyExternalSigner(target, raw, document);
   } else {
-    await notifyMemberSigner(target, document);
+    await notifyMemberSigner(target, document, request.id);
   }
   await update<SigningRequestRecord>(signingRequestsTable, request.id, {
     signers: next,
@@ -426,59 +518,7 @@ export const recordSignerResponse = async (
     return document ? notifyEligible(updated, document) : updated;
   }
 
-  if (!document) throw new Error("Document not found.");
-  const sourceVersion = await findById<DocumentVersionRecord>(
-    documentVersionsTable,
-    request.sourceVersionId,
-  );
-  if (!sourceVersion) throw new Error("The original version is missing.");
-
-  const certificateText = buildCompletionCertificate(document, sourceVersion, {
-    ...request,
-    signers: nextSigners,
-  });
-  const bytes = new TextEncoder().encode(certificateText);
-  const { storedFilename, sha256 } = await storeDocumentBytes(
-    bytes,
-    "text/plain",
-  );
-  const version = await create<DocumentVersionRecord>(documentVersionsTable, {
-    documentId: document.id,
-    storedFilename,
-    originalFilename: `${request.title} - signing certificate.txt`,
-    contentType: "text/plain",
-    size: bytes.byteLength,
-    sha256,
-    uploadedBy: request.createdBy,
-    uploadedByName: request.createdByName,
-    uploadedAt: now,
-    note: "Generated signing completion record.",
-    producedBySigningRequestId: request.id,
-  });
-  await update<DocumentRecord>(documentsTable, document.id, {
-    currentVersionId: version.id,
-  });
-
-  const updated = await update<SigningRequestRecord>(
-    signingRequestsTable,
-    request.id,
-    {
-      signers: nextSigners,
-      status: "completed",
-      completedAt: now,
-      resultingVersionId: version.id,
-      sha256,
-    },
-  );
-  if (updated) {
-    const addressGroups = await Promise.all(
-      nextSigners.map(signerEmailAddresses),
-    );
-    const addresses = [
-      request.createdByEmail ?? "",
-      ...addressGroups.flat(),
-    ].filter(Boolean);
-    await notifyCompletion([...new Set(addresses)], document);
-  }
-  return updated ?? request;
+  const completed = await finalizeIfComplete(request, nextSigners);
+  if (!completed) throw new Error("Could not complete this signing request.");
+  return completed;
 };

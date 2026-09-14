@@ -26,6 +26,7 @@ const safeSend = (msg: Parameters<typeof sendSystemEmail>[0]) =>
 export const notifyMemberSigner = async (
   signer: Signer,
   document: DocumentRecord,
+  signingRequestId: string,
 ): Promise<void> => {
   if (!signer.signupId) return;
   const to = await memberAddresses(signer.signupId);
@@ -35,7 +36,7 @@ export const notifyMemberSigner = async (
     text: [
       `${document.title} is waiting on your signature.`,
       "",
-      `Log in to the admin portal and open Documents to review and sign it: ${siteUrl()}/admin/documents`,
+      `Log in to the admin portal to review and sign it: ${siteUrl()}/admin/documents/signing/${signingRequestId}`,
     ].join("\n"),
   });
 };

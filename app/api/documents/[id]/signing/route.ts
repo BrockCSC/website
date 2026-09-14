@@ -76,7 +76,13 @@ export const POST = async (
     );
   }
 
-  const payload: StartSigningPayload = { documentId: id, title, mode, signers };
+  const payload: StartSigningPayload = {
+    documentId: id,
+    sourceVersionId: document.currentVersionId,
+    title,
+    mode,
+    signers,
+  };
   try {
     const outcome = await proposeOrApply(
       user,

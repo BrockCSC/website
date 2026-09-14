@@ -279,6 +279,8 @@ export type SignerInput =
 
 export type StartSigningPayload = {
   documentId: string;
+  /** The version the proposer actually reviewed, pinned so a later replace can't swap it out from under a queued approval. */
+  sourceVersionId: string;
   title: string;
   mode: "ordered" | "parallel";
   signers: SignerInput[];

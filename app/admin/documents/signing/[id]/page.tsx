@@ -205,13 +205,17 @@ export default function SigningRequestPage() {
   }, [id]);
 
   useEffect(() => {
+    // The full request detail (and the member picker) is admin-only — a
+    // member-but-not-exec signer only ever sees their own signature panel
+    // below, fed by the separately-gated my-signature endpoint.
+    if (!user?.isExecutive) return;
     void (async () => {
       await load();
     })();
     void fetchMemberOptions()
       .then(setMembers)
       .catch(() => {});
-  }, [load]);
+  }, [load, user?.isExecutive]);
 
   const run = async (
     key: string,
@@ -285,10 +289,20 @@ export default function SigningRequestPage() {
     setExternalEmail("");
   };
 
-  if (!user?.isExecutive) {
+  if (!user?.isMember) {
     return (
       <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
-        <Note>Only signed-in execs can see signing requests.</Note>
+        <Note>Only signed-in members can see signing requests.</Note>
+      </div>
+    );
+  }
+  // A member signer with no exec role (e.g. alumni) gets only their own
+  // signature panel — the rest of this page manages the request and is
+  // admin-only, matching /admin/documents and /admin/documents/[id].
+  if (!user.isExecutive) {
+    return (
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <MySignaturePanel onChanged={() => {}} signingRequestId={id} />
       </div>
     );
   }

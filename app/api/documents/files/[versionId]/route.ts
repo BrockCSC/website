@@ -3,9 +3,10 @@ import { stat } from "node:fs/promises";
 import { Readable } from "node:stream";
 import { NextResponse, type NextRequest } from "next/server";
 import type { DocumentVersionRecord } from "@/lib/api/types";
-import { requireAdmin } from "@/lib/auth/session";
+import { requireAdmin, requireMember } from "@/lib/auth/session";
 import { findById } from "@/lib/db/repository";
 import { documentVersionsTable } from "@/lib/db/schema";
+import { versionReadableByMemberSigner } from "@/lib/documents/access";
 import { documentFilePath } from "@/lib/documents/storage";
 import { notAuthorized, notFound } from "@/lib/json";
 
@@ -17,18 +18,26 @@ const INLINE_TYPES = new Set([
 ]);
 
 /**
- * Authenticated execs only — see app/api/documents/sign/[token]/file/route.ts
- * for the separate, token-scoped route external signers use. Re-checks
- * access on every request; never cached long-lived, unlike lib/uploads.ts.
+ * Execs, or an internal member signer scoped to exactly the version pinned
+ * to a signing request they're named on — see
+ * app/api/documents/sign/[token]/file/route.ts for the separate, token-scoped
+ * route external signers use. Re-checks access on every request; never
+ * cached long-lived, unlike lib/uploads.ts.
  */
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ versionId: string }> },
 ) => {
-  const user = await requireAdmin(req);
-  if (!user) return notAuthorized();
-
   const { versionId } = await params;
+
+  const admin = await requireAdmin(req);
+  if (!admin) {
+    const member = await requireMember(req);
+    const allowed =
+      !!member && (await versionReadableByMemberSigner(member.sub, versionId));
+    if (!allowed) return notAuthorized();
+  }
+
   const version = await findById<DocumentVersionRecord>(
     documentVersionsTable,
     versionId,

@@ -8,6 +8,7 @@ import { proposeOrApply } from "@/lib/documents/pending";
 import {
   ALLOWED_DOCUMENT_TYPES,
   MAX_DOCUMENT_BYTES,
+  deleteDocumentFile,
   sniffDocumentType,
   storeDocumentBytes,
 } from "@/lib/documents/storage";
@@ -80,17 +81,28 @@ export const POST = async (
     note: note || undefined,
   };
 
-  const outcome = await proposeOrApply(
-    user,
-    "replace",
-    payload,
-    { documentId: id },
-    () => addVersion({ sub: user.sub, name: user.name }, payload),
-  );
-  return outcome.applied
-    ? NextResponse.json(toWireRecord(outcome.result), { status: 201 })
-    : NextResponse.json(
-        { pending: toWireRecord(outcome.pending) },
-        { status: 202 },
-      );
+  try {
+    const outcome = await proposeOrApply(
+      user,
+      "replace",
+      payload,
+      { documentId: id },
+      () => addVersion({ sub: user.sub, name: user.name }, payload),
+    );
+    return outcome.applied
+      ? NextResponse.json(toWireRecord(outcome.result), { status: 201 })
+      : NextResponse.json(
+          { pending: toWireRecord(outcome.pending) },
+          { status: 202 },
+        );
+  } catch (err) {
+    await deleteDocumentFile(storedFilename);
+    return NextResponse.json(
+      {
+        error:
+          err instanceof Error ? err.message : "Could not upload that version.",
+      },
+      { status: 409 },
+    );
+  }
 };
