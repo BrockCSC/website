@@ -199,7 +199,7 @@ export type Signer = {
   /** External signers only. */
   email?: string;
   status: SignerStatus;
-  /** Cleared once spent (signed/declined) or on cancel/resend rotation. */
+  /** Kept after they sign or decline, so the link still shows their status. Cleared if the request stops before they respond; replaced on resend. */
   tokenHash?: string | null;
   tokenExpiresAt?: string | null;
   /** Set once their invite/notice email goes out, so a re-run of the eligibility sweep doesn't re-send it. */

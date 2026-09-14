@@ -42,9 +42,10 @@ const isLive = (expiresAt: string | null | undefined) =>
   !!expiresAt && new Date(expiresAt).getTime() > Date.now();
 
 /**
- * Null if the token is unknown, expired, or already spent — one generic
- * outcome, exactly like findValidResetToken, so the public routes built on
- * this never have to distinguish "wrong" from "used up" in their response.
+ * Null if the token is unknown, expired, or revoked — one generic outcome,
+ * exactly like findValidResetToken, so the public routes built on this never
+ * have to distinguish "wrong" from "revoked" in their response. A signer who
+ * already responded still resolves; the routes refuse a second response.
  */
 export const findValidSignerToken = async (
   rawToken: string,

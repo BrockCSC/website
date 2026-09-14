@@ -576,8 +576,6 @@ export const signAsSigner = async (
         signatureText: submission.fullName,
         ip: meta.ip,
         userAgent: meta.userAgent,
-        tokenHash: null,
-        tokenExpiresAt: null,
         fieldValues: Object.keys(fieldValues).length ? fieldValues : undefined,
         adopted: {
           fullName: submission.fullName,
@@ -613,7 +611,10 @@ export const signAsSigner = async (
   };
 };
 
-/** A decline halts the whole request, so every other outstanding link is revoked too. */
+/**
+ * A decline halts the whole request, so the links of everyone who hadn't
+ * responded are revoked. The decliner keeps theirs, to see that they declined.
+ */
 export const declineAsSigner = async (
   requestId: string,
   signerId: string,
@@ -633,8 +634,6 @@ export const declineAsSigner = async (
           declineReason: reason,
           ip: meta.ip,
           userAgent: meta.userAgent,
-          tokenHash: null,
-          tokenExpiresAt: null,
         };
       }
       return s.status === "pending" || s.status === "viewed"

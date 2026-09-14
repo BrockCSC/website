@@ -82,7 +82,7 @@ export const notifyExternalSigner = async (
       "",
       `Review and sign: ${siteUrl()}/sign/${rawToken}`,
       "",
-      "This link works only for you, expires in 14 days, and stops working once you sign or decline.",
+      "This link works only for you and expires in 14 days.",
       "",
       `Envelope ID: ${envelopeIdFor(request)}`,
     ].join("\n"),

@@ -75,13 +75,20 @@ const closedState = (session: SignerSessionView) => {
       detail: "The sender has been told. There's nothing more to do.",
     };
   }
-  if (signer.status === "signed") {
+  if (signer.status === "signed" && requestStatus === "completed") {
     return {
       icon: Check,
-      title: completed ? "Everyone has signed" : "You've signed",
+      title: "Everyone has signed",
       detail: completed
         ? `You signed on ${formatWhen(signer.signedAt)}. The completed document and its certificate are below.`
-        : `You signed on ${formatWhen(signer.signedAt)}. Other people still need to sign, and we'll email you when everyone has.`,
+        : `You signed on ${formatWhen(signer.signedAt)}. We emailed you a link to the completed document and its certificate.`,
+    };
+  }
+  if (signer.status === "signed" && requestStatus === "sent") {
+    return {
+      icon: Check,
+      title: "You've signed",
+      detail: `You signed on ${formatWhen(signer.signedAt)}. Other people still need to sign, and we'll email you when everyone has.`,
     };
   }
   if (requestStatus === "cancelled") {
