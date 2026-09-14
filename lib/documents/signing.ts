@@ -94,7 +94,9 @@ const isEligible = (
   all: Signer[],
   mode: "ordered" | "parallel",
 ): boolean => {
-  if (signer.status !== "pending" || signer.notifiedAt) return false;
+  if (signer.notifiedAt) return false;
+  // Older rows can be "viewed" by a signer who opened the request before their turn.
+  if (signer.status !== "pending" && signer.status !== "viewed") return false;
   if (mode === "parallel") return true;
   return all
     .filter((s) => s.order < signer.order)
@@ -462,7 +464,11 @@ export const resendSignerToken = async (
   });
 };
 
-/** Marks the signer viewed and logs it, the first time only. */
+/**
+ * Marks the signer viewed and logs it, the first time only. A member who
+ * opens the request before their turn hasn't been sent it yet, so that look
+ * doesn't count, and they still get notified when their turn comes.
+ */
 export const recordSignerView = (
   requestId: string,
   signerId: string,
@@ -475,7 +481,8 @@ export const recordSignerView = (
       signer.viewedAt ||
       request.status !== "sent" ||
       signer.status === "signed" ||
-      signer.status === "declined"
+      signer.status === "declined" ||
+      !isSignersTurn(request, signerId)
     ) {
       return request;
     }
