@@ -19,6 +19,7 @@ import {
   recordSignerResponse,
   recordSignerView,
   redactSigner,
+  sanitizeCertificateText,
 } from "@/lib/documents/signing";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 
@@ -103,7 +104,9 @@ export const POST = async (
 
   try {
     if (body.action === "sign") {
-      const signatureText = body.signatureText?.trim();
+      const signatureText = body.signatureText
+        ? sanitizeCertificateText(body.signatureText)
+        : "";
       if (!signatureText) {
         return NextResponse.json(
           { error: "Type your name to sign." },

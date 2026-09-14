@@ -11,6 +11,7 @@ import { findById, toWireRecord } from "@/lib/db/repository";
 import { documentsTable } from "@/lib/db/schema";
 import {
   redactSigningRequest,
+  sanitizeCertificateText,
   startSigningRequest,
 } from "@/lib/documents/signing";
 import { proposeOrApply } from "@/lib/documents/pending";
@@ -71,7 +72,7 @@ const parseFields = (
       required: e.required !== false,
       label:
         typeof e.label === "string" && e.label.trim()
-          ? e.label.trim().slice(0, 80)
+          ? sanitizeCertificateText(e.label).slice(0, 80) || undefined
           : undefined,
     });
   }

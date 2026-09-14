@@ -130,6 +130,15 @@ export const fieldsForSigner = (
 ): SigningField[] =>
   request.fields?.filter((f) => f.signerId === signerId) ?? [];
 
+/**
+ * Signer- and preparer-supplied strings end up embedded verbatim, one per
+ * line, in the plain-text completion certificate (certificate.ts). Strip
+ * control and line/paragraph-separator characters so a value can never
+ * inject a fake extra line — e.g. a forged signer entry — into that record.
+ */
+export const sanitizeCertificateText = (value: string): string =>
+  value.replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, " ").trim();
+
 /** Loose shape validation; resolveFieldValues (in recordSignerResponse) does the real per-signer filtering. */
 export const parseFieldValuesInput = (
   raw: unknown,
@@ -138,7 +147,8 @@ export const parseFieldValuesInput = (
   const values: Record<string, string> = {};
   for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
     if (typeof value === "string" && value.trim()) {
-      values[key] = value.trim().slice(0, 500);
+      const clean = sanitizeCertificateText(value).slice(0, 500);
+      if (clean) values[key] = clean;
     }
   }
   return values;
