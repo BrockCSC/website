@@ -4,6 +4,7 @@ import type {
   CancelSigningPayload,
   DeletePayload,
   RemoveSignerPayload,
+  RenamePayload,
   ReplacePayload,
   UploadPayload,
 } from "@/lib/api/types";
@@ -13,6 +14,7 @@ import {
   addVersion,
   createDocumentWithVersion,
   deleteDocument,
+  renameDocument,
 } from "@/lib/documents/mutations";
 import {
   findPendingAction,
@@ -102,6 +104,9 @@ export const POST = async (
         break;
       case "delete":
         await deleteDocument(pending.payload as DeletePayload);
+        break;
+      case "rename":
+        await renameDocument(pending.payload as RenamePayload);
         break;
       case "start-signing":
         await startSigningRequest(

@@ -18,6 +18,8 @@ type PendingActionTarget = {
   signingRequestMode?: "ordered" | "parallel";
   signers?: { name: string; kind: "member" | "external" }[];
   note?: string;
+  newTitle?: string;
+  newDescription?: string | null;
 };
 export type PendingActionItem = WithKey<PendingDocumentActionRecord> & {
   target?: PendingActionTarget;
@@ -103,6 +105,15 @@ export const deleteDocument = async (
   if (!res.ok) throw new ApiError(res.status, "DELETE failed", body?.error);
   return body ?? {};
 };
+
+export const renameDocument = (
+  id: string,
+  input: { title: string; description?: string },
+) =>
+  apiFetch<DocumentItem | { pending: PendingActionItem }>(
+    `/api/documents/${id}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
 
 export const startSigningRequest = (
   documentId: string,
