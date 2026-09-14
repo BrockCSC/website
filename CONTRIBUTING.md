@@ -123,7 +123,7 @@ the server's timezone.
 Documented in `.env.example` (production shape) and `.env.local.example` (the local subset).
 
 | Variable                               | Required    | Default                        | Notes                                                                                                                           |
-| -------------------------------------- | ----------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------|
+| -------------------------------------- | ----------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | `DATABASE_URL`                         | yes         | —                              | Postgres connection string                                                                                                      |
 | `DB_SCHEMA`                            | no          | `public`                       | Schema per environment. Must match `^[a-z0-9_]+$`. Only `prod` makes identity changes real                                      |
 | `KEYCLOAK_ISSUER`                      | yes         | —                              | Realm issuer URL                                                                                                                |
