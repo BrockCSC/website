@@ -51,6 +51,12 @@ export const SECTIONS: Section[] = [
     execOnly: true,
   },
   {
+    name: "Exports",
+    href: "/admin/exports",
+    blurb: "Letterhead PDFs of club records, like the access request list.",
+    approverOnly: true,
+  },
+  {
     name: "Profile",
     href: "/admin/profile",
     blurb: "Your public tile, photo and account.",
