@@ -60,7 +60,7 @@ export const buildCompletionCertificate = (
     "certification, no cryptographic non-repudiation). The hash below only",
     "detects accidental tampering with this record after the fact.",
     "",
-    `Document: ${document.title} [${document.category}]`,
+    `Document: ${document.title}`,
     `Signing request: ${request.title} (${request.mode})`,
     `Original file: ${sourceVersion.originalFilename}`,
     `Original sha256: ${sourceVersion.sha256}`,

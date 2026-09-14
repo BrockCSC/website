@@ -134,7 +134,6 @@ type SignerSummary = { name: string; kind: "member" | "external" };
 
 export type PendingActionTarget = {
   documentTitle?: string;
-  documentCategory?: string;
   signingRequestTitle?: string;
   signingRequestMode?: "ordered" | "parallel";
   signers?: SignerSummary[];
@@ -145,9 +144,7 @@ const documentTarget = async (
   documentId: string,
 ): Promise<PendingActionTarget> => {
   const document = await findById<DocumentRecord>(documentsTable, documentId);
-  return document
-    ? { documentTitle: document.title, documentCategory: document.category }
-    : {};
+  return document ? { documentTitle: document.title } : {};
 };
 
 const memberName = async (signupId: string): Promise<string> => {
@@ -182,11 +179,7 @@ export const buildPendingActionTarget = async (
   switch (item.kind) {
     case "upload": {
       const p = item.payload as UploadPayload;
-      return {
-        documentTitle: p.title,
-        documentCategory: p.category,
-        note: p.note,
-      };
+      return { documentTitle: p.title };
     }
     case "replace": {
       const p = item.payload as ReplacePayload;

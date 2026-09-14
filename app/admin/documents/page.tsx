@@ -14,7 +14,6 @@ import {
   type DocumentItem,
   type PendingActionItem,
 } from "@/lib/api/documents";
-import { DOCUMENT_CATEGORY_SUGGESTIONS } from "@/lib/documents/categories";
 import { useSession } from "../session";
 import { Note, Panel, Pill, field, labelClass } from "../users/ui";
 
@@ -92,12 +91,7 @@ function PendingApprovals({ onChanged }: { onChanged: () => void }) {
               {item.target && (
                 <div className="mt-1 text-xs text-ink">
                   {item.target.documentTitle && (
-                    <p>
-                      {item.target.documentTitle}
-                      {item.target.documentCategory
-                        ? ` — ${item.target.documentCategory}`
-                        : ""}
-                    </p>
+                    <p>{item.target.documentTitle}</p>
                   )}
                   {item.target.signingRequestTitle && (
                     <p>
@@ -212,7 +206,6 @@ export default function DocumentsPage() {
   const [documents, setDocuments] = useState<DocumentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -236,25 +229,19 @@ export default function DocumentsPage() {
     })();
   }, [load]);
 
-  const grouped = useMemo(() => {
-    const map = new Map<string, DocumentItem[]>();
-    for (const doc of documents) {
-      const list = map.get(doc.category) ?? [];
-      list.push(doc);
-      map.set(doc.category, list);
-    }
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [documents]);
+  const sortedDocuments = useMemo(
+    () => documents.slice().sort((a, b) => a.title.localeCompare(b.title)),
+    [documents],
+  );
 
   const upload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!category.trim() || !title.trim() || !file) return;
+    if (!title.trim() || !file) return;
     setUploading(true);
     setError(null);
     setNote(null);
     try {
       const result = await uploadDocument({
-        category: category.trim(),
         title: title.trim(),
         description: description.trim() || undefined,
         file,
@@ -264,7 +251,6 @@ export default function DocumentsPage() {
           ? "Submitted for a co-president to approve."
           : "Uploaded.",
       );
-      setCategory("");
       setTitle("");
       setDescription("");
       setFile(null);
@@ -316,46 +302,13 @@ export default function DocumentsPage() {
               How to use templates
             </Link>
             <Button asChild size="sm" variant="secondary">
-              <Link href="/admin/documents/templates">
-                Start from a template
-              </Link>
+              <Link href="/admin/documents/templates">Download a template</Link>
             </Button>
           </div>
         }
         title="Add a document"
       >
         <form className="flex flex-col gap-4" onSubmit={upload}>
-          <div>
-            <label className={labelClass} htmlFor="category">
-              Category
-            </label>
-            <input
-              className={field}
-              id="category"
-              list="category-suggestions"
-              onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Bylaws, Banking Resolutions, or Meeting Minutes"
-              value={category}
-            />
-            <datalist id="category-suggestions">
-              {DOCUMENT_CATEGORY_SUGGESTIONS.map((c) => (
-                <option key={c} value={c} />
-              ))}
-            </datalist>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {DOCUMENT_CATEGORY_SUGGESTIONS.map((c) => (
-                <button
-                  className="rounded-full border-2 border-line px-2.5 py-0.5 text-xs font-bold text-ink hover:bg-tint"
-                  key={c}
-                  onClick={() => setCategory(c)}
-                  type="button"
-                >
-                  {c}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div>
             <label className={labelClass} htmlFor="title">
               Title
@@ -396,7 +349,7 @@ export default function DocumentsPage() {
 
           <div className="flex items-center gap-3">
             <Button
-              disabled={uploading || !category.trim() || !title.trim() || !file}
+              disabled={uploading || !title.trim() || !file}
               type="submit"
               variant="primary"
             >
@@ -414,10 +367,10 @@ export default function DocumentsPage() {
       {loading ? (
         <p className="font-bold text-subtle">Loading...</p>
       ) : (
-        grouped.map(([cat, docs]) => (
-          <Panel key={cat} title={cat}>
+        !!sortedDocuments.length && (
+          <Panel title="Library">
             <ul className="flex flex-col gap-2">
-              {docs.map((doc) => (
+              {sortedDocuments.map((doc) => (
                 <li key={doc.$key}>
                   <Link
                     className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border-2 border-line bg-surface p-3 hover:bg-tint"
@@ -434,7 +387,7 @@ export default function DocumentsPage() {
               ))}
             </ul>
           </Panel>
-        ))
+        )
       )}
       {!loading && !documents.length && (
         <Note>No documents yet. Add the first one above.</Note>

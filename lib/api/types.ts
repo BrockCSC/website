@@ -162,9 +162,7 @@ export type DashboardStats = {
   unclaimedTiles: number | null;
 };
 
-/** Free-text; the 3 bank-checklist categories are offered as quick-create shortcuts. */
 export type DocumentRecord = {
-  category: string;
   title: string;
   description?: string;
   currentVersionId: string | null;
@@ -226,7 +224,7 @@ export type SigningFieldType = "signature" | "date" | "text";
 export type SigningField = {
   id: string;
   type: SigningFieldType;
-  /** 1-indexed; always 1 for an image- or HTML-origin version. */
+  /** 1-indexed; always 1 for an image-origin version. */
   page: number;
   xPercent: number;
   yPercent: number;
@@ -270,7 +268,6 @@ export type PendingDocumentActionKind =
 type PendingDocumentActionStatus = "pending" | "approved" | "rejected";
 
 export type UploadPayload = {
-  category: string;
   title: string;
   description?: string;
   storedFilename: string;
@@ -278,8 +275,6 @@ export type UploadPayload = {
   contentType: string;
   size: number;
   sha256: string;
-  /** Set when this came from POST /api/documents/from-template rather than a real upload. */
-  note?: string;
 };
 
 export type ReplacePayload = {

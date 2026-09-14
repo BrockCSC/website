@@ -22,7 +22,7 @@ const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink";
 
 type View = {
-  document: { title: string; category: string } | null;
+  document: { title: string } | null;
   version: { contentType: string } | null;
   signingRequestTitle: string;
   signingRequestStatus: string;
@@ -153,9 +153,7 @@ export default function SignPage() {
               {view.signingRequestTitle}
             </h1>
             {view.document && (
-              <p className="mb-4 text-sm text-subtle">
-                {view.document.title} — {view.document.category}
-              </p>
+              <p className="mb-4 text-sm text-subtle">{view.document.title}</p>
             )}
 
             <a

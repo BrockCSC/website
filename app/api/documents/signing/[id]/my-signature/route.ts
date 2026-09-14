@@ -68,9 +68,7 @@ export const GET = async (
       ));
 
   return NextResponse.json({
-    document: document
-      ? { title: document.title, category: document.category }
-      : null,
+    document: document ? { title: document.title } : null,
     version: version ? { contentType: version.contentType } : null,
     signingRequestId: request.id,
     signingRequestStatus: request.status,

@@ -304,7 +304,6 @@ export default function DocumentDetailPage() {
         <h1 className="mt-2 text-2xl font-extrabold text-ink">
           {document.title}
         </h1>
-        <p className="text-subtle">{document.category}</p>
         {document.description && (
           <p className="mt-1 text-sm text-ink">{document.description}</p>
         )}

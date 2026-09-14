@@ -42,7 +42,7 @@ function MySignaturePanel({
   onChanged: () => void;
 }) {
   const [view, setView] = useState<{
-    document: { title: string; category: string } | null;
+    document: { title: string } | null;
     version: { contentType: string } | null;
     versionId: string;
     signer: SafeSigner;
