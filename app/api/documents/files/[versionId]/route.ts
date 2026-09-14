@@ -15,6 +15,9 @@ const INLINE_TYPES = new Set([
   "image/png",
   "image/jpeg",
   "text/plain",
+  // Template-originated documents carry their own restrictive CSP meta tag
+  // (see lib/documents/letterhead.ts) rather than relying on this header.
+  "text/html",
 ]);
 
 /**

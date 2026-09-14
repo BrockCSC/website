@@ -306,7 +306,14 @@ export default function DocumentsPage() {
       {user.isApprover && <PendingApprovals onChanged={load} />}
       {!user.isApprover && <MySubmissions />}
 
-      <Panel title="Add a document">
+      <Panel
+        action={
+          <Button asChild size="sm" variant="secondary">
+            <Link href="/admin/documents/templates">Start from a template</Link>
+          </Button>
+        }
+        title="Add a document"
+      >
         <form className="flex flex-col gap-4" onSubmit={upload}>
           <div>
             <label className={labelClass} htmlFor="category">

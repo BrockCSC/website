@@ -73,6 +73,18 @@ export const uploadDocument = (input: {
   );
 };
 
+export const createDocumentFromTemplate = (input: {
+  templateId: string;
+  category: string;
+  title: string;
+  description?: string;
+  bodyHtml: string;
+}) =>
+  apiFetch<DocumentItem | { pending: PendingActionItem }>(
+    "/api/documents/from-template",
+    { method: "POST", body: JSON.stringify(input) },
+  );
+
 export const addDocumentVersion = (
   documentId: string,
   file: File,

@@ -259,6 +259,8 @@ export type UploadPayload = {
   contentType: string;
   size: number;
   sha256: string;
+  /** Set when this came from POST /api/documents/from-template rather than a real upload. */
+  note?: string;
 };
 
 export type ReplacePayload = {

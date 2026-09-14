@@ -182,7 +182,11 @@ export const buildPendingActionTarget = async (
   switch (item.kind) {
     case "upload": {
       const p = item.payload as UploadPayload;
-      return { documentTitle: p.title, documentCategory: p.category };
+      return {
+        documentTitle: p.title,
+        documentCategory: p.category,
+        note: p.note,
+      };
     }
     case "replace": {
       const p = item.payload as ReplacePayload;

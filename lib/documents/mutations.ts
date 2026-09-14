@@ -70,6 +70,7 @@ export const createDocumentWithVersion = async (
     uploadedBy: actor.sub,
     uploadedByName: actor.name,
     uploadedAt: now,
+    note: payload.note,
   });
   const updated = await update<DocumentRecord>(documentsTable, document.id, {
     currentVersionId: version.id,

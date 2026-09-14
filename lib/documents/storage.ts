@@ -19,9 +19,16 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
     ".docx",
   "text/plain": ".txt",
+  // Generated only (certificates, template-originated documents), never an
+  // upload — kept out of ALLOWED_DOCUMENT_TYPES below so an exec can't upload
+  // arbitrary HTML that then gets served inline on this origin.
+  "text/html": ".html",
 };
 
-export const ALLOWED_DOCUMENT_TYPES = Object.keys(EXTENSION_BY_TYPE);
+/** What a human can upload through the multipart routes; text/html is generated-only. */
+export const ALLOWED_DOCUMENT_TYPES = Object.keys(EXTENSION_BY_TYPE).filter(
+  (type) => type !== "text/html",
+);
 
 const ascii = (bytes: Uint8Array, start: number, end: number) =>
   Buffer.from(bytes.subarray(start, end)).toString("latin1");
