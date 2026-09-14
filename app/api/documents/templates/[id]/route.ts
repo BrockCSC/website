@@ -17,7 +17,9 @@ import { rateLimit } from "@/lib/rate-limit";
  * web ReadableStream adapter rejects each raw number — wrap in Buffer.from
  * so both producers behave the same way. */
 const bytesToBody = (bytes: Uint8Array) =>
-  Readable.toWeb(Readable.from(Buffer.from(bytes))) as ReadableStream<Uint8Array>;
+  Readable.toWeb(
+    Readable.from(Buffer.from(bytes)),
+  ) as ReadableStream<Uint8Array>;
 
 /**
  * A blank branded form generated on the fly from lib/documents/templates.ts
