@@ -45,6 +45,12 @@ export const SECTIONS: Section[] = [
     approverOnly: true,
   },
   {
+    name: "Documents",
+    href: "/admin/documents",
+    blurb: "Bylaws, resolutions, director confirmations and signing requests.",
+    execOnly: true,
+  },
+  {
     name: "Profile",
     href: "/admin/profile",
     blurb: "Your public tile, photo and account.",

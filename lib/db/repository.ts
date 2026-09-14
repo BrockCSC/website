@@ -4,11 +4,15 @@ import { requireAdmin } from "@/lib/auth/session";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { db } from "./index";
 import type {
+  documentsTable,
+  documentVersionsTable,
   eventsTable,
   execsTable,
   passwordResetsTable,
+  pendingDocumentActionsTable,
   retiredMailboxesTable,
   sharedMailboxesTable,
+  signingRequestsTable,
   signupsTable,
 } from "./schema";
 
@@ -18,11 +22,15 @@ type JsonbTable =
   | typeof signupsTable
   | typeof passwordResetsTable
   | typeof sharedMailboxesTable
-  | typeof retiredMailboxesTable;
+  | typeof retiredMailboxesTable
+  | typeof documentsTable
+  | typeof documentVersionsTable
+  | typeof signingRequestsTable
+  | typeof pendingDocumentActionsTable;
 export type Entity<T> = T & { id: string };
 
 /** id last: a stray `id` inside the stored JSON must not shadow the real one. */
-const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
+export const toEntity = <T>(row: { id: string; data: unknown }): Entity<T> => ({
   ...(row.data as T),
   id: row.id,
 });

@@ -26,9 +26,6 @@ if (prodSchemaExists.rowCount === 0) {
   process.exit(0);
 }
 
-// shared_mailboxes and retired_mailboxes describe real Stalwart state, so a
-// preview rides along rather than diverging from what prod actually has.
-//
 // A table can exist on this branch (and so in this schema, freshly migrated)
 // before prod has ever run that migration — every branch that adds a table
 // hits this until it merges and a prod release actually creates it there.
@@ -43,6 +40,8 @@ for (const table of [
   "signups",
   "shared_mailboxes",
   "retired_mailboxes",
+  "documents",
+  "document_versions",
 ]) {
   if (!prodTableNames.has(table)) {
     console.log(`prod has no "${table}" table yet; skipping.`);
@@ -52,6 +51,15 @@ for (const table of [
   await pool.query(
     `INSERT INTO "${schema}"."${table}" SELECT * FROM "prod"."${table}"`,
   );
+}
+
+// signing_requests and pending_document_actions carry external signers' PII
+// (name, email, IP, user-agent, typed signature text) and, for anything not
+// yet signed or reviewed, a still-live tokenHash — the same class of secret
+// password_resets is already excluded from this loop for. Truncated, not
+// copied: previews still get a clean slate, never prod's live data.
+for (const table of ["signing_requests", "pending_document_actions"]) {
+  await pool.query(`TRUNCATE TABLE "${schema}"."${table}"`);
 }
 
 await pool.end();

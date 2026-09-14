@@ -12,6 +12,9 @@ export function PageViewTracker() {
   const pathname = usePathname();
 
   useEffect(() => {
+    // The secret signing token lives in this path segment; recording it would
+    // put it in the page_views table, and from there into analytics reports.
+    if (pathname.startsWith("/sign/")) return;
     recordPageView(pathname).catch(() => {});
   }, [pathname]);
 

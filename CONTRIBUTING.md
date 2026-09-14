@@ -122,33 +122,34 @@ the server's timezone.
 
 Documented in `.env.example` (production shape) and `.env.local.example` (the local subset).
 
-| Variable                               | Required    | Default                        | Notes                                                                                                 |
-| -------------------------------------- | ----------- | ------------------------------ | ----------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                         | yes         | —                              | Postgres connection string                                                                            |
-| `DB_SCHEMA`                            | no          | `public`                       | Schema per environment. Must match `^[a-z0-9_]+$`. Only `prod` makes identity changes real            |
-| `KEYCLOAK_ISSUER`                      | yes         | —                              | Realm issuer URL                                                                                      |
-| `KEYCLOAK_CLIENT_ID`                   | yes         | `brockcsc-web` in examples     | Login client                                                                                          |
-| `KEYCLOAK_CLIENT_SECRET`               | yes         | —                              | **Secret.** The one value you cannot make up locally                                                  |
-| `ADMIN_ROLE`                           | no          | `executive`                    | Realm role required to reach the portal                                                               |
-| `ALUMNI_ROLE`                          | no          | `alumni`                       | Past execs: own profile only                                                                          |
-| `APPROVER_ROLE`                        | no          | `brockcsc-approver`            | Bundled into the `co-president` composite role                                                        |
-| `MAIL_ADMIN_ROLE`                      | no          | `brockcsc-mail-admin`          | Reads every mailbox and manages aliases. Bundled into `co-president`                                  |
-| `SUPERUSER_ROLE`                       | no          | `owner`                        | Passes every role check                                                                               |
-| `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` | for sign-up | falls back to the login client | **Secret.** Service account with `manage-users` + `view-realm`                                        |
-| `SESSION_JWT_SECRET`                   | yes         | —                              | **Secret.** Signs our own session cookie, not the Keycloak token                                      |
-| `INVITE_CODE_SECRET`                   | yes         | —                              | **Secret.** Seeds the rotating sign-up invite code; changing it invalidates codes handed out          |
-| `MAIL_DOMAIN`                          | no          | `brockcsc.ca`                  | Mailbox domain                                                                                        |
-| `STALWART_URL`                         | for mail    | —                              | Stalwart on the internal Docker network; its admin API is never exposed publicly                      |
-| `STALWART_ADMIN_USER` / `_SECRET`      | for mail    | —                              | **Secret.** Basic auth for the provisioning client only                                               |
-| `OCI_COMPARTMENT_OCID`                 | for mail    | —                              | **Secret.** OCI Email Delivery approved senders, via instance principal auth (no keys)                |
-| `PROTECTED_MAIL_USERS`                 | no          | `alaqmargandhi`                | Comma-separated accounts that can never be deprovisioned or rate-limited                              |
-| `MAIL_DAILY_LIMIT`                     | no          | `50`                           | Outbound messages per user per day (ceiling 500)                                                      |
-| `MAIL_SITE_URL`                        | no          | `https://brockcsc.ca`          | Link target in the mail signature                                                                     |
-| `ADMIN_MAIL_GROUP`                     | no          | `admin`                        | Stalwart group kept in sync with the current co-presidents                                            |
-| `CO_PRESIDENTS_LIST`                   | no          | `co-presidents`                | Mailing list of the co-presidents: catch-all target, and where a retired mailbox forwards for 30 days |
-| `ADMIN_SUBDOMAIN` / `PUBLIC_SUBDOMAIN` | prod only   | unset                          | Enables the middleware host split                                                                     |
-| `UPLOAD_DIR`                           | prod only   | —                              | `/data/uploads` in the container, on the `brockcsc-uploads` volume                                    |
-| `PORT`                                 | no          | `3000`                         | Set by the Dockerfile                                                                                 |
+| Variable                               | Required    | Default                        | Notes                                                                                                                           |
+| -------------------------------------- | ----------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                         | yes         | —                              | Postgres connection string                                                                                                      |
+| `DB_SCHEMA`                            | no          | `public`                       | Schema per environment. Must match `^[a-z0-9_]+$`. Only `prod` makes identity changes real                                      |
+| `KEYCLOAK_ISSUER`                      | yes         | —                              | Realm issuer URL                                                                                                                |
+| `KEYCLOAK_CLIENT_ID`                   | yes         | `brockcsc-web` in examples     | Login client                                                                                                                    |
+| `KEYCLOAK_CLIENT_SECRET`               | yes         | —                              | **Secret.** The one value you cannot make up locally                                                                            |
+| `ADMIN_ROLE`                           | no          | `executive`                    | Realm role required to reach the portal                                                                                         |
+| `ALUMNI_ROLE`                          | no          | `alumni`                       | Past execs: own profile only                                                                                                    |
+| `APPROVER_ROLE`                        | no          | `brockcsc-approver`            | Bundled into the `co-president` composite role                                                                                  |
+| `MAIL_ADMIN_ROLE`                      | no          | `brockcsc-mail-admin`          | Reads every mailbox and manages aliases. Bundled into `co-president`                                                            |
+| `SUPERUSER_ROLE`                       | no          | `owner`                        | Passes every role check                                                                                                         |
+| `KEYCLOAK_ADMIN_CLIENT_ID` / `_SECRET` | for sign-up | falls back to the login client | **Secret.** Service account with `manage-users` + `view-realm`                                                                  |
+| `SESSION_JWT_SECRET`                   | yes         | —                              | **Secret.** Signs our own session cookie, not the Keycloak token                                                                |
+| `INVITE_CODE_SECRET`                   | yes         | —                              | **Secret.** Seeds the rotating sign-up invite code; changing it invalidates codes handed out                                    |
+| `MAIL_DOMAIN`                          | no          | `brockcsc.ca`                  | Mailbox domain                                                                                                                  |
+| `STALWART_URL`                         | for mail    | —                              | Stalwart on the internal Docker network; its admin API is never exposed publicly                                                |
+| `STALWART_ADMIN_USER` / `_SECRET`      | for mail    | —                              | **Secret.** Basic auth for the provisioning client only                                                                         |
+| `OCI_COMPARTMENT_OCID`                 | for mail    | —                              | **Secret.** OCI Email Delivery approved senders, via instance principal auth (no keys)                                          |
+| `PROTECTED_MAIL_USERS`                 | no          | `alaqmargandhi`                | Comma-separated accounts that can never be deprovisioned or rate-limited                                                        |
+| `MAIL_DAILY_LIMIT`                     | no          | `50`                           | Outbound messages per user per day (ceiling 500)                                                                                |
+| `MAIL_SITE_URL`                        | no          | `https://brockcsc.ca`          | Link target in the mail signature                                                                                               |
+| `ADMIN_MAIL_GROUP`                     | no          | `admin`                        | Stalwart group kept in sync with the current co-presidents                                                                      |
+| `CO_PRESIDENTS_LIST`                   | no          | `co-presidents`                | Mailing list of the co-presidents: catch-all target, and where a retired mailbox forwards for 30 days                           |
+| `ADMIN_SUBDOMAIN` / `PUBLIC_SUBDOMAIN` | prod only   | unset                          | Enables the middleware host split                                                                                               |
+| `UPLOAD_DIR`                           | prod only   | —                              | `/data/uploads` in the container, on the `brockcsc-uploads` volume                                                              |
+| `DOCUMENTS_DIR`                        | prod only   | `/data/documents`              | Bank/legal document library storage, never the `UPLOAD_DIR` volume; a fresh, per-Stack volume — see `deploy/docker-compose.yml` |
+| `PORT`                                 | no          | `3000`                         | Set by the Dockerfile                                                                                                           |
 
 `MAIL_DAILY_LIMIT`, `MAIL_SITE_URL` and `ADMIN_MAIL_GROUP` are read by the code
 but are not in `.env.example` — they run on their defaults. Add them there to override one.

@@ -1,0 +1,427 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ApiError } from "@/lib/api/client";
+import {
+  fetchDocuments,
+  fetchMyPendingActions,
+  fetchPendingActions,
+  pendingFileUrl,
+  reviewPendingAction,
+  uploadDocument,
+  type DocumentItem,
+  type PendingActionItem,
+} from "@/lib/api/documents";
+import { DOCUMENT_CATEGORY_SUGGESTIONS } from "@/lib/documents/categories";
+import { useSession } from "../session";
+import { Note, Panel, Pill, field, labelClass } from "../users/ui";
+
+const describePendingKind = (kind: PendingActionItem["kind"]) =>
+  ({
+    upload: "Upload a new document",
+    replace: "Upload a new version",
+    delete: "Delete a document",
+    "start-signing": "Start a signing request",
+    "add-signer": "Add a signer",
+    "remove-signer": "Remove a signer",
+    "cancel-signing": "Cancel a signing request",
+  })[kind];
+
+function PendingApprovals({ onChanged }: { onChanged: () => void }) {
+  const [pending, setPending] = useState<PendingActionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setPending(await fetchPendingActions());
+    } catch {
+      setError("Could not load pending approvals.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      await load();
+    })();
+  }, [load]);
+
+  const review = async (id: string, action: "approve" | "reject") => {
+    setBusy(id);
+    setError(null);
+    try {
+      await reviewPendingAction(id, action);
+      await load();
+      onChanged();
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) || "Could not review that.",
+      );
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (loading || !pending.length) return null;
+
+  return (
+    <Panel
+      note="Actions from execs who aren't co-presidents wait here until approved."
+      title="Pending approvals"
+      tone="danger"
+    >
+      <ul className="flex flex-col gap-3">
+        {pending.map((item) => (
+          <li
+            className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border-2 border-line bg-surface p-3"
+            key={item.$key}
+          >
+            <div>
+              <p className="font-bold text-ink">
+                {describePendingKind(item.kind)}
+              </p>
+              <p className="text-xs text-subtle">
+                Proposed by {item.proposedByName || item.proposedBy} at{" "}
+                {new Date(item.proposedAt).toLocaleString()}
+              </p>
+              {item.target && (
+                <div className="mt-1 text-xs text-ink">
+                  {item.target.documentTitle && (
+                    <p>
+                      {item.target.documentTitle}
+                      {item.target.documentCategory
+                        ? ` — ${item.target.documentCategory}`
+                        : ""}
+                    </p>
+                  )}
+                  {item.target.signingRequestTitle && (
+                    <p>
+                      &ldquo;{item.target.signingRequestTitle}&rdquo;
+                      {item.target.signingRequestMode
+                        ? item.target.signingRequestMode === "ordered"
+                          ? " (in order)"
+                          : " (parallel)"
+                        : ""}
+                    </p>
+                  )}
+                  {!!item.target.signers?.length && (
+                    <p>
+                      Signers:{" "}
+                      {item.target.signers.map((s) => s.name).join(", ")}
+                    </p>
+                  )}
+                  {item.target.note && <p>Note: {item.target.note}</p>}
+                </div>
+              )}
+              {(item.kind === "upload" || item.kind === "replace") && (
+                <a
+                  className="text-xs font-bold text-brand underline underline-offset-4"
+                  href={pendingFileUrl(item.$key)}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  Preview file
+                </a>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button
+                disabled={busy === item.$key}
+                onClick={() => review(item.$key, "approve")}
+                size="sm"
+                type="button"
+                variant="primary"
+              >
+                Approve
+              </Button>
+              <Button
+                disabled={busy === item.$key}
+                onClick={() => review(item.$key, "reject")}
+                size="sm"
+                type="button"
+                variant="destructive"
+              >
+                Reject
+              </Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {error && (
+        <p className="mt-3 text-sm font-bold text-destructive">{error}</p>
+      )}
+    </Panel>
+  );
+}
+
+const submissionTone = (status: PendingActionItem["status"]) =>
+  status === "approved" ? "accent" : "flat";
+
+function MySubmissions() {
+  const [items, setItems] = useState<PendingActionItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    void fetchMyPendingActions()
+      .then(setItems)
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading || !items.length) return null;
+
+  return (
+    <Panel
+      note="What you've submitted, and whether a co-president has reviewed it."
+      title="Your submissions"
+    >
+      <ul className="flex flex-col gap-3">
+        {items.map((item) => (
+          <li
+            className="rounded-[14px] border-2 border-line bg-surface p-3"
+            key={item.$key}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="font-bold text-ink">
+                {describePendingKind(item.kind)}
+              </p>
+              <Pill tone={submissionTone(item.status)}>{item.status}</Pill>
+            </div>
+            {item.target?.documentTitle && (
+              <p className="text-xs text-subtle">{item.target.documentTitle}</p>
+            )}
+            {item.status === "rejected" && item.rejectionReason && (
+              <p className="mt-1 text-xs font-bold text-destructive">
+                Rejected: {item.rejectionReason}
+              </p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </Panel>
+  );
+}
+
+export default function DocumentsPage() {
+  const { user } = useSession();
+  const [documents, setDocuments] = useState<DocumentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [category, setCategory] = useState("");
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [note, setNote] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      setDocuments(await fetchDocuments());
+      setError(null);
+    } catch {
+      setError("Could not load the document library.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      await load();
+    })();
+  }, [load]);
+
+  const grouped = useMemo(() => {
+    const map = new Map<string, DocumentItem[]>();
+    for (const doc of documents) {
+      const list = map.get(doc.category) ?? [];
+      list.push(doc);
+      map.set(doc.category, list);
+    }
+    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [documents]);
+
+  const upload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!category.trim() || !title.trim() || !file) return;
+    setUploading(true);
+    setError(null);
+    setNote(null);
+    try {
+      const result = await uploadDocument({
+        category: category.trim(),
+        title: title.trim(),
+        description: description.trim() || undefined,
+        file,
+      });
+      setNote(
+        "pending" in result
+          ? "Submitted for a co-president to approve."
+          : "Uploaded.",
+      );
+      setCategory("");
+      setTitle("");
+      setDescription("");
+      setFile(null);
+      await load();
+    } catch (err) {
+      setError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not upload that file.",
+      );
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  if (!user?.isExecutive) {
+    return (
+      <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+        <Note>Only signed-in execs can see the document library.</Note>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-6 px-5 py-8">
+      <div>
+        <h1 className="text-2xl font-extrabold text-ink">Documents</h1>
+        <p className="mt-1 text-subtle">
+          Bylaws, banking resolutions, director confirmations and their signing
+          requests.
+        </p>
+        {!user.isApprover && (
+          <p className="mt-1 text-xs text-subtle">
+            You can upload and start signing requests, but a co-president has to
+            approve them before they take effect. Viewing is unrestricted.
+          </p>
+        )}
+      </div>
+
+      {user.isApprover && <PendingApprovals onChanged={load} />}
+      {!user.isApprover && <MySubmissions />}
+
+      <Panel title="Add a document">
+        <form className="flex flex-col gap-4" onSubmit={upload}>
+          <div>
+            <label className={labelClass} htmlFor="category">
+              Category
+            </label>
+            <input
+              className={field}
+              id="category"
+              list="category-suggestions"
+              onChange={(e) => setCategory(e.target.value)}
+              placeholder="e.g. Bylaws, Banking Resolutions, or Meeting Minutes"
+              value={category}
+            />
+            <datalist id="category-suggestions">
+              {DOCUMENT_CATEGORY_SUGGESTIONS.map((c) => (
+                <option key={c} value={c} />
+              ))}
+            </datalist>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {DOCUMENT_CATEGORY_SUGGESTIONS.map((c) => (
+                <button
+                  className="rounded-full border-2 border-line px-2.5 py-0.5 text-xs font-bold text-ink hover:bg-tint"
+                  key={c}
+                  onClick={() => setCategory(c)}
+                  type="button"
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="title">
+              Title
+            </label>
+            <input
+              className={field}
+              id="title"
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. 2025 Banking Resolution"
+              value={title}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="description">
+              Description (optional)
+            </label>
+            <textarea
+              className={`${field} min-h-[70px]`}
+              id="description"
+              onChange={(e) => setDescription(e.target.value)}
+              value={description}
+            />
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="file">
+              File (PDF, PNG, JPEG or DOCX, up to 15MB)
+            </label>
+            <input
+              accept=".pdf,.png,.jpg,.jpeg,.docx"
+              className={field}
+              id="file"
+              onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+              type="file"
+            />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button
+              disabled={uploading || !category.trim() || !title.trim() || !file}
+              type="submit"
+              variant="primary"
+            >
+              {uploading ? "Uploading..." : "Upload"}
+            </Button>
+            {note && (
+              <span className="text-sm font-bold text-brand">{note}</span>
+            )}
+          </div>
+        </form>
+      </Panel>
+
+      {error && <p className="text-sm font-bold text-destructive">{error}</p>}
+
+      {loading ? (
+        <p className="font-bold text-subtle">Loading...</p>
+      ) : (
+        grouped.map(([cat, docs]) => (
+          <Panel key={cat} title={cat}>
+            <ul className="flex flex-col gap-2">
+              {docs.map((doc) => (
+                <li key={doc.$key}>
+                  <Link
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border-2 border-line bg-surface p-3 hover:bg-tint"
+                    href={`/admin/documents/${doc.$key}`}
+                  >
+                    <span className="font-bold text-ink">{doc.title}</span>
+                    <Pill>
+                      {doc.currentVersionId
+                        ? "Has a version"
+                        : "No version yet"}
+                    </Pill>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+        ))
+      )}
+      {!loading && !documents.length && (
+        <Note>No documents yet. Add the first one above.</Note>
+      )}
+    </div>
+  );
+}
