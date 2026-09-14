@@ -42,8 +42,6 @@ for (const table of [
   "retired_mailboxes",
   "documents",
   "document_versions",
-  "signing_requests",
-  "pending_document_actions",
 ]) {
   if (!prodTableNames.has(table)) {
     console.log(`prod has no "${table}" table yet; skipping.`);
@@ -53,6 +51,15 @@ for (const table of [
   await pool.query(
     `INSERT INTO "${schema}"."${table}" SELECT * FROM "prod"."${table}"`,
   );
+}
+
+// signing_requests and pending_document_actions carry external signers' PII
+// (name, email, IP, user-agent, typed signature text) and, for anything not
+// yet signed or reviewed, a still-live tokenHash — the same class of secret
+// password_resets is already excluded from this loop for. Truncated, not
+// copied: previews still get a clean slate, never prod's live data.
+for (const table of ["signing_requests", "pending_document_actions"]) {
+  await pool.query(`TRUNCATE TABLE "${schema}"."${table}"`);
 }
 
 await pool.end();
