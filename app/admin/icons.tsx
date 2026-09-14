@@ -61,12 +61,21 @@ const BadgeIcon = ({ className }: IconProps) => (
   </svg>
 );
 
+const SharedMailboxIcon = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M15.5 12v1a2 2 0 0 0 4 0v-1" />
+  </svg>
+);
+
 export const SECTION_ICONS: Record<
   string,
   (props: IconProps) => React.ReactElement
 > = {
   "/admin/mail": MailIcon,
   "/admin/mail/aliases": AliasIcon,
+  "/admin/mail/shared": SharedMailboxIcon,
   "/admin/analytics": ChartIcon,
   "/admin/events": CalendarIcon,
   "/admin/users": PeopleIcon,

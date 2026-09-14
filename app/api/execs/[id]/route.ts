@@ -9,7 +9,7 @@ import {
 } from "@/lib/db/repository";
 import { asBool, cleanExec } from "@/lib/execs/patch";
 import { findSignupByExecKey } from "@/lib/db/signups";
-import { makeMailboxReadOnly } from "@/lib/mail/provision";
+import { retireMailbox } from "@/lib/mail/provision";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
@@ -48,14 +48,13 @@ export const PATCH = async (
   });
   if (!entity) return notFound();
 
-  // must not retire the mailbox either.
   if (
     ownsIdentities() &&
     before?.isCurrentExec !== false &&
     stillCurrent === false
   ) {
     const signup = await findSignupByExecKey(id);
-    if (signup?.username) await makeMailboxReadOnly(signup.username);
+    if (signup?.username) await retireMailbox(signup.username);
   }
   return NextResponse.json(toWireRecord(entity));
 };

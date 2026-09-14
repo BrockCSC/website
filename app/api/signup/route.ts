@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/keycloak-admin";
 import { fold, usernameFor } from "@/lib/auth/username";
 import { create, findAll } from "@/lib/db/repository";
+import { findActiveRetiredMailbox } from "@/lib/db/retired-mailboxes";
 import { rateLimit } from "@/lib/rate-limit";
 import { badJson, jsonObject } from "@/lib/json";
 import { signupsTable } from "@/lib/db/schema";
@@ -114,7 +115,10 @@ export const POST = async (req: NextRequest) => {
   if (!base) {
     return badRequest("We could not build a username from that name.");
   }
-  const username = await allocateUsername(base);
+  const username = await allocateUsername(
+    base,
+    async (candidate) => (await findActiveRetiredMailbox(candidate)) !== null,
+  );
 
   let keycloakUserId: string;
   try {
