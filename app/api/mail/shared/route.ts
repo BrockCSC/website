@@ -1,8 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
-import type { SharedMailboxRecord } from "@/lib/api/types";
+import type { SharedMailboxRecord, SignupRecord } from "@/lib/api/types";
 import { requireApprover } from "@/lib/auth/session";
-import { create } from "@/lib/db/repository";
-import { sharedMailboxesTable } from "@/lib/db/schema";
+import { create, findAll } from "@/lib/db/repository";
+import { sharedMailboxesTable, signupsTable } from "@/lib/db/schema";
 import { listSharedMailboxes } from "@/lib/db/shared-mailboxes";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized } from "@/lib/json";
@@ -36,11 +36,41 @@ export type SharedMailbox = {
   total: number | null;
 };
 
+/**
+ * Mailboxes created before this table existed (security@, from
+ * lib/mail/system-mail.ts) have no row here. Back-fill one on first sight so
+ * they become visible and manageable instead of staying invisible forever.
+ */
+const adoptUntracked = async (
+  users: MailUser[],
+  tracked: Set<string>,
+): Promise<void> => {
+  const signups = await findAll<SignupRecord>(signupsTable);
+  const hasSignup = new Set(
+    signups.filter((s) => s.username).map((s) => s.username),
+  );
+  const orphans = users.filter(
+    (user) =>
+      user.name !== process.env.STALWART_ADMIN_USER &&
+      !hasSignup.has(user.name) &&
+      !tracked.has(user.name),
+  );
+  for (const orphan of orphans) {
+    await create<SharedMailboxRecord>(sharedMailboxesTable, {
+      username: orphan.name,
+      createdBy: "detected automatically",
+      createdAt: new Date().toISOString(),
+    });
+  }
+};
+
 export const GET = async (req: NextRequest) => {
   if (!(await requireApprover(req))) return notAuthorized();
 
-  const rows = await listSharedMailboxes();
+  let rows = await listSharedMailboxes();
   const users = await listUsers();
+  await adoptUntracked(users, new Set(rows.map((row) => row.username)));
+  rows = await listSharedMailboxes();
   const byName = new Map(users.map((user) => [user.name, user]));
   const matched = rows
     .map((row) => byName.get(row.username))
