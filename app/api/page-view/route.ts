@@ -6,7 +6,7 @@ import { jsonObject } from "@/lib/json";
 
 /**
  * Admin traffic is the club's own work, so it is not a visit to the website.
- * /sign/<token> carries a secret signing token in the path itself — recording
+ * /sign/<token> and /signed/<token> carry a secret token in the path itself — recording
  * it would leak the token into the page_views table and admin analytics.
  */
 const isPublicPath = (path: unknown): path is string =>
@@ -14,7 +14,8 @@ const isPublicPath = (path: unknown): path is string =>
   path.startsWith("/") &&
   path.length <= 200 &&
   !path.startsWith("/admin") &&
-  !path.startsWith("/sign/");
+  !path.startsWith("/sign/") &&
+  !path.startsWith("/signed/");
 
 export const POST = async (req: NextRequest) => {
   // The count is a vanity metric, but the table it writes to is not free.
