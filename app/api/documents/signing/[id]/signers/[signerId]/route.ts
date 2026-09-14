@@ -3,6 +3,7 @@ import type { RemoveSignerPayload } from "@/lib/api/types";
 import { requireAdmin } from "@/lib/auth/session";
 import { toWireRecord } from "@/lib/db/repository";
 import { proposeOrApply } from "@/lib/documents/pending";
+import { requestMeta } from "@/lib/documents/signer-routes";
 import {
   redactSigningRequest,
   removeSignerFromRequest,
@@ -24,7 +25,11 @@ export const DELETE = async (
       "remove-signer",
       payload,
       { signingRequestId: id },
-      () => removeSignerFromRequest(payload),
+      () =>
+        removeSignerFromRequest(payload, {
+          ...requestMeta(req),
+          actorName: user.name,
+        }),
     );
     return outcome.applied
       ? NextResponse.json(toWireRecord(redactSigningRequest(outcome.result)))

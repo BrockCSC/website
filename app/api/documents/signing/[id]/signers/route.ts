@@ -7,6 +7,7 @@ import {
   redactSigningRequest,
 } from "@/lib/documents/signing";
 import { proposeOrApply } from "@/lib/documents/pending";
+import { requestMeta } from "@/lib/documents/signer-routes";
 import { badJson, jsonObject, notAuthorized } from "@/lib/json";
 
 type Body = { signer?: unknown };
@@ -54,7 +55,11 @@ export const POST = async (
       "add-signer",
       payload,
       { signingRequestId: id },
-      () => addSignerToRequest(payload),
+      () =>
+        addSignerToRequest(payload, {
+          ...requestMeta(req),
+          actorName: user.name,
+        }),
     );
     return outcome.applied
       ? NextResponse.json(toWireRecord(redactSigningRequest(outcome.result)), {

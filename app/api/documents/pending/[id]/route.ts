@@ -5,7 +5,6 @@ import type {
   DeletePayload,
   RemoveSignerPayload,
   ReplacePayload,
-  StartSigningPayload,
   UploadPayload,
 } from "@/lib/api/types";
 import { requireApprover } from "@/lib/auth/session";
@@ -21,6 +20,7 @@ import {
   revertPendingClaim,
 } from "@/lib/documents/pending";
 import {
+  type StartSigningInput,
   addSignerToRequest,
   cancelSigningRequest,
   removeSignerFromRequest,
@@ -106,14 +106,18 @@ export const POST = async (
       case "start-signing":
         await startSigningRequest(
           proposer,
-          pending.payload as StartSigningPayload,
+          pending.payload as StartSigningInput,
         );
         break;
       case "add-signer":
-        await addSignerToRequest(pending.payload as AddSignerPayload);
+        await addSignerToRequest(pending.payload as AddSignerPayload, {
+          actorName: proposer.name,
+        });
         break;
       case "remove-signer":
-        await removeSignerFromRequest(pending.payload as RemoveSignerPayload);
+        await removeSignerFromRequest(pending.payload as RemoveSignerPayload, {
+          actorName: proposer.name,
+        });
         break;
       case "cancel-signing":
         await cancelSigningRequest(

@@ -3,6 +3,7 @@ import type { CancelSigningPayload } from "@/lib/api/types";
 import { requireAdmin } from "@/lib/auth/session";
 import { toWireRecord } from "@/lib/db/repository";
 import { proposeOrApply } from "@/lib/documents/pending";
+import { requestMeta } from "@/lib/documents/signer-routes";
 import {
   cancelSigningRequest,
   redactSigningRequest,
@@ -24,7 +25,12 @@ export const POST = async (
       "cancel-signing",
       payload,
       { signingRequestId: id },
-      () => cancelSigningRequest(payload, { sub: user.sub, name: user.name }),
+      () =>
+        cancelSigningRequest(
+          payload,
+          { sub: user.sub, name: user.name },
+          requestMeta(req),
+        ),
     );
     return outcome.applied
       ? NextResponse.json(toWireRecord(redactSigningRequest(outcome.result)))

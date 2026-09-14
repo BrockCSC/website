@@ -6,9 +6,8 @@ import { documentsTable } from "@/lib/db/schema";
 import { createDocumentWithVersion } from "@/lib/documents/mutations";
 import { proposeOrApply } from "@/lib/documents/pending";
 import {
-  ALLOWED_DOCUMENT_TYPES,
   MAX_DOCUMENT_BYTES,
-  sniffDocumentType,
+  checkUploadedPdf,
   storeDocumentBytes,
 } from "@/lib/documents/storage";
 import { notAuthorized } from "@/lib/json";
@@ -56,31 +55,22 @@ export const POST = async (req: NextRequest) => {
   }
   if (file.size > MAX_DOCUMENT_BYTES) return TOO_LARGE();
 
-  const declaredType = file.type;
-  if (!ALLOWED_DOCUMENT_TYPES.includes(declaredType)) {
-    return NextResponse.json(
-      { error: "Unsupported file type. Use PDF, PNG, JPEG or DOCX." },
-      { status: 415 },
-    );
-  }
   const bytes = new Uint8Array(await file.arrayBuffer());
-  if (!sniffDocumentType(bytes, declaredType)) {
-    return NextResponse.json(
-      { error: "The file's contents don't match its declared type." },
-      { status: 415 },
-    );
+  const pdf = await checkUploadedPdf(bytes);
+  if (!pdf.ok) {
+    return NextResponse.json({ error: pdf.error }, { status: pdf.status });
   }
 
   const { storedFilename, sha256 } = await storeDocumentBytes(
     bytes,
-    declaredType,
+    "application/pdf",
   );
   const payload: UploadPayload = {
     title,
     description: description || undefined,
     storedFilename,
-    originalFilename: file.name || "document",
-    contentType: declaredType,
+    originalFilename: file.name || "document.pdf",
+    contentType: "application/pdf",
     size: bytes.byteLength,
     sha256,
   };

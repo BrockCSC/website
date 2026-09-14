@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from "node:crypto";
-import { mkdir, unlink, writeFile } from "node:fs/promises";
+import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, normalize, sep } from "node:path";
-import { sniffImageType } from "@/lib/uploads";
+import { PDFDocument } from "pdf-lib";
 
 /**
  * Deliberately its own root, never lib/uploads.ts's UPLOAD_ROOT: that pipeline
@@ -21,42 +21,46 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
   "text/plain": ".txt",
 };
 
-/** What a human can upload through the multipart routes. */
-export const ALLOWED_DOCUMENT_TYPES = Object.keys(EXTENSION_BY_TYPE);
-
 const ascii = (bytes: Uint8Array, start: number, end: number) =>
   Buffer.from(bytes.subarray(start, end)).toString("latin1");
 
+type PdfCheck = { ok: true } | { ok: false; status: 400 | 415; error: string };
+
 /**
- * Only pdf, png and jpeg have magic bytes worth checking against the
- * browser-declared type. docx is a zip container indistinguishable from any
- * other zip by signature alone, and a generated .txt certificate has none —
- * both are trusted at the declared (allowlisted) type, same as the rest of
- * this app trusts non-image uploads.
+ * Human uploads are PDF only, since fields are placed on rendered PDF pages
+ * and stamped into the file. The browser-declared type is ignored; the bytes
+ * decide. pdf-lib refuses encrypted files unless told to ignore encryption,
+ * and those could never be stamped.
  */
-export const sniffDocumentType = (
+export const checkUploadedPdf = async (
   bytes: Uint8Array,
-  declaredType: string,
-): boolean => {
-  if (declaredType === "application/pdf") {
-    return ascii(bytes, 0, 5) === "%PDF-";
+): Promise<PdfCheck> => {
+  if (ascii(bytes, 0, 5) !== "%PDF-") {
+    return {
+      ok: false,
+      status: 415,
+      error:
+        "Only PDF files can be uploaded. Export or print the file to PDF first.",
+    };
   }
-  if (declaredType === "image/png" || declaredType === "image/jpeg") {
-    return sniffImageType(bytes) === declaredType;
+  try {
+    const pdf = await PDFDocument.load(bytes, { updateMetadata: false });
+    if (pdf.getPageCount() < 1) {
+      return { ok: false, status: 400, error: "That PDF has no pages." };
+    }
+    return { ok: true };
+  } catch (err) {
+    // pdf-lib is compiled to ES5, so `instanceof EncryptedPDFError` is always
+    // false; its message is the only reliable signal.
+    const encrypted = err instanceof Error && /encrypted/i.test(err.message);
+    return {
+      ok: false,
+      status: 400,
+      error: encrypted
+        ? "That PDF is password-protected or encrypted. Save an unprotected copy and upload that."
+        : "That PDF could not be read. It may be damaged, so export it again and retry.",
+    };
   }
-  if (
-    declaredType ===
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-  ) {
-    return (
-      bytes.length >= 4 &&
-      bytes[0] === 0x50 &&
-      bytes[1] === 0x4b &&
-      bytes[2] === 0x03 &&
-      bytes[3] === 0x04
-    );
-  }
-  return declaredType === "text/plain";
 };
 
 /** Random name keyed by date, mirroring lib/uploads.ts's convention. */
@@ -76,6 +80,14 @@ const resolveDocumentPath = (storedFilename: string): string | null => {
 
 export const documentFilePath = (storedFilename: string): string | null =>
   resolveDocumentPath(storedFilename);
+
+export const readDocumentBytes = async (
+  storedFilename: string,
+): Promise<Uint8Array> => {
+  const target = resolveDocumentPath(storedFilename);
+  if (!target) throw new Error("Invalid storage path.");
+  return new Uint8Array(await readFile(target));
+};
 
 export const storeDocumentBytes = async (
   bytes: Uint8Array,
