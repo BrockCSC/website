@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DocumentThumbnail } from "@/components/documents/document-thumbnail";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import {
@@ -399,15 +400,20 @@ export default function DocumentsPage() {
               {sortedDocuments.map((doc) => (
                 <li key={doc.$key}>
                   <Link
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-[14px] border-2 border-line bg-surface p-3 hover:bg-tint"
+                    className="flex items-center gap-3 rounded-[14px] border-2 border-line bg-surface p-2 pr-3 hover:bg-tint"
                     href={`/admin/documents/${doc.$key}`}
                   >
-                    <span className="font-bold text-ink">{doc.title}</span>
-                    <Pill>
-                      {doc.currentVersionId
-                        ? "Has a version"
-                        : "No version yet"}
-                    </Pill>
+                    <DocumentThumbnail versionId={doc.currentVersionId} />
+                    <span className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-2">
+                      <span className="min-w-0 break-words font-bold text-ink">
+                        {doc.title}
+                      </span>
+                      <Pill>
+                        {doc.currentVersionId
+                          ? "Has a version"
+                          : "No version yet"}
+                      </Pill>
+                    </span>
                   </Link>
                 </li>
               ))}
