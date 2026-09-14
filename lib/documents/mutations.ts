@@ -141,6 +141,11 @@ export const deleteDocument = async (payload: DeletePayload): Promise<void> => {
     await remove(documentVersionsTable, version.id);
   }
   for (const request of requests) {
+    for (const signer of request.signers) {
+      const { signatureImage, initialsImage } = signer.adopted ?? {};
+      if (signatureImage) await deleteDocumentFile(signatureImage);
+      if (initialsImage) await deleteDocumentFile(initialsImage);
+    }
     await remove(signingRequestsTable, request.id);
   }
   await remove(documentsTable, payload.documentId);

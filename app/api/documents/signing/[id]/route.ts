@@ -3,6 +3,7 @@ import type { DocumentRecord, SigningRequestRecord } from "@/lib/api/types";
 import { requireAdmin } from "@/lib/auth/session";
 import { findById, toWireRecord } from "@/lib/db/repository";
 import { documentsTable, signingRequestsTable } from "@/lib/db/schema";
+import { retryStuckCompletion } from "@/lib/documents/finalize";
 import { redactSigningRequest } from "@/lib/documents/signing";
 import { notAuthorized, notFound } from "@/lib/json";
 
@@ -13,11 +14,9 @@ export const GET = async (
   const user = await requireAdmin(req);
   if (!user) return notAuthorized();
   const { id } = await params;
-  const request = await findById<SigningRequestRecord>(
-    signingRequestsTable,
-    id,
-  );
-  if (!request) return notFound();
+  const found = await findById<SigningRequestRecord>(signingRequestsTable, id);
+  if (!found) return notFound();
+  const request = await retryStuckCompletion(found);
   const document = await findById<DocumentRecord>(
     documentsTable,
     request.documentId,

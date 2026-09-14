@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { requireApprover } from "@/lib/auth/session";
+import { requestMeta } from "@/lib/documents/signer-routes";
 import { resendSignerToken } from "@/lib/documents/signing";
 import { badJson, jsonObject, notAuthorized } from "@/lib/json";
 
@@ -16,7 +17,10 @@ export const POST = async (
   if (!body?.signerId) return badJson();
 
   try {
-    await resendSignerToken(id, body.signerId);
+    await resendSignerToken(id, body.signerId, {
+      ...requestMeta(req),
+      actorName: approver.name,
+    });
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json(
