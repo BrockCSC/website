@@ -1,17 +1,21 @@
+import { eq, sql } from "drizzle-orm";
 import type {
   DeletePayload,
   DocumentRecord,
   DocumentVersionRecord,
+  RenamePayload,
   ReplacePayload,
   SigningRequestRecord,
   UploadPayload,
 } from "@/lib/api/types";
+import { db } from "@/lib/db";
 import {
   type Entity,
   create,
   findAll,
   findById,
   remove,
+  toEntity,
   update,
 } from "@/lib/db/repository";
 import {
@@ -74,6 +78,26 @@ export const createDocumentWithVersion = async (
     currentVersionId: version.id,
   });
   return { document: updated ?? document, version };
+};
+
+/** Versions, signing requests and certificates keep the old title: they record what was signed. */
+export const renameDocument = async (
+  payload: RenamePayload,
+): Promise<Entity<DocumentRecord>> => {
+  const patch: Partial<DocumentRecord> = { title: payload.title };
+  if (payload.description) patch.description = payload.description;
+  // A jsonb merge can't drop a key, so clearing strips it first.
+  const base =
+    payload.description === undefined
+      ? documentsTable.data
+      : sql`(${documentsTable.data} - 'description')`;
+  const rows = await db
+    .update(documentsTable)
+    .set({ data: sql`${base} || ${patch}::jsonb` })
+    .where(eq(documentsTable.id, payload.documentId))
+    .returning();
+  if (!rows[0]) throw new Error("Document not found.");
+  return toEntity<DocumentRecord>(rows[0]);
 };
 
 /** Also enforced by startSigningRequest, so this can't be raced from the other side. */

@@ -8,6 +8,7 @@ import type {
   PendingDocumentActionKind,
   PendingDocumentActionRecord,
   RemoveSignerPayload,
+  RenamePayload,
   ReplacePayload,
   SessionUser,
   SignerInput,
@@ -138,6 +139,8 @@ export type PendingActionTarget = {
   signingRequestMode?: "ordered" | "parallel";
   signers?: SignerSummary[];
   note?: string;
+  newTitle?: string;
+  newDescription?: string | null;
 };
 
 const documentTarget = async (
@@ -188,6 +191,14 @@ export const buildPendingActionTarget = async (
     case "delete": {
       const p = item.payload as DeletePayload;
       return documentTarget(p.documentId);
+    }
+    case "rename": {
+      const p = item.payload as RenamePayload;
+      return {
+        ...(await documentTarget(p.documentId)),
+        newTitle: p.title,
+        newDescription: p.description,
+      };
     }
     case "start-signing": {
       const p = item.payload as StartSigningPayload;

@@ -24,11 +24,33 @@ const describePendingKind = (kind: PendingActionItem["kind"]) =>
     upload: "Upload a new document",
     replace: "Upload a new version",
     delete: "Delete a document",
+    rename: "Rename a document",
     "start-signing": "Start a signing request",
     "add-signer": "Add a signer",
     "remove-signer": "Remove a signer",
     "cancel-signing": "Cancel a signing request",
   })[kind];
+
+function RenameSummary({
+  target,
+}: {
+  target: NonNullable<PendingActionItem["target"]>;
+}) {
+  const { documentTitle, newTitle, newDescription } = target;
+  return (
+    <>
+      <p className="wrap-anywhere">
+        {documentTitle && documentTitle !== newTitle
+          ? `Rename “${documentTitle}” to “${newTitle}”`
+          : `Title: “${newTitle}”`}
+      </p>
+      {newDescription === null && <p>Clear the description</p>}
+      {newDescription && (
+        <p className="wrap-anywhere">Description: {newDescription}</p>
+      )}
+    </>
+  );
+}
 
 function PendingApprovals({ onChanged }: { onChanged: () => void }) {
   const [pending, setPending] = useState<PendingActionItem[]>([]);
@@ -92,8 +114,12 @@ function PendingApprovals({ onChanged }: { onChanged: () => void }) {
               </p>
               {item.target && (
                 <div className="mt-1 text-xs text-ink">
-                  {item.target.documentTitle && (
-                    <p>{item.target.documentTitle}</p>
+                  {item.kind === "rename" ? (
+                    <RenameSummary target={item.target} />
+                  ) : (
+                    item.target.documentTitle && (
+                      <p>{item.target.documentTitle}</p>
+                    )
                   )}
                   {item.target.signingRequestTitle && (
                     <p>
@@ -188,8 +214,16 @@ function MySubmissions() {
               </p>
               <Pill tone={submissionTone(item.status)}>{item.status}</Pill>
             </div>
-            {item.target?.documentTitle && (
-              <p className="text-xs text-subtle">{item.target.documentTitle}</p>
+            {item.kind === "rename" && item.target ? (
+              <div className="text-xs text-subtle">
+                <RenameSummary target={item.target} />
+              </div>
+            ) : (
+              item.target?.documentTitle && (
+                <p className="text-xs text-subtle">
+                  {item.target.documentTitle}
+                </p>
+              )
             )}
             {item.status === "rejected" && item.rejectionReason && (
               <p className="mt-1 text-xs font-bold text-destructive">

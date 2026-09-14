@@ -382,6 +382,7 @@ export type PendingDocumentActionKind =
   | "upload"
   | "replace"
   | "delete"
+  | "rename"
   | "start-signing"
   | "add-signer"
   | "remove-signer"
@@ -410,6 +411,13 @@ export type ReplacePayload = {
 };
 
 export type DeletePayload = { documentId: string };
+
+/** An absent description is left as it is; null clears it. */
+export type RenamePayload = {
+  documentId: string;
+  title: string;
+  description?: string | null;
+};
 
 export type SignerInput =
   | { kind: "member"; signupId: string }
@@ -456,6 +464,7 @@ export type PendingActionPayload =
   | UploadPayload
   | ReplacePayload
   | DeletePayload
+  | RenamePayload
   | StartSigningPayload
   | AddSignerPayload
   | RemoveSignerPayload

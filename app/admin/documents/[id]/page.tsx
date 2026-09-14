@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { DocumentPreview } from "@/components/documents/document-preview";
 import { PlaceableField } from "@/components/documents/field-chip";
 import {
@@ -26,6 +26,7 @@ import {
   documentFileUrl,
   fetchDocumentDetail,
   fetchMemberOptions,
+  renameDocument,
   startSigningRequest,
   type DocumentItem,
   type DocumentVersionItem,
@@ -70,6 +71,14 @@ export default function DocumentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [note, setNote] = useState<string | null>(null);
 
+  const [renaming, setRenaming] = useState(false);
+  const [renameTitle, setRenameTitle] = useState("");
+  const [renameDescription, setRenameDescription] = useState("");
+  const [renameError, setRenameError] = useState<string | null>(null);
+  const [savingRename, setSavingRename] = useState(false);
+  const renameButton = useRef<HTMLButtonElement>(null);
+  const refocusRename = useRef(false);
+
   const [replaceFile, setReplaceFile] = useState<File | null>(null);
   const [replaceNote, setReplaceNote] = useState("");
   const [replaceError, setReplaceError] = useState<string | null>(null);
@@ -106,6 +115,61 @@ export default function DocumentDetailPage() {
       .then(setMembers)
       .catch(() => {});
   }, [load]);
+
+  useEffect(() => {
+    if (renaming || !refocusRename.current) return;
+    refocusRename.current = false;
+    renameButton.current?.focus();
+  }, [renaming]);
+
+  const openRename = () => {
+    if (!document) return;
+    setRenameTitle(document.title);
+    setRenameDescription(document.description ?? "");
+    setRenameError(null);
+    setRenaming(true);
+  };
+
+  const closeRename = () => {
+    refocusRename.current = true;
+    setRenaming(false);
+  };
+
+  const saveRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!document || savingRename) return;
+    const title = renameTitle.trim();
+    const description = renameDescription.trim();
+    if (!title) return;
+    const descriptionChanged = description !== (document.description ?? "");
+    if (title === document.title && !descriptionChanged) {
+      closeRename();
+      return;
+    }
+    setSavingRename(true);
+    setRenameError(null);
+    setNote(null);
+    try {
+      const result = await renameDocument(id, {
+        title,
+        description: descriptionChanged ? description : undefined,
+      });
+      if ("pending" in result) {
+        setNote("Submitted for a co-president to approve.");
+      } else {
+        setDocument(result);
+        setNote("Renamed.");
+      }
+      closeRename();
+    } catch (err) {
+      setRenameError(
+        (err instanceof ApiError && err.detail) ||
+          "Could not rename this document.",
+      );
+    } finally {
+      setSavingRename(false);
+    }
+  };
 
   const replace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -368,11 +432,87 @@ export default function DocumentDetailPage() {
         >
           ← Documents
         </Link>
-        <h1 className="mt-2 text-2xl font-extrabold text-ink">
-          {document.title}
-        </h1>
-        {document.description && (
-          <p className="mt-1 text-sm text-ink">{document.description}</p>
+        {renaming ? (
+          <form
+            className="mt-3 flex flex-col gap-3 rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut"
+            onKeyDown={(e) => {
+              if (e.key === "Escape" && !savingRename) {
+                e.preventDefault();
+                closeRename();
+              }
+            }}
+            onSubmit={saveRename}
+          >
+            <div>
+              <label className={labelClass} htmlFor="rename-title">
+                Title
+              </label>
+              <input
+                autoFocus
+                className={field}
+                id="rename-title"
+                maxLength={200}
+                onChange={(e) => setRenameTitle(e.target.value)}
+                value={renameTitle}
+              />
+            </div>
+            <div>
+              <label className={labelClass} htmlFor="rename-description">
+                Description (optional)
+              </label>
+              <textarea
+                className={`${field} min-h-[70px]`}
+                id="rename-description"
+                maxLength={2000}
+                onChange={(e) => setRenameDescription(e.target.value)}
+                value={renameDescription}
+              />
+            </div>
+            {renameError && (
+              <p className="text-sm font-bold text-destructive" role="alert">
+                {renameError}
+              </p>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <Button
+                disabled={savingRename || !renameTitle.trim()}
+                size="sm"
+                type="submit"
+                variant="primary"
+              >
+                {savingRename ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                disabled={savingRename}
+                onClick={closeRename}
+                size="sm"
+                type="button"
+                variant="secondary"
+              >
+                Cancel
+              </Button>
+            </div>
+          </form>
+        ) : (
+          <>
+            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-2">
+              <h1 className="min-w-0 text-2xl font-extrabold wrap-anywhere text-ink">
+                {document.title}
+              </h1>
+              <Button
+                onClick={openRename}
+                ref={renameButton}
+                size="xs"
+                type="button"
+                variant="secondary"
+              >
+                Rename
+              </Button>
+            </div>
+            {document.description && (
+              <p className="mt-1 text-sm text-ink">{document.description}</p>
+            )}
+          </>
         )}
       </div>
 
