@@ -13,12 +13,13 @@ import {
   type SafeSigner,
 } from "@/lib/api/documents";
 import type { SigningField } from "@/lib/api/types";
-import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
+import {
+  SIGNING_FIELD_DEFAULT_LABEL,
+  todayIsoLocal,
+} from "@/lib/documents/fields";
 
 const field =
   "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink";
-
-const todayIso = () => new Date().toISOString().slice(0, 10);
 
 type View = {
   document: { title: string; category: string } | null;
@@ -53,7 +54,7 @@ export default function SignPage() {
           Object.fromEntries(
             data.fields
               .filter((f) => f.type === "date")
-              .map((f) => [f.id, todayIso()]),
+              .map((f) => [f.id, todayIsoLocal()]),
           ),
         );
       } catch (err) {

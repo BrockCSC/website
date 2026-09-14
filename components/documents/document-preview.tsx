@@ -21,17 +21,19 @@ const kindForContentType = (contentType: string): Kind => {
 
 /**
  * Renders a document version (PDF via pdfjs-dist, an image directly, or an
- * HTML-origin document inline) as a fixed-size page that percentage-based
- * fields can be positioned on top of. Paging only for multi-page PDFs — no
- * zoom, search or annotation beyond that, per the brief.
+ * HTML-origin document in a sandboxed iframe) as a fixed-size page that
+ * percentage-based fields can be positioned on top of. Paging only for
+ * multi-page PDFs — no zoom, search or annotation beyond that, per the brief.
  *
- * The HTML case is rendered inline (sanitized at write time — see
- * lib/documents/letterhead.ts) rather than in a sandboxed iframe: an iframe's
- * content is a separate browsing context, so clicks inside it never reach
- * this component's click-to-place handler. Every consumer here is already an
- * authenticated exec, an approver, or a token-scoped signer who could open
- * the exact same file directly (documentFileUrl / signerFileUrl) with no
- * sandbox at all, so this doesn't lower the existing trust boundary.
+ * The HTML case stays in `<iframe sandbox="" srcDoc>` (same convention as the
+ * mail body viewer) rather than `dangerouslySetInnerHTML`: write-time
+ * sanitizing (lib/documents/letterhead.ts) is the only guard for injected
+ * markup, but the stored document also carries its own `<meta>` CSP that only
+ * takes effect when it's actually parsed as a standalone document — inlined
+ * via innerHTML, `<head>` is dropped and that CSP never applies. Click-to-place
+ * still works: the overlay below is a parent-document layer stacked *above*
+ * the iframe, not something living inside it, so it never needs the iframe's
+ * own clicks to bubble anywhere.
  *
  * Pass `key={fileUrl}` from the caller when the URL can change under a
  * mounted instance (e.g. picking a different version) — internal state
@@ -129,7 +131,10 @@ export function DocumentPreview({
     void (async () => {
       const pdfPage = await pdfDoc.getPage(page);
       if (cancelled) return;
-      const viewport = pdfPage.getViewport({ scale: 1 });
+      // 1 PDF point -> 1 CSS px at 96dpi, the usual baseline before any
+      // further zoom (there is none here) — renders a Letter page at ~816px
+      // instead of pdfjs's native 612pt, matching the letterhead page width.
+      const viewport = pdfPage.getViewport({ scale: 96 / 72 });
       setPageSize({ width: viewport.width, height: viewport.height });
       const canvas = canvasRef.current;
       const ctx = canvas?.getContext("2d");
@@ -220,11 +225,11 @@ export function DocumentPreview({
             )}
             {kind === "html" &&
               (htmlText !== null ? (
-                <div
-                  className="size-full overflow-hidden"
-                  // Sanitized server-side at write time (lib/documents/letterhead.ts /
-                  // lib/mail/sanitize.ts) — see the file-level comment above.
-                  dangerouslySetInnerHTML={{ __html: htmlText }}
+                <iframe
+                  className="size-full border-0"
+                  sandbox=""
+                  srcDoc={htmlText}
+                  title="Document preview"
                 />
               ) : (
                 <p className="p-4 text-sm text-subtle">Loading...</p>

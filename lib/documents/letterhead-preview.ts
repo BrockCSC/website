@@ -39,8 +39,8 @@ export const previewLetterheadHtml = (input: {
 <meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src * data:; style-src 'unsafe-inline'">
 </head>
-<body style="margin:0;padding:24px;background:#e5e5e5;${FONT}">
-<div style="max-width:${LETTERHEAD_PAGE_WIDTH}px;min-height:${LETTERHEAD_PAGE_MIN_HEIGHT}px;margin:0 auto;background:#ffffff;box-sizing:border-box;padding:48px 56px;color:#191619">
+<body style="margin:0;background:#ffffff;${FONT}">
+<div style="width:${LETTERHEAD_PAGE_WIDTH}px;min-height:${LETTERHEAD_PAGE_MIN_HEIGHT}px;box-sizing:border-box;padding:48px 56px;color:#191619">
 <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;width:100%;padding-bottom:16px;border-bottom:3px solid ${BRAND_COLOR}">
 <tr>
 <td valign="middle" style="vertical-align:middle;padding-right:16px">

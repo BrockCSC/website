@@ -308,9 +308,19 @@ export default function DocumentsPage() {
 
       <Panel
         action={
-          <Button asChild size="sm" variant="secondary">
-            <Link href="/admin/documents/templates">Start from a template</Link>
-          </Button>
+          <div className="flex items-center gap-3">
+            <Link
+              className="text-xs font-bold text-brand underline underline-offset-4"
+              href="/admin/documents/templates/help"
+            >
+              How to use templates
+            </Link>
+            <Button asChild size="sm" variant="secondary">
+              <Link href="/admin/documents/templates">
+                Start from a template
+              </Link>
+            </Button>
+          </div>
         }
         title="Add a document"
       >

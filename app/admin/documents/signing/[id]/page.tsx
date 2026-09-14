@@ -23,15 +23,16 @@ import {
 } from "@/lib/api/documents";
 import type { SafeSigner } from "@/lib/api/documents";
 import type { SigningField } from "@/lib/api/types";
-import { SIGNING_FIELD_DEFAULT_LABEL } from "@/lib/documents/fields";
+import {
+  SIGNING_FIELD_DEFAULT_LABEL,
+  todayIsoLocal,
+} from "@/lib/documents/fields";
 import { useSession } from "../../../session";
 import { ask } from "../../../ask";
 import { Note, Panel, Pill, Rows, field } from "../../../users/ui";
 
 const statusTone = (status: string) =>
   status === "signed" ? "accent" : "flat";
-
-const todayIso = () => new Date().toISOString().slice(0, 10);
 
 function MySignaturePanel({
   signingRequestId,
@@ -64,7 +65,7 @@ function MySignaturePanel({
           Object.fromEntries(
             data.fields
               .filter((f) => f.type === "date")
-              .map((f) => [f.id, todayIso()]),
+              .map((f) => [f.id, todayIsoLocal()]),
           ),
         );
       })

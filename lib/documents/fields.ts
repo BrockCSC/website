@@ -13,3 +13,12 @@ export const SIGNING_FIELD_DEFAULT_LABEL: Record<SigningFieldType, string> = {
   date: "Date",
   text: "Text",
 };
+
+/** Local calendar date (not UTC — a signer at 9pm shouldn't get tomorrow's date). */
+export const todayIsoLocal = (): string => {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
