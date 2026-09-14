@@ -5,6 +5,8 @@ import type {
   PendingDocumentActionRecord,
   Signer,
   SignerInput,
+  SigningField,
+  SigningFieldInput,
   SigningRequestRecord,
   WithKey,
 } from "./types";
@@ -13,7 +15,6 @@ export type DocumentItem = WithKey<DocumentRecord>;
 export type DocumentVersionItem = WithKey<DocumentVersionRecord>;
 type PendingActionTarget = {
   documentTitle?: string;
-  documentCategory?: string;
   signingRequestTitle?: string;
   signingRequestMode?: "ordered" | "parallel";
   signers?: { name: string; kind: "member" | "external" }[];
@@ -57,13 +58,11 @@ const postForm = async <T>(path: string, form: FormData): Promise<T> => {
 };
 
 export const uploadDocument = (input: {
-  category: string;
   title: string;
   description?: string;
   file: File;
 }) => {
   const form = new FormData();
-  form.set("category", input.category);
   form.set("title", input.title);
   if (input.description) form.set("description", input.description);
   form.set("file", input.file);
@@ -72,6 +71,9 @@ export const uploadDocument = (input: {
     form,
   );
 };
+
+export const templateFileUrl = (templateId: string, format: "docx" | "pdf") =>
+  `/api/documents/templates/${templateId}?format=${format}`;
 
 export const addDocumentVersion = (
   documentId: string,
@@ -109,6 +111,7 @@ export const startSigningRequest = (
     title: string;
     mode: "ordered" | "parallel";
     signers: SignerInput[];
+    fields?: SigningFieldInput[];
   },
 ) =>
   apiFetch<SigningRequestItem | { pending: PendingActionItem }>(
@@ -151,18 +154,24 @@ export const resendSignerLink = (signingRequestId: string, signerId: string) =>
 
 export const fetchMySignature = (signingRequestId: string) =>
   apiFetch<{
-    document: { title: string; category: string } | null;
+    document: { title: string } | null;
+    version: { contentType: string } | null;
     signingRequestId: string;
     signingRequestStatus: string;
     versionId: string;
     signer: SafeSigner;
+    fields: SigningField[];
     canRespond: boolean;
   }>(`/api/documents/signing/${signingRequestId}/my-signature`);
 
 export const respondToMySignature = (
   signingRequestId: string,
   body:
-    | { action: "sign"; signatureText: string }
+    | {
+        action: "sign";
+        signatureText: string;
+        fieldValues?: Record<string, string>;
+      }
     | { action: "decline"; reason?: string },
 ) =>
   apiFetch<{ success: true }>(
@@ -198,11 +207,13 @@ export const pendingFileUrl = (pendingId: string) =>
 /** Public, unauthenticated: the external signer's own view. */
 export const fetchSignerView = (token: string) =>
   apiFetch<{
-    document: { title: string; category: string } | null;
+    document: { title: string } | null;
+    version: { contentType: string } | null;
     signingRequestTitle: string;
     signingRequestStatus: string;
     mode: "ordered" | "parallel";
     signer: SafeSigner;
+    fields: SigningField[];
     otherSigners: { order: number; status: string }[];
     canRespond: boolean;
   }>(`/api/documents/sign/${token}`);
@@ -210,7 +221,11 @@ export const fetchSignerView = (token: string) =>
 export const respondAsSigner = (
   token: string,
   body:
-    | { action: "sign"; signatureText: string }
+    | {
+        action: "sign";
+        signatureText: string;
+        fieldValues?: Record<string, string>;
+      }
     | { action: "decline"; reason?: string },
 ) =>
   apiFetch<{ success: true }>(`/api/documents/sign/${token}`, {

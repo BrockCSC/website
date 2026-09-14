@@ -1,13 +1,13 @@
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
+import { CLUB_MAILING_ADDRESS, CLUB_NAME } from "@/lib/brand";
 import { findAll, findById } from "@/lib/db/repository";
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import { escapeHtml } from "./sanitize";
 
-const CLUB = "Brock University Computer Science Club";
+const CLUB = CLUB_NAME;
 const SITE = "brockcsc.ca";
 const SITE_URL = () => process.env.MAIL_SITE_URL ?? `https://${SITE}`;
-const MAILING_ADDRESS =
-  "Brock University, 1812 Sir Isaac Brock Way, St. Catharines, ON L2S 3A1, Canada";
+const MAILING_ADDRESS = CLUB_MAILING_ADDRESS;
 
 /** The mailbox transactional mail (password resets) is sent from. */
 export const SYSTEM_SENDER = "security";

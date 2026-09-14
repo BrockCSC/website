@@ -21,6 +21,7 @@ const EXTENSION_BY_TYPE: Record<string, string> = {
   "text/plain": ".txt",
 };
 
+/** What a human can upload through the multipart routes. */
 export const ALLOWED_DOCUMENT_TYPES = Object.keys(EXTENSION_BY_TYPE);
 
 const ascii = (bytes: Uint8Array, start: number, end: number) =>

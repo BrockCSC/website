@@ -2,11 +2,25 @@ import type {
   DocumentRecord,
   DocumentVersionRecord,
   Signer,
+  SigningField,
   SigningRequestRecord,
 } from "@/lib/api/types";
 import type { Entity } from "@/lib/db/repository";
+import { SIGNING_FIELD_DEFAULT_LABEL } from "./fields";
 
-const signerLine = (signer: Signer): string => {
+/** e.g. "Employee ID" if the preparer labeled the field, else "Date" from its type. */
+const fieldValueLines = (signer: Signer, fields: SigningField[]): string[] => {
+  if (!signer.fieldValues) return [];
+  const mine = fields.filter((f) => f.signerId === signer.id);
+  return mine
+    .filter((f) => signer.fieldValues![f.id])
+    .map(
+      (f) =>
+        `    ${f.label ?? SIGNING_FIELD_DEFAULT_LABEL[f.type]}: "${signer.fieldValues![f.id]}"`,
+    );
+};
+
+const signerLine = (signer: Signer, fields: SigningField[]): string => {
   const who =
     signer.kind === "member"
       ? `${signer.name ?? "Member"} (portal member)`
@@ -16,6 +30,7 @@ const signerLine = (signer: Signer): string => {
       `  - ${who}`,
       `    Signed: "${signer.signatureText ?? ""}" at ${signer.signedAt}`,
       `    IP: ${signer.ip ?? "unknown"}  User-Agent: ${signer.userAgent ?? "unknown"}`,
+      ...fieldValueLines(signer, fields),
     ].join("\n");
   }
   if (signer.status === "declined") {
@@ -45,7 +60,7 @@ export const buildCompletionCertificate = (
     "certification, no cryptographic non-repudiation). The hash below only",
     "detects accidental tampering with this record after the fact.",
     "",
-    `Document: ${document.title} [${document.category}]`,
+    `Document: ${document.title}`,
     `Signing request: ${request.title} (${request.mode})`,
     `Original file: ${sourceVersion.originalFilename}`,
     `Original sha256: ${sourceVersion.sha256}`,
@@ -56,6 +71,6 @@ export const buildCompletionCertificate = (
     ...request.signers
       .slice()
       .sort((a, b) => a.order - b.order)
-      .map(signerLine),
+      .map((signer) => signerLine(signer, request.fields ?? [])),
     "",
   ].join("\n");

@@ -52,7 +52,6 @@ export const createDocumentWithVersion = async (
 }> => {
   const now = new Date().toISOString();
   const document = await create<DocumentRecord>(documentsTable, {
-    category: payload.category,
     title: payload.title,
     description: payload.description,
     currentVersionId: null,

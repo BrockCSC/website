@@ -46,12 +46,11 @@ export const POST = async (req: NextRequest) => {
 
   const form = await req.formData();
   const file = form.get("file");
-  const category = String(form.get("category") ?? "").trim();
   const title = String(form.get("title") ?? "").trim();
   const description = String(form.get("description") ?? "").trim();
-  if (!(file instanceof File) || !category || !title) {
+  if (!(file instanceof File) || !title) {
     return NextResponse.json(
-      { error: "A category, a title and a file are required." },
+      { error: "A title and a file are required." },
       { status: 400 },
     );
   }
@@ -77,7 +76,6 @@ export const POST = async (req: NextRequest) => {
     declaredType,
   );
   const payload: UploadPayload = {
-    category,
     title,
     description: description || undefined,
     storedFilename,

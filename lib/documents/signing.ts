@@ -7,6 +7,7 @@ import type {
   RemoveSignerPayload,
   Signer,
   SignerInput,
+  SigningField,
   SigningRequestRecord,
   SignupRecord,
   StartSigningPayload,
@@ -122,6 +123,37 @@ export const redactSigningRequest = (
   signers: Omit<Signer, "tokenHash">[];
 } => ({ ...request, signers: request.signers.map(redactSigner) });
 
+/** A signer's own fields only — never another signer's, whose label could name them. */
+export const fieldsForSigner = (
+  request: Entity<SigningRequestRecord>,
+  signerId: string,
+): SigningField[] =>
+  request.fields?.filter((f) => f.signerId === signerId) ?? [];
+
+/**
+ * Signer- and preparer-supplied strings end up embedded verbatim, one per
+ * line, in the plain-text completion certificate (certificate.ts). Strip
+ * control and line/paragraph-separator characters so a value can never
+ * inject a fake extra line — e.g. a forged signer entry — into that record.
+ */
+export const sanitizeCertificateText = (value: string): string =>
+  value.replace(/[\p{Cc}\p{Zl}\p{Zp}]+/gu, " ").trim();
+
+/** Loose shape validation; resolveFieldValues (in recordSignerResponse) does the real per-signer filtering. */
+export const parseFieldValuesInput = (
+  raw: unknown,
+): Record<string, string> | undefined => {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const values: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === "string" && value.trim()) {
+      const clean = sanitizeCertificateText(value).slice(0, 500);
+      if (clean) values[key] = clean;
+    }
+  }
+  return values;
+};
+
 export const startSigningRequest = async (
   actor: Actor & { email?: string },
   payload: StartSigningPayload,
@@ -154,6 +186,24 @@ export const startSigningRequest = async (
     signers.push(await buildSigner(input, index));
   }
 
+  // Fields are drafted against the signer's position in the array (buildSigner
+  // above is what actually mints each signer's id) — resolve that here, once,
+  // rather than threading ids back through the pending-approval payload.
+  const fields: SigningField[] | undefined = payload.fields?.map((f) => {
+    const signer = signers[f.signerIndex];
+    if (!signer) throw new Error("A field references an unknown signer.");
+    return {
+      id: randomUUID(),
+      type: f.type,
+      page: f.page,
+      xPercent: f.xPercent,
+      yPercent: f.yPercent,
+      signerId: signer.id,
+      required: f.required,
+      label: f.label,
+    };
+  });
+
   const created = await create<SigningRequestRecord>(signingRequestsTable, {
     documentId: document.id,
     sourceVersionId: payload.sourceVersionId,
@@ -165,6 +215,7 @@ export const startSigningRequest = async (
     createdAt: new Date().toISOString(),
     status: "sent",
     signers,
+    fields,
   });
 
   return notifyEligible(created, document);
@@ -417,8 +468,40 @@ export const recordSignerView = async (
 };
 
 export type SignerResponse =
-  | { action: "sign"; signatureText: string; ip: string; userAgent: string }
+  | {
+      action: "sign";
+      signatureText: string;
+      ip: string;
+      userAgent: string;
+      /** Raw client field id -> typed value; sanitized against this signer's own fields below. */
+      fieldValues?: Record<string, string>;
+    }
   | { action: "decline"; reason?: string; ip: string; userAgent: string };
+
+/**
+ * Only this signer's own fields, in case a value for someone else's field id
+ * slipped into the request body — and Signature fields always resolve to the
+ * signatureText already captured by the existing flow rather than a second,
+ * independently-typed value.
+ */
+const resolveFieldValues = (
+  request: Entity<SigningRequestRecord>,
+  signerId: string,
+  signatureText: string,
+  submitted: Record<string, string> | undefined,
+): Record<string, string> | undefined => {
+  const mine = request.fields?.filter((f) => f.signerId === signerId);
+  if (!mine?.length) return undefined;
+  const values: Record<string, string> = {};
+  for (const f of mine) {
+    const value =
+      f.type === "signature"
+        ? signatureText
+        : (submitted?.[f.id]?.trim() ?? "");
+    if (value) values[f.id] = value;
+  }
+  return values;
+};
 
 /** The heart of the flow: records a response, advances ordering, and materializes the completion record once every signer is done. */
 export const recordSignerResponse = async (
@@ -446,6 +529,19 @@ export const recordSignerResponse = async (
     throw new Error("It is not your turn yet.");
   }
 
+  if (response.action === "sign") {
+    const missingRequired = request.fields?.some(
+      (f) =>
+        f.signerId === signerId &&
+        f.required &&
+        f.type !== "signature" &&
+        !response.fieldValues?.[f.id]?.trim(),
+    );
+    if (missingRequired) {
+      throw new Error("Fill in every required field before signing.");
+    }
+  }
+
   const now = new Date().toISOString();
   const updatedSigner: Signer =
     response.action === "sign"
@@ -458,6 +554,12 @@ export const recordSignerResponse = async (
           userAgent: response.userAgent,
           tokenHash: null,
           tokenExpiresAt: null,
+          fieldValues: resolveFieldValues(
+            request,
+            signerId,
+            response.signatureText,
+            response.fieldValues,
+          ),
         }
       : {
           ...signer,
