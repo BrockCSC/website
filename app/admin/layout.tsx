@@ -28,6 +28,9 @@ function AdminShell({ children }: { children: React.ReactNode }) {
         void fetch("/api/mail/keepalive", { method: "POST" });
       }
     };
+    // Also right away: a tab reopened or refocused after a long gap should
+    // not wait up to another 10 minutes to find out its mail session died.
+    beat();
     const timer = setInterval(beat, 10 * 60 * 1000);
     document.addEventListener("visibilitychange", beat);
     return () => {
