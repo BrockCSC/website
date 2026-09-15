@@ -517,9 +517,9 @@ function MailPage({
     : null;
 
   return (
-    <div className="flex h-[calc(100dvh-3.625rem)] animate-fade-in gap-3 p-3 md:gap-4 md:p-4">
+    <div className="flex h-[calc(100dvh-3.625rem-3.5rem)] animate-fade-in flex-col gap-3 p-3 md:h-[calc(100dvh-3.625rem)] md:gap-4 md:p-4 lg:flex-row">
       <aside
-        className={`min-h-0 shrink-0 flex-col gap-3 md:flex md:w-52 ${open ? "hidden" : "flex"}`}
+        className={`min-h-0 w-full shrink-0 flex-col gap-3 lg:flex lg:w-52 lg:shrink-0 ${open ? "hidden" : "flex"}`}
       >
         {user?.isMailAdmin && (
           <InboxPicker
@@ -590,7 +590,7 @@ function MailPage({
 
         <div className="flex min-h-0 flex-1">
           <div
-            className={`min-h-0 w-full flex-col md:flex md:w-80 md:shrink-0 md:border-r-2 md:border-line ${open ? "hidden" : "flex"}`}
+            className={`min-h-0 w-full flex-col lg:flex lg:w-80 lg:shrink-0 lg:border-r-2 lg:border-line ${open ? "hidden" : "flex"}`}
           >
             <header className="shrink-0 space-y-2 border-b-2 border-line px-4 py-2.5">
               <div className="flex items-baseline justify-between gap-2">
@@ -649,7 +649,7 @@ function MailPage({
           </div>
 
           <div
-            className={`min-h-0 min-w-0 flex-1 flex-col ${open ? "flex" : "hidden md:flex"}`}
+            className={`min-h-0 min-w-0 flex-1 flex-col ${open ? "flex" : "hidden lg:flex"}`}
           >
             {message ? (
               <>
@@ -776,13 +776,13 @@ function MessageActions({
 
   return (
     <div
-      className={`flex flex-wrap items-center gap-1.5 border-b-2 border-line px-3 py-2.5 md:px-5 ${viewing ? "md:hidden" : ""}`}
+      className={`flex flex-wrap items-center gap-1.5 border-b-2 border-line px-3 py-2.5 lg:px-5 ${viewing ? "lg:hidden" : ""}`}
     >
       <button
         type="button"
         onClick={onBack}
         aria-label="Back to the list"
-        className={`${ACTION} md:hidden`}
+        className={`${ACTION} lg:hidden`}
       >
         <ArrowLeft size={15} aria-hidden />
       </button>

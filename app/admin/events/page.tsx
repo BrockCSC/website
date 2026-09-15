@@ -46,7 +46,7 @@ function EventRow({
   const recurrence = getRecurrenceLabel(event);
 
   return (
-    <li className="flex flex-wrap items-start gap-4 rounded-[20px] border-2 border-line bg-surface p-4 shadow-brut-sm transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[3px_3px_0_0_var(--brand)] sm:p-5">
+    <li className="flex flex-wrap items-start gap-4 rounded-[16px] border-2 border-line bg-surface p-3 shadow-brut-sm transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[3px_3px_0_0_var(--brand)] sm:p-4">
       <div className="relative size-16 shrink-0 overflow-hidden rounded-[10px] border-2 border-line bg-tint">
         {event.image?.url ? (
           <Image

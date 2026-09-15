@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "./session";
-import { SECTIONS } from "./sections";
+import { visibleSections } from "./sections";
 import { SECTION_ICONS } from "./icons";
 
 export default function AdminMenu() {
@@ -20,22 +20,16 @@ export default function AdminMenu() {
       .catch(() => {});
   }, [user?.isExecutive]);
 
-  const open = SECTIONS.filter(
-    (section) =>
-      (!section.approverOnly || user?.isApprover) &&
-      (!section.execOnly || user?.isExecutive) &&
-      (!section.mailAdminOnly || user?.isMailAdmin) &&
-      (!section.mailboxOnly || hasMailbox !== false),
-  );
+  const open = visibleSections(user, hasMailbox);
 
   return (
-    <div className="mx-auto w-full max-w-[1060px] px-5 py-12">
+    <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
       <h1 className="text-3xl font-extrabold text-ink">
         Welcome{user?.name ? `, ${user.name.split(" ")[0]}` : ""}.
       </h1>
       <p className="mt-2 text-subtle">Pick what you want to work on.</p>
 
-      <div className="mt-9 grid gap-5 sm:grid-cols-2">
+      <div className="mt-9 grid grid-cols-2 gap-3 md:grid-cols-3">
         {open.map((section, index) => {
           const Icon = SECTION_ICONS[section.href];
           return (
@@ -43,15 +37,15 @@ export default function AdminMenu() {
               key={section.href}
               href={section.href}
               style={{ animationDelay: `${index * 20}ms` }}
-              className="group flex animate-rise-in items-start gap-4 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut hover:-translate-y-0.5 hover:bg-tint hover:shadow-[6px_8px_0_0_var(--shade)] motion-reduce:hover:translate-y-0"
+              className="group flex animate-rise-in items-start gap-4 rounded-[16px] border-2 border-line bg-surface p-4 shadow-brut hover:-translate-y-0.5 hover:bg-tint hover:shadow-[6px_8px_0_0_var(--shade)] motion-reduce:hover:translate-y-0"
             >
               {Icon && (
-                <span className="grid size-11 shrink-0 place-items-center rounded-[12px] border-2 border-line bg-tint text-brand transition duration-[var(--dur)] ease-smooth group-hover:-rotate-6 group-hover:bg-brand group-hover:text-brand-ink motion-reduce:group-hover:rotate-0">
-                  <Icon className="size-6" />
+                <span className="grid size-9 shrink-0 place-items-center rounded-[12px] border-2 border-line bg-tint text-brand transition duration-[var(--dur)] ease-smooth group-hover:-rotate-6 group-hover:bg-brand group-hover:text-brand-ink motion-reduce:group-hover:rotate-0">
+                  <Icon className="size-5" />
                 </span>
               )}
               <span className="min-w-0">
-                <span className="block text-xl font-extrabold text-brand">
+                <span className="block text-base font-extrabold text-brand">
                   {section.name}
                 </span>
                 <span className="mt-1.5 block text-sm text-subtle">

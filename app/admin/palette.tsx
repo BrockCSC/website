@@ -16,7 +16,7 @@ import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import type { Inbox } from "@/app/api/mail/inboxes/route";
 import { fetchInboxes, matchesInbox, withAs } from "./mail/inbox-picker";
 import { sender, when } from "./mail/message-list";
-import { SECTIONS, type Section } from "./sections";
+import { visibleSections, type Section } from "./sections";
 import { useSession } from "./session";
 import { flipTheme } from "@/components/theme-toggle";
 import {
@@ -152,7 +152,7 @@ export function PaletteProvider({
   onLogout,
   children,
 }: {
-  hasMail: boolean;
+  hasMail: boolean | null;
   onLogout: () => void;
   children: React.ReactNode;
 }) {
@@ -207,21 +207,21 @@ export function PaletteProvider({
   );
 
   const places = useMemo<Section[]>(
-    () => [
-      ...SECTIONS.filter(
-        (section) =>
-          (!section.approverOnly || user?.isApprover) &&
-          (!section.execOnly || user?.isExecutive) &&
-          (!section.mailboxOnly || hasMail) &&
-          (!section.mailAdminOnly || user?.isMailAdmin),
+    () =>
+      visibleSections(
+        {
+          isApprover: user?.isApprover,
+          isExecutive: user?.isExecutive,
+          isMailAdmin: user?.isMailAdmin,
+        },
+        hasMail,
       ),
-    ],
     [user?.isApprover, user?.isExecutive, user?.isMailAdmin, hasMail],
   );
 
   const actions = useMemo<Action[]>(
     () => [
-      ...(hasMail
+      ...(hasMail !== false
         ? [
             {
               id: "compose",
@@ -333,7 +333,7 @@ function Palette({
 }: {
   actions: Action[];
   data: Data | null;
-  hasMail: boolean;
+  hasMail: boolean | null;
   places: Section[];
   onClose: () => void;
   onSend: (href: string, handoff: Handoff) => void;

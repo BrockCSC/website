@@ -12,7 +12,7 @@ export default function Home() {
   return (
     <main className="flex flex-col w-full font-sans bg-surface overflow-x-clip">
       <section className="relative w-full border-b-2 border-line">
-        <div className="animate-rise-in max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="animate-rise-in max-w-7xl mx-auto px-4 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col items-start gap-6 z-10">
             <Badge
               variant="outline"
@@ -57,7 +57,7 @@ export default function Home() {
             />
             <MemberBadge
               count="900+"
-              className="absolute -bottom-6 -right-2 md:-right-8 z-20"
+              className="absolute -bottom-4 -right-1 sm:-bottom-6 sm:-right-2 md:-right-8 z-20"
             />
           </div>
         </div>
