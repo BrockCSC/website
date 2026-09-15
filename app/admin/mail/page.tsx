@@ -14,6 +14,7 @@ import { MailboxList } from "./mailbox-list";
 import { MessageList } from "./message-list";
 import { Conversation } from "./message-view";
 import { Compose, type Draft } from "./compose";
+import { domainOf } from "./external";
 import { buildQuote } from "./html";
 import { ask } from "../ask";
 import type { Contact } from "./recipient-input";
@@ -121,6 +122,7 @@ function MailPage({
   const [mailbox, setMailbox] = useState<string | null>(null);
   const [page, setPage] = useState<Page>(EMPTY);
   const [selected, setSelected] = useState<string | null>(null);
+  const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
   const [from, setFrom] = useState<string | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [found, setFound] = useState<MessageSummary | null>(null);
@@ -267,6 +269,7 @@ function MailPage({
     messages.find((item) => item.id === selected) ??
     (found?.id === selected ? found : null);
   const open = Boolean(message);
+  const ownDomain = domainOf(from);
 
   const mark = useCallback((id: string, flags: Flags) => {
     setPage((prev) => ({
@@ -308,6 +311,59 @@ function MailPage({
       void loadMailboxes().catch(() => {});
     },
     [loadMailboxes],
+  );
+
+  const toggleChecked = useCallback((id: string, on: boolean) => {
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const toggleAllChecked = useCallback(
+    (on: boolean) =>
+      setChecked(on ? new Set(messages.map((item) => item.id)) : new Set()),
+    [messages],
+  );
+
+  const clearChecked = useCallback(() => setChecked(new Set()), []);
+
+  const bulkFlag = useCallback(
+    async (ids: string[], flags: Flags) => {
+      setPage((prev) => ({
+        ...prev,
+        messages: prev.messages.map((item) =>
+          ids.includes(item.id) ? withKeywords(item, flags) : item,
+        ),
+      }));
+      await fetch("/api/mail/messages/bulk/flags", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, ...flags }),
+      }).catch(() => null);
+      if ("seen" in flags) void loadMailboxes().catch(() => {});
+    },
+    [loadMailboxes],
+  );
+
+  const bulkMove = useCallback(
+    async (ids: string[], to: { to?: string; mailboxId?: string }) => {
+      setBusy(true);
+      const res = await fetch("/api/mail/messages/bulk/move", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, ...to }),
+      }).catch(() => null);
+      setBusy(false);
+      if (!res?.ok) return;
+      clearChecked();
+      setSelected(null);
+      setReload((count) => count + 1);
+      void loadMailboxes().catch(() => {});
+    },
+    [clearChecked, loadMailboxes],
   );
 
   const startDraft = useCallback(() => setDraft({}), [setDraft]);
@@ -547,6 +603,7 @@ function MailPage({
           selected={mailbox}
           onSelect={(id) => {
             setSelected(null);
+            setChecked(new Set());
             setMailbox(id);
           }}
         />
@@ -614,6 +671,21 @@ function MailPage({
               </button>
             </header>
 
+            {!viewing && checked.size > 0 && (
+              <BulkActions
+                busy={busy}
+                count={checked.size}
+                onArchive={() => void bulkMove([...checked], { to: "archive" })}
+                onClear={clearChecked}
+                onMarkRead={() => void bulkFlag([...checked], { seen: true })}
+                onMarkUnread={() =>
+                  void bulkFlag([...checked], { seen: false })
+                }
+                onStar={() => void bulkFlag([...checked], { flagged: true })}
+                onTrash={() => void bulkMove([...checked], { to: "trash" })}
+              />
+            )}
+
             <div className="min-h-0 flex-1 overflow-y-auto">
               {error ? (
                 <p className="px-4 py-10 text-center text-sm font-bold text-brand">
@@ -622,10 +694,14 @@ function MailPage({
               ) : (
                 <MessageList
                   key={mailbox}
+                  checked={checked}
                   messages={messages}
+                  onCheck={viewing ? undefined : toggleChecked}
+                  onCheckAll={viewing ? undefined : toggleAllChecked}
+                  onSelect={setSelected}
+                  ownDomain={ownDomain}
                   selected={selected}
                   threadCounts={threadCounts}
-                  onSelect={setSelected}
                   onFlag={
                     viewing
                       ? undefined
@@ -696,6 +772,7 @@ function MailPage({
                   key={message.id}
                   message={message}
                   count={threadCounts[message.threadId] ?? 1}
+                  ownDomain={ownDomain}
                   viewing={viewing}
                   onRead={(id) => {
                     mark(id, { seen: true });
@@ -736,6 +813,76 @@ const prefixed = (subject: string | null, prefix: string) =>
 
 const ACTION =
   "rounded-[8px] border-2 border-line px-2.5 py-1.5 text-sm font-bold text-ink hover:bg-tint disabled:opacity-50";
+
+/** Replaces per-message actions once more than one message is checked. */
+function BulkActions({
+  count,
+  busy,
+  onMarkRead,
+  onMarkUnread,
+  onStar,
+  onArchive,
+  onTrash,
+  onClear,
+}: {
+  count: number;
+  busy: boolean;
+  onMarkRead: () => void;
+  onMarkUnread: () => void;
+  onStar: () => void;
+  onArchive: () => void;
+  onTrash: () => void;
+  onClear: () => void;
+}) {
+  return (
+    <div className="flex shrink-0 flex-wrap items-center gap-1.5 border-b-2 border-line bg-tint px-4 py-2">
+      <p className="mr-1 text-sm font-bold text-ink">{count} selected</p>
+      <button
+        type="button"
+        className={ACTION}
+        disabled={busy}
+        onClick={onMarkRead}
+      >
+        Mark read
+      </button>
+      <button
+        type="button"
+        className={ACTION}
+        disabled={busy}
+        onClick={onMarkUnread}
+      >
+        Mark unread
+      </button>
+      <button type="button" className={ACTION} disabled={busy} onClick={onStar}>
+        Star
+      </button>
+      <button
+        type="button"
+        className={ACTION}
+        disabled={busy}
+        onClick={onArchive}
+      >
+        Archive
+      </button>
+      <button
+        type="button"
+        className={`${ACTION} text-brand`}
+        disabled={busy}
+        onClick={onTrash}
+      >
+        Delete
+      </button>
+      <button
+        type="button"
+        className={`${ACTION} ml-auto`}
+        onClick={onClear}
+        aria-label="Clear selection"
+      >
+        Clear
+      </button>
+    </div>
+  );
+}
 
 function MessageActions({
   message,
