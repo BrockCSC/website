@@ -5,6 +5,8 @@ export {
   fetchPreviousExecs,
   fetchProfile,
   updateProfile,
+  fetchMailForwarding,
+  updateMailForwarding,
   stepDownAsCoPresident,
   createEvent,
   editEvent,
@@ -29,6 +31,7 @@ export type {
   DayCount,
   EventRecord,
   ExecRecord,
+  MailForwardingView,
   SessionUser,
   WithKey,
 } from "./types";
