@@ -5,4 +5,6 @@ export async function register() {
   started = true;
   const { startRetirementSweep } = await import("@/lib/mail/retirement-sweep");
   startRetirementSweep();
+  const { backfillTerms } = await import("@/lib/execs/term-backfill");
+  void backfillTerms();
 }

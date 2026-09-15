@@ -8,6 +8,8 @@ import {
   update,
 } from "@/lib/db/repository";
 import { asBool, cleanExec } from "@/lib/execs/patch";
+import { storedTerms } from "@/lib/execs/terms";
+import { fillMissingTerm } from "@/lib/db/execs";
 import { findSignupByExecKey } from "@/lib/db/signups";
 import { retireMailbox } from "@/lib/mail/provision";
 import { ownsIdentities } from "@/lib/env";
@@ -33,11 +35,11 @@ export const PATCH = async (
   const { id } = await params;
   const body = await jsonObject<ExecRecord>(req);
   if (!body) return badJson();
-  const cleaned = cleanExec(body);
+  const before = await findById<ExecRecord>(execsTable, id);
+  const cleaned = cleanExec(body, storedTerms(before ?? {}));
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
-  const before = await findById<ExecRecord>(execsTable, id);
   const stillCurrent = asBool(body.isCurrentExec);
 
   const entity = await update<ExecRecord>(execsTable, id, {
@@ -56,7 +58,7 @@ export const PATCH = async (
     const signup = await findSignupByExecKey(id);
     if (signup?.username) await retireMailbox(signup.username);
   }
-  return NextResponse.json(toWireRecord(entity));
+  return NextResponse.json(toWireRecord(await fillMissingTerm(entity)));
 };
 
 /** Also unlinks any account pointing at this tile, so nothing dangles. */

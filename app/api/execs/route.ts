@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { requireApprover, requireMember } from "@/lib/auth/session";
 import { create, findAll, toWireRecord } from "@/lib/db/repository";
 import { asBool, cleanExec } from "@/lib/execs/patch";
+import { servingTerm, termFields } from "@/lib/execs/terms";
 import { badJson, jsonObject, notAuthorized } from "@/lib/json";
 import { execsTable } from "@/lib/db/schema";
 import type { ExecRecord } from "@/lib/api/types";
@@ -26,11 +27,16 @@ export const POST = async (req: NextRequest) => {
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
+  const isCurrentExec = asBool(body.isCurrentExec);
   const input: ExecRecord = {
     ...cleaned.patch,
     name: body.name,
     title: body.title,
-    isCurrentExec: asBool(body.isCurrentExec),
+    isCurrentExec,
+    // A current tile always has a term; this is the one the backfill would give it.
+    ...(isCurrentExec === true && !cleaned.patch.terms?.length
+      ? termFields([servingTerm()])
+      : {}),
   };
   return NextResponse.json(
     toWireRecord(await create<ExecRecord>(execsTable, input)),

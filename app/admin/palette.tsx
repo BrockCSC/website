@@ -12,6 +12,7 @@ import {
 } from "react";
 import { Loader2, Search } from "lucide-react";
 import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
+import { storedTerms } from "@/lib/execs/terms";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import type { Inbox } from "@/app/api/mail/inboxes/route";
 import { fetchInboxes, matchesInbox, withAs } from "./mail/inbox-picker";
@@ -544,6 +545,8 @@ function Palette({
             label: person.name,
             hint: details([
               person.title,
+              // Every term is searchable, so list them all: a hit on an older year is otherwise unexplained.
+              person.exec ? storedTerms(person.exec).join(", ") : undefined,
               person.username,
               person.email,
               person.status ?? "no account",

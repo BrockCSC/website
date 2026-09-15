@@ -31,6 +31,9 @@ export type ExecRecord = {
   isCurrentExec?: boolean;
   /** Set by the exec themselves to stay off the public team page. */
   hidden?: boolean;
+  /** Every academic year served, newest first. The source of truth. */
+  terms?: string[];
+  /** Newest of `terms`, rewritten with it. Written before `terms` existed, so reads still count it. */
   term?: string;
   socials?: ExecSocialLinks;
   image?: {

@@ -6,6 +6,7 @@ import { X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import type { ExecRecord, WithKey } from "@/lib/api";
+import { storedTerms } from "@/lib/execs/terms";
 
 type TeamMemberCardProps = {
   member: WithKey<ExecRecord>;
@@ -74,6 +75,8 @@ export function TeamMemberCard({
     member.title?.trim() || (isAlumni ? "Club Alumni" : "Executive Member");
   const bio = member.description?.trim();
   const socialLinks = getExecSocialLinks(member);
+  // Alumni sit under their newest term, so the rest explains why a search for an older year found them.
+  const alsoServed = isAlumni ? storedTerms(member).slice(1).join(", ") : "";
   const titleLabel = isAlumni ? (
     <p className="max-w-full text-sm font-semibold text-brand">{title}</p>
   ) : (
@@ -163,7 +166,14 @@ export function TeamMemberCard({
           </h3>
 
           <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5">
-            <div className="min-w-0">{titleLabel}</div>
+            <div className="min-w-0">
+              {titleLabel}
+              {alsoServed && (
+                <p className="mt-0.5 text-xs leading-snug text-subtle">
+                  Also served {alsoServed}
+                </p>
+              )}
+            </div>
 
             {(socialLinks.length > 0 || bio) && (
               <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1">

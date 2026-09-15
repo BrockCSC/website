@@ -76,11 +76,7 @@ export const generatedStamp = (date: Date): string => {
   return `${part("month")} ${part("day")}, ${part("year")} at ${part("hour")}:${part("minute")} ${part("dayPeriod").toUpperCase()}`;
 };
 
-/**
- * "2026-2027" for a YYYY-MM-DD day; terms start September 1. Not
- * academicTerms() from lib/execs/terms.ts, which reads the server's local
- * clock (UTC in the container) instead of the club's calendar day.
- */
+/** "2026-2027" for a YYYY-MM-DD day; terms start September 1. currentTerm() in lib/execs/terms.ts applies it to today. */
 export const termForDay = (day: string): string => {
   const [year, month] = dayParts(day) ?? [0, 0];
   const start = month >= 9 ? year : year - 1;

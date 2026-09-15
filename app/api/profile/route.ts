@@ -2,8 +2,10 @@ import { NextResponse, type NextRequest } from "next/server";
 import type { ExecRecord, SignupRecord } from "@/lib/api/types";
 import { requireMember } from "@/lib/auth/session";
 import { findById, toWireRecord, update } from "@/lib/db/repository";
+import { fillMissingTerm } from "@/lib/db/execs";
 import { findSignupByUserId } from "@/lib/db/signups";
 import { cleanExec } from "@/lib/execs/patch";
+import { storedTerms } from "@/lib/execs/terms";
 import { cleanAccessCardId } from "@/lib/signups/access-card";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
 import { execsTable, signupsTable } from "@/lib/db/schema";
@@ -34,8 +36,10 @@ export const PATCH = async (req: NextRequest) => {
 
   const body = await jsonObject<ExecRecord & { accessCardId?: string }>(req);
   if (!body) return badJson();
+  const tile = await findById<ExecRecord>(execsTable, signup.execKey);
+  if (!tile) return notFound();
   // cleanExec omits name/title/isCurrentExec: those are the approver's.
-  const cleaned = cleanExec(body);
+  const cleaned = cleanExec(body, storedTerms(tile));
   if ("error" in cleaned) {
     return NextResponse.json({ error: cleaned.error }, { status: 400 });
   }
@@ -58,5 +62,8 @@ export const PATCH = async (req: NextRequest) => {
     cleaned.patch,
   );
   if (!exec) return notFound();
-  return NextResponse.json({ ...toWireRecord(exec), accessCardId });
+  return NextResponse.json({
+    ...toWireRecord(await fillMissingTerm(exec)),
+    accessCardId,
+  });
 };

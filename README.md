@@ -57,7 +57,7 @@ Sign in and you land on a **tile menu** — one card per thing you're allowed to
 | <img src="public/readme/icon-analytics.svg" alt="" width="64" /> | **Analytics** — 30 days of page views, top pages, mail sent versus received, sign-ups waiting on you, and who is missing a photo. Only path and time are recorded: no cookies, no IPs.                 |
 | <img src="public/readme/icon-events.svg" alt="" width="64" />    | **Events** — publish and edit events: poster, location, times, repeat rule, sign-up link. Live the moment you save.                                                                                    |
 | <img src="public/readme/icon-people.svg" alt="" width="64" />    | **Users** (co-presidents) — approve sign-ups, change roles, provision mailboxes, move people to the alumni wall. Every action lists what it will do before you confirm, as a checklist you can untick. |
-| <img src="public/readme/icon-admin.svg" alt="" width="64" />     | **Profile** — your own team page tile: photo with a focal-point picker, bio, term and socials, previewed as you type. A toggle hides you.                                                              |
+| <img src="public/readme/icon-admin.svg" alt="" width="64" />     | **Profile** — your own team page tile: photo with a focal-point picker, bio, terms served and socials, previewed as you type. A toggle hides you.                                                      |
 
 <br />
 
