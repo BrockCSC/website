@@ -205,7 +205,7 @@ export default function TeamPageClient() {
             <div
               aria-busy="true"
               aria-label="Loading current team"
-              className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4"
+              className="mb-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4"
               role="status"
             >
               {[0, 1, 2, 3].map((index) => (
@@ -214,7 +214,7 @@ export default function TeamPageClient() {
                   key={index}
                 >
                   <div className="aspect-[4/3] bg-line/10" />
-                  <div className="h-[5.5rem]" />
+                  <div className="h-[7.5rem]" />
                 </div>
               ))}
             </div>
@@ -224,7 +224,7 @@ export default function TeamPageClient() {
           )}
 
           {hasCurrentExecs && (
-            <div className="animate-fade-in grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
+            <div className="animate-fade-in grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-4">
               {visibleCurrentExecs.map((member) => (
                 <TeamMemberCard key={member.$key} member={member} />
               ))}
@@ -256,7 +256,7 @@ export default function TeamPageClient() {
                   <h3 className="mb-2 text-base font-semibold text-ink/80">
                     {group.term}
                   </h3>
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+                  <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
                     {group.members.map((member) => (
                       <TeamMemberCard
                         isAlumni

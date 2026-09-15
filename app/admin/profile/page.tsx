@@ -183,10 +183,10 @@ export default function ProfilePage() {
       </p>
 
       <form
-        className="mt-9 grid animate-fade-in gap-6 lg:grid-cols-[320px_1fr] lg:items-start lg:gap-8"
+        className="mt-9 grid animate-fade-in gap-6 md:grid-cols-[240px_1fr] md:items-start md:gap-8"
         onSubmit={save}
       >
-        <div className="lg:sticky lg:top-6">
+        <div className="md:sticky md:top-6">
           <div className="mb-3 flex items-center gap-2">
             <span className="text-xs font-extrabold uppercase tracking-wide text-subtle">
               Live preview

@@ -44,14 +44,14 @@ export default function TemplatesPage() {
       <div className="grid gap-4 sm:grid-cols-2">
         {DOCUMENT_TEMPLATES.map((template) => (
           <div
-            className="animate-fade-in rounded-[20px] border-2 border-line bg-surface p-5 shadow-brut transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[6px_6px_0_0_var(--brand)]"
+            className="animate-fade-in rounded-[16px] border-2 border-line bg-surface p-4 shadow-brut transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[6px_6px_0_0_var(--brand)]"
             key={template.id}
           >
             <h2 className="text-base font-extrabold text-ink">
               {template.name}
             </h2>
             <p className="mt-1 text-sm text-subtle">{template.blurb}</p>
-            <div className="mt-4 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap gap-2">
               <Button asChild size="sm" variant="primary">
                 <a href={templateFileUrl(template.id, "docx")}>
                   <Download aria-hidden />

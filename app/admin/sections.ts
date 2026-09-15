@@ -8,7 +8,7 @@ export type Section = {
   mailAdminOnly?: boolean;
 };
 
-export const SECTIONS: Section[] = [
+const SECTIONS: Section[] = [
   {
     name: "Email",
     href: "/admin/mail",
@@ -67,3 +67,22 @@ export const sectionFor = (pathname: string): Section | undefined =>
   SECTIONS.filter((section) => pathname.startsWith(section.href)).sort(
     (a, b) => b.href.length - a.href.length,
   )[0];
+
+export type NavUser = {
+  isApprover?: boolean;
+  isExecutive?: boolean;
+  isMailAdmin?: boolean;
+};
+
+/** Sections a given user may see, mailbox status included. Loading (`null`) reads as "yes" so nav doesn't flicker items away then back. */
+export const visibleSections = (
+  user: NavUser | null | undefined,
+  hasMailbox: boolean | null,
+): Section[] =>
+  SECTIONS.filter(
+    (section) =>
+      (!section.approverOnly || user?.isApprover) &&
+      (!section.execOnly || user?.isExecutive) &&
+      (!section.mailAdminOnly || user?.isMailAdmin) &&
+      (!section.mailboxOnly || hasMailbox !== false),
+  );

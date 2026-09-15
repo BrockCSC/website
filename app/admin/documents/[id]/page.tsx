@@ -672,7 +672,7 @@ export default function DocumentDetailPage() {
             <ul className="flex flex-col gap-2">
               {signers.map((signer, index) => (
                 <li
-                  className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
+                  className="flex flex-wrap items-center gap-2 md:flex-nowrap"
                   key={signer.localId}
                 >
                   <SignerSwatch color={signerColor(index)} />

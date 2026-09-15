@@ -62,9 +62,9 @@ export function Panel({
 }: PanelProps) {
   return (
     <section
-      className={`animate-fade-in rounded-[20px] border-2 border-line ${
+      className={`animate-fade-in rounded-[16px] border-2 border-line ${
         tone ? "bg-tint" : "bg-surface"
-      } p-5 shadow-brut transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[6px_6px_0_0_var(--brand)]`}
+      } p-4 shadow-brut-sm`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -85,7 +85,7 @@ export function Panel({
         </div>
         {action}
       </div>
-      <div className="mt-4">{children}</div>
+      <div className="mt-3">{children}</div>
     </section>
   );
 }

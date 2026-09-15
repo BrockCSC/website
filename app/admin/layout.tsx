@@ -5,19 +5,21 @@ import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, LogOut } from "lucide-react";
 import { LoginForm } from "@/components/admin/login-form";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SessionProvider, useSession } from "./session";
 import { PaletteProvider, SearchButton } from "./palette";
 import { AskHost } from "./ask";
-import { sectionFor } from "./sections";
+import { AdminRail, AdminTabBar } from "./nav";
+import { sectionFor, visibleSections } from "./sections";
 
 function AdminShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, loading, refresh } = useSession();
   const [mailAddress, setMailAddress] = useState<string | null>(null);
+  const [hasMailbox, setHasMailbox] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (!user?.isExecutive) return;
@@ -39,7 +41,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
     fetch("/api/mail/me")
       .then((res) => (res.ok ? res.json() : null))
       .then((data: { email: string | null } | null) => {
-        if (data) setMailAddress(data.email);
+        if (data) {
+          setMailAddress(data.email);
+          setHasMailbox(Boolean(data.email));
+        }
       })
       .catch(() => {});
   }, [user?.isExecutive]);
@@ -91,9 +96,10 @@ function AdminShell({ children }: { children: React.ReactNode }) {
 
   const section = sectionFor(pathname);
   const onMenu = pathname === "/admin";
+  const sections = visibleSections(user, hasMailbox);
 
   return (
-    <PaletteProvider hasMail={Boolean(mailAddress)} onLogout={handleLogout}>
+    <PaletteProvider hasMail={hasMailbox} onLogout={handleLogout}>
       <div className="flex min-h-screen flex-col">
         <header className="flex items-center gap-3 border-b-2 border-line px-4 py-2.5 sm:px-6">
           {onMenu ? (
@@ -108,23 +114,11 @@ function AdminShell({ children }: { children: React.ReactNode }) {
               <span className="font-extrabold text-ink">Admin</span>
             </span>
           ) : (
-            <Link
-              href="/admin"
-              className="group flex items-center gap-2 rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
-            >
-              <span
-                aria-hidden
-                className="transition-[translate] duration-[var(--dur)] ease-smooth group-hover:-translate-x-0.5 motion-reduce:group-hover:translate-x-0"
-              >
-                ←
-              </span>{" "}
-              Menu
-            </Link>
-          )}
-          {section && (
-            <span className="truncate font-extrabold text-ink">
-              {section.name}
-            </span>
+            section && (
+              <span className="min-w-0 flex-1 truncate font-extrabold text-ink">
+                {section.name}
+              </span>
+            )
           )}
 
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
@@ -148,17 +142,29 @@ function AdminShell({ children }: { children: React.ReactNode }) {
             </Link>
             <button
               onClick={handleLogout}
-              className="rounded-[10px] border-2 border-line px-3 py-1.5 text-sm font-bold text-ink hover:bg-tint"
+              aria-label="Log out"
+              title="Log out"
+              className="inline-flex h-9 items-center gap-1 rounded-[10px] border-2 border-line px-2 text-sm font-bold text-ink hover:bg-tint sm:px-3"
             >
-              Log out
+              <LogOut className="size-4" aria-hidden />
+              <span className="hidden sm:inline">Log out</span>
             </button>
           </div>
         </header>
 
+        <div className="flex min-h-0 flex-1">
+          <aside className="hidden md:flex md:w-14 md:flex-col md:border-r-2 md:border-line lg:w-52">
+            <AdminRail sections={sections} pathname={pathname} />
+          </aside>
+          <main
+            className="min-h-0 flex-1 animate-fade-in overflow-y-auto pb-16 md:pb-0"
+            key={pathname}
+          >
+            {children}
+          </main>
+        </div>
+        <AdminTabBar sections={sections} pathname={pathname} />
         <AskHost />
-        <main className="min-h-0 flex-1 animate-fade-in" key={pathname}>
-          {children}
-        </main>
       </div>
     </PaletteProvider>
   );

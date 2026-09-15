@@ -6,8 +6,8 @@ import type { PDFDocumentLoadingTask, RenderTask } from "pdfjs-dist";
 import { documentFileUrl } from "@/lib/api/documents";
 import { loadPdfjs } from "@/lib/documents/load-pdfjs";
 
-const BOX_WIDTH = 64;
-const BOX_HEIGHT = 84;
+const BOX_WIDTH = 40;
+const BOX_HEIGHT = 52;
 const MAX_RENDERS = 2;
 
 /** CSS size excludes the canvas's 1px border. */
@@ -169,7 +169,7 @@ function Thumbnail({ versionId }: { versionId: string | null }) {
           }`}
         >
           {rendered === null && (
-            <FileText className="size-7 text-subtle" strokeWidth={1.75} />
+            <FileText className="size-5 text-subtle" strokeWidth={1.75} />
           )}
         </span>
       )}

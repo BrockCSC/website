@@ -12,7 +12,7 @@ export function MailboxList({
   onSelect: (id: string) => void;
 }) {
   return (
-    <nav className="flex gap-2 overflow-x-auto pb-1 md:min-h-0 md:flex-col md:overflow-x-visible md:overflow-y-auto md:pb-0">
+    <nav className="flex gap-2 overflow-x-auto pb-1 lg:min-h-0 lg:flex-col lg:overflow-x-visible lg:overflow-y-auto lg:pb-0">
       {mailboxes.map((box) => {
         const active = box.id === selected;
         return (
@@ -20,7 +20,7 @@ export function MailboxList({
             key={box.id}
             type="button"
             onClick={() => onSelect(box.id)}
-            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold md:shrink ${
+            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold lg:shrink ${
               active
                 ? "bg-brand text-brand-ink shadow-brut-sm"
                 : "bg-surface text-ink hover:bg-tint"

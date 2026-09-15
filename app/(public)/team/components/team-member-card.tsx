@@ -80,7 +80,7 @@ export function TeamMemberCard({
   const titleLabel = isAlumni ? (
     <p className="max-w-full text-sm font-semibold text-brand">{title}</p>
   ) : (
-    <Badge className="max-w-full overflow-hidden" size="sm" variant="default">
+    <Badge className="max-w-full truncate" size="sm" variant="default">
       {title}
     </Badge>
   );
@@ -107,7 +107,11 @@ export function TeamMemberCard({
             alt={name}
             className="object-cover"
             fill
-            sizes="(max-width: 640px) 100vw, (max-width: 1060px) 50vw, 25vw"
+            sizes={
+              isAlumni
+                ? "(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 20vw"
+                : "(max-width: 767px) 50vw, (max-width: 1279px) 33vw, 25vw"
+            }
             src={imageUrl}
             style={{ objectPosition: member.image?.position ?? "50% 50%" }}
             unoptimized
@@ -153,13 +157,13 @@ export function TeamMemberCard({
         )}
       </div>
 
-      <div className={isAlumni ? "space-y-1 p-3" : "space-y-3 p-4"}>
+      <div className={isAlumni ? "space-y-1 p-2.5" : "space-y-2 p-3"}>
         <div className="space-y-1.5">
           <h3
             className={
               isAlumni
-                ? "text-lg font-semibold leading-tight text-ink/85"
-                : "text-xl font-semibold leading-tight text-ink"
+                ? "text-sm font-semibold leading-tight text-ink/85"
+                : "text-base font-semibold leading-tight text-ink"
             }
           >
             {name}
@@ -189,7 +193,7 @@ export function TeamMemberCard({
                     <Image
                       alt=""
                       aria-hidden="true"
-                      className="size-[18px] dark:brightness-[1.4]"
+                      className="size-4 dark:brightness-[1.4]"
                       height={18}
                       src={SOCIAL_ICON_SRC[social.platform]}
                       width={18}
@@ -201,7 +205,7 @@ export function TeamMemberCard({
                   <button
                     aria-controls={bioPanelId}
                     aria-expanded={isBioOpen}
-                    className={`inline-flex h-9 items-center rounded-full px-2.5 text-[0.65rem] font-bold uppercase tracking-wider ${
+                    className={`inline-flex h-9 items-center rounded-full px-2 text-[0.65rem] font-bold uppercase tracking-wider ${
                       isBioOpen
                         ? "bg-brand text-brand-ink"
                         : "text-brand hover:bg-tint"

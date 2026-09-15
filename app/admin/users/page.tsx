@@ -299,7 +299,7 @@ export default function UsersPage() {
                 {shown.map((entry) => (
                   <li key={entry.id}>
                     <button
-                      className="w-full rounded-[10px] border-2 border-line bg-surface px-4 py-3 text-left shadow-brut-sm hover:-translate-y-0.5 hover:bg-tint hover:shadow-[3px_5px_0_0_var(--shade)] motion-reduce:hover:translate-y-0"
+                      className="w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2.5 text-left hover:bg-tint"
                       onClick={() => setSelected(entry.id)}
                     >
                       <span className="flex flex-wrap items-center gap-x-3 gap-y-1">

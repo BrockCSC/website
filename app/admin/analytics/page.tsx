@@ -46,7 +46,7 @@ const Stat = ({
 }) => {
   const tile = (
     <div
-      className={`relative h-full animate-rise-in rounded-[20px] border-2 border-line p-4 shadow-brut-sm transition duration-[var(--dur)] ease-smooth ${
+      className={`relative h-full animate-rise-in rounded-[16px] border-2 border-line p-3.5 shadow-brut-sm transition duration-[var(--dur)] ease-smooth ${
         href
           ? "group-hover:-translate-y-0.5 group-hover:bg-tint group-hover:shadow-[3px_5px_0_0_var(--shade)] motion-reduce:group-hover:translate-y-0"
           : "hover:shadow-[3px_3px_0_0_var(--brand)]"
