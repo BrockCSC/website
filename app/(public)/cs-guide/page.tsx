@@ -55,7 +55,8 @@ const Guide: React.FC = () => {
         <Sidebar />
 
         {/* MAIN CONTENT */}
-        <div className="animate-fade-in flex-1 max-w-full md:max-w-3xl">
+        {/* min-w-0: without it a flex child won't shrink below its content's natural width, so right at lg (1024px) — the moment the 256px sidebar joins the row — this column pushes past the viewport instead of wrapping. */}
+        <div className="animate-fade-in min-w-0 flex-1 max-w-full md:max-w-3xl">
           {/* HERO */}
           <section id="introduction" className="mb-16">
             <h1 className="text-3xl sm:text-4xl font-bold mb-6">
