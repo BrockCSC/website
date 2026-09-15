@@ -209,10 +209,11 @@ every sixty days without it.
 `brockcsc.ca`, but that's only the site's own UI - a member reading the same mailbox through
 Thunderbird, Outlook or a phone's mail app would never see it. `deploy/mail/install-external-banner.sh`
 installs `external-sender-banner.sieve` as Stalwart's DATA-stage system script (`x:SieveSystemScript/set`
-+ `x:MtaStageData/set`), so every account gets a banner stamped into the body of mail from outside the
-club's domain, and an `X-BrockCSC-External` header, regardless of what reads it. Also idempotent; run it
-by hand (or on the same timer as `refresh-cert.sh`) whenever the `.sieve` file changes. Set
-`EXTERNAL_BANNER_DOMAINS` (comma-separated) if the club ever mails from more than one domain.
+
+- `x:MtaStageData/set`), so every account gets a banner stamped into the body of mail from outside the
+  club's domain, and an `X-BrockCSC-External` header, regardless of what reads it. Also idempotent; run it
+  by hand (or on the same timer as `refresh-cert.sh`) whenever the `.sieve` file changes. Set
+  `EXTERNAL_BANNER_DOMAINS` (comma-separated) if the club ever mails from more than one domain.
 
 **Outside mail apps.** Stalwart authenticates accounts through its OIDC directory on Keycloak, so a
 portal password never works over IMAP or SMTP. Stalwart also refuses to store a password for an
