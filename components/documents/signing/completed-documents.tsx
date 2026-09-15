@@ -4,22 +4,32 @@ import { Download } from "lucide-react";
 import { useId, useState } from "react";
 import { DocumentPages } from "./document-pages";
 
-type Which = "signed" | "certificate";
+type Which = "signed" | "certificate" | "combined";
 
 /** The stamped PDF and its Certificate of Completion, one at a time, read-only. */
 export function CompletedDocuments({
   signedFileUrl,
   certificateUrl,
+  combinedUrl,
 }: {
   signedFileUrl: string;
   certificateUrl: string;
+  combinedUrl?: string;
 }) {
   const baseId = useId();
   const [which, setWhich] = useState<Which>("signed");
-  const url = which === "signed" ? signedFileUrl : certificateUrl;
+  const urls: Record<Which, string> = {
+    signed: signedFileUrl,
+    certificate: certificateUrl,
+    combined: combinedUrl ?? signedFileUrl,
+  };
+  const url = urls[which];
   const options: { id: Which; label: string }[] = [
     { id: "signed", label: "Signed document" },
     { id: "certificate", label: "Certificate of completion" },
+    ...(combinedUrl
+      ? [{ id: "combined" as const, label: "Signed + certificate" }]
+      : []),
   ];
 
   return (
@@ -45,7 +55,9 @@ export function CompletedDocuments({
               onKeyDown={(e) => {
                 if (e.key !== "ArrowRight" && e.key !== "ArrowLeft") return;
                 e.preventDefault();
-                const next = options[(i + 1) % 2];
+                const delta = e.key === "ArrowRight" ? 1 : -1;
+                const next =
+                  options[(i + delta + options.length) % options.length];
                 setWhich(next.id);
                 document.getElementById(`${baseId}-${next.id}`)?.focus();
               }}
