@@ -77,6 +77,14 @@ const DocumentIcon = ({ className }: IconProps) => (
   </svg>
 );
 
+const ExportIcon = ({ className }: IconProps) => (
+  <svg {...base(className)}>
+    <path d="M6 2.5h9l4 4V21a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V3.5a1 1 0 0 1 1-1Z" />
+    <path d="M14.5 2.5V7a1 1 0 0 0 1 1H19.5" />
+    <path d="M12 11v6.5M9 14.5l3 3 3-3" />
+  </svg>
+);
+
 export const SECTION_ICONS: Record<
   string,
   (props: IconProps) => React.ReactElement
@@ -88,5 +96,6 @@ export const SECTION_ICONS: Record<
   "/admin/events": CalendarIcon,
   "/admin/users": PeopleIcon,
   "/admin/documents": DocumentIcon,
+  "/admin/exports": ExportIcon,
   "/admin/profile": BadgeIcon,
 };

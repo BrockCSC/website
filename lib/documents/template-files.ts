@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
 import {
   AlignmentType,
   BorderStyle,
@@ -28,21 +26,16 @@ import {
   CLUB_MAILING_ADDRESS,
   CLUB_NAME,
 } from "@/lib/brand";
+import {
+  PDF_LETTER_HEIGHT as PAGE_HEIGHT,
+  PDF_LETTER_MARGIN as MARGIN,
+  PDF_LETTER_WIDTH as PAGE_WIDTH,
+  drawLetterhead,
+  hexDigits,
+  hexToRgb,
+  readLogoBytes,
+} from "./letterhead";
 import type { DocumentTemplate, TemplateLine, TemplateRun } from "./templates";
-
-const hexDigits = (hex: string) => hex.replace(/^#/, "").toUpperCase();
-
-const hexToRgb = (hex: string) => {
-  const clean = hexDigits(hex);
-  return rgb(
-    parseInt(clean.slice(0, 2), 16) / 255,
-    parseInt(clean.slice(2, 4), 16) / 255,
-    parseInt(clean.slice(4, 6), 16) / 255,
-  );
-};
-
-const readLogoBytes = () =>
-  readFile(join(process.cwd(), "public/email-logo.png"));
 
 const ORDERED_LIST_REFERENCE = "template-ordered-list";
 
@@ -215,9 +208,6 @@ export const generateTemplateDocx = async (
   return Packer.toBuffer(doc);
 };
 
-const PAGE_WIDTH = 612;
-const PAGE_HEIGHT = 792;
-const MARGIN = 56;
 const BODY_SIZE = 11;
 const LEADING = 15;
 
@@ -227,58 +217,13 @@ type PdfCursor = {
   font: PDFFont;
   bold: PDFFont;
   brand: ReturnType<typeof rgb>;
-  accent: ReturnType<typeof rgb>;
   page: PDFPage;
   y: number;
 };
 
-const drawPdfHeader = (
-  cursor: Omit<PdfCursor, "page" | "y">,
-  page: PDFPage,
-) => {
-  const logoSize = 40;
-  const top = PAGE_HEIGHT - MARGIN;
-  const dividerX = MARGIN + logoSize + 10;
-  const textX = dividerX + 12;
-  page.drawImage(cursor.logo, {
-    x: MARGIN,
-    y: top - logoSize,
-    width: logoSize,
-    height: logoSize,
-  });
-  page.drawLine({
-    start: { x: dividerX, y: top },
-    end: { x: dividerX, y: top - logoSize },
-    thickness: 2,
-    color: cursor.accent,
-  });
-  page.drawText(CLUB_NAME, {
-    x: textX,
-    y: top - 14,
-    size: 12,
-    font: cursor.bold,
-    color: cursor.brand,
-  });
-  page.drawText(CLUB_MAILING_ADDRESS, {
-    x: textX,
-    y: top - 28,
-    size: 8,
-    font: cursor.font,
-    color: rgb(0x6b / 255, 0x72 / 255, 0x80 / 255),
-  });
-  const ruleY = top - logoSize - 8;
-  page.drawLine({
-    start: { x: MARGIN, y: ruleY },
-    end: { x: PAGE_WIDTH - MARGIN, y: ruleY },
-    thickness: 2,
-    color: cursor.brand,
-  });
-  return ruleY - 24;
-};
-
 const newPdfPage = (cursor: PdfCursor) => {
   cursor.page = cursor.doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-  cursor.y = drawPdfHeader(cursor, cursor.page);
+  cursor.y = drawLetterhead(cursor.page, cursor);
 };
 
 const ensurePdfSpace = (cursor: PdfCursor, needed: number) => {
@@ -410,11 +355,10 @@ export const generateTemplatePdf = async (
     font,
     bold,
     brand: hexToRgb(BRAND_COLOR),
-    accent: hexToRgb(BRAND_ACCENT_COLOR),
     page: doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]),
     y: 0,
   };
-  cursor.y = drawPdfHeader(cursor, cursor.page);
+  cursor.y = drawLetterhead(cursor.page, cursor);
 
   for (const block of template.body) {
     if (block.kind === "heading") {
