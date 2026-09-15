@@ -392,6 +392,8 @@ export type CompletedEnvelopeView = {
   completedAt: string;
   signedFileUrl: string;
   certificateUrl: string;
+  /** Only set once the modern stamped-PDF flow produced both a signed copy and a PDF certificate. */
+  combinedUrl?: string;
 };
 
 export type PendingDocumentActionKind =

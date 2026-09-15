@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Paperclip } from "lucide-react";
+import { ChevronDown, Paperclip, ShieldAlert } from "lucide-react";
 import type {
   BodyPart,
   MessageDetail,
   MessageSummary,
 } from "@/lib/mail/jmap-mail";
+import { ExternalTag } from "./message-list";
+import { isExternalSender } from "./external";
 import { withAs } from "./inbox-picker";
 
 const addressLine = (list: MessageDetail["from"]) =>
   (list ?? []).map((a) => a.name || a.email).join(", ");
+
+/** "Jane Doe <jane@x.com>", or just the email/name alone when the other half is missing. */
+const fullAddress = (a: { name: string | null; email: string } | undefined) => {
+  if (!a) return "Unknown sender";
+  if (a.name && a.name !== a.email) return `${a.name} <${a.email}>`;
+  return a.email || a.name || "Unknown sender";
+};
 
 const size = (bytes: number) =>
   bytes < 1024
@@ -45,13 +54,70 @@ const useDarkTheme = () => {
   return dark;
 };
 
+/** Reply-To, Bcc, timing and the raw header list, tucked behind "Details". */
+function MessageDetails({ message }: { message: MessageDetail }) {
+  return (
+    <div className="mt-2.5 animate-rise-in space-y-2 rounded-[10px] border-2 border-line bg-raised p-3 text-xs">
+      <dl className="grid grid-cols-[auto_1fr] gap-x-2 gap-y-1">
+        <dt className="font-bold text-subtle">From</dt>
+        <dd className="break-all text-ink">{fullAddress(message.from?.[0])}</dd>
+        {message.replyTo?.length ? (
+          <>
+            <dt className="font-bold text-subtle">Reply-To</dt>
+            <dd className="break-all text-ink">
+              {addressLine(message.replyTo)}
+            </dd>
+          </>
+        ) : null}
+        {message.bcc?.length ? (
+          <>
+            <dt className="font-bold text-subtle">Bcc</dt>
+            <dd className="break-all text-ink">{addressLine(message.bcc)}</dd>
+          </>
+        ) : null}
+        {message.sentAt && (
+          <>
+            <dt className="font-bold text-subtle">Sent</dt>
+            <dd className="text-ink">
+              {new Date(message.sentAt).toLocaleString()}
+            </dd>
+          </>
+        )}
+        <dt className="font-bold text-subtle">Received</dt>
+        <dd className="text-ink">
+          {new Date(message.receivedAt).toLocaleString()}
+        </dd>
+        <dt className="font-bold text-subtle">Size</dt>
+        <dd className="text-ink">{size(message.size)}</dd>
+      </dl>
+
+      {message.headers.length > 0 && (
+        <details className="pt-1">
+          <summary className="cursor-pointer font-bold text-subtle hover:text-ink">
+            Raw headers
+          </summary>
+          <div className="mt-1.5 max-h-40 overflow-y-auto rounded-[8px] bg-surface p-2 font-mono text-[11px] whitespace-pre-wrap text-ink">
+            {message.headers.map((h, i) => (
+              <div key={`${h.name}-${i}`} className="break-all">
+                <span className="font-bold">{h.name}:</span> {h.value}
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+  );
+}
+
 function MessageView({
   id,
   viewing,
+  ownDomain,
   onRead,
 }: {
   id: string;
   viewing: string | null;
+  ownDomain?: string | null;
   onRead?: (id: string) => void;
 }) {
   const [message, setMessage] = useState<MessageDetail | null>(null);
@@ -59,6 +125,7 @@ function MessageView({
   const [error, setError] = useState<string | null>(null);
   const [showImages, setShowImages] = useState(false);
   const [blocked, setBlocked] = useState(false);
+  const [details, setDetails] = useState(false);
   const dark = useDarkTheme();
 
   useEffect(() => {
@@ -109,18 +176,53 @@ function MessageView({
     return <p className="flex-1 p-6 text-sm text-subtle">Loading…</p>;
 
   const files = downloadable(message.attachments);
+  const external = isExternalSender(
+    message.from?.[0]?.email,
+    ownDomain ?? null,
+  );
 
   return (
     <article className="flex min-h-0 flex-1 animate-fade-in flex-col">
       <header className="border-b-2 border-line px-5 py-3">
-        <p className="text-sm font-bold text-ink">
-          {addressLine(message.from)}
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm font-bold text-ink">
+            <span className="truncate">{fullAddress(message.from?.[0])}</span>
+            {external && <ExternalTag />}
+          </p>
+          <button
+            type="button"
+            onClick={() => setDetails((v) => !v)}
+            aria-expanded={details}
+            className="flex shrink-0 items-center gap-1 rounded-[8px] px-1.5 py-0.5 text-xs font-bold text-subtle hover:bg-tint hover:text-ink"
+          >
+            Details
+            <ChevronDown
+              size={13}
+              aria-hidden
+              className={`transition-transform duration-[var(--dur-fast)] ${details ? "rotate-180" : ""}`}
+            />
+          </button>
+        </div>
         <p className="text-xs text-subtle">
           to {addressLine(message.to) || "undisclosed recipients"}
           {message.cc?.length ? `, cc ${addressLine(message.cc)}` : ""} ·{" "}
           {new Date(message.receivedAt).toLocaleString()}
         </p>
+
+        {external && (
+          <p className="mt-2 flex items-center gap-1.5 rounded-[8px] border-2 border-line bg-tint px-2.5 py-1.5 text-xs font-semibold text-ink">
+            <ShieldAlert
+              size={14}
+              className="shrink-0 text-brand"
+              aria-hidden
+            />
+            This message was sent from outside BrockCSC&rsquo;s mail. Be careful
+            with links, attachments and requests for information.
+          </p>
+        )}
+
+        {details && <MessageDetails message={message} />}
+
         {files.length > 0 && (
           <ul className="mt-2.5 flex flex-wrap gap-2">
             {files.map((part) => (
@@ -177,11 +279,13 @@ export function Conversation({
   message,
   count,
   viewing,
+  ownDomain,
   onRead,
 }: {
   message: MessageSummary;
   count: number;
   viewing: string | null;
+  ownDomain?: string | null;
   onRead?: (id: string) => void;
 }) {
   const [thread, setThread] = useState<MessageSummary[]>([]);
@@ -233,11 +337,17 @@ export function Conversation({
                 }`}
               >
                 <span
-                  className={`truncate text-sm text-ink ${
+                  className={`flex min-w-0 items-center gap-1.5 truncate text-sm text-ink ${
                     item.keywords?.$seen ? "font-medium" : "font-extrabold"
                   }`}
                 >
-                  {item.from?.[0]?.name || item.from?.[0]?.email || "Unknown"}
+                  <span className="truncate">
+                    {item.from?.[0]?.name || item.from?.[0]?.email || "Unknown"}
+                  </span>
+                  {isExternalSender(
+                    item.from?.[0]?.email,
+                    ownDomain ?? null,
+                  ) && <ExternalTag />}
                 </span>
                 <span className="shrink-0 text-xs text-subtle">
                   {new Date(item.receivedAt).toLocaleString([], {
@@ -252,7 +362,13 @@ export function Conversation({
           ))}
         </ul>
       )}
-      <MessageView key={open} id={open} viewing={viewing} onRead={markRead} />
+      <MessageView
+        key={open}
+        id={open}
+        onRead={markRead}
+        ownDomain={ownDomain}
+        viewing={viewing}
+      />
     </>
   );
 }

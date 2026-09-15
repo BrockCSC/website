@@ -34,6 +34,9 @@ export const GET = async (
     completedAt: request.completedAt,
     signedFileUrl: `${base}?which=signed`,
     certificateUrl: `${base}?which=certificate`,
+    ...(request.certificateVersionId
+      ? { combinedUrl: `${base}?which=combined` }
+      : {}),
   };
   return NextResponse.json(view, {
     headers: { "cache-control": "private, no-store" },

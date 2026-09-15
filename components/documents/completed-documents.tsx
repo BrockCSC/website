@@ -1,18 +1,32 @@
 "use client";
 
-import { Award, ExternalLink, FileCheck2, type LucideIcon } from "lucide-react";
+import {
+  Award,
+  Download,
+  ExternalLink,
+  FileCheck2,
+  Files,
+  type LucideIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { documentFileUrl, type SigningRequestItem } from "@/lib/api/documents";
+import {
+  combinedFileUrl,
+  documentFileUrl,
+  type SigningRequestItem,
+} from "@/lib/api/documents";
 import { DocumentPreview } from "./document-preview";
 
 type CompletedFile = {
   key: string;
   label: string;
   icon: LucideIcon;
-  versionId: string;
+  url: string;
+  downloadName: string;
   contentType: string;
   sha256?: string;
+  /** The combined copy is generated on request; there's nothing to preview inline. */
+  previewable?: boolean;
 };
 
 const completedFiles = (request: SigningRequestItem): CompletedFile[] => {
@@ -23,28 +37,42 @@ const completedFiles = (request: SigningRequestItem): CompletedFile[] => {
         key: "record",
         label: "Completion record",
         icon: FileCheck2,
-        versionId: request.resultingVersionId,
+        url: documentFileUrl(request.resultingVersionId),
+        downloadName: `${request.title} - signing certificate.txt`,
         contentType: "text/plain",
         sha256: request.sha256,
+        previewable: true,
       },
     ];
   }
   return [
     {
+      key: "combined",
+      label: "Signed document + certificate",
+      icon: Files,
+      url: combinedFileUrl(request.$key),
+      downloadName: `${request.title} - signed with certificate.pdf`,
+      contentType: "application/pdf",
+    },
+    {
       key: "signed",
       label: "Signed document",
       icon: FileCheck2,
-      versionId: request.resultingVersionId,
+      url: documentFileUrl(request.resultingVersionId),
+      downloadName: `${request.title} - signed.pdf`,
       contentType: "application/pdf",
       sha256: request.sha256,
+      previewable: true,
     },
     {
       key: "certificate",
       label: "Certificate of Completion",
       icon: Award,
-      versionId: request.certificateVersionId,
+      url: documentFileUrl(request.certificateVersionId),
+      downloadName: `${request.title} - Certificate of Completion.pdf`,
       contentType: "application/pdf",
       sha256: request.certificateSha256,
+      previewable: true,
     },
   ];
 };
@@ -89,28 +117,34 @@ export function CompletedDocuments({
                   {file.label}
                 </p>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    aria-controls="completed-preview"
-                    aria-expanded={open === file.key}
-                    onClick={() =>
-                      setOpen((current) =>
-                        current === file.key ? null : file.key,
-                      )
-                    }
-                    size="xs"
-                    type="button"
-                    variant={open === file.key ? "primary" : "secondary"}
-                  >
-                    {open === file.key ? "Hide" : "View"}
-                  </Button>
+                  {file.previewable && (
+                    <>
+                      <Button
+                        aria-controls="completed-preview"
+                        aria-expanded={open === file.key}
+                        onClick={() =>
+                          setOpen((current) =>
+                            current === file.key ? null : file.key,
+                          )
+                        }
+                        size="xs"
+                        type="button"
+                        variant={open === file.key ? "primary" : "secondary"}
+                      >
+                        {open === file.key ? "Hide" : "View"}
+                      </Button>
+                      <Button asChild size="xs" variant="outline">
+                        <a href={file.url} rel="noreferrer" target="_blank">
+                          <ExternalLink aria-hidden />
+                          New tab
+                        </a>
+                      </Button>
+                    </>
+                  )}
                   <Button asChild size="xs" variant="outline">
-                    <a
-                      href={documentFileUrl(file.versionId)}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      <ExternalLink aria-hidden />
-                      New tab
+                    <a download={file.downloadName} href={file.url}>
+                      <Download aria-hidden />
+                      Download
                     </a>
                   </Button>
                 </div>
@@ -135,8 +169,8 @@ export function CompletedDocuments({
           </p>
           <DocumentPreview
             contentType={openFile.contentType}
-            fileUrl={documentFileUrl(openFile.versionId)}
-            key={openFile.versionId}
+            fileUrl={openFile.url}
+            key={openFile.url}
           />
         </div>
       )}

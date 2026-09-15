@@ -75,6 +75,7 @@ export default function SignedEnvelopePage() {
           </div>
           <CompletedDocuments
             certificateUrl={view.certificateUrl}
+            combinedUrl={view.combinedUrl}
             signedFileUrl={view.signedFileUrl}
           />
         </>

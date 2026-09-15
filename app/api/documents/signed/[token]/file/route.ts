@@ -1,7 +1,9 @@
 import { Readable } from "node:stream";
 import { NextResponse, type NextRequest } from "next/server";
 import { versionReadableByViewToken } from "@/lib/documents/access";
+import { buildCombinedPdf } from "@/lib/documents/combined-pdf";
 import { readDocumentBytes } from "@/lib/documents/storage";
+import { findValidViewToken } from "@/lib/documents/tokens";
 import { rateLimit } from "@/lib/rate-limit";
 
 /** Readable.from() pushes a plain Uint8Array byte by byte; a Buffer goes as one chunk. */
@@ -10,7 +12,7 @@ const bytesToBody = (bytes: Uint8Array) =>
     Readable.from(Buffer.from(bytes)),
   ) as ReadableStream<Uint8Array>;
 
-/** ?which=signed|certificate, inline, for the view token's own completed request only. */
+/** ?which=signed|certificate|combined, for the view token's own completed request only. */
 export const GET = async (
   req: NextRequest,
   { params }: { params: Promise<{ token: string }> },
@@ -19,13 +21,50 @@ export const GET = async (
   if (limited) return limited;
 
   const which = req.nextUrl.searchParams.get("which");
-  if (which !== "signed" && which !== "certificate") {
+  if (which !== "signed" && which !== "certificate" && which !== "combined") {
     return NextResponse.json(
-      { error: "which must be signed or certificate." },
+      { error: "which must be signed, certificate or combined." },
       { status: 400 },
     );
   }
   const { token } = await params;
+
+  if (which === "combined") {
+    const lookup = await findValidViewToken(token);
+    const [signed, certificate] = await Promise.all([
+      versionReadableByViewToken(token, "signed"),
+      versionReadableByViewToken(token, "certificate"),
+    ]);
+    if (
+      !lookup ||
+      !signed ||
+      !certificate ||
+      signed.contentType !== "application/pdf" ||
+      certificate.contentType !== "application/pdf"
+    ) {
+      return new NextResponse(null, { status: 404 });
+    }
+    try {
+      const combined = await buildCombinedPdf(
+        await Promise.all([
+          readDocumentBytes(signed.storedFilename),
+          readDocumentBytes(certificate.storedFilename),
+        ]),
+      );
+      return new NextResponse(bytesToBody(combined), {
+        headers: {
+          "content-type": "application/pdf",
+          "content-length": String(combined.byteLength),
+          "content-disposition": `attachment; filename="${encodeURIComponent(`${lookup.request.title} - signed with certificate.pdf`)}"`,
+          "x-content-type-options": "nosniff",
+          "cache-control": "private, no-store",
+        },
+      });
+    } catch {
+      return new NextResponse(null, { status: 404 });
+    }
+  }
+
   const version = await versionReadableByViewToken(token, which);
   if (!version) return new NextResponse(null, { status: 404 });
 

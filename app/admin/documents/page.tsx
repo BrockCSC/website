@@ -6,6 +6,7 @@ import { DocumentThumbnail } from "@/components/documents/document-thumbnail";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import {
+  documentFileUrl,
   fetchDocuments,
   fetchMyPendingActions,
   fetchPendingActions,
@@ -271,6 +272,31 @@ export default function DocumentsPage() {
     [documents],
   );
 
+  const [checked, setChecked] = useState<ReadonlySet<string>>(new Set());
+  const toggleChecked = (key: string, on: boolean) =>
+    setChecked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key);
+      else next.delete(key);
+      return next;
+    });
+  const downloadable = sortedDocuments.filter((doc) => doc.currentVersionId);
+  const allChecked = checked.size > 0 && checked.size === downloadable.length;
+
+  const downloadSelected = async () => {
+    const picked = downloadable.filter((doc) => checked.has(doc.$key));
+    for (const doc of picked) {
+      const link = document.createElement("a");
+      link.href = documentFileUrl(doc.currentVersionId!);
+      link.download = `${doc.title}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      // Browsers throttle several downloads fired in the same tick.
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+  };
+
   const upload = async (e: React.FormEvent) => {
     e.preventDefault();
     const form = e.currentTarget as HTMLFormElement;
@@ -429,12 +455,70 @@ export default function DocumentsPage() {
         <p className="font-bold text-subtle">Loading...</p>
       ) : (
         !!sortedDocuments.length && (
-          <Panel title="Library">
+          <Panel
+            action={
+              checked.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-subtle">
+                    {checked.size} selected
+                  </span>
+                  <Button
+                    onClick={() => void downloadSelected()}
+                    size="sm"
+                    type="button"
+                    variant="secondary"
+                  >
+                    Download selected
+                  </Button>
+                  <Button
+                    onClick={() => setChecked(new Set())}
+                    size="sm"
+                    type="button"
+                    variant="outline"
+                  >
+                    Clear
+                  </Button>
+                </div>
+              )
+            }
+            title="Library"
+          >
+            {downloadable.length > 0 && (
+              <label className="mb-2 flex w-fit items-center gap-2 text-xs font-bold text-subtle">
+                <input
+                  checked={allChecked}
+                  className="size-4 accent-brand"
+                  onChange={(e) =>
+                    setChecked(
+                      e.target.checked
+                        ? new Set(downloadable.map((doc) => doc.$key))
+                        : new Set(),
+                    )
+                  }
+                  type="checkbox"
+                />
+                Select all
+              </label>
+            )}
             <ul className="flex flex-col gap-2">
               {sortedDocuments.map((doc) => (
-                <li key={doc.$key}>
+                <li
+                  className="flex items-center gap-2 rounded-[14px] border-2 border-line bg-surface p-2 pr-3 hover:bg-tint"
+                  key={doc.$key}
+                >
+                  {doc.currentVersionId && (
+                    <input
+                      aria-label={`Select ${doc.title}`}
+                      checked={checked.has(doc.$key)}
+                      className="ml-1 size-4 shrink-0 accent-brand"
+                      onChange={(e) =>
+                        toggleChecked(doc.$key, e.target.checked)
+                      }
+                      type="checkbox"
+                    />
+                  )}
                   <Link
-                    className="flex items-center gap-3 rounded-[14px] border-2 border-line bg-surface p-2 pr-3 hover:bg-tint"
+                    className="flex min-w-0 flex-1 items-center gap-3"
                     href={`/admin/documents/${doc.$key}`}
                   >
                     <DocumentThumbnail versionId={doc.currentVersionId} />

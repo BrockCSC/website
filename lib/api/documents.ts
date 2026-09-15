@@ -183,3 +183,6 @@ export const documentFileUrl = (versionId: string) =>
   `/api/documents/files/${versionId}`;
 export const pendingFileUrl = (pendingId: string) =>
   `/api/documents/pending/${pendingId}/file`;
+/** Signed document + Certificate of Completion, merged into one PDF on request. */
+export const combinedFileUrl = (signingRequestId: string) =>
+  `/api/documents/signing/${signingRequestId}/combined`;
