@@ -10,7 +10,7 @@ import { requireApprover } from "@/lib/auth/session";
 import { describePerson, findPerson } from "./consequences";
 import { ownsIdentities } from "@/lib/env";
 import { badJson, jsonObject, notAuthorized, notFound } from "@/lib/json";
-import { findExecMatchingName } from "@/lib/db/execs";
+import { fillMissingTerm, findExecMatchingName } from "@/lib/db/execs";
 import { grantsApproval } from "@/lib/execs/titles";
 import {
   isProtectedMailbox,
@@ -21,6 +21,7 @@ import {
 } from "@/lib/mail/provision";
 import {
   create,
+  type Entity,
   findById,
   remove,
   toWireRecord,
@@ -76,7 +77,7 @@ export const PATCH = async (
   }
 
   let execKey = signup.execKey;
-  let exec: (ExecRecord & { id?: string }) | undefined;
+  let exec: Entity<ExecRecord> | undefined;
   if (action === "approve") {
     if (!execKey) {
       const match = await findExecMatchingName(
@@ -97,6 +98,8 @@ export const PATCH = async (
     } else {
       exec = (await findById<ExecRecord>(execsTable, execKey)) ?? undefined;
     }
+    // Approving says they're serving now, so a current tile without a term gets this year's.
+    if (exec) exec = await fillMissingTerm(exec);
 
     const isPastExec = exec?.isCurrentExec === false;
     const role = isPastExec

@@ -311,6 +311,7 @@ export default function UsersPage() {
                             {entry.title}
                           </span>
                         )}
+                        {entry.term && <Pill>{entry.term}</Pill>}
                         {entry.isCurrentExec === false && <Pill>Past</Pill>}
                         {entry.status && entry.status !== "approved" && (
                           <Pill tone="accent">{entry.status}</Pill>

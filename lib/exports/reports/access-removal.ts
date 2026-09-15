@@ -1,5 +1,5 @@
 import { CLUB_NAME } from "@/lib/brand";
-import { termStartYear } from "@/lib/execs/order";
+import { byNewestTerm } from "@/lib/execs/terms";
 import { grantsApproval } from "@/lib/execs/titles";
 import {
   accessGaps,
@@ -52,17 +52,16 @@ export const accessRemovalReport: ExportReport<AccessRemovalData> = {
     const current = snapshot.people.filter((person) => person.isCurrent);
     const term =
       ctx.params.term ||
-      past
-        .map((person) => person.term)
-        .filter(Boolean)
-        .sort((a, b) => termStartYear(b) - termStartYear(a))[0] ||
+      past.flatMap((person) => person.terms).sort(byNewestTerm)[0] ||
       "";
-    const listed = term ? past.filter((person) => person.term === term) : [];
+    const listed = term
+      ? past.filter((person) => person.terms.includes(term))
+      : [];
     return {
       ...splitAccessList(listed),
       term,
       untermed: past.filter(
-        (person) => !person.term && accessGaps(person).length === 0,
+        (person) => !person.terms.length && accessGaps(person).length === 0,
       ).length,
       requesters: coPresidentSigners(current),
       warnings: peopleWarnings(snapshot, listed),

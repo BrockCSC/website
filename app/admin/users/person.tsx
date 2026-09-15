@@ -226,6 +226,7 @@ export default function PersonView({
         <div className="mt-2 flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-extrabold text-ink">{person.name}</h1>
           {person.title && <Pill>{person.title}</Pill>}
+          {person.term && <Pill>{person.term}</Pill>}
           {person.isCurrentExec === false && <Pill>Past</Pill>}
           {person.status && person.status !== "approved" && (
             <Pill tone="accent">{person.status}</Pill>

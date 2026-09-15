@@ -5,8 +5,8 @@ import {
   sortExecsByRoleThenDatabaseOrder,
   termStartYear,
 } from "@/lib/execs/order";
+import { currentTerm, servingTerm, storedTerms } from "@/lib/execs/terms";
 import { grantsApproval } from "@/lib/execs/titles";
-import { clubDay, termForDay } from "./dates";
 import { plural } from "./text";
 import type { ReportSigner } from "./types";
 
@@ -26,6 +26,9 @@ export type ExecPerson = {
   execId: string;
   /** Trimmed tile title, "" when unset. */
   title: string;
+  /** Every term served, newest first. */
+  terms: string[];
+  /** Newest of `terms`, "" when none. */
   term: string;
   tileName: string;
   isCurrent: boolean;
@@ -86,10 +89,12 @@ const loadExecPeople = async (): Promise<PeopleSnapshot> => {
               isFormerExec: signup.isFormerExec === true,
             }
           : null;
+        const terms = storedTerms(tile);
         return {
           execId: tile.$key,
           title: clean(tile.title),
-          term: clean(tile.term),
+          terms,
+          term: terms[0] ?? "",
           tileName: clean(tile.name),
           // The Users page's Current scope; currentFlag lets reports warn about tiles never marked either way.
           isCurrent: tile.isCurrentExec !== false,
@@ -116,11 +121,11 @@ export const peopleLoader = () => {
 };
 
 const hasEnded = (term: string, now: Date) =>
-  termStartYear(term) < termStartYear(termForDay(clubDay(now)));
+  termStartYear(term) < termStartYear(currentTerm(now));
 
 /** Most common term on the current tiles that hasn't ended (ties go to the newest), else the term today falls in. */
 export const teamTerm = (current: ExecPerson[], now: Date): string => {
-  // Returning execs rarely update their tile's term. From April to August the outgoing and incoming years both still count.
+  // Only each person's newest term counts, so a returning exec votes once. From April to August the outgoing and incoming years both still count.
   const counts = new Map<string, number>();
   for (const { term } of current) {
     if (term && !hasEnded(term, now)) {
@@ -131,7 +136,7 @@ export const teamTerm = (current: ExecPerson[], now: Date): string => {
     ([a, aCount], [b, bCount]) =>
       bCount - aCount || termStartYear(b) - termStartYear(a),
   );
-  return best?.[0] ?? termForDay(clubDay(now));
+  return best?.[0] ?? currentTerm(now);
 };
 
 /** Page-only warnings when current tiles list an ended term, or `term` isn't the academic year today falls in. */
@@ -140,17 +145,19 @@ export const termWarnings = (
   term: string,
   now: Date,
 ): string[] => {
-  const today = termForDay(clubDay(now));
+  const today = currentTerm(now);
   const ended = current.filter(
     (person) => person.term && hasEnded(person.term, now),
   ).length;
   return [
     ...(ended
       ? [
-          `${ended} current tile${plural(ended)} ${ended === 1 ? "has" : "have"} a term that already ended; this document uses ${term}.`,
+          `${ended} current tile${plural(ended)} ${ended === 1 ? "has" : "have"} only terms that already ended; this document uses ${term}.`,
         ]
       : []),
-    ...(term === today
+    // From April the incoming tiles carry next year and teamTerm() follows them, which is what
+    // the summer documents want; only a term that is neither of those two is worth flagging.
+    ...(term === today || term === servingTerm(now)
       ? []
       : [
           `This document is for ${term}, not the current academic year (${today}).`,

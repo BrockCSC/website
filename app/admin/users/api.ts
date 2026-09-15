@@ -5,6 +5,7 @@ import type {
 import { apiFetch } from "@/lib/api/client";
 import type { ExecRecord, SignupRecord, WithKey } from "@/lib/api/types";
 import { sortExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
+import { latestTerm, storedTerms } from "@/lib/execs/terms";
 
 export type { ApplyResult, PersonDetail };
 export type { Consequence } from "@/app/api/signups/[id]/consequences";
@@ -24,6 +25,8 @@ export type Person = {
   id: string;
   name: string;
   title?: string;
+  /** The tile's newest term. */
+  term?: string;
   username?: string;
   email?: string;
   status?: SignupRecord["status"];
@@ -105,6 +108,7 @@ const join = (exec: Exec | undefined, signup: Signup | undefined): Person => ({
     signup?.username ||
     "Unnamed",
   title: exec?.title,
+  term: exec ? latestTerm(exec) : undefined,
   username: signup?.username,
   email: signup?.email,
   status: signup?.status,
@@ -143,6 +147,7 @@ const haystack = (person: Person) =>
     person.title,
     person.status ?? "no account",
     person.execKey ? (person.isCurrentExec === false ? "past" : "current") : "",
+    ...(person.exec ? storedTerms(person.exec) : []),
   ]
     .join(" ")
     .toLowerCase();

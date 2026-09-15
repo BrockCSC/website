@@ -19,9 +19,10 @@ import {
   urlFromHandle,
   type SocialKey,
 } from "@/lib/execs/socials";
-import { academicTerms } from "@/lib/execs/terms";
+import { storedTerms } from "@/lib/execs/terms";
 import { CO_PRESIDENT } from "@/lib/auth/capabilities";
 import { useSession } from "../session";
+import { TermsField } from "../users/terms-field";
 import { Panel, fieldOn, labelClass, type PanelProps } from "../users/ui";
 import { ask } from "../ask";
 import { useEffect, useMemo, useState } from "react";
@@ -33,7 +34,7 @@ const ACCESS_CARD_PATTERN = /^\d{5}$/;
 
 type Form = {
   description: string;
-  term: string;
+  terms: string[];
   hidden: boolean;
   photoUrl: string;
   photoPosition: string;
@@ -43,7 +44,7 @@ type Form = {
 
 const formFor = (exec: ProfileRecord | null): Form => ({
   description: exec?.description ?? "",
-  term: exec?.term ?? "",
+  terms: exec ? storedTerms(exec) : [],
   hidden: exec?.hidden ?? false,
   photoUrl: exec?.image?.url ?? "",
   photoPosition: exec?.image?.position ?? "50% 50%",
@@ -122,7 +123,10 @@ export default function ProfilePage() {
     try {
       await updateProfile({
         description: form.description,
-        term: form.term,
+        // This page never refetches, so an unchanged list must not be resent.
+        ...(form.terms.join(",") === saved.terms.join(",")
+          ? {}
+          : { terms: form.terms }),
         hidden: form.hidden,
         image: { url: form.photoUrl, position: form.photoPosition },
         socials,
@@ -162,7 +166,6 @@ export default function ProfilePage() {
   const preview: TeamMember = {
     ...profile,
     description: form.description,
-    term: form.term,
     socials,
     image: { url: form.photoUrl, position: form.photoPosition },
   };
@@ -253,22 +256,16 @@ export default function ProfilePage() {
               {form.description.length}/400
             </div>
 
-            <label className={`${labelClass} mt-3`} htmlFor="term">
-              Term
+            <label className={`${labelClass} mt-3`} htmlFor="terms">
+              Terms served
             </label>
-            <select
-              className={field}
-              id="term"
-              onChange={(e) => set("term", e.target.value)}
-              value={form.term}
-            >
-              <option value="">Not set</option>
-              {academicTerms().map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
+            <TermsField
+              fieldClass={field}
+              id="terms"
+              keepOne={profile.isCurrentExec === true}
+              onChange={(terms) => set("terms", terms)}
+              terms={form.terms}
+            />
           </Section>
 
           <Section note="Enter your username, not the full link." title="Links">

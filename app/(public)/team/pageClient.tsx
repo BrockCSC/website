@@ -12,10 +12,8 @@ import {
   type ExecRecord,
   type WithKey,
 } from "@/lib/api";
-import {
-  sortExecsByRoleThenDatabaseOrder,
-  termStartYear,
-} from "@/lib/execs/order";
+import { sortExecsByRoleThenDatabaseOrder } from "@/lib/execs/order";
+import { byNewestTerm, latestTerm, storedTerms } from "@/lib/execs/terms";
 
 import { RetryNotice, SearchField } from "../components/search-panel";
 import { TeamMemberCard } from "./components/team-member-card";
@@ -30,7 +28,7 @@ const groupPreviousExecsByTerm = (
   const groups = new Map<string, TeamMember[]>();
 
   for (const member of execs) {
-    const term = member.term?.trim() || UNDATED_TERM;
+    const term = latestTerm(member) || UNDATED_TERM;
     const existing = groups.get(term);
     if (existing) {
       existing.push(member);
@@ -41,9 +39,7 @@ const groupPreviousExecsByTerm = (
 
   const dated = Array.from(groups.entries())
     .filter(([term]) => term !== UNDATED_TERM)
-    .sort(
-      ([a], [b]) => termStartYear(b) - termStartYear(a) || b.localeCompare(a),
-    );
+    .sort(([a], [b]) => byNewestTerm(a, b));
   const undated = groups.get(UNDATED_TERM);
 
   return [...dated, ...(undated ? [[UNDATED_TERM, undated] as const] : [])].map(
@@ -55,8 +51,8 @@ const groupPreviousExecsByTerm = (
 };
 
 const matchesQuery = (member: TeamMember, query: string): boolean =>
-  [member.name, member.title, member.term, member.description].some((field) =>
-    field?.toLowerCase().includes(query),
+  [member.name, member.title, member.description, ...storedTerms(member)].some(
+    (field) => field?.toLowerCase().includes(query),
   );
 
 export default function TeamPageClient() {

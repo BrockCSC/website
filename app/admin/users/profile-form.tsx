@@ -11,9 +11,10 @@ import {
   urlFromHandle,
   type SocialKey,
 } from "@/lib/execs/socials";
-import { academicTerms } from "@/lib/execs/terms";
+import { servingTerm, storedTerms } from "@/lib/execs/terms";
 import { ACTIVE_TITLES, isDeprecatedTitle } from "@/lib/execs/titles";
 import { createTile, updateTile, type Exec } from "./api";
+import { TermsField } from "./terms-field";
 import { ApiError } from "@/lib/api/client";
 import { Label, field } from "./ui";
 
@@ -29,7 +30,16 @@ export default function ProfileForm({
   const [name, setName] = useState(exec?.name ?? "");
   const [title, setTitle] = useState(exec?.title ?? "Executive");
   const [description, setDescription] = useState(exec?.description ?? "");
-  const [term, setTerm] = useState(exec?.term ?? "");
+  const stored = exec ? storedTerms(exec).join(",") : "";
+  const [terms, setTerms] = useState<string[]>(() =>
+    exec ? storedTerms(exec) : [servingTerm()],
+  );
+  // Returning someone to the team adds a term on the server, so follow the tile when it changes.
+  const [tracked, setTracked] = useState(stored);
+  if (exec && tracked !== stored) {
+    setTracked(stored);
+    setTerms(stored ? stored.split(",") : []);
+  }
   const [hidden, setHidden] = useState(exec?.hidden ?? false);
   const [photo, setPhoto] = useState(exec?.image?.url ?? "");
   const [handles, setHandles] = useState<Record<SocialKey, string>>({
@@ -62,15 +72,15 @@ export default function ProfileForm({
         name: name.trim(),
         title,
         description,
-        term,
         hidden,
         socials,
         image: { url: photo, position: exec?.image?.position ?? "50% 50%" },
       };
+      const changed = terms.join(",") !== stored;
       onSaved(
         exec
-          ? await updateTile(exec.$key, body)
-          : await createTile({ ...body, isCurrentExec: true }),
+          ? await updateTile(exec.$key, changed ? { ...body, terms } : body)
+          : await createTile({ ...body, terms, isCurrentExec: true }),
       );
     } catch (err) {
       setError(
@@ -127,20 +137,14 @@ export default function ProfileForm({
       </div>
 
       <div>
-        <Label htmlFor="person-term">Term</Label>
-        <select
-          className={field}
-          id="person-term"
-          onChange={(e) => setTerm(e.target.value)}
-          value={term}
-        >
-          <option value="">Not set</option>
-          {academicTerms().map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <Label htmlFor="person-terms">Terms served</Label>
+        <TermsField
+          fieldClass={field}
+          id="person-terms"
+          keepOne={!exec || exec.isCurrentExec === true}
+          onChange={setTerms}
+          terms={terms}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">

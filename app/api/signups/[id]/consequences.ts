@@ -16,6 +16,7 @@ import {
 import { execsTable, signupsTable } from "@/lib/db/schema";
 import { findActiveRetiredMailbox } from "@/lib/db/retired-mailboxes";
 import { ownsIdentities } from "@/lib/env";
+import { servingTerm, storedTerms, termFields } from "@/lib/execs/terms";
 import {
   isProtectedMailbox,
   provisionMailbox,
@@ -166,6 +167,8 @@ const mailboxItems = (
 const tileItems = (exec: Entity<ExecRecord> | null): Item[] => {
   if (!exec) return [];
   const toCurrent = exec.isCurrentExec === false;
+  const term = servingTerm();
+  const adds = toCurrent && !storedTerms(exec).includes(term);
   return [
     {
       id: toCurrent ? "tile:current" : "tile:past",
@@ -174,9 +177,19 @@ const tileItems = (exec: Entity<ExecRecord> | null): Item[] => {
         ? "Move their tile back to the current team"
         : "Move their tile to past executives",
       detail: toCurrent
-        ? "They appear again under the current executive team."
+        ? `They appear again under the current executive team${adds ? `, with ${term} added to their terms` : ""}.`
         : "They drop off the current team and appear under past executives.",
-      run: () => update(execsTable, exec.id, { isCurrentExec: toCurrent }),
+      run: () =>
+        update(
+          execsTable,
+          exec.id,
+          toCurrent
+            ? {
+                isCurrentExec: true,
+                ...termFields([...storedTerms(exec), term]),
+              }
+            : { isCurrentExec: false },
+        ),
     },
   ];
 };
