@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Paperclip, X } from "lucide-react";
 import { Editor } from "./editor";
 import { toPlainText } from "./html";
@@ -113,7 +114,11 @@ export function Compose({
     }
   };
 
-  return (
+  // Portaled to the document body: rendered under <main>, whose own
+  // fade-in animation creates a CSS stacking context that would otherwise
+  // trap this fixed overlay below the (higher DOM, but non-positioned
+  // relative to it) mobile tab bar.
+  return createPortal(
     <div className="fixed inset-0 z-50 flex animate-fade-in items-center justify-center bg-ink/40 px-4 dark:bg-surface/80">
       <div
         role="dialog"
@@ -256,6 +261,7 @@ export function Compose({
           </div>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -2,7 +2,18 @@
 
 import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Eye, MailOpen, Search, Star } from "lucide-react";
+import {
+  Archive,
+  ArrowLeft,
+  Eye,
+  Forward as ForwardIcon,
+  MailOpen,
+  Reply as ReplyIcon,
+  ReplyAll as ReplyAllIcon,
+  Search,
+  Star,
+  Trash2,
+} from "lucide-react";
 import { logout } from "@/lib/api";
 import type { MailDeletionRequest } from "@/lib/api/types";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
@@ -937,22 +948,32 @@ function MessageActions({
         <>
           <button
             type="button"
-            className={ACTION}
+            aria-label="Reply"
+            className={`${ACTION} flex items-center gap-1.5`}
             onClick={() => onReply(false)}
           >
-            Reply
+            <ReplyIcon size={15} aria-hidden />
+            <span className="hidden sm:inline">Reply</span>
           </button>
           {replyAll && (
             <button
               type="button"
-              className={ACTION}
+              aria-label="Reply all"
+              className={`${ACTION} flex items-center gap-1.5`}
               onClick={() => onReply(true)}
             >
-              Reply all
+              <ReplyAllIcon size={15} aria-hidden />
+              <span className="hidden sm:inline">Reply all</span>
             </button>
           )}
-          <button type="button" className={ACTION} onClick={onForward}>
-            Forward
+          <button
+            type="button"
+            aria-label="Forward"
+            className={`${ACTION} flex items-center gap-1.5`}
+            onClick={onForward}
+          >
+            <ForwardIcon size={15} aria-hidden />
+            <span className="hidden sm:inline">Forward</span>
           </button>
 
           <div className="ml-auto flex flex-wrap items-center gap-1.5">
@@ -999,12 +1020,14 @@ function MessageActions({
             </select>
             <button
               type="button"
+              aria-label="Archive"
               disabled={busy || inArchive}
               title={inArchive ? "Already in the archive" : undefined}
-              className={ACTION}
+              className={`${ACTION} flex items-center gap-1.5`}
               onClick={() => onMove({ to: "archive" })}
             >
-              Archive
+              <Archive size={15} aria-hidden />
+              <span className="hidden sm:inline">Archive</span>
             </button>
             {inTrash ? (
               deletionPending ? (
@@ -1014,21 +1037,25 @@ function MessageActions({
               ) : (
                 <button
                   type="button"
+                  aria-label="Request deletion"
                   disabled={busy}
-                  className={`${ACTION} text-destructive`}
+                  className={`${ACTION} flex items-center gap-1.5 text-destructive`}
                   onClick={onPurge}
                 >
-                  Request deletion
+                  <Trash2 size={15} aria-hidden />
+                  <span className="hidden sm:inline">Request deletion</span>
                 </button>
               )
             ) : (
               <button
                 type="button"
+                aria-label="Delete"
                 disabled={busy}
-                className={`${ACTION} text-brand`}
+                className={`${ACTION} flex items-center gap-1.5 text-brand`}
                 onClick={() => onMove({ to: "trash" })}
               >
-                Delete
+                <Trash2 size={15} aria-hidden />
+                <span className="hidden sm:inline">Delete</span>
               </button>
             )}
           </div>

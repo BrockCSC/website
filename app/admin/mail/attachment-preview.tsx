@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Download, X } from "lucide-react";
 import type { BodyPart } from "@/lib/mail/jmap-mail";
 import { withAs } from "./inbox-picker";
@@ -150,7 +151,10 @@ export function AttachmentPreview({
     return () => document.removeEventListener("keydown", onKey);
   }, [onClose, onNavigate, index, files.length]);
 
-  return (
+  // Portaled to the document body for the same reason as the compose
+  // modal: <main>'s fade-in animation creates a stacking context that
+  // would otherwise trap this overlay below the mobile tab bar.
+  return createPortal(
     <div
       role="dialog"
       aria-modal="true"
@@ -237,6 +241,7 @@ export function AttachmentPreview({
           </button>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
