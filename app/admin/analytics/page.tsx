@@ -425,74 +425,78 @@ export default function AnalyticsPage() {
               </dl>
 
               <div className="mt-6 grid gap-6">
-                <Card title="Where the money goes" hint="Last 30 days, USD">
-                  <SplitBar
-                    segments={costs.last30.lines.map((line) => ({
-                      label: line.label,
-                      value: line.amount,
-                    }))}
-                    format={usd}
-                  />
-                  <div className="mt-5 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs font-bold uppercase tracking-wide text-subtle">
-                          <th className="pb-2 font-bold">Item</th>
-                          <th className="pb-2 text-right font-bold">
-                            Quantity
-                          </th>
-                          <th className="pb-2 text-right font-bold">
-                            Unit price
-                          </th>
-                          <th className="pb-2 text-right font-bold">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {costs.last30.lines.map((line) => (
-                          <tr
-                            key={line.key}
-                            className="border-t-2 border-line/20 transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-tint"
-                          >
-                            <td className="py-2 pr-3">
-                              <a
-                                href={line.source}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-bold text-ink underline decoration-line/60 underline-offset-2 hover:decoration-brand"
-                              >
-                                {line.label}
-                              </a>
-                              {line.note && (
-                                <span className="ml-2 whitespace-nowrap text-xs text-subtle">
-                                  {line.note}
-                                </span>
-                              )}
+                <div className="min-w-0">
+                  <Card title="Where the money goes" hint="Last 30 days, USD">
+                    <SplitBar
+                      segments={costs.last30.lines.map((line) => ({
+                        label: line.label,
+                        value: line.amount,
+                      }))}
+                      format={usd}
+                    />
+                    <div className="mt-5 overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs font-bold uppercase tracking-wide text-subtle">
+                            <th className="pb-2 font-bold">Item</th>
+                            <th className="pb-2 text-right font-bold">
+                              Quantity
+                            </th>
+                            <th className="pb-2 text-right font-bold">
+                              Unit price
+                            </th>
+                            <th className="pb-2 text-right font-bold">
+                              Amount
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {costs.last30.lines.map((line) => (
+                            <tr
+                              key={line.key}
+                              className="border-t-2 border-line/20 transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-tint"
+                            >
+                              <td className="py-2 pr-3">
+                                <a
+                                  href={line.source}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="font-bold text-ink underline decoration-line/60 underline-offset-2 hover:decoration-brand"
+                                >
+                                  {line.label}
+                                </a>
+                                {line.note && (
+                                  <span className="ml-2 whitespace-nowrap text-xs text-subtle">
+                                    {line.note}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
+                                {quantity(line)}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
+                                ${line.unitPrice}
+                              </td>
+                              <td className="py-2 pl-3 text-right font-bold tabular-nums text-ink">
+                                {usd(line.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 border-line">
+                            <td className="pt-2 font-bold text-ink" colSpan={3}>
+                              Total
                             </td>
-                            <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
-                              {quantity(line)}
-                            </td>
-                            <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
-                              ${line.unitPrice}
-                            </td>
-                            <td className="py-2 pl-3 text-right font-bold tabular-nums text-ink">
-                              {usd(line.amount)}
+                            <td className="pt-2 text-right font-extrabold tabular-nums text-brand">
+                              {usd(costs.last30.total)}
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr className="border-t-2 border-line">
-                          <td className="pt-2 font-bold text-ink" colSpan={3}>
-                            Total
-                          </td>
-                          <td className="pt-2 text-right font-extrabold tabular-nums text-brand">
-                            {usd(costs.last30.total)}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </Card>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </Card>
+                </div>
 
                 <Card
                   title="Mail volume"

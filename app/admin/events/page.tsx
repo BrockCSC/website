@@ -47,7 +47,7 @@ function EventRow({
 
   return (
     <li className="flex flex-wrap items-start gap-4 rounded-[16px] border-2 border-line bg-surface p-3 shadow-brut-sm transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[3px_3px_0_0_var(--brand)] sm:p-4">
-      <div className="relative size-16 shrink-0 overflow-hidden rounded-[10px] border-2 border-line bg-tint">
+      <div className="relative min-h-16 w-16 shrink-0 self-stretch overflow-hidden rounded-[10px] border-2 border-line bg-tint">
         {event.image?.url ? (
           <Image
             alt=""

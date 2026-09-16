@@ -35,7 +35,7 @@ export function TermsField({
               {!(keepOne && terms.length === 1) && (
                 <button
                   aria-label={`Remove ${term}`}
-                  className="opacity-70 hover:opacity-100"
+                  className="-m-1.5 p-1.5 opacity-70 hover:opacity-100"
                   onClick={() => onChange(terms.filter((t) => t !== term))}
                   type="button"
                 >
