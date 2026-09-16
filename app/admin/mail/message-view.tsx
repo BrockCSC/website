@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, Paperclip, ShieldAlert } from "lucide-react";
+import { ChevronDown, Eye, Paperclip, ShieldAlert } from "lucide-react";
 import type {
   BodyPart,
   MessageDetail,
@@ -10,6 +10,12 @@ import type {
 import { ExternalTag } from "./message-list";
 import { isExternalSender } from "./external";
 import { withAs } from "./inbox-picker";
+import {
+  AttachmentPreview,
+  blobUrl,
+  previewKind,
+  size,
+} from "./attachment-preview";
 
 const addressLine = (list: MessageDetail["from"]) =>
   (list ?? []).map((a) => a.name || a.email).join(", ");
@@ -21,25 +27,13 @@ const fullAddress = (a: { name: string | null; email: string } | undefined) => {
   return a.email || a.name || "Unknown sender";
 };
 
-const size = (bytes: number) =>
-  bytes < 1024
-    ? `${bytes} B`
-    : bytes < 1024 * 1024
-      ? `${Math.round(bytes / 1024)} KB`
-      : `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+const ATTACHMENT_CHIP =
+  "flex items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink hover:bg-tint";
 
 const downloadable = (parts: BodyPart[] | undefined) =>
   (parts ?? []).filter((part) => part.blobId && !part.cid);
 
 type RenderedBody = { html: string; blocked: boolean };
-
-const blobUrl = (part: BodyPart, viewing: string | null) =>
-  withAs(
-    `/api/mail/blob/${encodeURIComponent(part.blobId!)}?name=${encodeURIComponent(
-      part.name ?? "attachment",
-    )}&type=${encodeURIComponent(part.type)}`,
-    viewing,
-  );
 
 const useDarkTheme = () => {
   const [dark, setDark] = useState(false);
@@ -126,6 +120,7 @@ function MessageView({
   const [showImages, setShowImages] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [details, setDetails] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
   const dark = useDarkTheme();
 
   useEffect(() => {
@@ -225,26 +220,54 @@ function MessageView({
 
         {files.length > 0 && (
           <ul className="mt-2.5 flex flex-wrap gap-2">
-            {files.map((part) => (
-              <li key={part.blobId}>
-                <a
-                  href={blobUrl(part, viewing)}
-                  download={part.name ?? "attachment"}
-                  className="flex items-center gap-1.5 rounded-[10px] border-2 border-line bg-raised px-2.5 py-1 text-xs font-bold text-ink hover:bg-tint"
-                >
-                  <Paperclip size={12} aria-hidden />
+            {files.map((part, i) => {
+              const label = (
+                <>
                   <span className="max-w-48 truncate">
                     {part.name ?? "attachment"}
                   </span>
                   <span className="font-medium text-subtle">
                     {size(part.size)}
                   </span>
-                </a>
-              </li>
-            ))}
+                </>
+              );
+              return (
+                <li key={part.blobId}>
+                  {previewKind(part.type) ? (
+                    <button
+                      type="button"
+                      onClick={() => setPreviewIndex(i)}
+                      className={ATTACHMENT_CHIP}
+                    >
+                      <Eye size={12} aria-hidden />
+                      {label}
+                    </button>
+                  ) : (
+                    <a
+                      href={blobUrl(part, viewing)}
+                      download={part.name ?? "attachment"}
+                      className={ATTACHMENT_CHIP}
+                    >
+                      <Paperclip size={12} aria-hidden />
+                      {label}
+                    </a>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         )}
       </header>
+
+      {previewIndex !== null && (
+        <AttachmentPreview
+          files={files}
+          index={previewIndex}
+          viewing={viewing}
+          onClose={() => setPreviewIndex(null)}
+          onNavigate={setPreviewIndex}
+        />
+      )}
 
       {blocked && (
         <div className="flex items-center justify-between gap-3 border-b-2 border-line bg-tint px-5 py-2">
@@ -263,11 +286,15 @@ function MessageView({
       )}
 
       {/* Sandboxed: the body is untrusted even after sanitising. srcdoc rather
-          than src so the app's own X-Frame-Options cannot block it. */}
+          than src so the app's own X-Frame-Options cannot block it.
+          allow-popups (+ allow-popups-to-escape-sandbox so the opened tab
+          isn't itself sandboxed) lets target="_blank" links in the body
+          actually open, without granting the frame scripts, forms or
+          same-origin access. */}
       <iframe
         title="Message body"
         srcDoc={body}
-        sandbox=""
+        sandbox="allow-popups allow-popups-to-escape-sandbox"
         referrerPolicy="no-referrer"
         className="w-full min-h-0 flex-1 border-0 bg-surface"
       />

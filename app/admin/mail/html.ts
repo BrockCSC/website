@@ -26,6 +26,7 @@ export const buildQuote = async (message: MessageSummary): Promise<string> => {
   const doc = document.implementation.createHTMLDocument("");
   const sender = message.from?.[0];
   const attribution = doc.createElement("div");
+  attribution.setAttribute("style", "margin-top:0.75em");
   attribution.textContent = `On ${new Date(
     message.receivedAt,
   ).toLocaleString()}, ${sender?.name || sender?.email || "someone"} wrote:`;
