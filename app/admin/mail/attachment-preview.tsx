@@ -75,7 +75,7 @@ function TextPreview({ url, bytes }: { url: string; bytes: number }) {
   if (state.status === "error")
     return <p className="p-6 text-sm text-brand">Could not load this file.</p>;
   return (
-    <div className="max-h-[75vh] w-full max-w-3xl overflow-auto rounded-[10px] bg-raised p-4">
+    <div className="max-h-[85vh] w-full max-w-4xl overflow-auto rounded-[10px] bg-raised p-4">
       <pre className="font-mono text-xs whitespace-pre-wrap break-words text-ink">
         {state.text}
       </pre>
@@ -117,7 +117,7 @@ function PdfPreview({ url }: { url: string }) {
     <iframe
       title="Attachment preview"
       src={state.objectUrl}
-      className="h-[75vh] w-full max-w-3xl rounded-[10px] border-2 border-line"
+      className="h-[85vh] w-full max-w-5xl rounded-[10px] border-2 border-line"
     />
   );
 }
