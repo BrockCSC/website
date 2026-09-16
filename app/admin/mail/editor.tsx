@@ -113,6 +113,19 @@ export function Editor({
   };
 
   const addLink = async () => {
+    // The ask() dialog steals focus while awaited, and browsers don't
+    // reliably restore the editor's caret/selection on refocus — save the
+    // range now and restore it before acting, or createLink silently does
+    // nothing.
+    const el = editorRef.current;
+    const selection = window.getSelection();
+    const savedRange =
+      selection &&
+      selection.rangeCount > 0 &&
+      el?.contains(selection.anchorNode)
+        ? selection.getRangeAt(0).cloneRange()
+        : null;
+
     const url = (
       await ask({
         title: "Insert a link",
@@ -123,7 +136,36 @@ export function Editor({
       })
     )?.trim();
     if (!url) return;
-    run("createLink", /^(https?:|mailto:)/i.test(url) ? url : `https://${url}`);
+
+    el?.focus();
+    if (savedRange) {
+      selection?.removeAllRanges();
+      selection?.addRange(savedRange);
+    }
+
+    const href = /^(https?:|mailto:)/i.test(url) ? url : `https://${url}`;
+    // createLink needs selected text to turn into a link; with just a caret
+    // (the common case when nothing was highlighted first), insert the URL
+    // itself as the link text instead, matching Gmail/Outlook. Built as a
+    // real node, not an HTML string, so a stray `"` or `<` in the typed URL
+    // can't break out of the markup.
+    if (savedRange && !savedRange.collapsed) {
+      document.execCommand("createLink", false, href);
+    } else {
+      const range = window.getSelection()?.getRangeAt(0);
+      if (range) {
+        const link = document.createElement("a");
+        link.href = href;
+        link.textContent = href;
+        range.deleteContents();
+        range.insertNode(link);
+        range.setStartAfter(link);
+        range.collapse(true);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+      }
+    }
+    syncActive();
   };
 
   const toolbarButton = ({ command, value, icon: Icon, title }: Command) => (
