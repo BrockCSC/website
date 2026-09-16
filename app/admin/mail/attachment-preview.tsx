@@ -162,7 +162,7 @@ export function AttachmentPreview({
       className="fixed inset-0 z-50 flex animate-fade-in flex-col bg-ink/80"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
-      <header className="flex shrink-0 items-center justify-between gap-3 px-5 py-3">
+      <header className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <p className="min-w-0 truncate text-sm font-bold text-white">
           {part.name ?? "attachment"}
           <span className="ml-2 font-medium text-white/60">

@@ -49,7 +49,7 @@ export function Sheet({
     >
       <div className="absolute inset-0 animate-fade-in bg-ink/40 dark:bg-surface/80" />
       <div className="relative flex h-full w-full animate-rise-in flex-col bg-surface sm:h-auto sm:max-h-[86vh] sm:max-w-[660px] sm:animate-pop-in sm:rounded-[20px] sm:border-2 sm:border-line sm:shadow-brut">
-        <div className="flex items-center gap-3 border-b-2 border-line px-5 py-4">
+        <div className="flex items-center gap-3 border-b-2 border-line px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
           <h2 className="text-lg font-extrabold text-ink">{title}</h2>
           <button
             aria-label="Close"

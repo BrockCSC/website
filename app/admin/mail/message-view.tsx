@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronDown, Eye, Paperclip, ShieldAlert } from "lucide-react";
 import type {
   BodyPart,
@@ -121,7 +121,31 @@ function MessageView({
   const [blocked, setBlocked] = useState(false);
   const [details, setDetails] = useState(false);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [bodyHeight, setBodyHeight] = useState<number | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const resizeObserver = useRef<ResizeObserver | null>(null);
   const dark = useDarkTheme();
+
+  // The header (sender, subject, attachments) and the message body used to
+  // scroll independently, squeezing the body into whatever space was left
+  // over — on a phone that could be a couple of lines. allow-same-origin
+  // (still with no allow-scripts, so nothing in the body can ever execute)
+  // lets the parent measure the sandboxed document so the iframe can be
+  // sized to its content and scroll as one continuous page with everything
+  // else, like a real mail app.
+  const onBodyLoad = () => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc?.documentElement) return;
+    setBodyHeight(doc.documentElement.scrollHeight);
+    resizeObserver.current?.disconnect();
+    resizeObserver.current = new ResizeObserver(
+      () =>
+        doc.documentElement && setBodyHeight(doc.documentElement.scrollHeight),
+    );
+    resizeObserver.current.observe(doc.documentElement);
+  };
+
+  useEffect(() => () => resizeObserver.current?.disconnect(), []);
 
   useEffect(() => {
     let live = true;
@@ -177,8 +201,8 @@ function MessageView({
   );
 
   return (
-    <article className="flex min-h-0 flex-1 animate-fade-in flex-col">
-      <header className="border-b-2 border-line px-5 py-3">
+    <article className="flex min-h-0 flex-1 animate-fade-in flex-col overflow-y-auto">
+      <header className="shrink-0 border-b-2 border-line px-5 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="flex min-w-0 flex-wrap items-center gap-1.5 text-sm font-bold text-ink">
             <span className="truncate">{fullAddress(message.from?.[0])}</span>
@@ -270,7 +294,7 @@ function MessageView({
       )}
 
       {blocked && (
-        <div className="flex items-center justify-between gap-3 border-b-2 border-line bg-tint px-5 py-2">
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b-2 border-line bg-tint px-5 py-2">
           <p className="text-xs font-semibold text-ink">
             This message links to images hosted elsewhere. Loading them tells
             the sender you opened it.
@@ -289,14 +313,20 @@ function MessageView({
           than src so the app's own X-Frame-Options cannot block it.
           allow-popups (+ allow-popups-to-escape-sandbox so the opened tab
           isn't itself sandboxed) lets target="_blank" links in the body
-          actually open, without granting the frame scripts, forms or
-          same-origin access. */}
+          actually open. allow-same-origin lets the parent measure the
+          document so the iframe can be sized to its content and scroll as
+          one page with the header above it, instead of being squeezed into
+          whatever space was left over; there's still no allow-scripts, so
+          nothing inside the body can ever run regardless of origin. */}
       <iframe
+        ref={iframeRef}
         title="Message body"
         srcDoc={body}
-        sandbox="allow-popups allow-popups-to-escape-sandbox"
+        onLoad={onBodyLoad}
+        sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin"
         referrerPolicy="no-referrer"
-        className="w-full min-h-0 flex-1 border-0 bg-surface"
+        style={{ height: bodyHeight ? `${bodyHeight}px` : "50vh" }}
+        className="w-full shrink-0 border-0 bg-surface"
       />
     </article>
   );

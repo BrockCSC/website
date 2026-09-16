@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, X } from "lucide-react";
 import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
 import { storedTerms } from "@/lib/execs/terms";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
@@ -316,7 +316,7 @@ export function SearchButton() {
       onClick={open}
       aria-label="Search everything"
       title="Search everything"
-      className="flex items-center gap-2 rounded-[10px] border-2 border-line px-2.5 py-1.5 text-sm font-bold text-subtle hover:bg-tint"
+      className="inline-flex h-9 items-center gap-1 rounded-[10px] border-2 border-line px-2 text-sm font-bold text-subtle hover:bg-tint sm:px-3"
     >
       <Search size={15} aria-hidden />
       <kbd className="hidden text-[11px] font-bold sm:block">⌘K</kbd>
@@ -673,7 +673,7 @@ function Palette({
         aria-label="Search the admin portal"
         className="flex h-dvh w-full animate-pop-in flex-col overflow-hidden border-line bg-surface sm:h-auto sm:max-h-[70vh] sm:max-w-2xl sm:rounded-[20px] sm:border-2 sm:shadow-brut"
       >
-        <div className="flex shrink-0 items-center gap-2 border-b-2 border-line px-4 py-3">
+        <div className="flex shrink-0 items-center gap-2 border-b-2 border-line px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
           <Search size={16} className="shrink-0 text-brand" aria-hidden />
           <input
             ref={input}
@@ -695,6 +695,14 @@ function Palette({
           <kbd className="hidden shrink-0 rounded-[6px] border-2 border-line px-1.5 py-0.5 text-[10px] font-bold text-subtle sm:block">
             esc
           </kbd>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close search"
+            className="shrink-0 rounded-[8px] p-1 text-subtle hover:bg-tint hover:text-ink sm:hidden"
+          >
+            <X size={18} aria-hidden />
+          </button>
         </div>
 
         <div

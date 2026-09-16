@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -33,6 +33,15 @@ export const metadata: Metadata = {
     locale: "en_CA",
   },
   twitter: { card: "summary_large_image" },
+};
+
+// viewportFit: "cover" lets fixed headers/footers extend under a notch or
+// dynamic island, so their own safe-area-inset padding (rather than the
+// browser reserving a blank bar) is what keeps content clear of it.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
