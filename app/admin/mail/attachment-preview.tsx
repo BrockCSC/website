@@ -159,7 +159,7 @@ export function AttachmentPreview({
       role="dialog"
       aria-modal="true"
       aria-label={part.name ?? "Attachment preview"}
-      className="fixed inset-0 z-50 flex animate-fade-in flex-col bg-ink/80"
+      className="fixed inset-0 z-50 flex animate-fade-in flex-col bg-ink/80 dark:bg-surface/90"
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
     >
       <header className="flex shrink-0 items-center justify-between gap-3 px-5 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">

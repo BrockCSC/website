@@ -665,7 +665,7 @@ function Palette({
   return (
     <div
       onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-      className="fixed inset-0 z-50 flex animate-fade-in justify-center bg-ink/40 sm:p-6 sm:pt-[11vh]"
+      className="fixed inset-0 z-50 flex animate-fade-in justify-center bg-ink/40 dark:bg-surface/80 sm:p-6 sm:pt-[11vh]"
     >
       <div
         role="dialog"

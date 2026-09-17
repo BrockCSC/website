@@ -62,7 +62,7 @@ export function AskHost() {
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-ink/40 px-4"
+      className="fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-ink/40 px-4 dark:bg-surface/80"
       onMouseDown={(event) =>
         event.target === event.currentTarget && settle(null)
       }
