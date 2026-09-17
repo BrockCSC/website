@@ -507,15 +507,17 @@ export default function DocumentsPage() {
                   key={doc.$key}
                 >
                   {doc.currentVersionId && (
-                    <input
-                      aria-label={`Select ${doc.title}`}
-                      checked={checked.has(doc.$key)}
-                      className="ml-1 size-4 shrink-0 accent-brand"
-                      onChange={(e) =>
-                        toggleChecked(doc.$key, e.target.checked)
-                      }
-                      type="checkbox"
-                    />
+                    <label className="-m-2 flex shrink-0 cursor-pointer p-2">
+                      <input
+                        aria-label={`Select ${doc.title}`}
+                        checked={checked.has(doc.$key)}
+                        className="ml-1 size-4 shrink-0 accent-brand"
+                        onChange={(e) =>
+                          toggleChecked(doc.$key, e.target.checked)
+                        }
+                        type="checkbox"
+                      />
+                    </label>
                   )}
                   <Link
                     className="flex min-w-0 flex-1 items-center gap-3"

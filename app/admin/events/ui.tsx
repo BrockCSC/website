@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 const base =
   "inline-flex items-center justify-center gap-2 rounded-[10px] border-2 border-line px-4 py-2 text-sm font-bold disabled:pointer-events-none disabled:opacity-50";
@@ -9,7 +10,7 @@ export const btn = {
   primary: `${base} bg-brand text-brand-ink shadow-brut-sm hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`,
   secondary: `${base} bg-surface text-ink shadow-brut-sm hover:-translate-y-0.5 hover:bg-tint motion-reduce:hover:translate-y-0`,
   danger: `${base} border-destructive bg-destructive text-surface shadow-brut-sm hover:-translate-y-0.5 motion-reduce:hover:translate-y-0`,
-  quiet: `${base} border-transparent px-2.5 py-1.5 text-destructive hover:bg-tint`,
+  quiet: `${base} border-transparent px-2.5 py-2 text-destructive hover:bg-tint`,
 };
 
 export const field =
@@ -40,7 +41,10 @@ export function Sheet({
     };
   }, [onClose]);
 
-  return (
+  // Portaled to the document body: rendered under <main>, whose own
+  // fade-in animation creates a CSS stacking context that would otherwise
+  // trap this fixed overlay below the mobile tab bar.
+  return createPortal(
     <div
       aria-label={title}
       aria-modal="true"
@@ -49,7 +53,7 @@ export function Sheet({
     >
       <div className="absolute inset-0 animate-fade-in bg-ink/40 dark:bg-surface/80" />
       <div className="relative flex h-full w-full animate-rise-in flex-col bg-surface sm:h-auto sm:max-h-[86vh] sm:max-w-[660px] sm:animate-pop-in sm:rounded-[20px] sm:border-2 sm:border-line sm:shadow-brut">
-        <div className="flex items-center gap-3 border-b-2 border-line px-5 py-4">
+        <div className="flex items-center gap-3 border-b-2 border-line px-5 pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pt-4">
           <h2 className="text-lg font-extrabold text-ink">{title}</h2>
           <button
             aria-label="Close"
@@ -62,6 +66,7 @@ export function Sheet({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

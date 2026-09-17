@@ -66,6 +66,9 @@ export const GET = async (
       })
     : { html: emailBodyToText(raw ?? ""), blocked: false };
 
+  // HTML bodies keep their own light background: their inline colors (e.g.
+  // dark text with no explicit background-color) assume a white canvas, and
+  // forcing the dark palette onto them can make that text unreadable.
   const dark = !isHtml && search.get("theme") === "dark";
   const palette = dark
     ? { fg: "#f4f1ee", bg: "#1a181b", link: "#d98079" }

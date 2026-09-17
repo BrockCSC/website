@@ -30,7 +30,7 @@ const Tile = ({
   detail: string;
   children?: React.ReactNode;
 }) => (
-  <div className="animate-rise-in rounded-[16px] border-2 border-line bg-surface p-3.5 shadow-brut-sm transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[3px_3px_0_0_var(--brand)]">
+  <div className="min-w-0 animate-rise-in rounded-[16px] border-2 border-line bg-surface p-3.5 shadow-brut-sm transition-shadow duration-[var(--dur)] ease-smooth hover:shadow-[3px_3px_0_0_var(--brand)]">
     <div className="text-xs font-bold uppercase tracking-wide text-subtle">
       {label}
     </div>

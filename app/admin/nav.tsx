@@ -74,7 +74,9 @@ export function AdminTabBar({
   pathname: string;
 }) {
   const { open } = usePalette();
-  const pinned = sections.slice(0, 2);
+  const pinned = ["/admin/mail", "/admin/profile"]
+    .map((href) => sections.find((section) => section.href === href))
+    .filter((section): section is Section => Boolean(section));
   const current = sectionFor(pathname);
   const atHome = pathname === "/admin";
 

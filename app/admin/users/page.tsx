@@ -318,12 +318,16 @@ export default function UsersPage() {
                         )}
                         {!entry.signupKey && <Pill>No account</Pill>}
                       </span>
-                      <span className="mt-1 block truncate text-sm text-subtle">
-                        <span className="font-mono">
-                          {entry.username ?? "—"}
+                      {(entry.username || entry.email) && (
+                        <span className="mt-1 block truncate text-sm text-subtle">
+                          {entry.username && (
+                            <span className="font-mono">{entry.username}</span>
+                          )}
+                          {entry.email
+                            ? `${entry.username ? " · " : ""}${entry.email}`
+                            : ""}
                         </span>
-                        {entry.email ? ` · ${entry.email}` : ""}
-                      </span>
+                      )}
                     </button>
                   </li>
                 ))}

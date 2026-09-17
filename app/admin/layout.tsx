@@ -104,7 +104,7 @@ function AdminShell({ children }: { children: React.ReactNode }) {
   return (
     <PaletteProvider hasMail={hasMailbox} onLogout={handleLogout}>
       <div className="flex min-h-screen flex-col">
-        <header className="flex items-center gap-3 border-b-2 border-line px-4 py-2.5 sm:px-6">
+        <header className="flex items-center gap-3 border-b-2 border-line px-4 pb-2.5 pt-[max(0.625rem,env(safe-area-inset-top))] sm:px-6">
           {onMenu ? (
             <span className="flex items-center gap-2.5">
               <Image

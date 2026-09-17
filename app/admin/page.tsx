@@ -29,15 +29,16 @@ export default function AdminMenu() {
       </h1>
       <p className="mt-2 text-subtle">Pick what you want to work on.</p>
 
-      <div className="mt-9 grid grid-cols-2 gap-3 md:grid-cols-3">
+      <div className="mt-9 grid grid-cols-2 items-start gap-3 md:grid-cols-3">
         {open.map((section, index) => {
           const Icon = SECTION_ICONS[section.href];
+          const last = index === open.length - 1 && open.length % 2 === 1;
           return (
             <Link
               key={section.href}
               href={section.href}
               style={{ animationDelay: `${index * 20}ms` }}
-              className="group flex animate-rise-in items-start gap-4 rounded-[16px] border-2 border-line bg-surface p-4 shadow-brut hover:-translate-y-0.5 hover:bg-tint hover:shadow-[6px_8px_0_0_var(--shade)] motion-reduce:hover:translate-y-0"
+              className={`group flex animate-rise-in items-start gap-4 rounded-[16px] border-2 border-line bg-surface p-4 shadow-brut hover:-translate-y-0.5 hover:bg-tint hover:shadow-[6px_8px_0_0_var(--shade)] motion-reduce:hover:translate-y-0 ${last ? "col-span-2 md:col-span-1" : ""}`}
             >
               {Icon && (
                 <span className="grid size-9 shrink-0 place-items-center rounded-[12px] border-2 border-line bg-tint text-brand transition duration-[var(--dur)] ease-smooth group-hover:-rotate-6 group-hover:bg-brand group-hover:text-brand-ink motion-reduce:group-hover:rotate-0">
