@@ -16,7 +16,16 @@ export const SearchField = ({
   query: string;
   results: ReactNode;
 }) => (
-  <div className="mt-3 flex flex-wrap items-center gap-2">
+  // A search form, so phone keyboards show a Search key; submitting just
+  // closes the keyboard (results already filter as you type).
+  <form
+    className="mt-3 flex flex-wrap items-center gap-2"
+    onSubmit={(submitEvent) => {
+      submitEvent.preventDefault();
+      (document.activeElement as HTMLElement | null)?.blur();
+    }}
+    role="search"
+  >
     <div className="relative min-w-[220px] flex-1">
       <Search
         aria-hidden="true"
@@ -24,7 +33,8 @@ export const SearchField = ({
       />
       <input
         aria-label={ariaLabel}
-        className="w-full rounded-[10px] border-2 border-line bg-surface py-2 pr-3 pl-9 text-ink"
+        className="w-full rounded-[10px] border-2 border-line bg-surface py-2 pr-3 pl-9 text-ink pointer-coarse:min-h-11"
+        enterKeyHint="search"
         onChange={(changeEvent) => onQueryChange(changeEvent.target.value)}
         placeholder={placeholder}
         type="search"
@@ -36,12 +46,18 @@ export const SearchField = ({
         <span aria-live="polite" className="text-sm text-subtle">
           {results}
         </span>
-        <Button onClick={() => onQueryChange("")} size="sm" variant="outline">
+        <Button
+          className="max-md:h-10 max-md:rounded-[16px] max-md:px-6 pointer-coarse:min-h-11"
+          onClick={() => onQueryChange("")}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
           Clear
         </Button>
       </>
     )}
-  </div>
+  </form>
 );
 
 type RetryNoticeProps = { message: string | null; onRetry: () => void };

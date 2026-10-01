@@ -1,5 +1,6 @@
 "use client";
 
+import { Maximize2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +38,8 @@ export function DocumentPreview({
   placing = false,
   onPlace,
   overlay,
+  outside,
+  onOpen,
 }: {
   fileUrl: string;
   contentType: string;
@@ -45,6 +48,10 @@ export function DocumentPreview({
   onPlace?: (page: number, xPercent: number, yPercent: number) => void;
   /** Absolutely-covers the page; position your own children by percent (left/top). Both this and onPlace already receive the current page — no separate page-tracking prop needed. */
   overlay?: (page: number) => React.ReactNode;
+  /** Real-size children over the page (touch targets), placed by percent; see PageBox. */
+  outside?: (page: number, scale: number) => React.ReactNode;
+  /** Phones: tapping the page opens the full-screen viewer. */
+  onOpen?: () => void;
 }) {
   const kind = kindForContentType(contentType);
   const [page, setPage] = useState(1);
@@ -197,8 +204,29 @@ export function DocumentPreview({
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-[14px] border-2 border-line bg-tint p-3">
-        <PageBox height={pageSize.height} width={pageSize.width}>
+      <div className="overflow-x-auto rounded-[14px] border-2 border-line bg-tint p-3 max-md:-mx-4 max-md:rounded-none max-md:border-x-0 max-md:p-1">
+        <PageBox
+          height={pageSize.height}
+          outside={(scale) => (
+            <>
+              {onOpen && !placing && (
+                <button
+                  aria-label="Open full screen"
+                  className="absolute inset-0 flex items-end justify-end p-2 desk:hidden"
+                  onClick={onOpen}
+                  type="button"
+                >
+                  <span className="flex items-center gap-1.5 rounded-full border-2 border-line bg-surface px-3 py-1.5 text-sm font-bold text-ink">
+                    <Maximize2 aria-hidden className="size-4" />
+                    Full screen
+                  </span>
+                </button>
+              )}
+              {outside?.(page, scale)}
+            </>
+          )}
+          width={pageSize.width}
+        >
           <div
             className="relative bg-white"
             style={{ width: pageSize.width, height: pageSize.height }}
@@ -256,6 +284,7 @@ export function DocumentPreview({
       {numPages > 1 && (
         <div className="mt-2 flex items-center justify-center gap-3">
           <Button
+            className="pointer-coarse:h-11"
             disabled={page <= 1}
             onClick={() => setPage(page - 1)}
             size="xs"
@@ -264,10 +293,11 @@ export function DocumentPreview({
           >
             Previous
           </Button>
-          <span className="text-xs font-bold text-subtle">
+          <span className="text-xs font-bold text-subtle max-md:text-sm">
             Page {page} of {numPages}
           </span>
           <Button
+            className="pointer-coarse:h-11"
             disabled={page >= numPages}
             onClick={() => setPage(page + 1)}
             size="xs"

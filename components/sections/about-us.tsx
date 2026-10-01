@@ -30,7 +30,7 @@ export function AboutUsSection() {
 
   return (
     <section id="about" className="w-full relative">
-      <div className="max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+      <div className="max-w-7xl mx-auto pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-14 md:px-8 sm:py-24 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
         <div className="flex flex-col gap-6">
           <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">
             About Us

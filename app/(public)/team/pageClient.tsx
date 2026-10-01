@@ -22,6 +22,10 @@ type TeamMember = WithKey<ExecRecord>;
 
 const UNDATED_TERM = "Previous Executives";
 
+// 44px tall on touch, same look.
+const smallLink =
+  "underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center";
+
 const groupPreviousExecsByTerm = (
   execs: TeamMember[],
 ): { term: string; members: TeamMember[] }[] => {
@@ -285,11 +289,11 @@ export default function TeamPageClient() {
 
       <p className="px-0 text-[0.85rem] text-subtle sm:px-4">
         Are you an exec?{" "}
-        <Link href="/signup" className="underline">
+        <Link href="/signup" className={smallLink}>
           Request an account
         </Link>{" "}
         or{" "}
-        <Link href="/admin" className="underline">
+        <Link href="/admin" className={smallLink}>
           sign in
         </Link>
         .

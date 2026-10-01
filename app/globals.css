@@ -2,6 +2,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Breakpoint vocabulary (spec D3). The query strings are copied verbatim from
+   lib/media-queries.ts. The block form is required: Tailwind's shorthand
+   splits its parentheses on top-level commas, which would turn the second
+   media query into a selector. */
+@custom-variant phone {
+  @media (max-width: 767.98px), (pointer: coarse) and (max-height: 500px) {
+    @slot;
+  }
+}
+@custom-variant desk {
+  @media (min-width: 768px) and (pointer: fine),
+    (min-width: 768px) and (min-height: 500.02px) {
+    @slot;
+  }
+}
+@custom-variant short {
+  @media (pointer: coarse) and (max-height: 500px) {
+    @slot;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -52,6 +73,40 @@
   }
 }
 
+/* Sheet enter/exit (components/ui/sheet.tsx). Not inlined, so reduced motion
+   can switch them off below. */
+@theme {
+  --animate-sheet-up: sheet-up 280ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-sheet-down: sheet-down 200ms cubic-bezier(0.32, 0.72, 0, 1) both;
+  --animate-fade-out: fade-out 200ms var(--ease-smooth) both;
+}
+
+@keyframes sheet-up {
+  from {
+    translate: 0 100%;
+  }
+}
+
+@keyframes sheet-down {
+  to {
+    translate: 0 100%;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --animate-sheet-up: none;
+    --animate-sheet-down: none;
+    --animate-fade-out: none;
+  }
+}
+
 :root {
   --surface: #ffffff;
   --raised: #f4f1ef;
@@ -74,8 +129,16 @@
   --background: #f7f4f2;
   --foreground: #191619;
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-ink: #ffffff;
+  /* Form-control borders, switch and segmented tracks, sheet edges. */
+  --line-strong: #2b262c;
   --border: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+}
+
+/* "only" also opts light out of Chrome's auto-darkening. */
+:root:not(.dark) {
+  color-scheme: only light;
 }
 
 .dark {
@@ -92,8 +155,153 @@
   --background: #131114;
   --foreground: #e4ded9;
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-ink: #17141a;
+  --line-strong: #6b6270;
   --border: #4a424e;
   --ring: #e08a82;
+  color-scheme: dark;
+}
+
+/* Public canvas: what shows past the page edges on overscroll. */
+html[data-public] {
+  background-color: var(--surface);
+}
+
+/* iOS zooms into any focused field under 16px. Unlayered on purpose: it beats
+   the size utilities in @layer utilities without shrinking fields that are
+   deliberately larger. Source fixes still carry the weight. */
+@media (pointer: coarse), (max-width: 767.98px) {
+  :is(
+    input:not(
+      [type="checkbox"],
+      [type="radio"],
+      [type="range"],
+      [type="color"],
+      [type="file"],
+      [type="button"],
+      [type="submit"],
+      [type="reset"],
+      [type="image"]
+    ),
+    textarea,
+    select,
+    [contenteditable]:not([contenteditable="false"])
+  ):is(
+    .text-xs,
+    .text-sm,
+    .text-\[10px\],
+    .text-\[11px\],
+    .text-\[12px\],
+    .text-\[13px\],
+    .text-\[14px\],
+    .text-\[0\.65rem\],
+    .text-\[0\.82rem\]
+  ) {
+    font-size: 16px;
+  }
+}
+
+/* Admin chrome variables (spec D8). Unlayered. Both media strings are
+   PHONE_QUERY / SHORT_QUERY from lib/use-media-query.ts, verbatim.
+   - --admin-top: header height; --admin-tabbar / --admin-toolbar: bottom bar
+     content heights; --admin-bottom: whichever bottom bar shows, plus the
+     home-indicator inset.
+   - --chrome-bottom: the fixed chrome at the bottom of any surface (admin,
+     signing, public), inset included. Toasts and the Fab sit above it. */
+:root {
+  --admin-top: 0px;
+  --admin-tabbar: 0px;
+  --admin-toolbar: 0px;
+  --admin-bottom: 0px;
+  --chrome-bottom: env(safe-area-inset-bottom);
+}
+html[data-admin] {
+  --admin-top: calc(2.875rem + 2px + max(0.625rem, env(safe-area-inset-top)));
+}
+/* Coarse pointers (tablets too): the header buttons are 44px and its
+   padding shrinks to 6px (app/admin/layout.tsx), the phone formula. */
+@media (pointer: coarse) {
+  html[data-admin] {
+    --admin-top: calc(3.125rem + 2px + max(0.375rem, env(safe-area-inset-top)));
+  }
+}
+@media (max-width: 767.98px), (pointer: coarse) and (max-height: 500px) {
+  html[data-admin] {
+    --admin-top: calc(3.125rem + 2px + max(0.375rem, env(safe-area-inset-top)));
+    --admin-tabbar: 3.5625rem;
+    --admin-bottom: calc(
+      max(var(--admin-tabbar), var(--admin-toolbar)) +
+        env(safe-area-inset-bottom)
+    );
+    --chrome-bottom: var(--admin-bottom);
+    scroll-padding-top: var(--admin-top);
+    scroll-padding-bottom: calc(var(--admin-bottom) + 0.5rem);
+  }
+  html[data-admin][data-tabbar="hidden"] {
+    --admin-tabbar: 0px;
+  }
+  /* components/ui/bottom-toolbar.tsx: border-t-2 + pt-1 + h-14 +
+     pb-[max(0.25rem,inset)] = 62px + max(4px, inset). --admin-bottom adds
+     the inset back, so this matches the bar's box exactly. */
+  html[data-admin][data-toolbar] {
+    --admin-toolbar: calc(
+      3.875rem + max(0.25rem, env(safe-area-inset-bottom)) -
+        env(safe-area-inset-bottom)
+    );
+  }
+}
+@media (pointer: coarse) and (max-height: 500px) {
+  html[data-admin]:not([data-tabbar="hidden"]) {
+    --admin-tabbar: 2.875rem;
+  }
+  /* Landscape bar: border 2 + pt-0.5 + 38px + pb = 42px + max(4px, inset). */
+  html[data-admin][data-toolbar] {
+    --admin-toolbar: calc(
+      2.625rem + max(0.25rem, env(safe-area-inset-bottom)) -
+        env(safe-area-inset-bottom)
+    );
+  }
+}
+html[data-sign-bar] {
+  --chrome-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  overscroll-behavior-y: none;
+}
+
+/* Scroll lock while a modal is open (lib/use-scroll-lock.ts). */
+html[data-modal-open] {
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+/* Tab bar hide (lib/use-chrome-flag.ts, and [data-typing] from the shell).
+   The visibility flip is delayed only on the way out, so the bar is visible
+   for its whole slide in and hidden only after it has slid out. */
+[data-admin-tabbar] {
+  transition:
+    translate 200ms var(--ease-smooth),
+    visibility 0s;
+}
+@media (max-width: 767.98px), (pointer: coarse) and (max-height: 500px) {
+  html[data-tabbar="hidden"] [data-admin-tabbar],
+  html[data-typing] [data-admin-tabbar] {
+    translate: 0 110%;
+    visibility: hidden;
+    transition:
+      translate 200ms var(--ease-smooth),
+      visibility 0s linear 200ms;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-admin-tabbar],
+  html[data-tabbar="hidden"] [data-admin-tabbar],
+  html[data-typing] [data-admin-tabbar] {
+    transition: none;
+  }
+}
+
+/* Bars that drop the home-indicator inset while the keyboard covers it. */
+:root[data-kb-open] .pb-safe-kb {
+  padding-bottom: 0.75rem !important;
 }
 
 @layer base {
@@ -126,9 +334,34 @@
       scale var(--dur) var(--ease-smooth),
       opacity var(--dur-fast) var(--ease-smooth);
   }
-  button:not(:disabled):active,
-  [role="button"]:not(:disabled):active {
+  /* Button, .press and .press-flat have their own :active styles. */
+  button:not([data-slot="button"], .press, .press-flat):not(:disabled):active,
+  [role="button"]:not([data-slot="button"], .press, .press-flat):not(
+      :disabled
+    ):active {
     transform: translateY(1px);
+  }
+  /* A variant-only press-flat (the palette's search button) opts out there. */
+  @variant phone {
+    button.phone\:press-flat:not(:disabled):active {
+      transform: none;
+    }
+  }
+  a,
+  button,
+  [role="button"],
+  label,
+  summary,
+  select,
+  input,
+  textarea {
+    touch-action: manipulation;
+  }
+  .press,
+  .press-flat,
+  .phone\:press-flat,
+  [data-slot="button"] {
+    -webkit-tap-highlight-color: transparent;
   }
   @media (prefers-reduced-motion: reduce) {
     *,
@@ -152,6 +385,12 @@
   ):focus-visible {
     outline: 3px solid var(--brand);
     outline-offset: 2px;
+  }
+  /* Focused programmatically, never by Tab: stack screen headings
+     (useStackParam) and <main> as the fallback after a toast leaves. */
+  [data-stack-heading]:focus,
+  main[tabindex="-1"]:focus {
+    outline: none;
   }
 
   * {
@@ -196,7 +435,13 @@
       border-color var(--dur-fast) var(--ease-smooth),
       box-shadow var(--dur-fast) var(--ease-smooth);
   }
-  .check:hover:not(:disabled) {
+  /* Gated, so the shadow doesn't stick after a tap. */
+  @media (hover: hover) {
+    .check:hover:not(:disabled) {
+      box-shadow: var(--brut-sm);
+    }
+  }
+  .check:active:not(:disabled) {
     box-shadow: var(--brut-sm);
   }
   .check:checked {
@@ -211,6 +456,74 @@
     opacity: 0.5;
   }
 
+  /* Fixed bars only (tab bar, toolbars, format bar), never list rows. */
+  .chrome {
+    -webkit-touch-callout: none;
+    user-select: none;
+  }
+
+  /* Switch: drawn the same on every browser (no native `switch` attribute).
+     Consumers add role="switch". The knob is a background image, so it
+     needs no pseudo-element on the input. */
+  input[type="checkbox"].switch {
+    appearance: none;
+    flex: none;
+    width: 44px;
+    height: 26px;
+    margin: 0;
+    border: 2px solid var(--line-strong);
+    border-radius: 999px;
+    background-color: var(--raised);
+    background-image: radial-gradient(
+      circle,
+      var(--surface) 7px,
+      var(--line) 7.5px 9px,
+      transparent 9.5px
+    );
+    background-repeat: no-repeat;
+    background-size: 22px 22px;
+    background-position: 0 50%;
+    cursor: pointer;
+    transition:
+      background-color var(--dur-fast) var(--ease-smooth),
+      background-position var(--dur-fast) var(--ease-smooth);
+  }
+  input[type="checkbox"].switch:checked {
+    background-color: var(--brand);
+    background-position: 100% 50%;
+  }
+  input[type="checkbox"].switch:focus-visible {
+    outline: 3px solid var(--brand);
+    outline-offset: 2px;
+  }
+  input[type="checkbox"].switch:disabled {
+    cursor: default;
+    opacity: 0.5;
+  }
+  @media (forced-colors: active) {
+    input[type="checkbox"].switch {
+      forced-color-adjust: none;
+      border-color: CanvasText;
+      background-color: Canvas;
+      background-image: radial-gradient(
+        circle,
+        CanvasText 9px,
+        transparent 9.5px
+      );
+    }
+    input[type="checkbox"].switch:checked {
+      background-color: Highlight;
+      background-image: radial-gradient(
+        circle,
+        HighlightText 9px,
+        transparent 9.5px
+      );
+    }
+    input[type="checkbox"].switch:focus-visible {
+      outline-color: Highlight;
+    }
+  }
+
   .section-lead {
     @apply border-l-4 border-line pl-3.5 text-subtle;
   }
@@ -222,5 +535,34 @@
   .detail-info-card {
     @apply rounded-[14px] border-2 border-line bg-surface p-3;
     box-shadow: 4px 4px 0 var(--brand);
+  }
+}
+
+/* Press feedback (spec D11). Shadowed pressables sink like Button's `hard`;
+   flat rows, tabs and toolbar items tint and keep their focus ring inside
+   (overflow-x-clip would cut an outer one). */
+@utility press {
+  transition:
+    translate 120ms var(--ease-smooth),
+    box-shadow 120ms var(--ease-smooth);
+  &:active:not(:disabled) {
+    translate: 3px 3px;
+    box-shadow: 1px 1px 0 0 var(--shade);
+    transition-duration: 60ms;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    &:active:not(:disabled) {
+      translate: none;
+    }
+  }
+}
+
+@utility press-flat {
+  transition: background-color 110ms var(--ease-smooth);
+  &:active:not(:disabled) {
+    background-color: var(--tint);
+  }
+  &:focus-visible {
+    outline-offset: -3px;
   }
 }

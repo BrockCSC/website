@@ -15,6 +15,7 @@ export function ConsentCard({
   heading,
   busy,
   error,
+  brandless,
   onContinue,
   onDecline,
 }: {
@@ -22,6 +23,8 @@ export function ConsentCard({
   heading: "h1" | "h2";
   busy: boolean;
   error: string | null;
+  /** The page header already carries the brand on phones. */
+  brandless?: boolean;
   onContinue: () => void;
   onDecline: () => void;
 }) {
@@ -32,32 +35,36 @@ export function ConsentCard({
   return (
     <div className={cardClass}>
       <EnvelopeHeader
+        brandless={brandless}
+        compact="consent"
         documentTitle={session.documentTitle}
         heading={heading}
         title={session.requestTitle}
       />
-      <p className="mt-4 text-base text-ink">
+      <p className="mt-4 text-base text-ink phone:mt-2 max-sm:text-[15px]">
         <strong>{session.requesterName}</strong> sent you a document to review
         and sign.
       </p>
 
-      <div className="mt-5 rounded-[14px] border-2 border-line bg-tint p-4">
-        <p className="text-sm text-ink">{DISCLOSURE_SHORT}</p>
+      <div className="mt-5 rounded-[14px] border-2 border-line bg-tint p-4 phone:mt-4">
+        <p className="text-sm text-ink max-sm:text-[15px]">
+          {DISCLOSURE_SHORT}
+        </p>
         <button
           aria-controls={`${baseId}-disclosure`}
           aria-expanded={open}
-          className="mt-2 inline-flex items-center gap-1 text-left text-sm font-bold text-brand underline underline-offset-4"
+          className="mt-2 inline-flex items-center gap-1 text-left text-sm font-bold text-brand underline underline-offset-4 phone:-my-1.5 phone:min-h-11"
           onClick={() => setOpen((v) => !v)}
           type="button"
         >
           {open ? "Hide" : "Read"} the {DISCLOSURE_TITLE}
           <ChevronDown
             aria-hidden
-            className={`size-4 transition-transform ${open ? "rotate-180" : ""}`}
+            className={`size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
           />
         </button>
         <div
-          className="mt-3 max-h-[45vh] overflow-y-auto rounded-[10px] border-2 border-line bg-surface p-4 text-sm text-ink"
+          className="mt-3 rounded-[10px] border-2 border-line bg-surface p-4 text-sm text-ink max-sm:text-[15px] desk:max-h-[45vh] desk:overflow-y-auto"
           hidden={!open}
           id={`${baseId}-disclosure`}
         >
@@ -70,21 +77,27 @@ export function ConsentCard({
         </div>
       </div>
 
-      <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm font-bold text-ink">
+      <label className="mt-5 flex cursor-pointer items-start gap-3 text-sm font-bold text-ink phone:mt-3 phone:min-h-12 phone:items-center max-sm:text-[15px]">
         <input
           checked={agreed}
-          className="check mt-0.5"
+          className="check mt-0.5 phone:mt-0"
           onChange={(e) => setAgreed(e.target.checked)}
           type="checkbox"
         />
         I agree to use electronic records and signatures
       </label>
 
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        <Button disabled={!agreed || busy} onClick={onContinue} type="button">
+      <div className="mt-6 flex flex-wrap items-center gap-3 phone:mt-3 phone:flex-col phone:items-stretch">
+        <Button
+          className="phone:h-12 phone:w-full"
+          disabled={!agreed || busy}
+          onClick={onContinue}
+          type="button"
+        >
           {busy ? "Continuing..." : "Continue"}
         </Button>
         <Button
+          className="phone:h-11 phone:w-full phone:text-destructive"
           disabled={busy}
           onClick={onDecline}
           type="button"

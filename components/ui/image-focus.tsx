@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useRef } from "react";
+import { Button } from "./button";
 
 const clamp = (n: number) => Math.min(100, Math.max(0, Math.round(n)));
 
@@ -39,8 +40,11 @@ export function ImageFocus({
   return (
     <div>
       <div className="flex flex-wrap items-start gap-4">
+        {/* Below sm the box fills the width at the cards' 4:5, so a thumb
+            can aim; from sm it's the compact 128x160 it always was. */}
         <button
-          className="relative h-40 w-32 shrink-0 touch-none cursor-crosshair select-none overflow-hidden rounded-[12px] border-2 border-line active:cursor-grabbing"
+          aria-label="Choose what stays in frame"
+          className="relative aspect-[4/5] w-full max-w-[20rem] shrink-0 touch-none cursor-crosshair select-none overflow-hidden rounded-[12px] border-2 border-line active:cursor-grabbing sm:h-40 sm:w-32"
           // A native image drag fires pointercancel and ends the pick mid-gesture.
           onDragStart={(e) => e.preventDefault()}
           onLostPointerCapture={() => {
@@ -85,7 +89,7 @@ export function ImageFocus({
           />
           <span
             aria-hidden
-            className="pointer-events-none absolute size-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-brand/70 shadow-[0_0_0_2px_rgba(0,0,0,0.6)]"
+            className="pointer-events-none absolute size-7 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface bg-brand/70 shadow-[0_0_0_2px_rgba(0,0,0,0.6)] sm:size-5"
             style={{ left: `${x}%`, top: `${y}%` }}
           />
         </button>
@@ -93,21 +97,41 @@ export function ImageFocus({
         <div className="text-sm">
           <p className="font-semibold">Framing</p>
           <p className="mt-1 max-w-[22rem] text-subtle">
-            Cards crop to a fixed shape. Click or drag on the photo to choose
-            what stays in frame — for a portrait, aim at the face. Arrow keys
-            nudge it.
+            Cards crop to a fixed shape.{" "}
+            <span className="pointer-coarse:hidden">
+              Click or drag on the photo to choose what stays in frame — for a
+              portrait, aim at the face.
+            </span>
+            <span className="hidden pointer-coarse:inline">
+              Drag on the photo to choose what stays in frame — for a portrait,
+              aim at the face.
+            </span>
+            <span className="hidden pointer-fine:inline">
+              {" "}
+              Arrow keys nudge it.
+            </span>
           </p>
           <div className="mt-2 flex items-center gap-3">
             <span className="font-mono text-xs text-subtle">
               {x}% {y}%
             </span>
+            {/* Touch gets a real button; a mouse keeps the small link. */}
             <button
-              className="text-xs font-semibold underline"
+              className="text-xs font-semibold underline pointer-coarse:hidden"
               onClick={() => onChange("50% 50%")}
               type="button"
             >
               Reset to centre
             </button>
+            <Button
+              className="hidden pointer-coarse:inline-flex"
+              onClick={() => onChange("50% 50%")}
+              size="sm"
+              type="button"
+              variant="secondary"
+            >
+              Reset
+            </Button>
           </div>
         </div>
       </div>

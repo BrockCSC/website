@@ -41,7 +41,7 @@ export function SignerActivity({
   const adopted = describeAdopted(signer);
 
   return (
-    <div className="mt-1 flex flex-col gap-0.5 text-xs text-subtle">
+    <div className="mt-1 flex flex-col gap-0.5 text-xs text-subtle max-md:text-sm">
       {!!moments.length && (
         <p className="flex flex-wrap gap-x-3 gap-y-0.5">
           {moments.map(([label, at]) => (
@@ -85,6 +85,50 @@ export function SignerActivity({
       {signer.status === "declined" && signer.declineReason && (
         <p>Reason: {signer.declineReason}</p>
       )}
+    </div>
+  );
+}
+
+/** "2 of 4 signed" and who the request is waiting on, for status cards. */
+export const signingProgress = (request: SigningRequestItem) => {
+  const signers = request.signers.slice().sort((a, b) => a.order - b.order);
+  const signed = signers.filter((s) => s.status === "signed").length;
+  const waiting = signers.filter(
+    (s) => s.status !== "signed" && s.status !== "declined",
+  );
+  const names = waiting.map((s) => s.name ?? "a signer");
+  const waitingOn =
+    request.mode === "ordered"
+      ? names[0]
+      : names.length <= 2
+        ? names.join(" and ")
+        : `${names.length} people`;
+  return {
+    signed,
+    total: signers.length,
+    /** The next signer in an ordered request, else the first one outstanding. */
+    next: waiting[0] ?? null,
+    waitingOn: waitingOn || null,
+  };
+};
+
+/** A thin progress bar; the text next to it carries the meaning. */
+export function SigningProgressBar({
+  signed,
+  total,
+}: {
+  signed: number;
+  total: number;
+}) {
+  return (
+    <div
+      aria-hidden
+      className="h-2.5 overflow-hidden rounded-full border-2 border-line bg-tint"
+    >
+      <div
+        className="h-full bg-ink"
+        style={{ width: `${total ? (signed / total) * 100 : 0}%` }}
+      />
     </div>
   );
 }

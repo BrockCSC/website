@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ApiError } from "@/lib/api/client";
 import { updatePersonDetails, type Signup } from "./api";
@@ -31,13 +31,17 @@ export default function DetailsForm({
   identitiesEditable,
   onSaved,
   onCancel,
+  onDirtyChange,
 }: {
   signup: Signup;
   identitiesEditable: boolean;
   onSaved: () => void | Promise<void>;
   onCancel: () => void;
+  /** Unsaved edits, for the person screen's leave guard. */
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const [form, setForm] = useState<Details>(detailsFrom(signup));
+  const [initial] = useState<Details>(() => detailsFrom(signup));
+  const [form, setForm] = useState<Details>(initial);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +51,13 @@ export default function DetailsForm({
   const cardInvalid =
     form.accessCardId.trim() !== "" &&
     !ACCESS_CARD_PATTERN.test(form.accessCardId.trim());
+
+  const dirty = JSON.stringify(form) !== JSON.stringify(initial);
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  // Closing the form (Cancel, Save) is never a pending edit.
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,6 +90,7 @@ export default function DetailsForm({
           <Label htmlFor="details-first-name">First name</Label>
           <input
             className={field}
+            autoComplete="off"
             id="details-first-name"
             onChange={(e) => set("firstName", e.target.value)}
             required
@@ -89,6 +101,7 @@ export default function DetailsForm({
           <Label htmlFor="details-last-name">Last name</Label>
           <input
             className={field}
+            autoComplete="off"
             id="details-last-name"
             onChange={(e) => set("lastName", e.target.value)}
             required
@@ -99,8 +112,12 @@ export default function DetailsForm({
           <Label htmlFor="details-email">Email</Label>
           <input
             className={field}
+            autoCapitalize="none"
+            autoComplete="email"
             id="details-email"
+            inputMode="email"
             onChange={(e) => set("email", e.target.value)}
+            spellCheck={false}
             required
             type="email"
             value={form.email}
@@ -110,8 +127,10 @@ export default function DetailsForm({
           <Label htmlFor="details-phone">Phone</Label>
           <input
             className={field}
+            autoComplete="tel"
             id="details-phone"
             onChange={(e) => set("phone", e.target.value)}
+            type="tel"
             value={form.phone}
           />
         </div>
@@ -119,7 +138,9 @@ export default function DetailsForm({
           <Label htmlFor="details-student-id">Student ID</Label>
           <input
             className={field}
+            autoComplete="off"
             id="details-student-id"
+            inputMode="numeric"
             onChange={(e) => set("studentId", e.target.value)}
             value={form.studentId}
           />
@@ -139,7 +160,7 @@ export default function DetailsForm({
             value={form.accessCardId}
           />
           {cardInvalid && (
-            <p className="mt-1 text-xs font-bold text-brand">
+            <p className="mt-1 text-sm font-bold text-brand pointer-fine:text-xs">
               Must be exactly 5 digits.
             </p>
           )}

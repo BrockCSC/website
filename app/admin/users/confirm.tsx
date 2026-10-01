@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Consequence } from "./api";
 
@@ -11,6 +11,7 @@ export default function Confirm({
   intro,
   items,
   confirmLabel,
+  destructive = false,
   onCancel,
   onApply,
 }: {
@@ -18,6 +19,8 @@ export default function Confirm({
   intro: string;
   items: ConfirmItem[];
   confirmLabel: string;
+  /** The apply button is the filled destructive one (Delete, Reject). */
+  destructive?: boolean;
   onCancel: () => void;
   onApply: (ids: string[]) => Promise<void>;
 }) {
@@ -25,6 +28,13 @@ export default function Confirm({
     items.filter((item) => !item.blocked).map((item) => item.id),
   );
   const [busy, setBusy] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+
+  // It opens in place of the button that asked for it, possibly low on a
+  // phone screen: bring the whole thing into view.
+  useEffect(() => {
+    box.current?.scrollIntoView({ block: "nearest" });
+  }, []);
 
   const toggle = (id: string) =>
     setChosen((current) =>
@@ -34,7 +44,10 @@ export default function Confirm({
     );
 
   return (
-    <div className="animate-rise-in rounded-[10px] border-2 border-line bg-raised p-4">
+    <div
+      className="animate-rise-in rounded-[10px] border-2 border-line bg-raised p-4"
+      ref={box}
+    >
       <h3 className="text-sm font-extrabold uppercase tracking-wide text-ink">
         {title}
       </h3>
@@ -85,7 +98,7 @@ export default function Confirm({
           }}
           size="sm"
           type="button"
-          variant="primary"
+          variant={destructive ? "destructive" : "primary"}
         >
           {busy ? "Working..." : `${confirmLabel} (${chosen.length})`}
         </Button>

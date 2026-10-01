@@ -12,6 +12,7 @@ import {
   getEventStartTimestamp,
   getEventTiming,
 } from "@/lib/events/schedule";
+import { Button } from "@/components/ui/button";
 import { EventCard } from "@/components/ui/event-card";
 
 type EventItem = WithKey<EventRecord>;
@@ -47,7 +48,7 @@ export function UpcomingEventsSection() {
 
   return (
     <section className="w-full border-b-2 border-line bg-raised">
-      <div className="max-w-7xl mx-auto px-1 py-14 sm:px-8 sm:py-20">
+      <div className="max-w-7xl mx-auto pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-14 md:px-8 sm:py-20">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 mb-12">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -64,7 +65,7 @@ export function UpcomingEventsSection() {
 
           <Link
             href="/events"
-            className="text-brand font-bold flex items-center gap-2 hover:underline group shrink-0"
+            className="text-brand font-bold hidden sm:flex items-center gap-2 hover:underline group shrink-0"
           >
             View Calendar{" "}
             <ArrowRight className="size-4 transition-transform duration-[var(--dur)] ease-smooth group-hover:translate-x-1" />
@@ -137,6 +138,16 @@ export function UpcomingEventsSection() {
             </div>
           )}
         </div>
+
+        {/* Phones: the header link above becomes a full-width button here. */}
+        <Button
+          asChild
+          className="mt-8 h-12 w-full sm:hidden"
+          size="lg"
+          variant="outline"
+        >
+          <Link href="/events">See all events</Link>
+        </Button>
       </div>
     </section>
   );

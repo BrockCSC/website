@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronRight, Moon, Sun, X } from "lucide-react";
 import { Logo } from "./logo";
 import { DiscordButton } from "./discord-button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { Segmented } from "./segmented";
+import { Sheet } from "./sheet";
+import { ThemeToggle, setTheme } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -16,9 +19,54 @@ const navLinks = [
   { name: "Portal", href: "/admin", muted: true },
 ];
 
+// Phones: 64px row under the status bar; md+: the 80px bar as before.
+const gutters =
+  "pr-[max(1.25rem,env(safe-area-inset-right))] pl-[max(1.25rem,env(safe-area-inset-left))]";
+
+const brand = (
+  <>
+    <Logo />
+    <span className="text-[19px] font-bold tracking-wide whitespace-nowrap text-brand sm:text-[22px]">
+      BROCK CSC
+    </span>
+  </>
+);
+
+const squareButton =
+  "inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border-2 border-line bg-surface text-ink";
+
+/** Light/Dark as a segmented control. Mounted only inside the open menu. */
+function ThemeRow() {
+  const [theme, setLocalTheme] = useState<"light" | "dark">(() =>
+    document.documentElement.classList.contains("dark") ? "dark" : "light",
+  );
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <span className="text-base font-bold text-ink">Theme</span>
+      <Segmented
+        className="w-48"
+        label="Theme"
+        value={theme}
+        onChange={(value) => {
+          setTheme(value);
+          setLocalTheme(value);
+        }}
+        options={[
+          { value: "light", label: "Light", icon: Sun },
+          { value: "dark", label: "Dark", icon: Moon },
+        ]}
+      />
+    </div>
+  );
+}
+
 export function Navbar() {
   const pathname = usePathname();
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  // The menu is open for the page it was opened on, so a route change (a
+  // row tap, back, a link elsewhere) closes it without an effect.
+  const [openAt, setOpenAt] = useState<string | null>(null);
+  const isMenuOpen = openAt === pathname;
+  const closeMenu = () => setOpenAt(null);
   const menuButton = useRef<HTMLButtonElement>(null);
 
   const isActive = (href: string) =>
@@ -26,38 +74,29 @@ export function Navbar() {
       ? pathname === "/"
       : pathname === href || pathname.startsWith(`${href}/`);
 
-  useEffect(() => {
-    if (!isMenuOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape") return;
-      setIsMenuOpen(false);
-      menuButton.current?.focus();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [isMenuOpen]);
-
   return (
     <nav
       aria-label="Main"
-      className="relative h-20 w-full border-b-2 border-line bg-surface"
+      className="sticky top-0 z-40 w-full border-b-2 border-line bg-surface pt-[env(safe-area-inset-top)] md:relative md:z-auto md:h-20 md:pt-0"
     >
-      <div className="mx-auto flex h-full w-full max-w-[1060px] items-center justify-between gap-3 px-5">
+      <div
+        className={cn(
+          "mx-auto flex h-16 w-full max-w-[1060px] items-center justify-between gap-3 md:h-full",
+          gutters,
+        )}
+      >
         <Link href="/" className="flex cursor-pointer items-center gap-3">
-          <Logo />
-          <span className="text-[19px] font-bold tracking-wide text-brand sm:text-[22px]">
-            BROCK CSC
-          </span>
+          {brand}
         </Link>
 
-        <div className="hidden items-center gap-8 text-[15px] font-bold text-ink md:flex">
+        <div className="hidden items-center gap-6 text-[15px] font-bold whitespace-nowrap text-ink md:flex lg:gap-8">
           {navLinks.map((link) => (
             <Link
               key={link.name}
               href={link.href}
               aria-current={isActive(link.href) ? "page" : undefined}
               className={cn(
-                "border-b-2 border-transparent pb-1 hover:text-brand",
+                "border-b-2 border-transparent pb-1 hover:text-brand pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center",
                 link.muted && "text-subtle",
                 isActive(link.href) && "border-brand text-brand",
               )}
@@ -73,74 +112,103 @@ export function Navbar() {
         </div>
 
         <button
-          aria-controls="mobile-nav-menu"
+          aria-controls={isMenuOpen ? "mobile-nav-menu" : undefined}
           aria-expanded={isMenuOpen}
-          aria-label={
-            isMenuOpen ? "Close navigation menu" : "Open navigation menu"
-          }
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] border-2 border-line bg-surface text-ink md:hidden"
-          onClick={() => setIsMenuOpen((prev) => !prev)}
+          aria-haspopup="dialog"
+          aria-label="Open navigation menu"
+          className={cn(squareButton, "active:bg-tint md:hidden")}
+          onClick={() => setOpenAt(pathname)}
           ref={menuButton}
           type="button"
         >
-          <span className="relative h-4 w-5">
-            <span
-              className={cn(
-                "absolute left-0 top-0 h-[2px] w-full bg-current transition-transform duration-[var(--dur)] ease-smooth",
-                isMenuOpen && "translate-y-[7px] rotate-45",
-              )}
-            />
-            <span
-              className={cn(
-                "absolute left-0 top-[7px] h-[2px] w-full bg-current transition-opacity duration-[var(--dur-fast)] ease-smooth",
-                isMenuOpen && "opacity-0",
-              )}
-            />
-            <span
-              className={cn(
-                "absolute left-0 top-[14px] h-[2px] w-full bg-current transition-transform duration-[var(--dur)] ease-smooth",
-                isMenuOpen && "-translate-y-[7px] -rotate-45",
-              )}
-            />
+          <span aria-hidden="true" className="relative h-4 w-5">
+            <span className="absolute top-0 left-0 h-[2px] w-full bg-current" />
+            <span className="absolute top-[7px] left-0 h-[2px] w-full bg-current" />
+            <span className="absolute top-[14px] left-0 h-[2px] w-full bg-current" />
           </span>
         </button>
       </div>
 
-      <div
-        className={cn(
-          "absolute inset-x-0 top-full z-50 border-b-2 border-line bg-surface transition-[opacity,transform,visibility] duration-[var(--dur-slow)] ease-smooth md:hidden",
-          isMenuOpen
-            ? "visible translate-y-0 opacity-100"
-            : "invisible -translate-y-3 opacity-0 motion-reduce:translate-y-0",
-        )}
+      {/* A full-screen <dialog> (spec D20): the header row repeats inside it
+          with the close X exactly where the hamburger was. */}
+      <Sheet
+        bare
+        desktop="none"
+        hideTitle
         id="mobile-nav-menu"
+        onClose={closeMenu}
+        open={isMenuOpen}
+        presentation="full"
+        title="Menu"
       >
-        <div className="mx-auto flex w-full max-w-[1060px] flex-col gap-1 px-5 py-4">
-          {navLinks.map((link) => (
+        <div className="shrink-0 border-b-2 border-line bg-surface pt-[env(safe-area-inset-top)]">
+          <div
+            className={cn(
+              "flex h-16 items-center justify-between gap-3",
+              gutters,
+            )}
+          >
             <Link
-              key={link.name}
-              href={link.href}
-              aria-current={isActive(link.href) ? "page" : undefined}
-              onClick={() => setIsMenuOpen(false)}
-              className={cn(
-                "rounded-[10px] border-2 border-transparent px-3 py-2.5 text-base font-semibold text-ink",
-                link.muted && "text-subtle",
-                isActive(link.href)
-                  ? "border-brand bg-tint text-brand"
-                  : "hover:bg-tint",
-              )}
+              href="/"
+              className="flex items-center gap-3"
+              onClick={closeMenu}
             >
-              {link.name}
+              {brand}
             </Link>
-          ))}
-          <div className="mt-2 flex items-center gap-3">
-            <ThemeToggle className="shrink-0" />
-            <div className="flex-1" onClick={() => setIsMenuOpen(false)}>
-              <DiscordButton className="w-full" />
-            </div>
+            <button
+              aria-label="Close navigation menu"
+              className={cn(squareButton, "active:bg-tint")}
+              onClick={closeMenu}
+              type="button"
+            >
+              <X aria-hidden="true" className="size-5" strokeWidth={2.5} />
+            </button>
           </div>
         </div>
-      </div>
+
+        <div
+          data-scroll-allow
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-2"
+        >
+          <ul>
+            {navLinks.map((link) => {
+              const active = isActive(link.href);
+              return (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    aria-current={active ? "page" : undefined}
+                    onClick={closeMenu}
+                    className={cn(
+                      "press-flat relative flex min-h-12 items-center justify-between gap-3 py-2 text-lg font-bold",
+                      gutters,
+                      link.muted ? "text-subtle" : "text-ink",
+                      active &&
+                        "before:absolute before:inset-y-2 before:left-0 before:w-[3px] before:rounded-r-full before:bg-brand",
+                    )}
+                  >
+                    {link.name}
+                    <ChevronRight
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-subtle"
+                    />
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div
+          className={cn(
+            "flex shrink-0 flex-col gap-4 border-t-2 border-line pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]",
+            gutters,
+          )}
+        >
+          <DiscordButton className="h-12 w-full" />
+          <ThemeRow />
+        </div>
+      </Sheet>
     </nav>
   );
 }

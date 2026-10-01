@@ -1,6 +1,6 @@
 "use client";
 
-import { Globe, Users } from "lucide-react";
+import { Globe, UserCheck, Users } from "lucide-react";
 import { Pill } from "../../users/ui";
 import type { Alias, AliasDirectory, Delivered } from "./api";
 
@@ -13,6 +13,21 @@ export const groupOf = (directory: AliasDirectory, address: string) =>
 
 const local = (address: string) => address.split("@")[0];
 
+export const peopleCount = (count: number) =>
+  `${count} ${count === 1 ? "person" : "people"}`;
+
+/** One line for an alias row: who it reaches (the server's `delivered`) and its other names. */
+export const aliasMeta = (alias: Alias) => {
+  const parts = [
+    alias.delivered.length
+      ? `Reaches ${peopleCount(alias.delivered.length)}`
+      : "Reaches nobody yet",
+  ];
+  if (alias.synced) parts.push("synced");
+  if (alias.aliases.length) parts.push(`also ${alias.aliases.join(", ")}`);
+  return parts.join(" · ");
+};
+
 const chip =
   "inline-flex items-center gap-1 rounded-full border-2 border-line px-2.5 py-0.5 text-xs font-bold";
 
@@ -24,8 +39,16 @@ export const DeliversTo = ({
   directory: AliasDirectory;
 }) => {
   const names = new Map(directory.people.map((p) => [p.address, p.name]));
+  const roles = new Map(directory.roleGroups.map((g) => [g.id, g.label]));
   return (
     <span className="flex flex-wrap gap-1.5">
+      {alias.recipients.roles.map((id) => (
+        <span key={id} className={`${chip} bg-raised text-ink`}>
+          <UserCheck className="size-3" />
+          {roles.get(id) ?? id} ·{" "}
+          {peopleCount(directory.roleMembers[id]?.length ?? 0)}
+        </span>
+      ))}
       {alias.recipients.people.map((address) => (
         <span
           key={address}
@@ -67,13 +90,15 @@ export const DeliveredRows = ({ delivered }: { delivered: Delivered[] }) =>
           key={entry.address}
           className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm"
         >
-          <span className="font-extrabold text-ink">
+          <span className="min-w-0 font-extrabold wrap-anywhere text-ink">
             {entry.name ?? entry.address}
           </span>
           {entry.name && (
-            <span className="font-mono text-subtle">{entry.address}</span>
+            <span className="min-w-0 font-mono wrap-anywhere text-subtle">
+              {entry.address}
+            </span>
           )}
-          <span className="ml-auto flex gap-1.5">
+          <span className="ml-auto flex flex-wrap gap-1.5">
             {entry.direct && <Pill>direct</Pill>}
             {entry.via.length > 0 && (
               <Pill tone="accent">via {entry.via.map(local).join(", ")}</Pill>

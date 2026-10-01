@@ -7,7 +7,13 @@ import { requestPasswordReset } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 
 const field =
-  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink";
+  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink pointer-coarse:min-h-11";
+
+// Desktop keeps its autofocus. On touch the keyboard only rises when the
+// person taps a field (spec D7), so nothing is focused for them.
+const autoFocusFine = (el: HTMLInputElement | null) => {
+  if (el && window.matchMedia("(pointer: fine)").matches) el.focus();
+};
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -36,8 +42,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8">
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10 max-sm:items-start max-sm:px-0 max-sm:py-6">
+      <div className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut max-sm:p-5 max-sm:shadow-brut-sm sm:p-8">
         {sent ? (
           <>
             <h1 className="text-center text-2xl font-extrabold text-brand">
@@ -66,11 +72,12 @@ export default function ForgotPasswordPage() {
             </label>
             <input
               autoComplete="email"
-              autoFocus
               className={field}
+              enterKeyHint="go"
               id="email"
               onChange={(e) => setEmail(e.target.value)}
               required
+              ref={autoFocusFine}
               type="email"
               value={email}
             />
@@ -82,11 +89,18 @@ export default function ForgotPasswordPage() {
                 {error}
               </p>
             )}
-            <Button className="mt-6 w-full" disabled={submitting} type="submit">
+            <Button
+              className="mt-6 w-full pointer-coarse:min-h-12"
+              disabled={submitting}
+              type="submit"
+            >
               {submitting ? "Sending..." : "Send reset instructions"}
             </Button>
             <p className="mt-4 text-center text-sm text-subtle">
-              <Link className="underline" href="/admin">
+              <Link
+                className="underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-3"
+                href="/admin"
+              >
                 Back to sign in
               </Link>
             </p>

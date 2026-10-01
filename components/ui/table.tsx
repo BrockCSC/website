@@ -58,20 +58,27 @@ export const Table = ({
       className={cn(
         "relative w-full rounded-[var(--table-radius)] border-2 border-[color:var(--table-border)] bg-[color:var(--table-bg)] shadow-[var(--table-shadow)] overflow-hidden",
         mobileVariant === "scroll" && "overflow-x-auto",
+        // Stacked: below md each row is its own card, so the wrapper drops
+        // its chrome (public-12).
+        isStack &&
+          "max-md:overflow-visible max-md:rounded-none max-md:border-0 max-md:bg-transparent max-md:shadow-none",
       )}
       style={tableDefaults}
     >
       {isStack ? (
-        <div className="md:hidden flex flex-col gap-4 p-4">
+        <div className="md:hidden flex flex-col gap-4">
           {data.rows.map((row, i) => (
             <div
               key={i}
               className="border-2 border-[color:var(--table-border)] rounded-xl p-4 shadow-brut-sm"
             >
               {data.columns.map((col) => (
-                <div key={col.key} className="flex justify-between gap-3 py-1">
+                <div
+                  key={col.key}
+                  className="flex flex-col gap-0.5 py-1 min-[420px]:flex-row min-[420px]:justify-between min-[420px]:gap-3"
+                >
                   <span className="font-semibold">{col.label}</span>
-                  <span className="min-w-0 text-right">
+                  <span className="min-w-0 min-[420px]:text-right">
                     {renderCell(row[col.key])}
                   </span>
                 </div>

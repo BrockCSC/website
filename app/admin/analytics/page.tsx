@@ -2,9 +2,12 @@
 
 import { DashboardStats, fetchDashboardStats } from "@/lib/api";
 import { DEDICATED_VM, type CostLine, type CostReport } from "@/lib/costs";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, ChevronRight, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { AdminPage } from "../page-frame";
+import { usePalette } from "../palette";
 import { useSession } from "../session";
 import { Panel } from "../users/ui";
 import { BarList, formatDay, plural, SplitBar, TrendChart } from "./charts";
@@ -31,40 +34,68 @@ const viewsDetail = ({
     : `${change > 0 ? "↑" : "↓"} ${Math.abs(change)}% vs previous 30 days`;
 };
 
+/** A plain click, not one that asks for a new tab or window. */
+const plainClick = (event: React.MouseEvent) =>
+  event.button === 0 &&
+  !event.metaKey &&
+  !event.ctrlKey &&
+  !event.shiftKey &&
+  !event.altKey;
+
+const tileClass =
+  "relative h-full animate-rise-in rounded-[16px] border-2 border-line p-3 shadow-brut-sm transition duration-[var(--dur)] ease-smooth sm:p-3.5";
+
 const Stat = ({
   label,
+  period,
   value,
   detail,
   href,
+  onOpen,
   hero,
+  className,
 }: {
   label: string;
+  /** "(30 days)" after the label, from sm up; the page intro says it on phones. */
+  period?: string;
   value: string;
   detail: string;
   href?: string;
+  /** Replaces a plain click on the link (the href stays for new tabs). */
+  onOpen?: () => void;
   hero?: boolean;
+  className?: string;
 }) => {
   const tile = (
     <div
-      className={`relative h-full animate-rise-in rounded-[16px] border-2 border-line p-3.5 shadow-brut-sm transition duration-[var(--dur)] ease-smooth ${
+      className={`${tileClass} ${
         href
-          ? "group-hover:-translate-y-0.5 group-hover:bg-tint group-hover:shadow-[3px_5px_0_0_var(--shade)] motion-reduce:group-hover:translate-y-0"
-          : "hover:shadow-[3px_3px_0_0_var(--brand)]"
-      } ${hero ? "bg-raised" : "bg-surface"}`}
+          ? "group-hover:-translate-y-0.5 group-hover:bg-tint group-hover:shadow-[3px_5px_0_0_var(--shade)] motion-reduce:group-hover:translate-y-0 pointer-coarse:press"
+          : // Only pressables carry a shadow on phones (D21), so linked
+            // tiles read as linked (dash-missed-2).
+            "hover:shadow-[3px_3px_0_0_var(--brand)] max-md:shadow-none"
+      } ${hero ? "bg-raised" : "bg-surface"} ${href ? "" : (className ?? "")}`}
     >
       {href && (
-        <ArrowUpRight
-          aria-hidden
-          className="absolute top-3 right-3 size-4 text-subtle transition duration-[var(--dur)] ease-smooth group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
-        />
+        <>
+          <ArrowUpRight
+            aria-hidden
+            className="absolute top-3 right-3 size-4 text-subtle transition duration-[var(--dur)] ease-smooth group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-brand max-md:hidden motion-reduce:group-hover:translate-x-0 motion-reduce:group-hover:translate-y-0"
+          />
+          <ChevronRight
+            aria-hidden
+            className="absolute top-2.5 right-2 size-5 text-subtle md:hidden"
+          />
+        </>
       )}
       <div
-        className={`text-xs font-bold uppercase tracking-wide text-subtle ${href ? "pr-5" : ""}`}
+        className={`text-xs font-bold uppercase tracking-wide text-subtle ${hero ? "" : "min-h-8 sm:min-h-0"} ${href ? "pr-5" : ""}`}
       >
         {label}
+        {period && <span className="max-sm:hidden"> ({period})</span>}
       </div>
       <div
-        className={`mt-1 font-extrabold tabular-nums text-brand ${hero ? "text-4xl" : "text-3xl"}`}
+        className={`mt-1 font-extrabold tabular-nums text-brand ${hero ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"}`}
       >
         {value}
       </div>
@@ -72,13 +103,49 @@ const Stat = ({
     </div>
   );
   return href ? (
-    <Link href={href} className="group block rounded-[20px]">
+    <Link
+      href={href}
+      onClick={
+        onOpen &&
+        ((event) => {
+          if (!plainClick(event)) return;
+          event.preventDefault();
+          onOpen();
+        })
+      }
+      className={`group block rounded-[20px] ${className ?? ""}`}
+    >
       {tile}
     </Link>
   ) : (
     tile
   );
 };
+
+/** A tinted bar the height of one line of text. */
+const Bone = ({ className = "" }: { className?: string }) => (
+  <span
+    aria-hidden
+    className={`inline-block rounded-[6px] bg-tint align-middle text-transparent ${className}`}
+  >
+    0
+  </span>
+);
+
+/** A Stat's shape while the numbers load, so nothing below it jumps (dash-missed-5). */
+const StatSkeleton = () => (
+  <div className="h-full rounded-[16px] border-2 border-line/30 bg-surface p-3 sm:p-3.5">
+    <div className="min-h-8 text-xs sm:min-h-0">
+      <Bone className="w-24" />
+    </div>
+    <div className="mt-1 text-2xl sm:text-3xl">
+      <Bone className="w-16" />
+    </div>
+    <div className="mt-1 text-sm">
+      <Bone className="w-32 max-w-full" />
+    </div>
+  </div>
+);
 
 const Card = ({
   hint,
@@ -89,10 +156,36 @@ const Card = ({
   children: React.ReactNode;
 }) => <Panel {...rest} note={hint} smallNote />;
 
+/** A TrendChart card's final height, empty. */
+const ChartSkeleton = ({ title }: { title: string }) => (
+  <div aria-hidden>
+    <Card title={title} hint=" ">
+      <div className="mb-2 hidden h-6 pointer-coarse:block" />
+      <div className="h-44 rounded-[12px] bg-tint/60" />
+      <div className="mt-2 h-7" />
+    </Card>
+  </div>
+);
+
 const Note = ({ children }: { children: React.ReactNode }) => (
   <p className="animate-fade-in rounded-[14px] border-2 border-dashed border-line/40 p-4 text-sm text-subtle">
     {children}
   </p>
+);
+
+const Failed = ({
+  children,
+  onRetry,
+}: {
+  children: React.ReactNode;
+  onRetry: () => void;
+}) => (
+  <div className="flex animate-rise-in flex-wrap items-center justify-between gap-3 rounded-[20px] border-2 border-line bg-surface p-5 md:shadow-brut">
+    <p className="font-bold text-ink">{children}</p>
+    <Button onClick={onRetry} size="sm" variant="outline">
+      Retry
+    </Button>
+  </div>
 );
 
 const HealthRow = ({ label, value }: { label: string; value: number }) => (
@@ -106,52 +199,81 @@ const HealthRow = ({ label, value }: { label: string; value: number }) => (
   </li>
 );
 
+const readJson = <T,>(url: string) =>
+  fetch(url).then((res) =>
+    res.ok
+      ? (res.json() as Promise<T>)
+      : Promise.reject(new Error(String(res.status))),
+  );
+
 export default function AnalyticsPage() {
   const { user } = useSession();
+  const { send } = usePalette();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [statsFailed, setStatsFailed] = useState(false);
   const [mail, setMail] = useState<MailStats | "unavailable" | null>(null);
   const [report, setReport] = useState<CostReport | "unavailable" | null>(null);
+  // Bumped on unmount and on every retry, so a stale response never lands.
+  const statsRun = useRef(0);
+  const costsRun = useRef(0);
 
-  useEffect(() => {
-    let active = true;
+  const loadStats = useCallback(() => {
+    const current = statsRun.current;
+    const live = () => statsRun.current === current;
 
     fetchDashboardStats()
-      .then((data) => active && setStats(data))
-      .catch(() => active && setStatsFailed(true));
+      .then((data) => live() && setStats(data))
+      .catch(() => live() && setStatsFailed(true));
 
-    fetch("/api/mail/stats?days=30")
-      .then((res) =>
-        res.ok ? res.json() : Promise.reject(new Error(String(res.status))),
-      )
-      .then((data: Partial<MailStats>) => {
+    readJson<Partial<MailStats>>("/api/mail/stats?days=30")
+      .then((data) => {
         if (
           typeof data?.sent !== "number" ||
           typeof data?.received !== "number"
         )
           throw new Error("unexpected payload");
-        if (active) setMail({ sent: data.sent, received: data.received });
+        if (live()) setMail({ sent: data.sent, received: data.received });
       })
-      .catch(() => active && setMail("unavailable"));
+      .catch(() => live() && setMail("unavailable"));
+  }, []);
 
-    return () => {
-      active = false;
-    };
+  const loadCosts = useCallback(() => {
+    const current = costsRun.current;
+    const live = () => costsRun.current === current;
+    readJson<CostReport>("/api/stats/costs")
+      .then((data) => live() && setReport(data))
+      .catch(() => live() && setReport("unavailable"));
   }, []);
 
   useEffect(() => {
-    if (!user?.isApprover) return;
-    let active = true;
-    fetch("/api/stats/costs")
-      .then((res) =>
-        res.ok ? res.json() : Promise.reject(new Error(String(res.status))),
-      )
-      .then((data: CostReport) => active && setReport(data))
-      .catch(() => active && setReport("unavailable"));
+    loadStats();
     return () => {
-      active = false;
+      statsRun.current += 1;
     };
-  }, [user?.isApprover]);
+  }, [loadStats]);
+
+  const approver = Boolean(user?.isApprover);
+  useEffect(() => {
+    if (!approver) return;
+    loadCosts();
+    return () => {
+      costsRun.current += 1;
+    };
+  }, [approver, loadCosts]);
+
+  const retryCosts = () => {
+    costsRun.current += 1;
+    setReport(null);
+    loadCosts();
+  };
+
+  const retryStats = () => {
+    statsRun.current += 1;
+    setStatsFailed(false);
+    setMail(null);
+    loadStats();
+    if (approver && report === "unavailable") retryCosts();
+  };
 
   const views = stats?.pageViews;
   const peak = views
@@ -174,30 +296,49 @@ export default function AnalyticsPage() {
         .filter((account) => account.sent > 0)
         .sort((a, b) => b.sent - a.sent)
     : [];
+  const loading = !stats && !statsFailed;
 
   return (
-    <div className="mx-auto w-full max-w-[1060px] px-5 py-8">
+    <AdminPage>
       <h1 className="text-3xl font-extrabold text-ink">Analytics</h1>
       <p className="mt-2 text-subtle">
         Traffic, sign-ups and mail over the last 30 days.
       </p>
 
       {statsFailed && (
-        <p className="mt-8 animate-rise-in rounded-[20px] border-2 border-line bg-surface p-5 font-bold text-ink shadow-brut">
-          Could not load the numbers. Reload the page to try again.
-        </p>
+        <div className="mt-8">
+          <Failed onRetry={retryStats}>Could not load the numbers.</Failed>
+        </div>
+      )}
+
+      {loading && (
+        <div aria-busy className="mt-6 sm:mt-8">
+          <p className="sr-only" role="status">
+            Loading the numbers…
+          </p>
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {Array.from({ length: approver ? 4 : 3 }, (_, i) => (
+              <StatSkeleton key={i} />
+            ))}
+          </div>
+          <div className="mt-6">
+            <ChartSkeleton title="Visits per day" />
+          </div>
+        </div>
       )}
 
       {stats && views && peak && (
         <>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-2 gap-3 sm:mt-8 sm:gap-4 lg:grid-cols-4">
             <Stat
-              label="Page views (30 days)"
+              label="Page views"
+              period="30 days"
               value={views.last30Days.toLocaleString()}
               detail={viewsDetail(views)}
             />
             <Stat
-              label="Mail handled (30 days)"
+              label="Mail handled"
+              period="30 days"
               value={
                 mailStats
                   ? (mailStats.sent + mailStats.received).toLocaleString()
@@ -221,6 +362,7 @@ export default function AnalyticsPage() {
                     : "Nothing to review"
                 }
                 href="/admin/users"
+                onOpen={() => send("/admin/users", { pending: true })}
               />
             )}
             <Stat
@@ -262,6 +404,7 @@ export default function AnalyticsPage() {
               <Card title="Most visited pages" hint="Last 30 days">
                 {views.topPaths.length > 0 ? (
                   <BarList
+                    mono
                     rows={views.topPaths.map((entry) => ({
                       label: entry.path,
                       value: entry.views,
@@ -275,7 +418,7 @@ export default function AnalyticsPage() {
               </Card>
 
               <Card
-                title="Mail volume"
+                title="Your mailbox"
                 hint="Last 30 days in your club mailbox"
               >
                 {mailStats ? (
@@ -323,7 +466,11 @@ export default function AnalyticsPage() {
                   hint={`${plural(signupsThisMonth, "request")} in the last 30 days`}
                 >
                   {signupsThisMonth > 0 ? (
-                    <TrendChart points={signups.daily} unit="sign-up" />
+                    <TrendChart
+                      points={signups.daily}
+                      unit="sign-up"
+                      variant="bars"
+                    />
                   ) : (
                     <Note>
                       No new sign-ups in the last 30 days. Invite codes are
@@ -362,10 +509,9 @@ export default function AnalyticsPage() {
         </>
       )}
 
-      {!stats && !statsFailed && (
-        <p className="mt-8 text-subtle">Loading the numbers…</p>
-      )}
-      {user?.isApprover && (
+      {/* Held back until the numbers above settle, so it doesn't render
+          first and then jump a few thousand pixels (dash-missed-5). */}
+      {approver && !loading && (
         <section className="mt-10">
           <h2 className="text-2xl font-extrabold text-ink">Projected bill</h2>
           <p className="mt-1 text-subtle">
@@ -376,9 +522,10 @@ export default function AnalyticsPage() {
 
           {costs ? (
             <>
-              <div className="mt-6 grid gap-4 sm:grid-cols-3">
+              <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
                 <Stat
                   hero
+                  className="col-span-2 sm:col-span-1"
                   label="This month so far"
                   value={usd(costs.month.soFar)}
                   detail={`projected ${usd(costs.month.projected)} by month end`}
@@ -412,90 +559,141 @@ export default function AnalyticsPage() {
                 ].map((row) => (
                   <div
                     key={row.label}
-                    className="group flex flex-wrap justify-between gap-x-4"
+                    className="group grid grid-cols-[minmax(0,1fr)_auto] gap-x-4"
                   >
                     <dt className="text-subtle transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-ink">
                       {row.label}
                     </dt>
-                    <dd className="font-bold tabular-nums text-ink transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-brand">
-                      {usd(row.value)} / month
+                    <dd className="text-right font-bold tabular-nums text-ink transition-colors duration-[var(--dur-fast)] ease-smooth group-hover:text-brand">
+                      {usd(row.value)}
+                      <span className="max-sm:hidden"> / month</span>
+                      <span className="sm:hidden">/mo</span>
                     </dd>
                   </div>
                 ))}
               </dl>
 
               <div className="mt-6 grid gap-6">
-                <Card title="Where the money goes" hint="Last 30 days, USD">
-                  <SplitBar
-                    segments={costs.last30.lines.map((line) => ({
-                      label: line.label,
-                      value: line.amount,
-                    }))}
-                    format={usd}
-                  />
-                  <div className="mt-5 overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="text-left text-xs font-bold uppercase tracking-wide text-subtle">
-                          <th className="pb-2 font-bold">Item</th>
-                          <th className="pb-2 text-right font-bold">
-                            Quantity
-                          </th>
-                          <th className="pb-2 text-right font-bold">
-                            Unit price
-                          </th>
-                          <th className="pb-2 text-right font-bold">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {costs.last30.lines.map((line) => (
-                          <tr
-                            key={line.key}
-                            className="border-t-2 border-line/20 transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-tint"
-                          >
-                            <td className="py-2 pr-3">
-                              <a
-                                href={line.source}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-bold text-ink underline decoration-line/60 underline-offset-2 hover:decoration-brand"
-                              >
-                                {line.label}
-                              </a>
-                              {line.note && (
-                                <span className="ml-2 whitespace-nowrap text-xs text-subtle">
-                                  {line.note}
-                                </span>
-                              )}
-                            </td>
-                            <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
-                              {quantity(line)}
-                            </td>
-                            <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
-                              ${line.unitPrice}
-                            </td>
-                            <td className="py-2 pl-3 text-right font-bold tabular-nums text-ink">
+                <div className="min-w-0">
+                  <Card title="Where the money goes" hint="Last 30 days, USD">
+                    <SplitBar
+                      segments={costs.last30.lines.map((line) => ({
+                        label: line.label,
+                        value: line.amount,
+                      }))}
+                      format={usd}
+                    />
+
+                    {/* Phones: one row per line item, amounts on the right (dash-2). */}
+                    <ul className="mt-4 sm:hidden">
+                      {costs.last30.lines.map((line) => (
+                        <li
+                          key={line.key}
+                          className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 border-t-2 border-line/20 py-3"
+                        >
+                          <div className="min-w-0">
+                            <div className="font-bold text-ink">
+                              {line.label}
+                            </div>
+                            {line.note && (
+                              <div className="text-sm text-subtle">
+                                {line.note}
+                              </div>
+                            )}
+                            <div className="text-sm tabular-nums text-subtle">
+                              {quantity(line)} × ${line.unitPrice}
+                            </div>
+                          </div>
+                          <div className="flex items-center">
+                            <a
+                              href={line.source}
+                              target="_blank"
+                              rel="noreferrer"
+                              aria-label={`${line.label} price source (opens in a new tab)`}
+                              className="press-flat grid size-11 place-items-center rounded-[10px] text-subtle"
+                            >
+                              <ExternalLink aria-hidden className="size-4" />
+                            </a>
+                            <span className="font-bold tabular-nums text-ink">
                               {usd(line.amount)}
+                            </span>
+                          </div>
+                        </li>
+                      ))}
+                      <li className="grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 border-t-2 border-line pt-3">
+                        <span className="font-bold text-ink">Total</span>
+                        <span className="font-extrabold tabular-nums text-brand">
+                          {usd(costs.last30.total)}
+                        </span>
+                      </li>
+                    </ul>
+
+                    <div className="mt-5 hidden overflow-x-auto overscroll-x-contain sm:block">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs font-bold uppercase tracking-wide text-subtle">
+                            <th className="pb-2 font-bold">Item</th>
+                            <th className="pb-2 text-right font-bold">
+                              Quantity
+                            </th>
+                            <th className="pb-2 text-right font-bold">
+                              Unit price
+                            </th>
+                            <th className="pb-2 text-right font-bold">
+                              Amount
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {costs.last30.lines.map((line) => (
+                            <tr
+                              key={line.key}
+                              className="border-t-2 border-line/20 transition-colors duration-[var(--dur-fast)] ease-smooth hover:bg-tint"
+                            >
+                              <td className="py-2 pr-3">
+                                <a
+                                  href={line.source}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="font-bold text-ink underline decoration-line/60 underline-offset-2 hover:decoration-brand pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center"
+                                >
+                                  {line.label}
+                                </a>
+                                {line.note && (
+                                  <span className="ml-2 text-xs text-subtle">
+                                    {line.note}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
+                                {quantity(line)}
+                              </td>
+                              <td className="whitespace-nowrap py-2 pl-3 text-right tabular-nums text-subtle">
+                                ${line.unitPrice}
+                              </td>
+                              <td className="py-2 pl-3 text-right font-bold tabular-nums text-ink">
+                                {usd(line.amount)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                        <tfoot>
+                          <tr className="border-t-2 border-line">
+                            <td className="pt-2 font-bold text-ink" colSpan={3}>
+                              Total
+                            </td>
+                            <td className="pt-2 text-right font-extrabold tabular-nums text-brand">
+                              {usd(costs.last30.total)}
                             </td>
                           </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr className="border-t-2 border-line">
-                          <td className="pt-2 font-bold text-ink" colSpan={3}>
-                            Total
-                          </td>
-                          <td className="pt-2 text-right font-extrabold tabular-nums text-brand">
-                            {usd(costs.last30.total)}
-                          </td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </Card>
+                        </tfoot>
+                      </table>
+                    </div>
+                  </Card>
+                </div>
 
                 <Card
-                  title="Mail volume"
+                  title="Club mail by sender"
                   hint={`${plural(costs.usage.totals.sent, "message")} sent and ${costs.usage.totals.received.toLocaleString()} received club-wide in the last ${costs.usage.days} days`}
                 >
                   {senders.length > 0 ? (
@@ -525,17 +723,20 @@ export default function AnalyticsPage() {
                 </Note>
               </div>
             </>
+          ) : report === "unavailable" ? (
+            <div className="mt-6">
+              <Failed onRetry={retryCosts}>
+                Cost figures are unavailable. The mail server could not be
+                reached.
+              </Failed>
+            </div>
           ) : (
             <div className="mt-6">
-              <Note>
-                {report === "unavailable"
-                  ? "Cost figures are unavailable. The mail server could not be reached."
-                  : "Loading cost figures…"}
-              </Note>
+              <Note>Loading cost figures…</Note>
             </div>
           )}
         </section>
       )}
-    </div>
+    </AdminPage>
   );
 }

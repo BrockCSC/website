@@ -14,6 +14,7 @@ import {
   UserPlus,
   type LucideIcon,
 } from "lucide-react";
+import { useState } from "react";
 import type { SigningRequestItem } from "@/lib/api/documents";
 import type { SigningEvent, SigningEventType } from "@/lib/api/types";
 import { formatSigningTime } from "@/lib/documents/signing-time";
@@ -109,19 +110,39 @@ const describe = (event: SigningEvent, signerName: string | undefined) => {
   }
 };
 
-export function SigningTimeline({ request }: { request: SigningRequestItem }) {
+export function SigningTimeline({
+  request,
+  collapsedCount,
+}: {
+  request: SigningRequestItem;
+  /** Show only the latest N events until "Show all" is tapped (phones). */
+  collapsedCount?: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
   const recorded = !!request.events?.length;
-  const events = (recorded ? request.events! : eventsFromTimestamps(request))
+  const all = (recorded ? request.events! : eventsFromTimestamps(request))
     .slice()
     .sort((a, b) => Date.parse(a.at) - Date.parse(b.at));
+  const collapsed =
+    !expanded && collapsedCount != null && all.length > collapsedCount;
+  const events = collapsed ? all.slice(-collapsedCount) : all;
 
   return (
     <div>
       {!recorded && (
-        <p className="mb-4 text-xs text-subtle">
+        <p className="mb-4 text-xs text-subtle max-md:text-sm">
           This request predates the full audit trail, so its history is rebuilt
           from the times saved on it.
         </p>
+      )}
+      {collapsed && (
+        <button
+          className="press-flat -mt-2 mb-2 min-h-11 rounded-[10px] px-2 text-left font-bold text-ink"
+          onClick={() => setExpanded(true)}
+          type="button"
+        >
+          Show all {all.length} events
+        </button>
       )}
       <ol className="flex flex-col">
         {events.map((event, index) => {
@@ -151,23 +172,23 @@ export function SigningTimeline({ request }: { request: SigningRequestItem }) {
                 <Icon aria-hidden className="size-4" />
               </span>
               <div className={cn("min-w-0 pt-1", !last && "pb-5")}>
-                <p className="text-sm font-bold text-ink">
+                <p className="text-sm font-bold text-ink max-md:text-base">
                   {describe(event, signerName)}
                   {actor && (
                     <span className="font-normal text-subtle"> by {actor}</span>
                   )}
                 </p>
-                <p className="text-xs break-words text-subtle">
+                <p className="text-xs break-words text-subtle max-md:text-sm">
                   <time dateTime={event.at}>{formatSigningTime(event.at)}</time>
                   {event.ip && <> · IP {event.ip}</>}
                 </p>
                 {event.userAgent && (
-                  <p
-                    className="truncate text-[11px] text-subtle"
-                    title={event.userAgent}
-                  >
-                    {event.userAgent}
-                  </p>
+                  <details className="text-[11px] text-subtle max-md:text-sm">
+                    <summary className="w-fit cursor-pointer font-bold pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center">
+                      Device
+                    </summary>
+                    <p className="wrap-anywhere">{event.userAgent}</p>
+                  </details>
                 )}
               </div>
             </li>

@@ -6,9 +6,18 @@ import { Button } from "@/components/ui/button";
 import { completeForcedReset, login } from "@/lib/api";
 import { ApiError } from "@/lib/api/client";
 import { MIN_PASSWORD_LENGTH } from "@/lib/signups/validation";
+import { useCoarsePointer } from "@/lib/use-media-query";
 
+// 16px text and 48px tall on touch, so iOS never zooms on focus. Fine
+// pointers keep the 14px desktop field.
 const field =
-  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink outline-none";
+  "w-full min-h-12 rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-base text-ink outline-none pointer-fine:min-h-0 pointer-fine:text-sm";
+
+// A container, so no hard shadow on phones (spec D21).
+const card =
+  "mt-6 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut phone:shadow-none";
+
+const submit = "mt-6 w-full pointer-coarse:h-12";
 
 const reason = (err: unknown): string => {
   const status = err instanceof ApiError ? err.status : 0;
@@ -36,6 +45,10 @@ function ForcedResetForm({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  // On touch, focusing a field nobody tapped raises the keyboard over the
+  // form (spec D7). This form only mounts on the client, so the first render
+  // already knows the pointer.
+  const coarse = useCoarsePointer();
 
   useEffect(() => {
     if (error) errorRef.current?.focus();
@@ -78,10 +91,7 @@ function ForcedResetForm({
   };
 
   return (
-    <form
-      className="mt-6 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut"
-      onSubmit={handleSubmit}
-    >
+    <form className={card} onSubmit={handleSubmit}>
       <p className="mb-4 text-sm text-subtle">
         That was a temporary password. Choose a new one to finish signing in.
       </p>
@@ -95,8 +105,9 @@ function ForcedResetForm({
       <input
         aria-invalid={error ? true : undefined}
         autoComplete="new-password"
-        autoFocus
+        autoFocus={!coarse}
         className={field}
+        enterKeyHint="next"
         id="new-password"
         onChange={(e) => setNewPassword(e.target.value)}
         required
@@ -114,6 +125,7 @@ function ForcedResetForm({
         aria-invalid={error ? true : undefined}
         autoComplete="new-password"
         className={field}
+        enterKeyHint="go"
         id="confirm-new-password"
         onChange={(e) => setConfirmPassword(e.target.value)}
         required
@@ -132,7 +144,7 @@ function ForcedResetForm({
         </p>
       )}
 
-      <Button className="mt-6 w-full" disabled={submitting} type="submit">
+      <Button className={submit} disabled={submitting} type="submit">
         {submitting ? "Saving..." : "Set password and sign in"}
       </Button>
     </form>
@@ -146,6 +158,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   const [submitting, setSubmitting] = useState(false);
   const [resetToken, setResetToken] = useState<string | null>(null);
   const errorRef = useRef<HTMLParagraphElement>(null);
+  const coarse = useCoarsePointer();
 
   useEffect(() => {
     if (error) errorRef.current?.focus();
@@ -170,7 +183,8 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-12">
+    // Phones: top-aligned, so the form doesn't jump when the keyboard rises.
+    <div className="flex min-h-svh items-center justify-center px-5 py-12 max-sm:items-start max-sm:pt-[max(12svh,env(safe-area-inset-top))] short:items-start short:py-6">
       <div className="w-full max-w-[380px]">
         <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-subtle">
           BrockCSC
@@ -184,10 +198,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             username={username}
           />
         ) : (
-          <form
-            className="mt-6 rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut"
-            onSubmit={handleSubmit}
-          >
+          <form className={card} onSubmit={handleSubmit}>
             <label
               className="mb-1 block text-sm font-bold text-ink"
               htmlFor="username"
@@ -196,12 +207,16 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
             </label>
             <input
               aria-invalid={error ? true : undefined}
+              autoCapitalize="none"
               autoComplete="username"
-              autoFocus
+              autoCorrect="off"
+              autoFocus={!coarse}
               className={field}
+              enterKeyHint="next"
               id="username"
               onChange={(e) => setUsername(e.target.value)}
               required
+              spellCheck={false}
               value={username}
             />
 
@@ -212,8 +227,10 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
               >
                 Password
               </label>
+              {/* 44px tall on touch; the negative margin keeps the row's
+                  height, so the field below doesn't move. */}
               <Link
-                className="text-xs font-bold text-subtle underline underline-offset-4 hover:text-ink"
+                className="-my-3 inline-flex min-h-11 items-center text-xs font-bold text-subtle underline underline-offset-4 hover:text-ink"
                 href="/forgot-password"
               >
                 Forgot password?
@@ -223,6 +240,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
               aria-invalid={error ? true : undefined}
               autoComplete="current-password"
               className={field}
+              enterKeyHint="go"
               id="password"
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -241,7 +259,7 @@ export function LoginForm({ onSuccess }: { onSuccess: () => void }) {
               </p>
             )}
 
-            <Button className="mt-6 w-full" disabled={submitting} type="submit">
+            <Button className={submit} disabled={submitting} type="submit">
               {submitting ? "Signing in..." : "Sign in"}
             </Button>
           </form>

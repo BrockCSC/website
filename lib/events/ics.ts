@@ -13,15 +13,21 @@ const toIcsTimestamp = (timestamp: number): string =>
 const escapeIcsText = (value: string): string =>
   value.replace(/([\\;,])/g, "\\$1").replace(/\r?\n/g, "\\n");
 
-const buildEventIcs = (
+const endFor = (event: WithKey<EventRecord>, startTimestamp: number) =>
+  startTimestamp + (getEventDurationMs(event) ?? DEFAULT_DURATION_MS);
+
+export const eventIcsFilename = (event: WithKey<EventRecord>): string =>
+  `${
+    (event.title ?? "event").replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "") ||
+    "event"
+  }.ics`;
+
+export const buildEventIcs = (
   event: WithKey<EventRecord>,
   startTimestamp: number,
   eventUrl: string,
-): string => {
-  const endTimestamp =
-    startTimestamp + (getEventDurationMs(event) ?? DEFAULT_DURATION_MS);
-
-  return [
+): string =>
+  [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
     "PRODID:-//BrockCSC//Events//EN",
@@ -29,7 +35,7 @@ const buildEventIcs = (
     `UID:${event.$key}@brockcsc.ca`,
     `DTSTAMP:${toIcsTimestamp(Date.now())}`,
     `DTSTART:${toIcsTimestamp(startTimestamp)}`,
-    `DTEND:${toIcsTimestamp(endTimestamp)}`,
+    `DTEND:${toIcsTimestamp(endFor(event, startTimestamp))}`,
     `SUMMARY:${escapeIcsText(event.title ?? "BrockCSC Event")}`,
     ...(event.description
       ? [`DESCRIPTION:${escapeIcsText(event.description)}`]
@@ -39,6 +45,31 @@ const buildEventIcs = (
     "END:VEVENT",
     "END:VCALENDAR",
   ].join("\r\n");
+
+/** Same-origin .ics link (a text/calendar route): iOS opens it in Calendar. */
+export const eventIcsHref = (
+  event: WithKey<EventRecord>,
+  startTimestamp: number,
+): string =>
+  `/api/events/${encodeURIComponent(event.$key)}/ics?start=${startTimestamp}`;
+
+/** Google Calendar's "add event" template; Android opens it in the Calendar app. */
+export const googleCalendarUrl = (
+  event: WithKey<EventRecord>,
+  startTimestamp: number,
+  eventUrl: string,
+): string => {
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: event.title ?? "BrockCSC Event",
+    dates: `${toIcsTimestamp(startTimestamp)}/${toIcsTimestamp(endFor(event, startTimestamp))}`,
+  });
+  if (event.location) params.set("location", event.location);
+  params.set(
+    "details",
+    [event.description, eventUrl].filter(Boolean).join("\n\n"),
+  );
+  return `https://calendar.google.com/calendar/render?${params.toString()}`;
 };
 
 export const downloadEventIcs = (
@@ -52,7 +83,8 @@ export const downloadEventIcs = (
   const objectUrl = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = objectUrl;
-  anchor.download = `${(event.title ?? "event").replace(/[^\w-]+/g, "-").replace(/^-|-$/g, "") || "event"}.ics`;
+  anchor.download = eventIcsFilename(event);
   anchor.click();
-  URL.revokeObjectURL(objectUrl);
+  // Revoking in the same task can cancel the download in some browsers.
+  window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 };

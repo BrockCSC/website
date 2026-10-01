@@ -63,10 +63,19 @@ const SECTIONS: Section[] = [
   },
 ];
 
+/** The phone "More" screen. Not a section: the rail lists everything, so it's never in visibleSections. */
+const MORE: Section = {
+  name: "More",
+  href: "/admin/more",
+  blurb: "Every other section, appearance and log out.",
+};
+
 export const sectionFor = (pathname: string): Section | undefined =>
-  SECTIONS.filter((section) => pathname.startsWith(section.href)).sort(
-    (a, b) => b.href.length - a.href.length,
-  )[0];
+  pathname.startsWith(MORE.href)
+    ? MORE
+    : SECTIONS.filter((section) => pathname.startsWith(section.href)).sort(
+        (a, b) => b.href.length - a.href.length,
+      )[0];
 
 export type NavUser = {
   isApprover?: boolean;

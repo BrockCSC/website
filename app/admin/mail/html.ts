@@ -1,5 +1,7 @@
 import type { MessageSummary } from "@/lib/mail/jmap-mail";
 
+type EmailAddress = NonNullable<MessageSummary["from"]>[number];
+
 const QUOTE_STYLE =
   "margin:0 0 0 0.8ex;border-left:2px solid #ccc;padding-left:1ex";
 
@@ -8,7 +10,7 @@ const SAFE_URL = /^(?:https?:|mailto:|tel:|cid:|#)/i;
 const BLOCK =
   /^(ADDRESS|ARTICLE|DD|DIV|DL|DT|H[1-6]|HR|OL|P|PRE|SECTION|TABLE|TR|UL)$/;
 
-export const harden = (root: HTMLElement) => {
+export const harden = (root: ParentNode) => {
   root
     .querySelectorAll("script,style,link,meta,base,iframe,object,embed,form")
     .forEach((el) => el.remove());
@@ -22,16 +24,71 @@ export const harden = (root: HTMLElement) => {
   });
 };
 
-export const buildQuote = async (message: MessageSummary): Promise<string> => {
+const IMAGE_BOX =
+  "p,div,td,th,li,figure,center,section,article,blockquote,h1,h2,h3,h4,h5,h6";
+
+/** Logos, icons and spacers: gone from a quote without a word, as in native mail. */
+const isSmall = (img: Element) =>
+  ["width", "height"].some((name) => {
+    const value = Number.parseInt(img.getAttribute(name) ?? "", 10);
+    return Number.isFinite(value) && value <= 64;
+  });
+
+/**
+ * Images a reply can't carry: blocked remote images, unresolved `cid:` parts
+ * and inlined `data:` parts (harden drops their src). One that stands alone
+ * in its block with a descriptive alt (a poster, a chart) becomes
+ * "[image: alt]"; the rest (logos beside a name, icons in links, spacers) go
+ * silently instead of leaving a broken box or a stray label.
+ */
+const replaceUnsendableImages = (root: HTMLElement) => {
+  // Decide for every image first: a label put in for one must not count as
+  // text beside the next.
+  const verdicts = Array.from(root.querySelectorAll("img")).flatMap((img) => {
+    const src = img.getAttribute("src") ?? "";
+    if (src && !/^cid:/i.test(src) && !img.hasAttribute("data-blocked-src"))
+      return [];
+    const alt = (img.getAttribute("alt") ?? "").trim().replace(/\s+/g, " ");
+    const box = img.parentElement?.closest(IMAGE_BOX) ?? img.parentElement;
+    const alone =
+      !box?.textContent?.trim() && !img.closest("a")?.textContent?.trim();
+    const label =
+      alone && !isSmall(img) && alt.split(" ").length > 3 ? alt : null;
+    return [{ img, label }];
+  });
+  for (const { img, label } of verdicts) {
+    if (label)
+      img.replaceWith(img.ownerDocument.createTextNode(`[image: ${label}]`));
+    else img.remove();
+  }
+};
+
+const person = (address: EmailAddress) =>
+  address.name && address.name !== address.email
+    ? `${address.name} <${address.email}>`
+    : address.email;
+
+const people = (list: EmailAddress[] | null) =>
+  (list ?? []).map(person).join(", ");
+
+/**
+ * The quoted original for a reply or forward, as page.tsx stores it in
+ * `draft.quoteHtml`. Reply: an attribution line and an indented blockquote.
+ * Forward: Gmail's "Forwarded message" header block and the body, unindented.
+ */
+export const buildQuote = async (
+  message: MessageSummary,
+  mode: "reply" | "forward" = "reply",
+): Promise<string> => {
   const doc = document.implementation.createHTMLDocument("");
   const sender = message.from?.[0];
-  const attribution = doc.createElement("div");
-  attribution.textContent = `On ${new Date(
-    message.receivedAt,
-  ).toLocaleString()}, ${sender?.name || sender?.email || "someone"} wrote:`;
+  const when = new Date(message.receivedAt).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 
-  const quote = doc.createElement("blockquote");
-  quote.setAttribute("style", QUOTE_STYLE);
+  const body = doc.createElement(mode === "forward" ? "div" : "blockquote");
+  if (mode === "reply") body.setAttribute("style", QUOTE_STYLE);
   try {
     const res = await fetch(
       `/api/mail/messages/${encodeURIComponent(message.id)}/body`,
@@ -42,12 +99,39 @@ export const buildQuote = async (message: MessageSummary): Promise<string> => {
       "text/html",
     );
     harden(parsed.body);
-    quote.append(...Array.from(parsed.body.childNodes));
+    replaceUnsendableImages(parsed.body);
+    body.append(...Array.from(parsed.body.childNodes));
+    // An email that paints its own backgrounds: the editor keeps it on a light
+    // scheme in the dark theme (editor.tsx).
+    if (body.querySelector("[bgcolor],[style*=background]"))
+      body.setAttribute("data-quote", "styled");
   } catch {
-    quote.textContent = message.preview;
+    body.textContent = message.preview;
   }
 
-  return `<div><br></div>${attribution.outerHTML}${quote.outerHTML}`;
+  if (mode === "forward") {
+    const header = doc.createElement("div");
+    header.setAttribute("style", "margin-top:0.75em");
+    const lines = [
+      "---------- Forwarded message ----------",
+      `From: ${sender ? person(sender) : "unknown sender"}`,
+      `Date: ${when}`,
+      `Subject: ${message.subject ?? "(no subject)"}`,
+      `To: ${people(message.to)}`,
+    ];
+    lines.forEach((line, index) => {
+      if (index > 0) header.append(doc.createElement("br"));
+      header.append(doc.createTextNode(line));
+    });
+    const spacer = doc.createElement("div");
+    spacer.append(doc.createElement("br"));
+    return `<div><br></div>${header.outerHTML}${spacer.outerHTML}${body.outerHTML}`;
+  }
+
+  const attribution = doc.createElement("div");
+  attribution.setAttribute("style", "margin-top:0.75em");
+  attribution.textContent = `On ${when}, ${sender?.name || sender?.email || "someone"} wrote:`;
+  return `<div><br></div>${attribution.outerHTML}${body.outerHTML}`;
 };
 
 /** Plain-text alternative for what the editor holds. */

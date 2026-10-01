@@ -3,6 +3,7 @@
 import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { useRevealedGroups } from "@/lib/use-revealed-groups";
 
 import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
@@ -10,7 +11,11 @@ import { classifyEventsByTiming } from "@/lib/events/classify";
 import { getEventStartTimestamp } from "@/lib/events/schedule";
 
 import { RetryNotice, SearchField } from "../components/search-panel";
-import { EventTimelineCard } from "./components/event-timeline-card";
+import {
+  EventRow,
+  EventRowList,
+  EventTimelineCard,
+} from "./components/event-timeline-card";
 import { DISCORD_INVITE } from "@/lib/links";
 
 type EventItem = WithKey<EventRecord>;
@@ -56,6 +61,9 @@ export default function EventsPageClient({
   const [query, setQuery] = useState(initialQuery);
   const [reloadCount, setReloadCount] = useState(0);
   const hasRestoredScrollRef = useRef(false);
+  // Below md each event is a compact row (public-18). Lists only render
+  // after the client fetch, so reading the media query can't mismatch SSR.
+  const rows = !useMediaQuery("(min-width: 768px)");
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
@@ -115,13 +123,21 @@ export default function EventsPageClient({
     }
 
     hasRestoredScrollRef.current = true;
-    const raw = window.sessionStorage.getItem("events:scrollY");
+    // Back on the list: a detail page opened later from elsewhere must not
+    // treat its Back as a history back.
+    let raw: string | null = null;
+    try {
+      window.sessionStorage.removeItem("events:fromList");
+      raw = window.sessionStorage.getItem("events:scrollY");
+      window.sessionStorage.removeItem("events:scrollY");
+    } catch {
+      // Storage blocked: skip scroll restore.
+    }
     if (!raw) {
       return;
     }
 
     const scrollY = Number(raw);
-    window.sessionStorage.removeItem("events:scrollY");
     if (!Number.isFinite(scrollY)) {
       return;
     }
@@ -224,15 +240,23 @@ export default function EventsPageClient({
               Happening right now.
             </p>
 
-            <div className="grid grid-cols-1 gap-2.5">
-              {ongoing.map((event) => (
-                <EventTimelineCard
-                  event={event}
-                  key={event.$key}
-                  variant="ongoing"
-                />
-              ))}
-            </div>
+            {rows ? (
+              <EventRowList>
+                {ongoing.map((event) => (
+                  <EventRow event={event} key={event.$key} variant="ongoing" />
+                ))}
+              </EventRowList>
+            ) : (
+              <div className="grid grid-cols-1 gap-2.5">
+                {ongoing.map((event) => (
+                  <EventTimelineCard
+                    event={event}
+                    key={event.$key}
+                    variant="ongoing"
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -270,16 +294,29 @@ export default function EventsPageClient({
               What&apos;s coming next.
             </p>
 
-            <div className="grid grid-cols-1 gap-3">
-              {upcoming.map((event) => (
-                <EventTimelineCard
-                  event={event}
-                  key={event.$key}
-                  nowTimestamp={nowTimestamp}
-                  variant="upcoming"
-                />
-              ))}
-            </div>
+            {rows ? (
+              <EventRowList>
+                {upcoming.map((event) => (
+                  <EventRow
+                    event={event}
+                    key={event.$key}
+                    nowTimestamp={nowTimestamp}
+                    variant="upcoming"
+                  />
+                ))}
+              </EventRowList>
+            ) : (
+              <div className="grid grid-cols-1 gap-3">
+                {upcoming.map((event) => (
+                  <EventTimelineCard
+                    event={event}
+                    key={event.$key}
+                    nowTimestamp={nowTimestamp}
+                    variant="upcoming"
+                  />
+                ))}
+              </div>
+            )}
           </section>
         )}
 
@@ -309,7 +346,7 @@ export default function EventsPageClient({
               {[0, 1, 2].map((index) => (
                 <div
                   aria-hidden="true"
-                  className="h-64 animate-pulse rounded-2xl border border-line/25 bg-raised"
+                  className="h-64 animate-pulse rounded-2xl border border-line/25 bg-raised max-md:h-24"
                   key={index}
                 />
               ))}
@@ -325,15 +362,23 @@ export default function EventsPageClient({
                 <h3 className="mb-2 text-base font-semibold text-ink/80">
                   {group.term}
                 </h3>
-                <div className="grid grid-cols-3 gap-3 max-[980px]:grid-cols-2 max-[700px]:grid-cols-1">
-                  {group.events.map((event) => (
-                    <EventTimelineCard
-                      event={event}
-                      key={event.$key}
-                      variant="past"
-                    />
-                  ))}
-                </div>
+                {rows ? (
+                  <EventRowList>
+                    {group.events.map((event) => (
+                      <EventRow event={event} key={event.$key} variant="past" />
+                    ))}
+                  </EventRowList>
+                ) : (
+                  <div className="grid grid-cols-3 gap-3 max-[980px]:grid-cols-2 max-[700px]:grid-cols-1">
+                    {group.events.map((event) => (
+                      <EventTimelineCard
+                        event={event}
+                        key={event.$key}
+                        variant="past"
+                      />
+                    ))}
+                  </div>
+                )}
               </section>
             ))}
 

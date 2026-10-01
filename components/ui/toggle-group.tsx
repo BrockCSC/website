@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 export type ToggleOption<T extends string> = { value: T; label: string };
 
@@ -15,17 +16,28 @@ export function ToggleGroup<T extends string>({
   value,
   onChange,
   label,
+  className,
+  itemClassName,
 }: {
   options: ToggleOption<T>[];
   value: T | null;
   onChange: (value: T) => void;
   label?: string;
+  /** Extra classes for the row, e.g. "max-md:w-full". */
+  className?: string;
+  /** Extra classes for each option, e.g. "max-md:flex-1". */
+  itemClassName?: string;
 }) {
   return (
-    <div aria-label={label} className="flex flex-wrap gap-2" role="radiogroup">
+    <div
+      aria-label={label}
+      className={cn("flex flex-wrap gap-2", className)}
+      role="radiogroup"
+    >
       {options.map((opt) => (
         <Button
           aria-checked={value === opt.value}
+          className={itemClassName}
           key={opt.value}
           onClick={() => onChange(opt.value)}
           role="radio"

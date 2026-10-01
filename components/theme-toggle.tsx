@@ -2,12 +2,35 @@
 
 import { cn } from "@/lib/utils";
 
-export const flipTheme = () => {
-  const dark = document.documentElement.classList.toggle("dark");
+// The --surface value per theme (globals.css), mirrored in the pre-paint
+// script in app/layout.tsx.
+const THEME_COLOR = { light: "#ffffff", dark: "#1b181d" };
+
+function syncThemeColor(dark: boolean) {
+  let meta = document.querySelector<HTMLMetaElement>(
+    'meta[name="theme-color"]',
+  );
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "theme-color";
+    document.head.appendChild(meta);
+  }
+  meta.content = dark ? THEME_COLOR.dark : THEME_COLOR.light;
+}
+
+export const setTheme = (theme: "light" | "dark") => {
+  const dark = theme === "dark";
+  document.documentElement.classList.toggle("dark", dark);
+  syncThemeColor(dark);
   try {
-    localStorage.setItem("brockcsc-theme", dark ? "dark" : "light");
+    localStorage.setItem("brockcsc-theme", theme);
   } catch {}
 };
+
+export const flipTheme = () =>
+  setTheme(
+    document.documentElement.classList.contains("dark") ? "light" : "dark",
+  );
 
 export function ThemeToggle({ className = "" }: { className?: string }) {
   return (
