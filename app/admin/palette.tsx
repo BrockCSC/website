@@ -10,11 +10,26 @@ import {
   useRef,
   useState,
 } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import {
+  ArrowRight,
+  Calendar,
+  Folder,
+  Hash,
+  Inbox as InboxIcon,
+  Loader2,
+  Mail,
+  Search,
+  User,
+  Zap,
+  type LucideIcon,
+} from "lucide-react";
 import { fetchAllEvents, type EventRecord, type WithKey } from "@/lib/api";
 import { storedTerms } from "@/lib/execs/terms";
 import type { Mailbox, MessageSummary } from "@/lib/mail/jmap-mail";
 import type { Inbox } from "@/app/api/mail/inboxes/route";
+import { Sheet } from "@/components/ui/sheet";
+import { navigateStack } from "@/lib/use-stack-param";
+import { usePhone } from "@/lib/use-media-query";
 import { fetchInboxes, matchesInbox, withAs } from "./mail/inbox-picker";
 import { sender, when } from "./mail/message-list";
 import { visibleSections, type Section } from "./sections";
@@ -32,6 +47,9 @@ const STORE = "admin.palette.recents";
 const DEBOUNCE = 180;
 const LIMIT = 5;
 const STALE = 60_000;
+
+/** The palette's <dialog> id: global shortcuts skip `dialog[open]:not(#admin-palette)`. */
+export const PALETTE_DIALOG_ID = "admin-palette";
 
 const OPERATORS: [string, string][] = [
   ["from:", "messages from an address"],
@@ -56,6 +74,19 @@ type Kind =
   | "Operator"
   | "Folder";
 
+/** Shown in place of the kind badge in "Recent" below sm. */
+const KIND_ICONS: Record<Kind, LucideIcon> = {
+  Mail: Mail,
+  Person: User,
+  Inbox: InboxIcon,
+  Event: Calendar,
+  "Go to": ArrowRight,
+  Action: Zap,
+  Search: Search,
+  Operator: Hash,
+  Folder: Folder,
+};
+
 type Recent = { kind: Kind; id: string; label: string; hint?: string };
 
 type Row = {
@@ -78,22 +109,43 @@ type Data = {
   inboxes: Inbox[];
 };
 
+/**
+ * Intents the palette hands to the page it opens. Screens are URLs now
+ * (`?person=`, `?event=`, `?m=`, `?compose=`, spec D4). `pending` and
+ * `pickInbox` stay; `person`, `event` and `newEvent` ride along with their URL
+ * until the users and events pages read it (LEGACY_HANDOFF).
+ */
 export type Handoff = {
+  /** Sent with `/admin/users?person=ID` (LEGACY_HANDOFF). */
   person?: string;
+  /** Sent with `/admin/events?event=KEY` (LEGACY_HANDOFF). */
   event?: EventItem;
+  /** Sent with `/admin/events?event=new` (LEGACY_HANDOFF). */
   newEvent?: true;
   pending?: true;
+  /** @deprecated Never sent: jumps go to `/admin/mail?compose=new`. */
   compose?: true;
   pickInbox?: true;
+  /** @deprecated Never sent: jumps go to `/admin/mail?m=ID`. */
   message?: MessageSummary;
 };
+
+type Send = (href: string, handoff?: Handoff) => void;
 
 const PaletteContext = createContext<{
   open: () => void;
   isOpen: boolean;
   handoff: Handoff;
   taken: () => void;
-}>({ open: () => {}, isOpen: false, handoff: {}, taken: () => {} });
+  /** Close the palette and go to `href` (stack params through navigateStack). */
+  send: Send;
+}>({
+  open: () => {},
+  isOpen: false,
+  handoff: {},
+  taken: () => {},
+  send: () => {},
+});
 
 export const usePalette = () => useContext(PaletteContext);
 
@@ -142,11 +194,25 @@ const asTerm = (name: string) => (name.includes(" ") ? `"${name}"` : name);
 const details = (values: (string | undefined)[]) =>
   values.filter(Boolean).join(" · ");
 
+/** Stack params (spec D4): a jump that sets one goes through navigateStack. */
+const STACK_KEYS = ["m", "compose", "event", "person"];
+
+/**
+ * The users and events pages still open their screens from these handoffs,
+ * not yet from `?person=` / `?event=`. Sent next to the URL until they read
+ * it (spec D4); a page that reads the URL ignores them.
+ */
+const LEGACY_HANDOFF = {
+  person: (person: string): Handoff => ({ person }),
+  event: (event: EventItem): Handoff => ({ event }),
+  newEvent: (): Handoff => ({ newEvent: true }),
+};
+
 const ROW =
-  "relative z-10 block w-full animate-rise-in rounded-[10px] px-3 py-2 text-left";
+  "relative z-10 block w-full animate-rise-in rounded-[10px] px-3 py-2 text-left pointer-coarse:min-h-11 max-sm:min-h-12 max-sm:py-2.5";
 
 const BADGE =
-  "shrink-0 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-brand-ink";
+  "shrink-0 rounded-full bg-brand px-2 py-0.5 text-[10px] font-bold text-brand-ink max-sm:hidden";
 
 export function PaletteProvider({
   hasMail,
@@ -160,20 +226,28 @@ export function PaletteProvider({
   const router = useRouter();
   const { user } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [session, setSession] = useState(0);
   const [handoff, setHandoff] = useState<Handoff>({});
   const [data, setData] = useState<Data | null>(null);
   const fetchedAt = useRef(0);
+  const [afterClose, setAfterClose] = useState<string | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+
+  const openPalette = useCallback(() => setIsOpen(true), []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
-        event.preventDefault();
-        setIsOpen(true);
-      }
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "k")
+        return;
+      // Another dialog owns the keyboard (compose's Cmd-K inserts a link).
+      if (document.querySelector(`dialog[open]:not(#${PALETTE_DIALOG_ID})`))
+        return;
+      event.preventDefault();
+      openPalette();
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [openPalette]);
 
   useEffect(() => {
     if (!isOpen || Date.now() - fetchedAt.current < STALE) return;
@@ -198,14 +272,36 @@ export function PaletteProvider({
     );
   }, [isOpen, user?.isApprover, user?.isMailAdmin, hasMail]);
 
-  const send = useCallback(
-    (href: string, next: Handoff) => {
-      setHandoff(next);
+  const close = useCallback(() => setIsOpen(false), []);
+
+  const send = useCallback<Send>(
+    (href, next) => {
+      if (next) setHandoff(next);
+      const url = new URL(href, window.location.href);
+      const stack = STACK_KEYS.some((key) => url.searchParams.has(key));
       setIsOpen(false);
-      router.push(href);
+      if (!stack) {
+        router.push(href);
+      } else if (isOpen) {
+        // Wait until the palette has closed, so the screen the param opens
+        // can take focus (the page is inert until then). Another page's
+        // screen takes it when it mounts (useStackParam, recentJump).
+        setAfterClose(href);
+      } else {
+        navigateStack(href, router);
+      }
     },
-    [router],
+    [isOpen, router],
   );
+
+  // After the exit animation: a fresh palette next time, then any deferred
+  // same-page jump.
+  const onExited = useCallback(() => {
+    setSession((count) => count + 1);
+    if (!afterClose) return;
+    setAfterClose(null);
+    navigateStack(afterClose, router);
+  }, [afterClose, router]);
 
   const places = useMemo<Section[]>(
     () =>
@@ -228,7 +324,7 @@ export function PaletteProvider({
               id: "compose",
               label: "Compose mail",
               hint: "start a new message",
-              run: () => send("/admin/mail", { compose: true }),
+              run: () => send("/admin/mail?compose=new"),
             },
           ]
         : []),
@@ -238,7 +334,8 @@ export function PaletteProvider({
               id: "new-event",
               label: "New event",
               hint: "publish something to the site",
-              run: () => send("/admin/events", { newEvent: true }),
+              run: () =>
+                send("/admin/events?event=new", LEGACY_HANDOFF.newEvent()),
             },
           ]
         : []),
@@ -283,27 +380,42 @@ export function PaletteProvider({
 
   const value = useMemo(
     () => ({
-      open: () => setIsOpen(true),
+      open: openPalette,
       isOpen,
       handoff,
       taken: () => setHandoff({}),
+      send,
     }),
-    [isOpen, handoff],
+    [openPalette, isOpen, handoff, send],
   );
 
   return (
     <PaletteContext.Provider value={value}>
       {children}
-      {isOpen && (
+      <Sheet
+        id={PALETTE_DIALOG_ID}
+        open={isOpen}
+        onClose={close}
+        onExited={onExited}
+        title="Search the admin portal"
+        hideTitle
+        bare
+        presentation="full"
+        desktop="top-card"
+        desktopClassName="desk:mt-[11vh] desk:w-[calc(100%-3rem)] desk:max-w-2xl desk:max-h-[70vh]"
+        initialFocus={input}
+      >
         <Palette
+          key={session}
           actions={actions}
           data={data}
           hasMail={hasMail}
-          onClose={() => setIsOpen(false)}
+          inputRef={input}
+          onClose={close}
           onSend={send}
           places={places}
         />
-      )}
+      </Sheet>
     </PaletteContext.Provider>
   );
 }
@@ -316,10 +428,10 @@ export function SearchButton() {
       onClick={open}
       aria-label="Search everything"
       title="Search everything"
-      className="inline-flex h-9 items-center gap-1 rounded-[10px] border-2 border-line px-2 text-sm font-bold text-subtle hover:bg-tint sm:px-3"
+      className="inline-flex h-9 items-center gap-1 rounded-[10px] border-2 border-line px-2 text-sm font-bold text-subtle hover:bg-tint pointer-coarse:h-11 desk:px-3 phone:size-11 phone:justify-center phone:border-0 phone:px-0 phone:text-ink phone:press-flat"
     >
-      <Search size={15} aria-hidden />
-      <kbd className="hidden text-[11px] font-bold sm:block">⌘K</kbd>
+      <Search size={15} aria-hidden className="phone:size-5" />
+      <kbd className="hidden text-[11px] font-bold desk:block">⌘K</kbd>
     </button>
   );
 }
@@ -328,6 +440,7 @@ function Palette({
   actions,
   data,
   hasMail,
+  inputRef,
   places,
   onClose,
   onSend,
@@ -335,10 +448,12 @@ function Palette({
   actions: Action[];
   data: Data | null;
   hasMail: boolean | null;
+  inputRef: React.RefObject<HTMLInputElement | null>;
   places: Section[];
   onClose: () => void;
-  onSend: (href: string, handoff: Handoff) => void;
+  onSend: Send;
 }) {
+  const phone = usePhone();
   const [text, setText] = useState("");
   const [result, setResult] = useState({
     query: "",
@@ -347,7 +462,6 @@ function Palette({
   const [recents] = useState(readRecents);
   const [highlight, setHighlight] = useState(0);
   const [bar, setBar] = useState<{ top: number; height: number } | null>(null);
-  const input = useRef<HTMLInputElement>(null);
   const list = useRef<HTMLDivElement>(null);
   const ticket = useRef(0);
 
@@ -357,32 +471,14 @@ function Palette({
   const busy = hasMail && query !== "" && result.query !== query;
   const mailboxes = useMemo(() => data?.mailboxes ?? [], [data]);
 
-  const retype = useCallback((next: string) => {
-    setText(next);
-    setHighlight(0);
-    input.current?.focus();
-  }, []);
-
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onClose();
-      } else if (
-        event.key === "Tab" &&
-        document.activeElement !== input.current
-      ) {
-        event.preventDefault();
-        input.current?.focus();
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      opener?.focus();
-    };
-  }, [onClose]);
+  const retype = useCallback(
+    (next: string) => {
+      setText(next);
+      setHighlight(0);
+      inputRef.current?.focus();
+    },
+    [inputRef],
+  );
 
   useEffect(() => {
     if (!hasMail || !query) return;
@@ -414,15 +510,21 @@ function Palette({
           retype(recent.id);
           return;
         case "Person":
-          onSend("/admin/users", { person: recent.id });
+          onSend(
+            `/admin/users?person=${encodeURIComponent(recent.id)}`,
+            LEGACY_HANDOFF.person(recent.id),
+          );
           return;
         case "Event": {
           const event = data?.events.find((item) => item.$key === recent.id);
-          onSend("/admin/events", event ? { event } : {});
+          onSend(
+            `/admin/events?event=${encodeURIComponent(recent.id)}`,
+            event ? LEGACY_HANDOFF.event(event) : undefined,
+          );
           return;
         }
         default:
-          onSend(recent.id, {});
+          onSend(recent.id);
       }
     },
     [actions, data, onSend, retype],
@@ -515,7 +617,7 @@ function Palette({
           label: place.name,
           hint: place.blurb,
           recent: { kind: "Go to", id: place.href, label: place.name },
-          run: () => onSend(place.href, {}),
+          run: () => onSend(place.href),
         })),
       });
     }
@@ -529,7 +631,8 @@ function Palette({
           label: message.subject || "(no subject)",
           message,
           recent: { kind: "Search", id: query, label: query },
-          run: () => onSend("/admin/mail", { message }),
+          // The search runs over your own inbox, so the jump opens it there.
+          run: () => onSend(`/admin/mail?m=${encodeURIComponent(message.id)}`),
         })),
       });
     }
@@ -552,7 +655,11 @@ function Palette({
               person.status ?? "no account",
             ]),
             recent: { kind: "Person", id: person.id, label: person.name },
-            run: () => onSend("/admin/users", { person: person.id }),
+            run: () =>
+              onSend(
+                `/admin/users?person=${encodeURIComponent(person.id)}`,
+                LEGACY_HANDOFF.person(person.id),
+              ),
           })),
         });
       }
@@ -574,7 +681,7 @@ function Palette({
               label,
               hint: inbox.address,
               recent: { kind: "Inbox", id: href, label },
-              run: () => onSend(href, {}),
+              run: () => onSend(href),
             };
           }),
         });
@@ -600,7 +707,11 @@ function Palette({
               id: event.$key,
               label: event.title || "Untitled event",
             },
-            run: () => onSend("/admin/events", { event }),
+            run: () =>
+              onSend(
+                `/admin/events?event=${encodeURIComponent(event.$key)}`,
+                LEGACY_HANDOFF.event(event),
+              ),
           })),
         });
       }
@@ -650,137 +761,151 @@ function Palette({
       const step = event.key === "ArrowDown" ? 1 : -1;
       setHighlight((index + step + rows.length) % rows.length);
     } else if (event.key === "Tab") {
-      event.preventDefault();
+      // Tab completes a mail operator; otherwise it moves focus as usual.
       const match = OPERATORS.find(
         ([token]) =>
           trailing && token.startsWith(trailing) && token !== trailing,
       );
-      if (match) retype(replaceLast(text, match[0]));
+      if (!match) return;
+      event.preventDefault();
+      retype(replaceLast(text, match[0]));
     } else if (event.key === "Enter") {
+      if (event.nativeEvent.isComposing) return;
       event.preventDefault();
       if (active) pick(active);
     }
   };
 
   return (
-    <div
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
-      className="fixed inset-0 z-50 flex animate-fade-in justify-center bg-ink/40 dark:bg-surface/80 sm:p-6 sm:pt-[11vh]"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Search the admin portal"
-        className="flex h-dvh w-full animate-pop-in flex-col overflow-hidden border-line bg-surface sm:h-auto sm:max-h-[70vh] sm:max-w-2xl sm:rounded-[20px] sm:border-2 sm:shadow-brut"
-      >
-        <div className="flex shrink-0 items-center gap-2 border-b-2 border-line px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <Search size={16} className="shrink-0 text-brand" aria-hidden />
-          <input
-            ref={input}
-            autoFocus
-            value={text}
-            onChange={(event) => retype(event.target.value)}
-            onKeyDown={onKeyDown}
-            aria-label="Search the admin portal"
-            placeholder="Search mail, people and events — or run a command"
-            className="min-w-0 flex-1 bg-transparent text-sm text-ink placeholder:text-subtle focus:outline-none"
-          />
-          {busy && (
-            <Loader2
-              size={15}
-              className="shrink-0 animate-spin text-subtle"
-              aria-hidden
-            />
-          )}
-          <kbd className="hidden shrink-0 rounded-[6px] border-2 border-line px-1.5 py-0.5 text-[10px] font-bold text-subtle sm:block">
-            esc
-          </kbd>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close search"
-            className="shrink-0 rounded-[8px] p-1 text-subtle hover:bg-tint hover:text-ink sm:hidden"
-          >
-            <X size={18} aria-hidden />
-          </button>
-        </div>
-
-        <div
-          ref={list}
-          role="listbox"
-          aria-label="Results"
-          className="relative min-h-0 flex-1 overflow-y-auto p-2"
-        >
-          <div
+    <>
+      <div className="flex shrink-0 items-center gap-2 border-b-2 border-line desk:px-4 desk:pt-[max(0.75rem,env(safe-area-inset-top))] desk:pb-3 phone:min-h-[calc(3.5rem+env(safe-area-inset-top))] phone:pt-[env(safe-area-inset-top)] phone:pr-[max(0.5rem,env(safe-area-inset-right))] phone:pl-[max(1rem,env(safe-area-inset-left))]">
+        <Search size={16} className="shrink-0 text-brand" aria-hidden />
+        <input
+          ref={inputRef}
+          value={text}
+          onChange={(event) => retype(event.target.value)}
+          onKeyDown={onKeyDown}
+          role="combobox"
+          aria-expanded={rows.length > 0}
+          aria-controls="admin-palette-results"
+          aria-activedescendant={
+            active ? `admin-palette-row-${index}` : undefined
+          }
+          aria-label="Search the admin portal"
+          enterKeyHint="search"
+          autoCapitalize="off"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          placeholder={
+            phone
+              ? "Search or jump to…"
+              : "Search mail, people and events — or run a command"
+          }
+          className="min-w-0 flex-1 bg-transparent text-base text-ink placeholder:text-subtle focus:outline-none pointer-coarse:min-h-11 pointer-fine:text-sm"
+        />
+        {busy && (
+          <Loader2
+            size={15}
+            className="shrink-0 animate-spin text-subtle"
             aria-hidden
-            className="pointer-events-none absolute inset-x-2 top-0 rounded-[10px] bg-tint transition-[transform,opacity] duration-[var(--dur-fast)] ease-smooth"
-            style={{
-              transform: `translateY(${bar?.top ?? 0}px)`,
-              height: bar?.height ?? 0,
-              opacity: bar ? 1 : 0,
-            }}
           />
-
-          {rows.length === 0 && (
-            <p className="px-3 py-12 text-center text-sm text-subtle">
-              {busy
-                ? "Looking…"
-                : `Nothing matches “${query}”. Try fewer words.`}
-            </p>
-          )}
-
-          {groups.map((group) => (
-            <div key={group.label} role="group" aria-label={group.label}>
-              <p className="px-3 pt-2 pb-1 text-[11px] font-extrabold tracking-wide text-subtle uppercase">
-                {group.label}
-              </p>
-              {group.rows.map((row) => {
-                const at = rows.indexOf(row);
-                return (
-                  <button
-                    key={row.key}
-                    type="button"
-                    role="option"
-                    aria-selected={at === index}
-                    data-row={at}
-                    onMouseEnter={() => setHighlight(at)}
-                    onClick={() => pick(row)}
-                    style={{ animationDelay: `${Math.min(at, 8) * 20}ms` }}
-                    className={ROW}
-                  >
-                    <span className="flex items-baseline gap-2">
-                      <span className={BADGE}>{row.kind}</span>
-                      <span className="min-w-0 flex-1">
-                        {row.message ? (
-                          <Hit message={row.message} mailboxes={mailboxes} />
-                        ) : (
-                          <span className="flex items-baseline gap-2">
-                            <span className="truncate text-sm font-bold text-ink">
-                              {row.label}
-                            </span>
-                            {row.hint && (
-                              <span className="truncate text-xs text-subtle">
-                                {row.hint}
-                              </span>
-                            )}
-                          </span>
-                        )}
-                      </span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          ))}
-        </div>
-
-        <p className="hidden shrink-0 gap-4 border-t-2 border-line px-4 py-2 text-[11px] font-bold text-subtle sm:flex">
-          <span>↑↓ move</span>
-          <span>↵ run</span>
-          <span>tab completes a mail operator</span>
-        </p>
+        )}
+        <kbd className="hidden shrink-0 rounded-[6px] border-2 border-line px-1.5 py-0.5 text-[10px] font-bold text-subtle desk:block">
+          esc
+        </kbd>
+        <button
+          type="button"
+          onClick={onClose}
+          className="press-flat min-h-11 shrink-0 rounded-[10px] px-2 font-bold text-ink desk:hidden"
+        >
+          Cancel
+        </button>
       </div>
-    </div>
+
+      <div
+        ref={list}
+        id="admin-palette-results"
+        role="listbox"
+        aria-label="Results"
+        data-scroll-allow
+        className="relative min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 phone:pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+      >
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-x-2 top-0 rounded-[10px] bg-tint transition-[transform,opacity] duration-[var(--dur-fast)] ease-smooth"
+          style={{
+            transform: `translateY(${bar?.top ?? 0}px)`,
+            height: bar?.height ?? 0,
+            opacity: bar ? 1 : 0,
+          }}
+        />
+
+        {rows.length === 0 && (
+          <p className="px-3 py-12 text-center text-sm text-subtle">
+            {busy ? "Looking…" : `Nothing matches “${query}”. Try fewer words.`}
+          </p>
+        )}
+
+        {groups.map((group) => (
+          <div key={group.label} role="group" aria-label={group.label}>
+            <p className="px-3 pt-2 pb-1 text-[11px] font-extrabold tracking-wide text-subtle uppercase">
+              {group.label}
+            </p>
+            {group.rows.map((row) => {
+              const at = rows.indexOf(row);
+              const KindIcon = KIND_ICONS[row.kind];
+              return (
+                <button
+                  key={row.key}
+                  id={`admin-palette-row-${at}`}
+                  type="button"
+                  role="option"
+                  aria-selected={at === index}
+                  data-row={at}
+                  onMouseEnter={() => setHighlight(at)}
+                  onClick={() => pick(row)}
+                  style={{ animationDelay: `${Math.min(at, 8) * 20}ms` }}
+                  className={ROW}
+                >
+                  <span className="flex items-baseline gap-2 max-sm:items-center">
+                    <span className={BADGE}>{row.kind}</span>
+                    {group.label === "Recent" && (
+                      <KindIcon
+                        aria-hidden
+                        className="size-4 shrink-0 text-subtle sm:hidden"
+                      />
+                    )}
+                    <span className="min-w-0 flex-1">
+                      {row.message ? (
+                        <Hit message={row.message} mailboxes={mailboxes} />
+                      ) : (
+                        <span className="flex items-baseline gap-2 max-sm:flex-col max-sm:items-stretch max-sm:gap-0">
+                          <span className="truncate text-sm font-bold text-ink max-sm:text-base">
+                            {row.label}
+                          </span>
+                          {row.hint && (
+                            <span className="truncate text-xs text-subtle max-sm:text-sm">
+                              {row.hint}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      <p className="hidden shrink-0 gap-4 border-t-2 border-line px-4 py-2 text-[11px] font-bold text-subtle desk:flex">
+        <span>↑↓ move</span>
+        <span>↵ run</span>
+        <span>tab completes a mail operator</span>
+      </p>
+    </>
   );
 }
 
@@ -795,7 +920,7 @@ function Hit({
   return (
     <>
       <span className="flex items-baseline justify-between gap-3">
-        <span className="truncate text-sm font-bold text-ink">
+        <span className="truncate text-sm font-bold text-ink max-sm:text-base">
           {message.subject || "(no subject)"}
         </span>
         <span className="shrink-0 text-xs text-subtle">
@@ -809,7 +934,7 @@ function Hit({
         <span className="truncate text-xs text-subtle">{message.preview}</span>
       </span>
       {folder && (
-        <span className="mt-1 inline-block rounded-full border-2 border-line px-2 text-[10px] font-bold text-ink">
+        <span className="mt-1 inline-block rounded-full border-2 border-line px-2 text-[10px] font-bold text-ink max-sm:text-xs">
           {folder}
         </span>
       )}
