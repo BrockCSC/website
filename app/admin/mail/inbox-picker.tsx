@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import type { Inbox } from "@/app/api/mail/inboxes/route";
+import { useCoarsePointer } from "@/lib/use-media-query";
 
 const STALE = 60_000;
 
@@ -41,8 +42,41 @@ export const useInboxes = () => {
   return { inboxes, failed, load };
 };
 
-type Row = Pick<Inbox, "name" | "address" | "unread" | "readOnly"> & {
+export type InboxRow = Pick<
+  Inbox,
+  "name" | "address" | "unread" | "readOnly"
+> & {
   username: string | null;
+};
+
+type Row = InboxRow;
+
+/** "You", then current and past executives, filtered by `needle` (lowercased). */
+export const inboxGroups = (
+  inboxes: Inbox[] | null,
+  self: string | null,
+  needle: string,
+): { label: string; rows: InboxRow[] }[] => {
+  const mine = inboxes?.find((inbox) => inbox.address === self);
+  const you: InboxRow = {
+    ...(mine ?? { address: self ?? "", unread: null, readOnly: false }),
+    username: null,
+    name: "Your inbox",
+  };
+  const others = (inboxes ?? []).filter(
+    (inbox) => inbox !== mine && (!needle || matchesInbox(inbox, needle)),
+  );
+  return [
+    { label: "You", rows: [you] },
+    {
+      label: "Current executives",
+      rows: others.filter((inbox) => inbox.current && !inbox.readOnly),
+    },
+    {
+      label: "Past executives",
+      rows: others.filter((inbox) => !inbox.current || inbox.readOnly),
+    },
+  ].filter((group) => group.rows.length);
 };
 
 export function InboxPicker({
@@ -70,28 +104,11 @@ export function InboxPicker({
   const panel = useRef<HTMLDivElement>(null);
   const needle = text.trim().toLowerCase();
 
-  const groups = useMemo(() => {
-    const mine = inboxes?.find((inbox) => inbox.address === self);
-    const you: Row = {
-      ...(mine ?? { address: self ?? "", unread: null, readOnly: false }),
-      username: null,
-      name: "Your inbox",
-    };
-    const others = (inboxes ?? []).filter(
-      (inbox) => inbox !== mine && (!needle || matchesInbox(inbox, needle)),
-    );
-    return [
-      { label: "You", rows: [you] },
-      {
-        label: "Current executives",
-        rows: others.filter((inbox) => inbox.current && !inbox.readOnly),
-      },
-      {
-        label: "Past executives",
-        rows: others.filter((inbox) => !inbox.current || inbox.readOnly),
-      },
-    ].filter((group) => group.rows.length);
-  }, [inboxes, needle, self]);
+  const coarse = useCoarsePointer();
+  const groups = useMemo(
+    () => inboxGroups(inboxes, self, needle),
+    [inboxes, needle, self],
+  );
 
   const rows = useMemo<Row[]>(
     () => groups.flatMap((group) => group.rows),
@@ -194,8 +211,9 @@ export function InboxPicker({
         >
           <div className="border-b-2 border-line p-2">
             <input
-              autoFocus
+              autoFocus={!coarse}
               type="search"
+              enterKeyHint="search"
               autoComplete="off"
               value={text}
               onChange={(event) => {
@@ -204,7 +222,7 @@ export function InboxPicker({
               }}
               aria-label="Search inboxes"
               placeholder="Name, username or address"
-              className="w-full rounded-[8px] border-2 border-line bg-raised px-2 py-1 text-sm text-ink outline-none placeholder:text-subtle focus:border-brand"
+              className="w-full rounded-[8px] border-2 border-line bg-raised px-2 py-1 text-base text-ink outline-none placeholder:text-subtle focus:border-brand pointer-fine:text-sm"
             />
           </div>
           <div

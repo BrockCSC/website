@@ -74,11 +74,23 @@ export const GET = async (
     ? { fg: "#f4f1ee", bg: "#1a181b", link: "#d98079" }
     : { fg: "#111", bg: "#fff", link: "#9a4440" };
 
+  // Touch screens: 16px body text and a 16px gutter, and no text inflation
+  // (the parent scales wide HTML bodies to fit instead). Long unbroken
+  // strings wrap in plain-text bodies and in links only; HTML tables keep
+  // their own wrapping. A blocked remote image (the sanitizer's
+  // data-blocked-src, no src) is a quiet placeholder box in its slot rather
+  // than a broken-image glyph with its alt text as loose prose. Only HTML
+  // bodies have images, and they always use the light palette.
   const doc = `<!doctype html><html><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="${EMAIL_IFRAME_CSP}">
-<style>body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;color:${palette.fg};background:${palette.bg};word-wrap:break-word}
-img{max-width:100%;height:auto}table{max-width:100%}a{color:${palette.link}}</style>
-</head><body>${body}</body></html>`;
+<style>html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,sans-serif;color:${palette.fg};background:${palette.bg};word-wrap:break-word}
+img{max-width:100%;height:auto}table{max-width:100%}a{color:${palette.link};overflow-wrap:anywhere}
+body.plain{overflow-wrap:anywhere}
+@media (pointer:coarse){body{font-size:16px;padding:12px 16px}
+img[data-blocked-src]{display:inline-block;max-width:100%;min-height:24px;box-sizing:border-box;padding:8px 12px;border:1px dashed #c9c4c7;border-radius:8px;background:#f4f2f1;color:#6a656c;font:13px/1.4 ui-sans-serif,system-ui,sans-serif;vertical-align:middle;overflow:hidden}
+img[data-blocked-src][width="0"],img[data-blocked-src][width="1"],img[data-blocked-src][height="0"],img[data-blocked-src][height="1"]{display:none}}</style>
+</head><body${isHtml ? "" : ' class="plain"'}>${body}</body></html>`;
 
   return new NextResponse(doc, {
     headers: {

@@ -20,7 +20,7 @@ export function MailboxList({
             key={box.id}
             type="button"
             onClick={() => onSelect(box.id)}
-            className={`flex shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold lg:shrink ${
+            className={`flex max-w-[14rem] shrink-0 items-center justify-between gap-3 rounded-[10px] border-2 border-line px-3 py-2 text-left text-sm font-bold lg:shrink ${
               active
                 ? "bg-brand text-brand-ink shadow-brut-sm"
                 : "bg-surface text-ink hover:bg-tint"
