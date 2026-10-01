@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 
 interface EventCardProps {
   title: string;
@@ -20,7 +20,7 @@ export function EventCard({
   tags,
 }: EventCardProps) {
   return (
-    <div className="w-full flex flex-col rounded-[24px] border-2 border-line bg-surface p-2 shadow-[4px_4px_0_0_var(--brand)] overflow-hidden h-full transition-[transform,box-shadow] duration-[var(--dur)] ease-smooth hover:-translate-y-1 hover:shadow-[6px_6px_0_0_var(--brand)] motion-reduce:hover:translate-y-0 group/card">
+    <div className="w-full flex flex-col rounded-[24px] border-2 border-line bg-surface p-2 shadow-[4px_4px_0_0_var(--brand)] overflow-hidden h-full transition-[transform,box-shadow] duration-[var(--dur)] ease-smooth hover:-translate-y-1 hover:shadow-[6px_6px_0_0_var(--brand)] motion-reduce:hover:translate-y-0 pointer-coarse:press group/card">
       <div
         className={`relative w-full aspect-[4/3] sm:aspect-video rounded-[16px] border-2 border-line overflow-hidden flex items-center justify-center bg-slab`}
       >
@@ -69,7 +69,7 @@ export function EventCard({
             <Badge
               key={index}
               variant="default"
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-[10px] sm:text-xs font-bold uppercase tracking-wider"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-[8px] text-xs font-bold uppercase tracking-wider"
             >
               {tag.icon && (
                 <span className="[&>svg]:size-3.5 opacity-80 shrink-0">
@@ -84,7 +84,7 @@ export function EventCard({
         {/* Action Button */}
         <div className="mt-2 w-full rounded-[14px] bg-brand text-brand-ink py-3 px-4 flex items-center justify-center gap-2 font-bold border-2 border-line shadow-[2px_2px_0_0_var(--shade)] group-hover/card:opacity-90 transition-opacity duration-[var(--dur-fast)] ease-smooth">
           More Info
-          <ArrowUpRight className="size-4 opacity-80 shrink-0" />
+          <ArrowRight className="size-4 opacity-80 shrink-0" />
         </div>
       </div>
     </div>

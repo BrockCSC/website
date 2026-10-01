@@ -9,6 +9,7 @@ import {
 import { ApiError } from "@/lib/api/client";
 import type { MailForwardingBlocker } from "@/lib/api/types";
 import { Panel } from "../users/ui";
+import { SettingToggle } from "./setting-toggle";
 
 const BLOCKED: Record<MailForwardingBlocker, string> = {
   "no-mailbox": "You don't have a club mailbox, so there's nothing to forward.",
@@ -69,40 +70,37 @@ export function MailForwarding() {
       note="Private to you. It isn't shown on your team page card."
       title="Email forwarding"
     >
-      <label className="flex items-start gap-3 text-sm">
-        <input
-          checked={view.enabled}
-          className="check mt-0.5"
-          disabled={saving || locked}
-          onChange={(e) => void toggle(e.target.checked)}
-          type="checkbox"
-        />
-        <span>
-          <span className="font-bold text-ink">
-            Forward my club email to {view.personalEmail ?? "my personal email"}
-          </span>
-          <span className="block text-subtle">
+      <SettingToggle
+        applies="Takes effect immediately"
+        checked={view.enabled}
+        detail={
+          <>
             A copy of everything that reaches {view.clubAddress} is sent on to
             your personal inbox, and the original stays in your club mailbox.
             Forwarded mail shows as from &ldquo;Sender via BrockCSC&rdquo;;
             replying goes straight to the original sender. Spam isn&apos;t
             forwarded.
-          </span>
-        </span>
-      </label>
+          </>
+        }
+        disabled={saving || locked}
+        onChange={(enabled) => void toggle(enabled)}
+        title={`Forward my club email to ${view.personalEmail ?? "my personal email"}`}
+      />
       {view.blocker && (
-        <p className="mt-3 text-xs font-bold text-subtle">
+        <p className="mt-3 text-sm font-bold text-subtle pointer-fine:text-xs">
           {BLOCKED[view.blocker]}
         </p>
       )}
       {view.rehearsed && (
-        <p className="mt-3 text-xs font-bold text-subtle">
+        <p className="mt-3 text-sm font-bold text-subtle pointer-fine:text-xs">
           This environment shares the live mail server, so the switch isn&apos;t
           applied here. It only takes effect on production.
         </p>
       )}
       {saving && (
-        <p className="mt-3 text-xs font-bold text-subtle">Saving...</p>
+        <p className="mt-3 text-sm font-bold text-subtle pointer-fine:text-xs">
+          Saving...
+        </p>
       )}
       {error && (
         <p className="mt-3 text-sm font-bold text-destructive">{error}</p>

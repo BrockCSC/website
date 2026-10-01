@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/toast";
 import { ask } from "../../ask";
 import { field, Label, Note, Panel, Pill, Rows } from "../../users/ui";
 import { AppPasswords } from "../setup/app-passwords";
-import { RecipientInput } from "../recipient-input";
+import { RecipientInput, type RecipientInputHandle } from "../recipient-input";
 import {
   deleteSharedMailbox,
   errorText,
@@ -33,6 +34,10 @@ export default function MailboxCard({
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<"save" | "delete" | null>(null);
   const [showAppPasswords, setShowAppPasswords] = useState(false);
+  // Mounted on first open, then only hidden: hiding must not destroy a
+  // just-created secret (admin-missed-3).
+  const [appPasswordsMounted, setAppPasswordsMounted] = useState(false);
+  const aliasesRef = useRef<RecipientInputHandle>(null);
 
   const save = async () => {
     setBusy("save");
@@ -43,10 +48,12 @@ export default function MailboxCard({
       setBusy(null);
       return;
     }
+    // A typed local part counts without pressing Return.
+    const nextAliases = aliasesRef.current?.commit() ?? aliases;
     try {
       const result = await updateSharedMailbox(mailbox.username, {
         description,
-        aliases,
+        aliases: nextAliases,
         ...(limit !== undefined ? { mailDailyLimit: limit } : {}),
       });
       setEditing(false);
@@ -75,9 +82,19 @@ export default function MailboxCard({
         result?.rehearsed ? REHEARSED : `Deleted ${mailbox.address}.`,
       );
     } catch (err) {
-      setError(errorText(err, "Could not delete this mailbox."));
+      const message = errorText(err, "Could not delete this mailbox.");
+      setError(message);
+      toast({ tone: "error", message });
       setBusy(null);
     }
+  };
+
+  const cancelEdit = () => {
+    setEditing(false);
+    setDescription(mailbox.description);
+    setAliases(mailbox.aliases);
+    setDailyLimit(mailbox.mailDailyLimit ? String(mailbox.mailDailyLimit) : "");
+    setError(null);
   };
 
   return (
@@ -94,7 +111,9 @@ export default function MailboxCard({
             >
               Edit
             </Button>
+            {/* Phones: Delete lives at the end of the edit form. */}
             <Button
+              className="phone:hidden"
               disabled={busy !== null}
               onClick={remove}
               size="sm"
@@ -108,6 +127,7 @@ export default function MailboxCard({
       }
       note={mailbox.description || undefined}
       title={mailbox.address}
+      titleClassName="normal-case font-mono tracking-normal"
     >
       <div className="flex flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
@@ -130,6 +150,7 @@ export default function MailboxCard({
               </Label>
               <input
                 className={field}
+                enterKeyHint="done"
                 id={`${mailbox.username}-description`}
                 maxLength={200}
                 onChange={(e) => setDescription(e.target.value)}
@@ -138,9 +159,11 @@ export default function MailboxCard({
             </div>
             <RecipientInput
               contacts={[]}
+              kind="local"
               label="Aliases"
               onChange={setAliases}
               placeholder="another local part, like sponsors"
+              ref={aliasesRef}
               value={aliases}
             />
             <div>
@@ -148,12 +171,15 @@ export default function MailboxCard({
                 Daily send limit
               </Label>
               <input
+                autoComplete="off"
                 className={field}
+                enterKeyHint="done"
                 id={`${mailbox.username}-limit`}
-                min={1}
+                inputMode="numeric"
                 onChange={(e) => setDailyLimit(e.target.value)}
+                pattern="[0-9]*"
                 placeholder="Club default"
-                type="number"
+                type="text"
                 value={dailyLimit}
               />
             </div>
@@ -164,21 +190,22 @@ export default function MailboxCard({
               </Button>
               <Button
                 disabled={busy !== null}
-                onClick={() => {
-                  setEditing(false);
-                  setDescription(mailbox.description);
-                  setAliases(mailbox.aliases);
-                  setDailyLimit(
-                    mailbox.mailDailyLimit
-                      ? String(mailbox.mailDailyLimit)
-                      : "",
-                  );
-                  setError(null);
-                }}
+                onClick={cancelEdit}
                 type="button"
                 variant="secondary"
               >
                 Cancel
+              </Button>
+            </div>
+            <div className="mt-3 border-t-2 border-line/15 pt-5 desk:hidden">
+              <Button
+                className="h-auto min-h-12 w-full py-2 whitespace-normal wrap-anywhere"
+                disabled={busy !== null}
+                onClick={remove}
+                type="button"
+                variant="outline-destructive"
+              >
+                {busy === "delete" ? "Deleting…" : `Delete ${mailbox.address}`}
               </Button>
             </div>
           </div>
@@ -206,17 +233,25 @@ export default function MailboxCard({
 
         <div>
           <Button
-            onClick={() => setShowAppPasswords((v) => !v)}
+            aria-expanded={showAppPasswords}
+            onClick={() => {
+              setAppPasswordsMounted(true);
+              setShowAppPasswords((v) => !v);
+            }}
             size="sm"
             type="button"
             variant="outline"
           >
             {showAppPasswords ? "Hide app passwords" : "Manage app passwords"}
           </Button>
-          {showAppPasswords && (
-            <div className="mt-3 rounded-[14px] border-2 border-line bg-raised p-4">
+          {appPasswordsMounted && (
+            <div
+              className="mt-3 rounded-[14px] border-2 border-line bg-raised p-4 max-sm:rounded-none max-sm:border-0 max-sm:bg-transparent max-sm:p-0"
+              hidden={!showAppPasswords}
+            >
               <AppPasswords
                 endpoint={`/api/mail/shared/${encodeURIComponent(mailbox.username)}/app-passwords`}
+                inputId={`${mailbox.username}-app-password-name`}
               />
             </div>
           )}

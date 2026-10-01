@@ -15,11 +15,13 @@ export const fetchExportPreview = (id: string, params: ExportParamValues) =>
     `/api/exports/${id}/preview?${new URLSearchParams(params)}`,
   );
 
+export type BuiltExport = { blob: Blob; filename: string };
+
 /** Fetched rather than linked, so a 400 or 429 shows on the card instead of opening a JSON page. */
-export const downloadExport = async (
+export const buildExport = async (
   id: string,
   params: ExportParamValues,
-): Promise<void> => {
+): Promise<BuiltExport> => {
   const res = await fetch(`/api/exports/${id}?${new URLSearchParams(params)}`, {
     credentials: "same-origin",
   });
@@ -39,10 +41,26 @@ export const downloadExport = async (
     /filename="([^"]+)"/.exec(
       res.headers.get("content-disposition") ?? "",
     )?.[1] ?? `${id}.pdf`;
+  return { blob, filename };
+};
+
+/** Saves a built PDF through a temporary object URL. */
+export const saveExport = ({ blob, filename }: BuiltExport) => {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
   anchor.download = filename;
   anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 30_000);
+};
+
+/** The PDF as a File the share sheet takes, or null where it can't share files. */
+export const shareableFile = ({ blob, filename }: BuiltExport): File | null => {
+  if (typeof navigator === "undefined" || !navigator.canShare) return null;
+  const file = new File([blob], filename, { type: "application/pdf" });
+  try {
+    return navigator.canShare({ files: [file] }) ? file : null;
+  } catch {
+    return null;
+  }
 };

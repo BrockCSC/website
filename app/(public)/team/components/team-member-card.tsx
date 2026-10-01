@@ -5,8 +5,11 @@ import Image from "next/image";
 import { X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Sheet } from "@/components/ui/sheet";
 import type { ExecRecord, WithKey } from "@/lib/api";
 import { storedTerms } from "@/lib/execs/terms";
+import { cn } from "@/lib/utils";
 
 type TeamMemberCardProps = {
   member: WithKey<ExecRecord>;
@@ -23,6 +26,13 @@ const SOCIAL_ICON_SRC: Record<SocialLink["platform"], string> = {
   linkedin: "/icons/linkedin.svg",
   instagram: "/icons/instagram.svg",
   x: "/icons/x.svg",
+};
+
+const SOCIAL_LABEL: Record<SocialLink["platform"], string> = {
+  github: "GitHub",
+  linkedin: "LinkedIn",
+  instagram: "Instagram",
+  x: "X",
 };
 
 const normalizeSocialUrl = (rawValue?: string): string | null => {
@@ -67,6 +77,7 @@ export function TeamMemberCard({
   isAlumni = false,
 }: TeamMemberCardProps) {
   const [isBioOpen, setIsBioOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const bioPanelId = useId();
 
   const imageUrl = member.image?.url;
@@ -80,7 +91,11 @@ export function TeamMemberCard({
   const titleLabel = isAlumni ? (
     <p className="max-w-full text-sm font-semibold text-brand">{title}</p>
   ) : (
-    <Badge className="max-w-full truncate" size="sm" variant="default">
+    <Badge
+      className="max-w-full truncate max-md:text-xs"
+      size="sm"
+      variant="default"
+    >
       {title}
     </Badge>
   );
@@ -92,9 +107,18 @@ export function TeamMemberCard({
     ? "relative aspect-[4/3] border-b border-line/25 bg-raised"
     : "relative aspect-[4/3] bg-tint";
 
+  // Below md a card with more to show is one tap target that opens a
+  // profile sheet (public-4); the BIO chip and social icons are hidden there.
+  const hasProfile = Boolean(bio) || socialLinks.length > 0;
+
   return (
     <article
-      className={cardClass}
+      className={cn(
+        cardClass,
+        "relative",
+        hasProfile &&
+          "max-md:transition-transform max-md:duration-[60ms] max-md:has-[[aria-haspopup=dialog]:active]:translate-y-[2px]",
+      )}
       onKeyDown={(keyEvent) => {
         if (keyEvent.key === "Escape") {
           setIsBioOpen(false);
@@ -179,8 +203,8 @@ export function TeamMemberCard({
               )}
             </div>
 
-            {(socialLinks.length > 0 || bio) && (
-              <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1">
+            {hasProfile && (
+              <div className="flex max-w-full shrink-0 flex-wrap items-center justify-end gap-1 max-md:hidden">
                 {socialLinks.map((social) => (
                   <a
                     aria-label={`${name} ${social.platform}`}
@@ -221,6 +245,85 @@ export function TeamMemberCard({
           </div>
         </div>
       </div>
+
+      {hasProfile && (
+        // Below md the whole card is the button (drawn over it, last, so it
+        // takes the tap); its focus ring sits inside the card's edge.
+        <button
+          aria-haspopup="dialog"
+          aria-label={`${name}, ${title}: view profile`}
+          className="absolute inset-0 z-10 rounded-[inherit] focus-visible:outline-offset-[-3px] md:hidden"
+          onClick={() => setIsProfileOpen(true)}
+          type="button"
+        />
+      )}
+
+      {hasProfile && (
+        <Sheet
+          description={title}
+          onClose={() => setIsProfileOpen(false)}
+          open={isProfileOpen}
+          title={name}
+        >
+          <div className="flex flex-col gap-4">
+            {imageUrl && (
+              <div className="relative aspect-[4/3] max-h-[36svh] w-full overflow-hidden rounded-[16px] border-2 border-line bg-tint">
+                <Image
+                  alt=""
+                  className="object-cover"
+                  fill
+                  sizes="100vw"
+                  src={imageUrl}
+                  style={{
+                    objectPosition: member.image?.position ?? "50% 50%",
+                  }}
+                  unoptimized
+                />
+              </div>
+            )}
+            {bio && (
+              <p
+                className="text-base leading-relaxed whitespace-pre-line text-ink"
+                data-bio=""
+              >
+                {bio}
+              </p>
+            )}
+            {alsoServed && (
+              <p className="text-sm text-subtle">Also served {alsoServed}</p>
+            )}
+            {socialLinks.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {socialLinks.map((social) => (
+                  <Button
+                    asChild
+                    className="min-h-11"
+                    key={social.platform}
+                    variant="outline"
+                  >
+                    <a
+                      href={social.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      <Image
+                        alt=""
+                        aria-hidden="true"
+                        className="size-4 dark:brightness-[1.4]"
+                        height={18}
+                        src={SOCIAL_ICON_SRC[social.platform]}
+                        width={18}
+                      />
+                      {SOCIAL_LABEL[social.platform]}
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
+        </Sheet>
+      )}
     </article>
   );
 }

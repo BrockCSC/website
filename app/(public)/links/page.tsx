@@ -115,7 +115,7 @@ export default function LinksPage(): ReactElement {
                     {link.title}
                   </span>
                   {link.badge ? (
-                    <span className="shrink-0 rounded-full border border-brand/30 bg-surface px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-brand">
+                    <span className="shrink-0 rounded-full border border-brand/30 bg-surface px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wide text-brand max-md:text-xs">
                       {link.badge}
                     </span>
                   ) : null}

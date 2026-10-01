@@ -10,9 +10,9 @@ import { Reveal } from "@/components/reveal";
 
 export default function Home() {
   return (
-    <main className="flex flex-col w-full font-sans bg-surface overflow-x-clip">
+    <main className="flex flex-col w-full font-sans bg-surface overflow-x-clip max-md:-ml-[max(1.25rem,env(safe-area-inset-left))] max-md:-mr-[max(1.25rem,env(safe-area-inset-right))] max-md:w-auto">
       <section className="relative w-full border-b-2 border-line">
-        <div className="animate-rise-in max-w-7xl mx-auto px-4 py-14 sm:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <div className="animate-rise-in max-w-7xl mx-auto pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-14 md:px-8 sm:py-24 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="flex flex-col items-start gap-6 z-10">
             <Badge
               variant="outline"
@@ -36,13 +36,13 @@ export default function Home() {
               interested in Computer Science. Code, connect, and create with us.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 mt-4">
-              <DiscordButton className="w-auto" />
+            <div className="mt-4 flex w-full flex-col gap-3 self-stretch sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:gap-4 sm:self-auto">
+              <DiscordButton className="max-sm:h-12" />
               <Button
                 asChild
                 size="lg"
                 variant="outline"
-                className="bg-surface"
+                className="bg-surface w-full sm:w-auto max-sm:h-12"
               >
                 <Link href="/events">See upcoming events</Link>
               </Button>

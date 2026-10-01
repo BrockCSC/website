@@ -1,7 +1,7 @@
 import React from "react";
 import type { Metadata } from "next";
 import { Table, type TableData } from "@/components/ui/table";
-import Sidebar from "@/components/ui/sidebar";
+import Sidebar, { GuideTocBar } from "@/components/ui/sidebar";
 import durations from "@/data/courseDurations.json";
 import requirements from "@/data/programRequirements.json";
 import courses from "@/data/courses.json";
@@ -50,6 +50,7 @@ const courseTypes: CourseType[] = [
 const Guide: React.FC = () => {
   return (
     <main className="min-h-screen py-10 sm:py-16">
+      <GuideTocBar />
       <div className="max-w-6xl mx-auto flex gap-16 px-1 sm:px-6">
         {/* LEFT SIDEBAR */}
         <Sidebar />
@@ -58,7 +59,7 @@ const Guide: React.FC = () => {
         {/* min-w-0: without it a flex child won't shrink below its content's natural width, so right at lg (1024px) — the moment the 256px sidebar joins the row — this column pushes past the viewport instead of wrapping. */}
         <div className="animate-fade-in min-w-0 flex-1 max-w-full md:max-w-3xl">
           {/* HERO */}
-          <section id="introduction" className="mb-16">
+          <section id="introduction" className="max-lg:scroll-mt-32 mb-16">
             <h1 className="text-3xl sm:text-4xl font-bold mb-6">
               Brock CS Student Guide
             </h1>
@@ -88,10 +89,10 @@ const Guide: React.FC = () => {
           </section>
 
           {/* COURSE REGISTRATION */}
-          <section id="registration" className="mb-12">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+          <section id="registration" className="max-lg:scroll-mt-32 mb-12">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
               Course Registration
-            </h1>
+            </h2>
 
             <Prose>
               <p>
@@ -112,7 +113,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* COURSE CODES  */}
-          <section id="course-codes" className="mb-20">
+          <section id="course-codes" className="max-lg:scroll-mt-32 mb-20">
             <SectionHeading>Course Codes</SectionHeading>
 
             <Prose className="mb-8">
@@ -147,7 +148,10 @@ const Guide: React.FC = () => {
           </section>
 
           {/* CREDIT BREAKDOWN */}
-          <section id="common-course-types" className="mb-20">
+          <section
+            id="common-course-types"
+            className="max-lg:scroll-mt-32 mb-20"
+          >
             <SectionHeading>Common Course Types</SectionHeading>
 
             <div className="grid md:grid-cols-2 gap-8">
@@ -162,7 +166,7 @@ const Guide: React.FC = () => {
                     {badge}
                   </div>
 
-                  <h3 className="text-xl font-semibold mb-4 mt-4">{title}</h3>
+                  <h4 className="text-xl font-semibold mb-4 mt-4">{title}</h4>
 
                   <p className="text-subtle">{body}</p>
                 </div>
@@ -176,7 +180,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Course Durations*/}
-          <section id="course-duration" className="mb-20">
+          <section id="course-duration" className="max-lg:scroll-mt-32 mb-20">
             <SectionHeading>Course Durations</SectionHeading>
             <Prose className="mb-8">
               <p>
@@ -189,7 +193,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Sections*/}
-          <section id="course-sections" className="mb-8">
+          <section id="course-sections" className="max-lg:scroll-mt-32 mb-8">
             <SectionHeading>Sections</SectionHeading>
             <Prose className="mb-8">
               <p>
@@ -203,7 +207,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Context Credits*/}
-          <section id="context-credits" className="mb-20">
+          <section id="context-credits" className="max-lg:scroll-mt-32 mb-20">
             <SectionHeading>Context Credits</SectionHeading>
             <Prose className="mb-8">
               <p>
@@ -269,17 +273,17 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Program Requirements*/}
-          <section id="requirements" className="mb-20">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+          <section id="requirements" className="max-lg:scroll-mt-32 mb-20">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
               Program Requirements
-            </h1>
+            </h2>
 
-            <section id="bachelor">
+            <section id="bachelor" className="max-lg:scroll-mt-32">
               <SectionHeading>
                 Credit Requirements for Bachelor of Science, Computer Science
               </SectionHeading>
 
-              <Table data={requirements as TableData} mobileVariant="scroll" />
+              <Table data={requirements as TableData} mobileVariant="stack" />
 
               <div className="mt-6 mb-8">
                 <Callout>
@@ -296,7 +300,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Minor in Applied Computing*/}
-          <section id="minor-computing" className="mb-8">
+          <section id="minor-computing" className="max-lg:scroll-mt-32 mb-8">
             <SectionHeading>Minor in Applied Computing</SectionHeading>
             <Prose className="mb-8">
               <Callout>
@@ -318,7 +322,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Double Major*/}
-          <section id="double-major" className="mb-8">
+          <section id="double-major" className="max-lg:scroll-mt-32 mb-8">
             <SectionHeading>Double Major</SectionHeading>
 
             <Prose className="mb-8">
@@ -331,10 +335,10 @@ const Guide: React.FC = () => {
                 degree, however you can pair computer science with most programs
                 in sciences, humanities, social sciences, and arts.
               </p>
-              <ul className="list-disc pl-5 space-y-1">
+              <ul className="list-disc pl-5 space-y-1 max-md:space-y-0 pointer-coarse:space-y-0">
                 <li>
                   <a
-                    className={linkStyle}
+                    className={listLinkStyle}
                     href="https://calendar.brocku.ca/preview_program.php?catoid=23&poid=10350"
                   >
                     Double Major info
@@ -342,7 +346,7 @@ const Guide: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    className={linkStyle}
+                    className={listLinkStyle}
                     href="https://brocku.ca/programs/undergraduate/computing-and-business/"
                   >
                     Computing and Business
@@ -353,7 +357,7 @@ const Guide: React.FC = () => {
           </section>
 
           {/* Courses*/}
-          <section id="courses" className="mb-20">
+          <section id="courses" className="max-lg:scroll-mt-32 mb-20">
             <SectionHeading>Courses</SectionHeading>
 
             <Prose className="mb-8">
@@ -369,10 +373,10 @@ const Guide: React.FC = () => {
                     ⚠ Note: Do not rely on this alone, For the most up-to-date
                     information, consult:
                   </p>
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-1 max-md:space-y-0 pointer-coarse:space-y-0">
                     <li>
                       <a
-                        className={linkStyle}
+                        className={listLinkStyle}
                         href="https://brocku.ca/guides-and-timetables/timetables/?session=fw&type=ug&level=all"
                       >
                         BrockU Time table
@@ -380,7 +384,7 @@ const Guide: React.FC = () => {
                     </li>
                     <li>
                       <a
-                        className={linkStyle}
+                        className={listLinkStyle}
                         href="https://brocku.ca/webcal/current/undergrad/cosc.html"
                       >
                         Course Calendar
@@ -397,14 +401,17 @@ const Guide: React.FC = () => {
               </Callout>
             </div>
 
-            <Table data={courses as TableData} mobileVariant="stack" />
+            <CourseList className="md:hidden" />
+            <div className="max-md:hidden">
+              <Table data={courses as TableData} mobileVariant="stack" />
+            </div>
 
             <Prose className="mb-8 mt-8">
               <p>Here are some other helpful links,</p>
-              <ul className="list-disc pl-5 space-y-1">
+              <ul className="list-disc pl-5 space-y-1 max-md:space-y-0 pointer-coarse:space-y-0">
                 <li>
                   <a
-                    className={linkStyle}
+                    className={listLinkStyle}
                     href="https://brocku.ca/webcal/current/undergrad/cosc.html"
                   >
                     List of different degrees and specializations in Computer
@@ -413,7 +420,7 @@ const Guide: React.FC = () => {
                 </li>
                 <li>
                   <a
-                    className={linkStyle}
+                    className={listLinkStyle}
                     href="https://brocku.ca/mathematics-science/computer-science/"
                   >
                     Computer Science Department website.
@@ -424,21 +431,24 @@ const Guide: React.FC = () => {
           </section>
 
           {/* ADDITIONAL RESOURCES AND OPPORTUNITIES (PARENT INTRO ONLY) */}
-          <section id="resources-opportunities" className="mb-16">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-6">
+          <section
+            id="resources-opportunities"
+            className="max-lg:scroll-mt-32 mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6">
               Additional Resources and Opportunities
-            </h1>
+            </h2>
           </section>
 
           {/* RESOURCES */}
-          <section id="resources" className="mb-10">
+          <section id="resources" className="max-lg:scroll-mt-32 mb-10">
             <SectionHeading>Resources</SectionHeading>
 
             <Prose className="mb-8">
               <div>
-                <h3 className="font-semibold text-ink mb-2">
+                <h4 className="font-semibold text-ink mb-2">
                   Computer Science Club
-                </h3>
+                </h4>
                 <p>
                   A great place to start and get a student&apos;s perspective on
                   things and to stay up to date about the latest opportunities
@@ -458,9 +468,9 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-ink mb-2">
+                <h4 className="font-semibold text-ink mb-2">
                   Computer Science Help Desk
-                </h3>
+                </h4>
                 <p>
                   The Computer Science Department hosts a Help Desk in MCJ 328.
                   This allows you to receive one-on-one support for any Computer
@@ -476,9 +486,9 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-ink mb-2">
+                <h4 className="font-semibold text-ink mb-2">
                   Learning Services
-                </h3>
+                </h4>
                 <p>
                   Learning Services increases academic success and retention of
                   all students at Brock University. Check them out{" "}
@@ -492,22 +502,22 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-ink mb-2">Professors</h3>
+                <h4 className="font-semibold text-ink mb-2">Professors</h4>
                 <p>
                   One of the most underrated resources. Don’t hesitate to reach
                   out, attend office hours, and ask questions.
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-ink mb-2">Goodies</h3>
+                <h4 className="font-semibold text-ink mb-2">Goodies</h4>
                 <p className="mb-2">
                   Many free trials and tools are available to you as a CS
                   student:
                 </p>
-                <ul className="list-disc pl-5 space-y-1">
+                <ul className="list-disc pl-5 space-y-1 max-md:space-y-0 pointer-coarse:space-y-0">
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://brocku.ca/information-technology/office-365-log-in/"
                     >
                       Office 365
@@ -516,7 +526,7 @@ const Guide: React.FC = () => {
                   </li>
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://education.github.com/pack"
                     >
                       GitHub Student Developer Pack
@@ -524,7 +534,7 @@ const Guide: React.FC = () => {
                   </li>
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://www.linkedin.com/learning/"
                     >
                       LinkedIn Learning
@@ -532,7 +542,7 @@ const Guide: React.FC = () => {
                   </li>
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://www.studentappcentre.com/App/1Password"
                     >
                       1Password Trial
@@ -540,7 +550,7 @@ const Guide: React.FC = () => {
                   </li>
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://www.amazon.ca/amazonprime?primeCampaignId=studentWlpPrimeRedir"
                     >
                       Amazon Prime Student
@@ -548,7 +558,7 @@ const Guide: React.FC = () => {
                   </li>
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://www.figma.com/education/"
                     >
                       Figma
@@ -556,7 +566,7 @@ const Guide: React.FC = () => {
                   </li>
                   <li>
                     <a
-                      className={linkStyle}
+                      className={listLinkStyle}
                       href="https://www.spotify.com/ca-en/student/"
                     >
                       Spotify Student
@@ -569,12 +579,12 @@ const Guide: React.FC = () => {
           </section>
 
           {/* OPPORTUNITIES */}
-          <section id="opportunities" className="mb-16">
+          <section id="opportunities" className="max-lg:scroll-mt-32 mb-16">
             <SectionHeading>Opportunities</SectionHeading>
 
             <Prose className="mb-8">
               <div>
-                <h3 className="font-semibold text-ink mb-2">Experience BU</h3>
+                <h4 className="font-semibold text-ink mb-2">Experience BU</h4>
                 <p>
                   Find events, volunteering, and workshops.{" "}
                   <a
@@ -587,7 +597,7 @@ const Guide: React.FC = () => {
                 </p>
               </div>
               <div>
-                <h3 className="font-semibold text-ink mb-2">CareerZone</h3>
+                <h4 className="font-semibold text-ink mb-2">CareerZone</h4>
                 <p>
                   Apply for on-campus jobs and build transferable skills.{" "}
                   <a
@@ -640,10 +650,10 @@ function Prose({
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-2xl font-bold mb-8 flex items-center gap-3">
+    <h3 className="text-2xl font-bold mb-8 flex items-center gap-3">
       <span className="w-4 h-4 shrink-0 rounded-full border-2 border-brand" />
       {children}
-    </h2>
+    </h3>
   );
 }
 
@@ -669,6 +679,8 @@ function Callout({
 }
 
 const linkStyle = "underline text-brand hover:decoration-2";
+// 44px targets on phones and on touch tablets; fine pointers keep the dense list.
+const listLinkStyle = `${linkStyle} max-md:inline-flex max-md:min-h-11 max-md:items-center max-md:py-2 pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:py-2`;
 
 /* ---------- SMALL COURSE ROW COMPONENT ---------- */
 
@@ -687,5 +699,71 @@ function CourseRow({ code, title }: CourseRowProps) {
         <span className="font-medium">{title}</span>
       </div>
     </div>
+  );
+}
+
+/* ---------- COURSE LIST (below md) ---------- */
+
+type CourseCell = string | { type: "badge"; label: string };
+
+const TERMS = [
+  { key: "fall", short: "F", name: "Fall" },
+  { key: "winter", short: "W", name: "Winter" },
+  { key: "spring", short: "S", name: "Spring/Summer" },
+] as const;
+
+const isOffered = (cell: CourseCell | undefined) =>
+  typeof cell === "object" && cell.label === "Yes";
+
+/** The courses table as one grouped list: code, name, terms, prerequisites. */
+function CourseList({ className = "" }: { className?: string }) {
+  const rows = (courses as { rows: Record<string, CourseCell>[] }).rows;
+  return (
+    <ul
+      className={`divide-y-2 divide-line/15 overflow-hidden rounded-[16px] border-2 border-line bg-surface ${className}`}
+    >
+      {rows.map((row) => {
+        const prereq = typeof row.prereq === "string" ? row.prereq : "";
+        return (
+          <li
+            className="flex flex-col gap-1.5 px-4 py-3"
+            key={String(row.code)}
+          >
+            <div className="flex items-center justify-between gap-3">
+              <span className="shrink-0 rounded-md border border-line bg-brand px-2 py-0.5 text-xs font-bold text-brand-ink">
+                {String(row.code)}
+              </span>
+              <span className="flex shrink-0 gap-1">
+                {TERMS.map((term) => {
+                  const offered = isOffered(row[term.key]);
+                  return (
+                    <span
+                      className={`grid size-6 place-items-center rounded-full border-2 text-[11px] font-bold ${
+                        offered
+                          ? "border-line bg-brand text-brand-ink"
+                          : "border-line/40 text-subtle"
+                      }`}
+                      key={term.key}
+                      title={`${term.name}: ${offered ? "offered" : "not offered"}`}
+                    >
+                      <span aria-hidden="true">{term.short}</span>
+                      <span className="sr-only">
+                        {term.name} {offered ? "offered" : "not offered"}
+                      </span>
+                    </span>
+                  );
+                })}
+              </span>
+            </div>
+            <span className="font-semibold text-ink">{String(row.name)}</span>
+            {prereq && prereq !== "-" && (
+              <span className="text-sm text-subtle">
+                Prerequisites: {prereq}
+              </span>
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

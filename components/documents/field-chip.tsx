@@ -121,3 +121,68 @@ export function PlaceableField({
     </div>
   );
 }
+
+/**
+ * Coarse pointers: the placed field drawn at page scale, passive. Taps go to
+ * its FieldHitTarget in PageBox's `outside` slot instead.
+ */
+export function FieldFootprint({
+  type,
+  xPercent,
+  yPercent,
+  caption,
+  color,
+  selected,
+}: {
+  type: SigningFieldType;
+  xPercent: number;
+  yPercent: number;
+  caption: string;
+  color?: string;
+  selected: boolean;
+}) {
+  const Icon = FIELD_ICON[type];
+  return (
+    <div
+      aria-hidden
+      className={`pointer-events-none absolute flex -translate-x-1/2 -translate-y-1/2 items-center gap-1 rounded-[10px] border-2 border-line px-2 py-1 text-xs font-bold whitespace-nowrap select-none ${color ? "text-white" : "bg-brand text-brand-ink"} ${selected ? "outline-[6px] outline-offset-4 outline-ink" : ""}`}
+      style={{
+        left: `${xPercent}%`,
+        top: `${yPercent}%`,
+        backgroundColor: color,
+      }}
+    >
+      <Icon className="size-3.5 shrink-0" />
+      {caption}
+    </div>
+  );
+}
+
+/** A 44px touch target over a FieldFootprint, at the same page percentages. */
+export function FieldHitTarget({
+  xPercent,
+  yPercent,
+  label,
+  selected,
+  onSelect,
+}: {
+  xPercent: number;
+  yPercent: number;
+  label: string;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  return (
+    <button
+      aria-label={label}
+      aria-pressed={selected}
+      className="absolute size-11 -translate-x-1/2 -translate-y-1/2 rounded-full focus-visible:outline-3 focus-visible:outline-brand"
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect();
+      }}
+      style={{ left: `${xPercent}%`, top: `${yPercent}%` }}
+      type="button"
+    />
+  );
+}

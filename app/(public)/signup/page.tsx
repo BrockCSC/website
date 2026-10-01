@@ -27,6 +27,12 @@ type Submitted = {
 };
 
 const STORE_KEY = "brockcsc:signup";
+
+// Desktop keeps its autofocus. On touch the keyboard only rises when the
+// person taps a field (spec D7), so nothing is focused for them.
+const autoFocusFine = (el: HTMLInputElement | null) => {
+  if (el && window.matchMedia("(pointer: fine)").matches) el.focus();
+};
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const BROCK_EMAIL_PATTERN = /@(?:[a-z0-9-]+\.)*brocku\.ca$/i;
 const STUDENT_ID_PATTERN = /^\d{6,10}$/;
@@ -112,7 +118,7 @@ const Field = ({
       id={id}
       aria-describedby={error ? `${id}-error` : hint ? `${id}-hint` : undefined}
       aria-invalid={error ? true : undefined}
-      className={`w-full rounded-[10px] border-2 bg-surface px-3 py-2 text-ink ${
+      className={`w-full rounded-[10px] border-2 bg-surface px-3 py-2 text-ink pointer-coarse:min-h-11 ${
         error ? "border-destructive" : "border-line"
       }`}
       {...props}
@@ -207,9 +213,9 @@ export default function SignupPage() {
   };
 
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10">
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10 max-sm:items-start max-sm:px-0 max-sm:py-6">
       {submitted ? (
-        <div className="animate-pop-in w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8">
+        <div className="animate-pop-in w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut max-sm:p-5 max-sm:shadow-brut-sm sm:p-8">
           <h1
             className="text-center text-2xl font-extrabold text-brand"
             ref={headingRef}
@@ -288,7 +294,7 @@ export default function SignupPage() {
         <form
           noValidate
           onSubmit={handleSubmit}
-          className="animate-rise-in w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8"
+          className="animate-rise-in w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut max-sm:p-5 max-sm:shadow-brut-sm sm:p-8"
         >
           <h1 className="mb-1 text-center text-2xl font-extrabold text-brand">
             Request an exec account
@@ -305,15 +311,16 @@ export default function SignupPage() {
               hint="This week's code, from a current exec."
               autoCapitalize="characters"
               autoComplete="off"
+              autoCorrect="off"
               spellCheck={false}
               value={form.inviteCode}
               error={errors.inviteCode}
               onChange={set("inviteCode")}
-              autoFocus
+              ref={autoFocusFine}
               required
             />
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2">
               <Field
                 id="firstName"
                 label="First name"
@@ -422,6 +429,7 @@ export default function SignupPage() {
               type="password"
               autoComplete="new-password"
               value={form.confirmPassword}
+              enterKeyHint="go"
               error={errors.confirmPassword}
               onChange={set("confirmPassword")}
               required
@@ -439,13 +447,20 @@ export default function SignupPage() {
             </p>
           )}
 
-          <Button type="submit" className="mt-6 w-full" disabled={submitting}>
+          <Button
+            type="submit"
+            className="mt-6 w-full pointer-coarse:min-h-12"
+            disabled={submitting}
+          >
             {submitting ? "Submitting..." : "Request account"}
           </Button>
 
           <p className="mt-4 text-center text-sm text-subtle">
             Already have an account?{" "}
-            <Link className="underline" href="/admin">
+            <Link
+              className="underline pointer-coarse:inline-flex pointer-coarse:min-h-11 pointer-coarse:items-center pointer-coarse:px-1"
+              href="/admin"
+            >
               Sign in
             </Link>
           </p>

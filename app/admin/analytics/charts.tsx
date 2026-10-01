@@ -42,7 +42,7 @@ const Readout = ({
 }) => (
   <div
     aria-hidden
-    className={`pointer-events-none absolute left-0 z-10 whitespace-nowrap rounded-[8px] border-2 border-line bg-ink px-2 py-0.5 text-xs text-surface shadow-brut-sm transition-[transform,opacity] duration-[var(--dur-fast)] ease-smooth ${
+    className={`pointer-events-none absolute left-0 z-10 whitespace-nowrap rounded-[8px] border-2 border-line bg-ink px-2 py-0.5 text-sm text-surface md:text-xs shadow-brut-sm transition-[transform,opacity] duration-[var(--dur-fast)] ease-smooth ${
       visible ? "opacity-100" : "opacity-0"
     } ${className}`}
     style={style}
@@ -55,15 +55,24 @@ const Readout = ({
 export const TrendChart = ({
   points,
   unit,
+  variant = "line",
 }: {
   points: DayCount[];
   unit: string;
+  /** bars: one bar per day, for sparse counts that a line draws as spikes (dash-23). */
+  variant?: "line" | "bars";
 }) => {
-  const { index, visible, bind } = useCrosshair(points.length);
+  const bars = variant === "bars";
+  const { index, visible, bind } = useCrosshair(
+    points.length,
+    bars ? "slots" : "points",
+  );
   const peak = Math.max(0, ...points.map((point) => point.count));
-  const max = Math.max(1, peak);
+  // Bars: a scale floor, so a lone 1 on a quiet month reads as small, not as a spike.
+  const max = Math.max(bars ? 4 : 1, peak);
   const last = Math.max(points.length - 1, 1);
-  const x = (i: number) => i / last;
+  const slots = Math.max(points.length, 1);
+  const x = (i: number) => (bars ? (i + 0.5) / slots : i / last);
   const y = (count: number) =>
     (PLOT_H - 4 - (count / max) * (PLOT_H - 12)) / PLOT_H;
   const line = points
@@ -85,6 +94,8 @@ export const TrendChart = ({
     detail: formatDay(point.day),
   };
   const at = { left: `${x(index) * 100}%` };
+  const slotW = PLOT_W / slots;
+  const barW = Math.max(slotW * 0.62, 2);
 
   return (
     <div
@@ -94,7 +105,22 @@ export const TrendChart = ({
       aria-label={`${unit[0].toUpperCase()}${unit.slice(1)}s per day, peaking at ${plural(peak, unit)}. Use the arrow keys to read each day.`}
       className="@container relative touch-pan-y select-none rounded-[12px]"
     >
-      <div className="relative h-36 sm:h-44">
+      {/* Touch: the finger covers the floating readout, so the value also
+          shows up here, above the plot. The latest day until you scrub. */}
+      {readout && (
+        <div
+          aria-hidden
+          className="mb-2 hidden h-6 items-baseline gap-2 pointer-coarse:flex"
+        >
+          <span
+            className={`text-base font-extrabold tabular-nums ${visible ? "text-ink" : "text-subtle"}`}
+          >
+            {readout.value}
+          </span>
+          <span className="text-sm text-subtle">{readout.detail}</span>
+        </div>
+      )}
+      <div className="relative h-44">
         <svg
           viewBox={`0 0 ${PLOT_W} ${PLOT_H}`}
           preserveAspectRatio="none"
@@ -115,21 +141,57 @@ export const TrendChart = ({
               vectorEffect="non-scaling-stroke"
             />
           ))}
-          <path
-            d={`${line} L${PLOT_W} ${PLOT_H} L0 ${PLOT_H} Z`}
-            fill="currentColor"
-            className="transition-[fill-opacity] duration-[var(--dur)] ease-smooth"
-            style={{ fillOpacity: visible ? 0.2 : 0.12 }}
-          />
-          <path
-            d={line}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            vectorEffect="non-scaling-stroke"
-          />
+          {bars ? (
+            points.map((day, i) => {
+              if (day.count <= 0) return null;
+              const height = (day.count / max) * (PLOT_H - 12);
+              return (
+                <rect
+                  key={day.day}
+                  x={i * slotW + (slotW - barW) / 2}
+                  y={PLOT_H - height}
+                  width={barW}
+                  height={height}
+                  fill="currentColor"
+                  className="transition-[fill-opacity] duration-[var(--dur-fast)] ease-smooth"
+                  style={{
+                    fillOpacity: visible && i !== index ? 0.45 : 1,
+                  }}
+                />
+              );
+            })
+          ) : (
+            <>
+              <path
+                d={`${line} L${PLOT_W} ${PLOT_H} L0 ${PLOT_H} Z`}
+                fill="currentColor"
+                className="transition-[fill-opacity] duration-[var(--dur)] ease-smooth"
+                style={{ fillOpacity: visible ? 0.2 : 0.12 }}
+              />
+              <path
+                d={line}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                vectorEffect="non-scaling-stroke"
+              />
+            </>
+          )}
+          {bars && (
+            <line
+              className="text-line"
+              x1={0}
+              x2={PLOT_W}
+              y1={PLOT_H}
+              y2={PLOT_H}
+              stroke="currentColor"
+              strokeOpacity={0.5}
+              strokeWidth={2}
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
         </svg>
         <div
           aria-hidden
@@ -138,7 +200,7 @@ export const TrendChart = ({
           }`}
           style={at}
         />
-        {point && (
+        {point && !bars && (
           <div
             aria-hidden
             className={`pointer-events-none absolute grid size-8 -translate-x-1/2 -translate-y-1/2 place-items-center transition-[left,top,opacity,scale] duration-[var(--dur-fast)] ease-smooth ${
@@ -152,7 +214,7 @@ export const TrendChart = ({
         )}
       </div>
 
-      <div className="relative mt-2 h-7 text-xs text-subtle">
+      <div className="relative mt-2 h-7 text-sm text-subtle md:text-xs">
         {ticks.map((tick, k) => (
           <span
             key={tick}
@@ -187,10 +249,13 @@ export const BarList = ({
   rows,
   total,
   of,
+  mono = false,
 }: {
   rows: { label: string; value: number }[];
   total: number;
   of: string;
+  /** Monospace labels: for paths, not names (dash-22). */
+  mono?: boolean;
 }) => {
   const { ref, active, target } = useHighlight<HTMLUListElement>();
   const max = Math.max(1, ...rows.map((row) => row.value));
@@ -211,10 +276,12 @@ export const BarList = ({
             }`}
           >
             <div className="flex items-baseline justify-between gap-3">
-              <span className="truncate font-mono text-xs text-ink">
+              <span
+                className={`truncate text-sm text-ink md:text-xs ${mono ? "font-mono" : ""}`}
+              >
                 {row.label}
               </span>
-              <span className="flex shrink-0 items-baseline gap-2 text-xs tabular-nums">
+              <span className="flex shrink-0 items-baseline gap-2 text-sm tabular-nums md:text-xs">
                 {on && (
                   <span className="animate-fade-in font-semibold text-subtle">
                     {share(row.value, total)} {of}

@@ -13,6 +13,28 @@ export const SERVER_SETTINGS = [
   { label: "Password", value: "an app password made above" },
 ];
 
+export type ServerRow = {
+  label: string;
+  value: string;
+  /** Offer a copy button (only for values an app wants typed exactly). */
+  copy: boolean;
+};
+
+/** One value per row, so each can be copied on its own (settings-16). */
+export const serverRows = (address: string | null): ServerRow[] => [
+  { label: "Incoming server", value: MAIL_HOST, copy: true },
+  { label: "IMAP port", value: "993", copy: true },
+  { label: "Outgoing server", value: MAIL_HOST, copy: true },
+  { label: "SMTP port", value: "465", copy: true },
+  { label: "Security", value: "SSL/TLS", copy: false },
+  {
+    label: "Username",
+    value: address ?? "your full club address",
+    copy: address != null,
+  },
+  { label: "Password", value: "an app password made above", copy: false },
+];
+
 export const CLIENT_GUIDES: ClientGuide[] = [
   {
     name: "iPhone and iPad",

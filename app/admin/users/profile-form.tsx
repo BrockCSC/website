@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "@/components/ui/image-upload";
 import type { ExecSocialLinks } from "@/lib/api/types";
@@ -22,10 +22,18 @@ export default function ProfileForm({
   exec,
   onSaved,
   onCancel,
+  onDirtyChange,
+  formId,
+  onSavingChange,
 }: {
   exec?: Exec;
   onSaved: (saved: Exec) => void;
   onCancel?: () => void;
+  /** Unsaved edits, for the person screen's leave guard. */
+  onDirtyChange?: (dirty: boolean) => void;
+  /** Set when a sheet's top bar submits the form: the in-form buttons hide on a phone. */
+  formId?: string;
+  onSavingChange?: (saving: boolean) => void;
 }) {
   const [name, setName] = useState(exec?.name ?? "");
   const [title, setTitle] = useState(exec?.title ?? "Executive");
@@ -50,6 +58,31 @@ export default function ProfileForm({
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const snapshot = JSON.stringify([
+    name,
+    title,
+    description,
+    terms,
+    hidden,
+    photo,
+    handles,
+  ]);
+  // The first values, and again after a save (the tile comes back changed).
+  const [clean, setClean] = useState(snapshot);
+  const [cleanFor, setCleanFor] = useState(exec);
+  if (exec !== cleanFor) {
+    setCleanFor(exec);
+    setClean(snapshot);
+  }
+  const dirty = snapshot !== clean;
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+  useEffect(() => () => onDirtyChange?.(false), [onDirtyChange]);
+  useEffect(() => {
+    onSavingChange?.(saving);
+  }, [saving, onSavingChange]);
 
   const invalid = SOCIAL_PLATFORMS.filter(
     ({ key }) =>
@@ -77,11 +110,12 @@ export default function ProfileForm({
         image: { url: photo, position: exec?.image?.position ?? "50% 50%" },
       };
       const changed = terms.join(",") !== stored;
-      onSaved(
-        exec
-          ? await updateTile(exec.$key, changed ? { ...body, terms } : body)
-          : await createTile({ ...body, terms, isCurrentExec: true }),
-      );
+      const saved = exec
+        ? await updateTile(exec.$key, changed ? { ...body, terms } : body)
+        : await createTile({ ...body, terms, isCurrentExec: true });
+      // Only after success: a failed save must stay dirty so the leave guard holds.
+      setClean(snapshot);
+      onSaved(saved);
     } catch (err) {
       setError(
         (err instanceof ApiError && err.detail) ||
@@ -93,7 +127,7 @@ export default function ProfileForm({
   };
 
   return (
-    <form className="flex flex-col gap-4" onSubmit={save}>
+    <form className="flex flex-col gap-4" id={formId} onSubmit={save}>
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="person-name">Full name</Label>
@@ -155,22 +189,28 @@ export default function ProfileForm({
             <div key={key}>
               <Label htmlFor={`person-${key}`}>{label}</Label>
               <div className="flex items-center overflow-hidden rounded-[10px] border-2 border-line bg-raised transition-colors duration-[var(--dur-fast)] ease-smooth focus-within:border-brand">
-                <span className="shrink-0 px-2 py-2 text-xs text-subtle">
+                <span className="shrink-0 px-2 py-2 text-sm text-subtle pointer-fine:text-xs">
                   {prefix}
                 </span>
                 <input
                   aria-invalid={bad}
-                  className="w-full bg-transparent px-1 py-2 text-sm text-ink outline-none"
+                  autoCapitalize="none"
+                  autoComplete="off"
+                  autoCorrect="off"
+                  className="w-full min-w-0 bg-transparent px-1 py-2 text-base text-ink outline-none pointer-fine:text-sm"
                   id={`person-${key}`}
                   onChange={(e) =>
                     setHandles({ ...handles, [key]: e.target.value })
                   }
                   placeholder="username"
+                  spellCheck={false}
                   value={handles[key]}
                 />
               </div>
               {bad && (
-                <p className="mt-1 text-xs font-bold text-brand">{hint}</p>
+                <p className="mt-1 text-sm font-bold text-brand pointer-fine:text-xs">
+                  {hint}
+                </p>
               )}
             </div>
           );
@@ -195,7 +235,9 @@ export default function ProfileForm({
         </span>
       </label>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div
+        className={`flex flex-wrap items-center gap-3 ${formId ? "phone:hidden" : ""}`}
+      >
         <Button
           disabled={saving || invalid.length > 0}
           size="sm"
@@ -217,6 +259,11 @@ export default function ProfileForm({
         )}
         {error && <span className="text-sm font-bold text-brand">{error}</span>}
       </div>
+      {formId && error && (
+        <p className="text-sm font-bold text-brand desk:hidden" role="alert">
+          {error}
+        </p>
+      )}
     </form>
   );
 }

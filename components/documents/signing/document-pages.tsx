@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentProxy, RenderTask } from "pdfjs-dist";
 import { loadPdfjs } from "@/lib/documents/load-pdfjs";
+import { COARSE_QUERY, mediaMatches } from "@/lib/use-media-query";
+import { cn } from "@/lib/utils";
 
 type Size = { width: number; height: number };
 
@@ -15,6 +17,21 @@ type Loaded =
 export type PageOverlay = (page: number, scale: number) => React.ReactNode;
 
 const CSS_PX_PER_PT = 96 / 72;
+
+/** Canvas backing budget per page on touch screens, where people pinch-zoom. */
+const COARSE_MAX_PIXELS = 4_000_000;
+
+/**
+ * Device pixels per CSS pixel for a page's canvas. Fine pointers keep the DPR
+ * (capped at 2). Touch screens get headroom for pinch-zoom, min(dpr * 2, 4),
+ * clamped so one canvas stays within COARSE_MAX_PIXELS.
+ */
+const backingRatio = (cssWidth: number, cssHeight: number) => {
+  const dpr = window.devicePixelRatio || 1;
+  if (!mediaMatches(COARSE_QUERY)) return Math.min(dpr, 2);
+  const budget = Math.sqrt(COARSE_MAX_PIXELS / (cssWidth * cssHeight));
+  return Math.max(1, Math.min(dpr * 2, 4, budget));
+};
 
 const useDocument = (fileUrl: string) => {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
@@ -89,10 +106,13 @@ function PageFrame({
   number,
   total,
   maxWidth,
+  bleed,
   children,
 }: {
   number: number;
   total: number;
+  /** Below sm: no side borders or corners, for pages that run edge to edge. */
+  bleed?: boolean;
   /** Content width at 96dpi; a page is never drawn larger than that. */
   maxWidth?: number;
   children: React.ReactNode;
@@ -100,13 +120,16 @@ function PageFrame({
   return (
     <section aria-label={`Page ${number} of ${total}`} className="w-full">
       <div
-        className="mx-auto w-full overflow-hidden rounded-[6px] border-2 border-line bg-white shadow-brut-sm"
+        className={cn(
+          "mx-auto w-full overflow-hidden rounded-[6px] border-2 border-line bg-white sm:shadow-brut-sm",
+          bleed && "max-sm:rounded-none max-sm:border-x-0",
+        )}
         style={maxWidth ? { maxWidth: maxWidth + 4 } : undefined}
       >
         {children}
       </div>
       {total > 1 && (
-        <p className="mt-1.5 text-center text-[11px] font-bold text-subtle">
+        <p className="mt-1.5 text-center text-[11px] font-bold text-subtle phone:text-xs">
           {number} / {total}
         </p>
       )}
@@ -121,6 +144,7 @@ function PdfPage({
   size,
   width,
   overlay,
+  bleed,
 }: {
   doc: PDFDocumentProxy;
   number: number;
@@ -129,6 +153,7 @@ function PdfPage({
   /** Available content width, borders excluded. */
   width: number;
   overlay?: PageOverlay;
+  bleed?: boolean;
 }) {
   const box = useRef<HTMLDivElement>(null);
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -162,8 +187,11 @@ function PdfPage({
     void (async () => {
       const page = await doc.getPage(number);
       if (cancelled) return;
-      const ratio = Math.min(window.devicePixelRatio || 1, 2);
       const natural = page.getViewport({ scale: 1 });
+      const ratio = backingRatio(
+        renderWidth,
+        (renderWidth * natural.height) / natural.width,
+      );
       const viewport = page.getViewport({
         scale: (renderWidth / natural.width) * ratio,
       });
@@ -185,7 +213,12 @@ function PdfPage({
   }, [doc, near, number, renderWidth]);
 
   return (
-    <PageFrame maxWidth={size.width} number={number} total={total}>
+    <PageFrame
+      bleed={bleed}
+      maxWidth={size.width}
+      number={number}
+      total={total}
+    >
       <div
         className="relative w-full"
         ref={box}
@@ -205,22 +238,33 @@ function PdfPage({
   );
 }
 
-function ImagePage({ url, overlay }: { url: string; overlay?: PageOverlay }) {
+function ImagePage({
+  url,
+  overlay,
+  onSized,
+  bleed,
+}: {
+  url: string;
+  overlay?: PageOverlay;
+  onSized: () => void;
+  bleed?: boolean;
+}) {
   const [size, setSize] = useState<Size | null>(null);
   const [box, width] = useElementWidth();
   return (
-    <PageFrame maxWidth={size?.width} number={1} total={1}>
+    <PageFrame bleed={bleed} maxWidth={size?.width} number={1} total={1}>
       <div className="relative w-full" ref={box}>
         {/* eslint-disable-next-line @next/next/no-img-element -- a blob URL of an access-checked file; next/image can't optimise it. */}
         <img
           alt=""
           className="block h-auto w-full"
-          onLoad={(e) =>
+          onLoad={(e) => {
             setSize({
               width: e.currentTarget.naturalWidth,
               height: e.currentTarget.naturalHeight,
-            })
-          }
+            });
+            onSized();
+          }}
           src={url}
         />
         {overlay && size && width > 0 && (
@@ -243,13 +287,34 @@ export function DocumentPages({
   fileUrl,
   overlay,
   label,
+  onReady,
+  bleed = false,
 }: {
   fileUrl: string;
   overlay?: PageOverlay;
   label: string;
+  /** Once the overlay is laid out (or the file failed), so its targets can be scrolled to. */
+  onReady?: () => void;
+  /** Pages run edge to edge below sm (the caller drops its own gutter). */
+  bleed?: boolean;
 }) {
   const { loaded, error } = useDocument(fileUrl);
   const [container, width] = useElementWidth();
+  const [imageSized, setImageSized] = useState<string | null>(null);
+  const ready =
+    !!error ||
+    (!!loaded &&
+      (loaded.kind === "text" ||
+        (loaded.kind === "pdf" && width > 0) ||
+        (loaded.kind === "image" && imageSized === loaded.url)));
+
+  const onReadyRef = useRef(onReady);
+  useEffect(() => {
+    onReadyRef.current = onReady;
+  });
+  useEffect(() => {
+    if (ready) onReadyRef.current?.();
+  }, [ready]);
 
   return (
     <div aria-label={label} className="w-full" ref={container} role="region">
@@ -265,6 +330,7 @@ export function DocumentPages({
         <div className="flex flex-col gap-4">
           {loaded.sizes.map((size, i) => (
             <PdfPage
+              bleed={bleed}
               doc={loaded.doc}
               key={i}
               number={i + 1}
@@ -276,9 +342,14 @@ export function DocumentPages({
           ))}
         </div>
       ) : loaded.kind === "image" ? (
-        <ImagePage overlay={overlay} url={loaded.url} />
+        <ImagePage
+          bleed={bleed}
+          onSized={() => setImageSized(loaded.url)}
+          overlay={overlay}
+          url={loaded.url}
+        />
       ) : (
-        <PageFrame maxWidth={816} number={1} total={1}>
+        <PageFrame bleed={bleed} maxWidth={816} number={1} total={1}>
           <pre className="overflow-x-auto p-6 font-mono text-xs whitespace-pre-wrap text-neutral-900">
             {loaded.body}
           </pre>

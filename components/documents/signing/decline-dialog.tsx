@@ -20,6 +20,7 @@ export function DeclineDialog({
 
   return (
     <Modal
+      dismissible={!busy}
       footer={
         <>
           <Button
@@ -45,7 +46,7 @@ export function DeclineDialog({
       onClose={() => !busy && onClose()}
       title="Decline to sign"
     >
-      <p className="text-sm text-ink">
+      <p className="text-[15px] text-ink sm:text-sm">
         Declining ends your part in this request and closes it for everyone. The
         sender will be told. This can&apos;t be undone.
       </p>
@@ -56,7 +57,8 @@ export function DeclineDialog({
         Reason (optional)
       </label>
       <textarea
-        className="min-h-[96px] w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-sm text-ink placeholder:text-subtle focus:border-brand"
+        autoCapitalize="sentences"
+        className="min-h-[96px] w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-base text-ink placeholder:text-subtle focus:border-brand pointer-fine:text-sm"
         data-autofocus
         id={id}
         maxLength={500}

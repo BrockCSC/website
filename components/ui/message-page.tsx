@@ -19,7 +19,7 @@ export function MessagePage({
         <SkipLink />
         <Navbar />
         <main
-          className="animate-rise-in mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center gap-5 px-5 py-20 text-center"
+          className="animate-rise-in mx-auto flex w-full max-w-[640px] flex-1 flex-col items-center justify-center gap-5 pl-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] py-20 text-center"
           id="main-content"
           tabIndex={-1}
         >
@@ -30,7 +30,7 @@ export function MessagePage({
             {title}
           </h1>
           <p className="text-subtle">{body}</p>
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex w-full flex-col gap-3 *:w-full sm:w-auto sm:flex-row sm:flex-wrap sm:items-center sm:justify-center sm:*:w-auto">
             {children}
           </div>
         </main>

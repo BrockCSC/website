@@ -30,10 +30,29 @@ const useTapOutside = (
   }, [ref, open, close]);
 };
 
-/** Snaps to the nearest of `count` evenly spaced points across the element. */
-export const useCrosshair = (count: number) => {
+/** A touch or pen has to move this far sideways before it scrubs. */
+const INTENT_PX = 6;
+
+/**
+ * Snaps to one of `count` points across the element: evenly spaced edge to
+ * edge ("points", a line chart), or the centres of `count` equal slots
+ * ("slots", a bar chart).
+ *
+ * Touch and pen don't show anything on pointerdown, so a vertical scroll
+ * that starts on the chart never flashes the crosshair (dash-7). Scrubbing
+ * starts on the first clearly horizontal move; a tap without a scroll (no
+ * pointercancel) shows the point under the finger.
+ */
+export const useCrosshair = (
+  count: number,
+  layout: "points" | "slots" = "points",
+) => {
   const ref = useRef<HTMLDivElement>(null);
   const [state, setState] = useState({ index: count - 1, visible: false });
+  // The touch in progress: where it went down, and whether it's scrubbing.
+  const touch = useRef<{ x: number; y: number; scrubbing: boolean } | null>(
+    null,
+  );
   const hide = useCallback(
     () =>
       setState((prev) => (prev.visible ? { ...prev, visible: false } : prev)),
@@ -46,13 +65,24 @@ export const useCrosshair = (count: number) => {
 
   const track = (event: PointerEvent<HTMLDivElement>) => {
     const rect = event.currentTarget.getBoundingClientRect();
-    const fraction = rect.width ? (event.clientX - rect.left) / rect.width : 0;
-    const next = Math.round(Math.min(Math.max(fraction, 0), 1) * last);
+    const fraction = Math.min(
+      Math.max(rect.width ? (event.clientX - rect.left) / rect.width : 0, 0),
+      1,
+    );
+    const next =
+      layout === "slots"
+        ? Math.min(Math.floor(fraction * count), last)
+        : Math.round(fraction * last);
     setState((prev) =>
       prev.visible && prev.index === next
         ? prev
         : { index: next, visible: true },
     );
+  };
+
+  const cancel = () => {
+    touch.current = null;
+    hide();
   };
 
   return {
@@ -61,12 +91,37 @@ export const useCrosshair = (count: number) => {
     bind: {
       ref,
       tabIndex: 0,
-      onPointerDown: track,
-      onPointerMove: track,
+      onPointerDown: (event: PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === "mouse") return track(event);
+        touch.current = {
+          x: event.clientX,
+          y: event.clientY,
+          scrubbing: false,
+        };
+      },
+      onPointerMove: (event: PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === "mouse") return track(event);
+        const current = touch.current;
+        if (!current) return;
+        if (!current.scrubbing) {
+          const dx = Math.abs(event.clientX - current.x);
+          const dy = Math.abs(event.clientY - current.y);
+          if (dx <= INTENT_PX || dx <= dy) return;
+          current.scrubbing = true;
+        }
+        track(event);
+      },
+      onPointerUp: (event: PointerEvent<HTMLDivElement>) => {
+        if (event.pointerType === "mouse") return;
+        const current = touch.current;
+        touch.current = null;
+        // A tap: the browser never took it over for scrolling.
+        if (current && !current.scrubbing) track(event);
+      },
       onPointerLeave: (event: PointerEvent<HTMLDivElement>) => {
         if (event.pointerType === "mouse") hide();
       },
-      onPointerCancel: hide,
+      onPointerCancel: cancel,
       onBlur: hide,
       onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => {
         if (event.key === "Escape") return hide();

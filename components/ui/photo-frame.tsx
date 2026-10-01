@@ -5,12 +5,14 @@ type PhotoFrameProps = {
   className?: string;
   src: string;
   alt?: string;
+  sizes?: string;
 };
 
 export function PhotoFrame({
   className,
   src,
   alt = "Club Photo",
+  sizes = "(min-width: 1024px) 512px, 90vw",
 }: PhotoFrameProps) {
   return (
     <div className={cn("relative w-full h-full", className)}>
@@ -21,7 +23,7 @@ export function PhotoFrame({
               src={src}
               alt={alt}
               fill
-              unoptimized
+              sizes={sizes}
               className="object-cover transition-transform duration-[var(--dur-slow)] ease-smooth group-hover:scale-105"
             />
           </div>

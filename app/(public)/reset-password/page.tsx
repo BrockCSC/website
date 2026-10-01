@@ -9,7 +9,13 @@ import { ApiError } from "@/lib/api/client";
 import { MIN_PASSWORD_LENGTH } from "@/lib/signups/validation";
 
 const field =
-  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink";
+  "w-full rounded-[10px] border-2 border-line bg-surface px-3 py-2 text-ink pointer-coarse:min-h-11";
+
+// Desktop keeps its autofocus. On touch the keyboard only rises when the
+// person taps a field (spec D7), so nothing is focused for them.
+const autoFocusFine = (el: HTMLInputElement | null) => {
+  if (el && window.matchMedia("(pointer: fine)").matches) el.focus();
+};
 
 function ResetPasswordForm() {
   const token = useSearchParams().get("token") ?? "";
@@ -90,10 +96,10 @@ function ResetPasswordForm() {
       </label>
       <input
         autoComplete="new-password"
-        autoFocus
         className={field}
         id="password"
         onChange={(e) => setPassword(e.target.value)}
+        ref={autoFocusFine}
         required
         type="password"
         value={password}
@@ -108,6 +114,7 @@ function ResetPasswordForm() {
       <input
         autoComplete="new-password"
         className={field}
+        enterKeyHint="go"
         id="confirmPassword"
         onChange={(e) => setConfirmPassword(e.target.value)}
         required
@@ -124,7 +131,11 @@ function ResetPasswordForm() {
         </p>
       )}
 
-      <Button className="mt-6 w-full" disabled={submitting} type="submit">
+      <Button
+        className="mt-6 w-full pointer-coarse:min-h-12"
+        disabled={submitting}
+        type="submit"
+      >
         {submitting ? "Saving..." : "Set new password"}
       </Button>
     </form>
@@ -133,8 +144,8 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10">
-      <div className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut sm:p-8">
+    <main className="flex min-h-[70vh] items-center justify-center px-4 py-10 max-sm:items-start max-sm:px-0 max-sm:py-6">
+      <div className="w-full max-w-md rounded-[20px] border-2 border-line bg-surface p-6 shadow-brut max-sm:p-5 max-sm:shadow-brut-sm sm:p-8">
         <Suspense
           fallback={
             <p className="text-center text-sm text-subtle">Loading...</p>

@@ -7,15 +7,21 @@ import { useEffect, useRef, useState } from "react";
  * page) down to fit its container, uniformly, so percentage-based field
  * coordinates stay correct at any width — the CSS transform never changes
  * the box's own coordinate space, only how large it's drawn.
+ *
+ * `outside` renders in the scaled box but outside the transform, so its
+ * children keep their real size (44px touch targets placed by percent over a
+ * page drawn at 0.4x).
  */
 export function PageBox({
   width,
   height,
   children,
+  outside,
 }: {
   width: number;
   height: number;
   children: React.ReactNode;
+  outside?: (scale: number) => React.ReactNode;
 }) {
   const outer = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
@@ -41,6 +47,7 @@ export function PageBox({
         >
           <div style={{ width, height }}>{children}</div>
         </div>
+        {outside?.(scale)}
       </div>
     </div>
   );
