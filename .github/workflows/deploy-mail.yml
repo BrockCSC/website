@@ -10,6 +10,9 @@ on:
       - ".github/workflows/deploy-mail.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 concurrency:
   group: deploy-mail
   cancel-in-progress: false
@@ -23,7 +26,9 @@ jobs:
       name: mail
       url: https://mail.brockcsc.ca
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
 
       - name: Sync mail secrets to Komodo Variables
         env:
