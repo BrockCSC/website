@@ -56,3 +56,14 @@ jobs:
       - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5
         with:
           fail-on-severity: high
+
+  shell-checks:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install bats
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends bats
+      - run: test/shell/shellcheck.sh
+      - run: test/shell/bats.sh
