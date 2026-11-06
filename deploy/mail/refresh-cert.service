@@ -1,0 +1,22 @@
+# systemd unit that runs refresh-cert.sh once. Started by refresh-cert.timer.
+#
+# Install on the VPS (not done by CI; nothing in this repo runs it):
+#   sudo install -m 755 deploy/mail/refresh-cert.sh /opt/platform/brockcsc/refresh-cert.sh
+#   sudo install -m 644 deploy/mail/refresh-cert.service /etc/systemd/system/
+#   sudo install -m 644 deploy/mail/refresh-cert.timer /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now refresh-cert.timer
+#
+# Check it: systemctl list-timers refresh-cert.timer
+#           sudo systemctl start refresh-cert.service && journalctl -u refresh-cert.service
+# Adjust the ExecStart path if drop-db.sh lives somewhere else on the host.
+
+[Unit]
+Description=Copy the Traefik wildcard certificate into Stalwart
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+# Root is needed to read the Traefik ACME volume and to run docker.
+ExecStart=/opt/platform/brockcsc/refresh-cert.sh
