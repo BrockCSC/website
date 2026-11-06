@@ -127,17 +127,6 @@ jobs:
         run: |
           source .github/scripts/komodo.sh
 
-          sync_var() {
-            local name="$1" value="$2" is_secret="$3"
-            if komodo /read "$(jq -n --arg name "$name" '{type:"GetVariable", params:{name:$name}}')" quiet >/dev/null; then
-              komodo /write "$(jq -n --arg name "$name" --arg value "$value" \
-                '{type:"UpdateVariableValue", params:{name:$name, value:$value}}')" >/dev/null
-            else
-              komodo /write "$(jq -n --arg name "$name" --arg value "$value" --argjson is_secret "$is_secret" \
-                '{type:"CreateVariable", params:{name:$name, value:$value, is_secret:$is_secret}}')" >/dev/null
-            fi
-          }
-
           sync_var BROCKCSC_DB_PASSWORD "$VAL_BROCKCSC_DB_PASSWORD" true
           sync_var BROCKCSC_KEYCLOAK_ISSUER "$VAL_BROCKCSC_KEYCLOAK_ISSUER" false
           sync_var BROCKCSC_KEYCLOAK_CLIENT_ID "$VAL_BROCKCSC_KEYCLOAK_CLIENT_ID" false
@@ -181,16 +170,7 @@ jobs:
             environment: $environment
           }')
 
-          if komodo /read "$(jq -n --arg s "$STACK_NAME" '{type:"GetStack", params:{stack:$s}}')" quiet >/dev/null; then
-            komodo /write "$(jq -n --arg id "$STACK_NAME" --argjson config "$config" \
-              '{type:"UpdateStack", params:{id:$id, config:$config}}')" >/dev/null
-          else
-            komodo /write "$(jq -n --arg name "$STACK_NAME" --argjson config "$config" \
-              '{type:"CreateStack", params:{name:$name, config:$config}}')" >/dev/null
-          fi
-
-          update=$(komodo /execute "$(jq -n --arg s "$STACK_NAME" '{type:"DeployStack", params:{stack:$s}}')")
-          komodo_await "$update" 60 >/dev/null
+          komodo_ensure_and_deploy_stack "$STACK_NAME" "$config" 60
 
       - uses: BrockCSC/komodo-deploy/ensure-action@v1
         with:
