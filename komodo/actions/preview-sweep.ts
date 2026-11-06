@@ -1,4 +1,4 @@
-// Connects to Postgres directly over wayfarer-net rather than SSH, since
+// Connects to Postgres directly over platform-net rather than SSH, since
 // Komodo Core has no docker.sock access to exec into the postgres container.
 
 import { Client } from "npm:pg@8";

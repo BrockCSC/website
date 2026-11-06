@@ -1,14 +1,17 @@
 # Its own Komodo stack, not per-branch: mailboxes outlive any app deploy.
+# The version is pinned on purpose. Stalwart 1.x cannot open a data store
+# written by 0.x, so a floating tag takes mail down on the next deploy.
+# Moving to 1.x needs a planned data migration first.
 networks:
-  wayfarer-net:
+  platform-net:
     external: true
 
 services:
   stalwart:
-    image: stalwartlabs/stalwart:${STALWART_TAG:-latest}
+    image: stalwartlabs/stalwart:${STALWART_TAG:-v0.16.22}
     container_name: brockcsc-stalwart
     restart: unless-stopped
-    networks: [wayfarer-net]
+    networks: [platform-net]
     ports:
       - "25:25"
       - "465:465"
@@ -21,7 +24,7 @@ services:
     environment:
       - STALWART_RECOVERY_ADMIN=${STALWART_ADMIN_USER}:${STALWART_ADMIN_SECRET}
       - OCI_SMTP_PASSWORD=${OCI_SMTP_PASSWORD}
-    # Only autoconfig paths are routed; admin and JMAP stay on wayfarer-net.
+    # Only autoconfig paths are routed; admin and JMAP stay on platform-net.
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.stalwart-autoconfig.rule=(Host(`autoconfig.brockcsc.ca`) && PathPrefix(`/mail/config-v1.1.xml`)) || (Host(`autodiscover.brockcsc.ca`) && PathPrefix(`/autodiscover/`))"

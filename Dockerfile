@@ -33,4 +33,8 @@ COPY --from=builder --chown=nextjs:nodejs /app/node_modules/libheif-js ./node_mo
 
 USER nextjs
 EXPOSE 3000
+# Single source of truth for container health; deploy/docker-compose.yml relies on it.
+# start-period covers the migrate and sync steps that run before the server starts.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD ["wget", "-qO-", "http://127.0.0.1:3000/api/health"]
 CMD ["sh", "-c", "node scripts/migrate.mjs && node scripts/sync-from-prod.mjs && node server.js"]
