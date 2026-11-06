@@ -13,7 +13,7 @@ SCRIPT_NAME="${SCRIPT_NAME:-external-sender-banner}"
 SIEVE_FILE="$(dirname "$0")/external-sender-banner.sieve"
 CONTAINER="${STALWART_CONTAINER:-brockcsc-stalwart}"
 STALWART_URL="${STALWART_URL:-http://brockcsc-stalwart:8080}"
-NETWORK="${DOCKER_NETWORK:-wayfarer-net}"
+NETWORK="${DOCKER_NETWORK:-platform-net}"
 
 [ -f "$SIEVE_FILE" ] || {
   echo "missing $SIEVE_FILE" >&2

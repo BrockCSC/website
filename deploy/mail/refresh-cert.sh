@@ -1,12 +1,12 @@
 #!/bin/sh
 set -eu
 
-ACME_JSON="${ACME_JSON:-/var/lib/docker/volumes/wayfarer_traefik-acme/_data/acme-dns.json}"
+ACME_JSON="${ACME_JSON:-/var/lib/docker/volumes/platform_traefik-acme/_data/acme-dns.json}"
 ACME_RESOLVER="${ACME_RESOLVER:-le-dns}"
 CERT_DOMAIN="${CERT_DOMAIN:-*.brockcsc.ca}"
 CONTAINER="${STALWART_CONTAINER:-brockcsc-stalwart}"
 STALWART_URL="${STALWART_URL:-http://brockcsc-stalwart:8080}"
-NETWORK="${DOCKER_NETWORK:-wayfarer-net}"
+NETWORK="${DOCKER_NETWORK:-platform-net}"
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT

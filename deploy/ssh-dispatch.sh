@@ -7,7 +7,7 @@ arg=$(printf '%s' "$cmd" | awk '{print $2}')
 
 case "$action" in
   drop-db)
-    exec /opt/wayfarer/brockcsc/drop-db.sh "$arg"
+    exec /opt/platform/brockcsc/drop-db.sh "$arg"
     ;;
   *)
     echo "unknown command" >&2

@@ -2,7 +2,7 @@
 # Komodo sets per Stack (image, hostname, secrets, DB). The image is built and
 # pushed by GitHub Actions; the VPS only pulls it.
 networks:
-  wayfarer-net:
+  platform-net:
     external: true
 
 services:
@@ -12,7 +12,7 @@ services:
     image: ${IMAGE}
     container_name: ${PROJECT_NAME}-app
     restart: unless-stopped
-    networks: [wayfarer-net]
+    networks: [platform-net]
     volumes:
       - uploads:/data/uploads
       - documents:/data/documents
