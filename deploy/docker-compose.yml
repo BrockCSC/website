@@ -46,12 +46,7 @@ services:
       - CO_PRESIDENTS_LIST=${CO_PRESIDENTS_LIST}
       - ADMIN_SUBDOMAIN=${ADMIN_SUBDOMAIN}
       - PUBLIC_SUBDOMAIN=${PUBLIC_SUBDOMAIN}
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
+    # Healthcheck comes from the image (HEALTHCHECK in the Dockerfile).
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.${PROJECT_NAME}-app.rule=Host(`${SUBDOMAIN}`) || Host(`${ADMIN_SUBDOMAIN}`)"
