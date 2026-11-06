@@ -1,11 +1,14 @@
 # Its own Komodo stack, not per-branch: mailboxes outlive any app deploy.
+# The version is pinned on purpose. Stalwart 1.x cannot open a data store
+# written by 0.x, so a floating tag takes mail down on the next deploy.
+# Moving to 1.x needs a planned data migration first.
 networks:
   platform-net:
     external: true
 
 services:
   stalwart:
-    image: stalwartlabs/stalwart:${STALWART_TAG:-latest}
+    image: stalwartlabs/stalwart:${STALWART_TAG:-v0.16.22}
     container_name: brockcsc-stalwart
     restart: unless-stopped
     networks: [platform-net]
