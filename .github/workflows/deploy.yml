@@ -8,15 +8,16 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
 env:
   IMAGE: ghcr.io/brockcsc/brockcsc-ca
 
 jobs:
   build-image:
     runs-on: ubuntu-24.04-arm
-    concurrency:
-      group: build-${{ github.ref }}
-      cancel-in-progress: true
     permissions:
       contents: read
       packages: write
@@ -106,10 +107,6 @@ jobs:
   deploy-stack:
     needs: [build-image, resolve-target]
     runs-on: ubuntu-latest
-    # Never cancel a deploy midway. A newer push waits for the running one.
-    concurrency:
-      group: deploy-${{ github.ref }}
-      cancel-in-progress: false
     permissions:
       contents: read
     environment:
