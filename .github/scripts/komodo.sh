@@ -54,3 +54,35 @@ komodo_await() {
   echo "::error::Komodo operation $id did not finish within $((max_attempts * 5))s"
   return 1
 }
+
+# Create or update a Komodo Variable.
+#   $1 = name, $2 = value, $3 = is_secret (true|false, only used on create)
+sync_var() {
+  local name="$1" value="$2" is_secret="$3"
+  if komodo /read "$(jq -n --arg name "$name" '{type:"GetVariable", params:{name:$name}}')" quiet >/dev/null; then
+    komodo /write "$(jq -n --arg name "$name" --arg value "$value" \
+      '{type:"UpdateVariableValue", params:{name:$name, value:$value}}')" >/dev/null
+  else
+    komodo /write "$(jq -n --arg name "$name" --arg value "$value" --argjson is_secret "$is_secret" \
+      '{type:"CreateVariable", params:{name:$name, value:$value, is_secret:$is_secret}}')" >/dev/null
+  fi
+}
+
+# Create the stack if it does not exist, otherwise update its config, then
+# deploy it and wait for the deploy to finish.
+#   $1 = stack name
+#   $2 = stack config as a JSON object
+#   $3 = max poll attempts for komodo_await, one every 5s
+komodo_ensure_and_deploy_stack() {
+  local stack="$1" config="$2" max_attempts="$3" update
+  if komodo /read "$(jq -n --arg s "$stack" '{type:"GetStack", params:{stack:$s}}')" quiet >/dev/null; then
+    komodo /write "$(jq -n --arg id "$stack" --argjson config "$config" \
+      '{type:"UpdateStack", params:{id:$id, config:$config}}')" >/dev/null
+  else
+    komodo /write "$(jq -n --arg name "$stack" --argjson config "$config" \
+      '{type:"CreateStack", params:{name:$name, config:$config}}')" >/dev/null
+  fi
+
+  update=$(komodo /execute "$(jq -n --arg s "$stack" '{type:"DeployStack", params:{stack:$s}}')")
+  komodo_await "$update" "$max_attempts" >/dev/null
+}
