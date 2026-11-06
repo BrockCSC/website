@@ -302,7 +302,7 @@ not the fault of whichever PR is open when it lands.
 
 Push a branch — it gets its own preview environment and `preview_<slug>` schema automatically, and
 the environment URL appears on the workflow run. Fill in `.github/pull_request_template.md`:
-a short description, the checklist, and screenshots of the change working on the preview. Note it in
+a short description and screenshots of the change working on the preview. Note it in
 the description if it needs a role or env var that does not exist yet.
 
 Deleting the branch tears the preview down. Merging to `main` deploys to uat; tagging deploys to
