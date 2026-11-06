@@ -1,0 +1,13 @@
+# Daily trigger for refresh-cert.service. See that file for install steps.
+# The script is idempotent: it only restarts Stalwart when the expiry changes.
+
+[Unit]
+Description=Daily Stalwart certificate refresh
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
