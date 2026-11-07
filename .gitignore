@@ -43,3 +43,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Local scratch output (PDF builds and renders); never commit
+/output/
+/tmp/
