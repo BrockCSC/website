@@ -9,6 +9,9 @@ case "$action" in
   drop-db)
     exec /opt/platform/brockcsc/drop-db.sh "$arg"
     ;;
+  cleanup-preview)
+    exec /opt/platform/brockcsc/cleanup-preview.sh "$arg"
+    ;;
   *)
     echo "unknown command" >&2
     exit 1
