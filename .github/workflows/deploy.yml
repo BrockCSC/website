@@ -17,6 +17,7 @@ env:
 
 jobs:
   build-image:
+    name: Docker Image Build
     runs-on: ubuntu-24.04-arm
     permissions:
       contents: read
@@ -42,6 +43,7 @@ jobs:
           provenance: false
 
   scan-image:
+    name: Trivy Image Scan
     needs: build-image
     runs-on: ubuntu-latest
     permissions:
@@ -78,6 +80,7 @@ jobs:
           trivyignores: .trivyignore
 
   resolve-target:
+    name: Deploy Target Resolution
     runs-on: ubuntu-latest
     permissions: {}
     outputs:
@@ -107,6 +110,7 @@ jobs:
           fi
 
   deploy-stack:
+    name: Komodo Stack Deploy
     needs: [build-image, resolve-target]
     runs-on: ubuntu-latest
     permissions:
@@ -126,7 +130,7 @@ jobs:
           VPS_HOST: ${{ vars.VPS_HOST }}
           IMAGE: ${{ env.IMAGE }}:${{ github.sha }}
 
-      - name: Ensure and deploy the stack
+      - name: Ensure and Deploy Stack
         env:
           KOMODO_HOST: ${{ vars.KOMODO_HOST }}
           KOMODO_API_KEY: ${{ secrets.KOMODO_DEPLOY_API_KEY }}

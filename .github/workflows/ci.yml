@@ -1,4 +1,4 @@
-name: CI
+name: Continuous Integration
 
 on:
   pull_request:
@@ -15,6 +15,7 @@ concurrency:
 
 jobs:
   lint-and-types:
+    name: Lint, Typecheck and Format
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,6 +33,7 @@ jobs:
       - run: npm run format:check
 
   dependency-audit:
+    name: NPM Dependency Audit
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -46,6 +48,7 @@ jobs:
       - run: npm audit --omit=dev --audit-level=high
 
   dependency-review:
+    name: Dependency Review
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
@@ -59,7 +62,7 @@ jobs:
           fail-on-severity: high
 
   workflow-audit:
-    name: Workflow audit
+    name: Zizmor Workflow Audit
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -72,12 +75,13 @@ jobs:
           python-version: "3.12"
       # Template injection, unpinned actions, credentials left in .git/config and over-broad
       # permissions in the workflows themselves. Offline: no token needed, nothing leaves the runner.
-      - name: Install zizmor
+      - name: Install Zizmor
         run: pip install --quiet zizmor==1.16.3
-      - name: Audit workflows
+      - name: Audit Workflows
         run: zizmor --persona=regular --offline --format plain .github/workflows/
 
   shell-checks:
+    name: ShellCheck and Bats Tests
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -85,7 +89,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - name: Install bats
+      - name: Install Bats
         run: sudo apt-get update && sudo apt-get install -y --no-install-recommends bats
       - run: test/shell/shellcheck.sh
       - run: test/shell/bats.sh
