@@ -1,0 +1,48 @@
+{
+  "objects": [
+    {
+      "connection": {
+        "else": "'default'",
+        "match": {}
+      },
+      "id": "singleton",
+      "route": {
+        "else": "'oci-relay'",
+        "match": {
+          "0": {
+            "if": "is_local_domain(rcpt_domain)",
+            "then": "'local'"
+          }
+        }
+      },
+      "schedule": {
+        "else": "'remote'",
+        "match": {
+          "0": {
+            "if": "is_local_domain(rcpt_domain)",
+            "then": "'local'"
+          },
+          "1": {
+            "if": "source == 'dsn'",
+            "then": "'dsn'"
+          },
+          "2": {
+            "if": "source == 'report'",
+            "then": "'report'"
+          }
+        }
+      },
+      "tls": {
+        "else": "'default'",
+        "match": {
+          "0": {
+            "if": "retry_num > 0 && last_error == 'tls'",
+            "then": "'invalid-tls'"
+          }
+        }
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaOutboundStrategy"
+}

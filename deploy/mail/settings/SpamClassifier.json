@@ -1,0 +1,30 @@
+{
+  "objects": [
+    {
+      "holdSamplesFor": 15552000000,
+      "id": "singleton",
+      "learnHamFromCard": true,
+      "learnHamFromReply": true,
+      "learnSpamFromRblHits": 2,
+      "learnSpamFromTraps": true,
+      "minHamSamples": 20,
+      "minSpamSamples": 20,
+      "model": {
+        "@type": "FtrlFh",
+        "featureL2Normalize": true,
+        "featureLogScale": true,
+        "parameters": {
+          "alpha": 2.0,
+          "beta": 1.0,
+          "l1Ratio": 0.001,
+          "l2Ratio": 0.0001,
+          "numFeatures": "20"
+        }
+      },
+      "reservoirCapacity": 1024,
+      "trainFrequency": 43200000
+    }
+  ],
+  "singleton": true,
+  "type": "SpamClassifier"
+}

@@ -1,0 +1,28 @@
+{
+  "objects": [
+    {
+      "allowInvalidCerts": true,
+      "dane": "optional",
+      "description": "Allow invalid TLS certificates",
+      "id": "jaat3yyiacab",
+      "mtaSts": "optional",
+      "mtaStsTimeout": 300000,
+      "name": "invalid-tls",
+      "startTls": "optional",
+      "tlsTimeout": 180000
+    },
+    {
+      "allowInvalidCerts": false,
+      "dane": "optional",
+      "description": "Default TLS settings",
+      "id": "jaat3yykacqb",
+      "mtaSts": "optional",
+      "mtaStsTimeout": 300000,
+      "name": "default",
+      "startTls": "optional",
+      "tlsTimeout": 180000
+    }
+  ],
+  "singleton": false,
+  "type": "MtaTlsStrategy"
+}

@@ -1,0 +1,26 @@
+{
+  "objects": [
+    {
+      "id": "singleton",
+      "rejectNonFqdn": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "require": {
+        "else": "true",
+        "match": {}
+      },
+      "script": {
+        "else": "false",
+        "match": {}
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaStageEhlo"
+}

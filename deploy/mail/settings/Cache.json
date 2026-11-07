@@ -1,0 +1,35 @@
+{
+  "objects": [
+    {
+      "accessTokens": 10485760,
+      "accounts": 20971520,
+      "contacts": 10485760,
+      "dkimSignatures": 10485760,
+      "dnsIpv4": 5242880,
+      "dnsIpv6": 5242880,
+      "dnsMtaSts": 1048576,
+      "dnsMx": 5242880,
+      "dnsPtr": 1048576,
+      "dnsRbl": 5242880,
+      "dnsTlsa": 1048576,
+      "dnsTxt": 5242880,
+      "domainNames": 10485760,
+      "domainNamesNegative": 1048576,
+      "domains": 5242880,
+      "emailAddresses": 10485760,
+      "emailAddressesNegative": 2097152,
+      "events": 10485760,
+      "files": 10485760,
+      "httpAuth": 1048576,
+      "id": "singleton",
+      "mailingLists": 2097152,
+      "messages": 52428800,
+      "negativeTtl": 3600000,
+      "roles": 5242880,
+      "scheduling": 1048576,
+      "tenants": 5242880
+    }
+  ],
+  "singleton": true,
+  "type": "Cache"
+}

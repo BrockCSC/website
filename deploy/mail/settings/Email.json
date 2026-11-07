@@ -1,0 +1,23 @@
+{
+  "objects": [
+    {
+      "compressionAlgorithm": "lz4",
+      "defaultFolders": {},
+      "encryptAtRest": true,
+      "encryptOnAppend": false,
+      "id": "singleton",
+      "maxAttachmentSize": 50000000,
+      "maxIdentities": 20,
+      "maxMailboxDepth": 10,
+      "maxMailboxNameLength": 255,
+      "maxMailboxes": 250,
+      "maxMaskedAddresses": 5,
+      "maxMessageSize": 75000000,
+      "maxMessages": null,
+      "maxPublicKeys": 5,
+      "maxSubmissions": 500
+    }
+  ],
+  "singleton": true,
+  "type": "Email"
+}

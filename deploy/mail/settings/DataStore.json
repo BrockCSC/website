@@ -1,0 +1,15 @@
+{
+  "objects": [
+    {
+      "@type": "RocksDb",
+      "blobSize": 16834,
+      "bufferSize": 134217728,
+      "cacheSize": 134217728,
+      "id": "singleton",
+      "path": "/var/lib/stalwart/",
+      "poolWorkers": null
+    }
+  ],
+  "singleton": true,
+  "type": "DataStore"
+}

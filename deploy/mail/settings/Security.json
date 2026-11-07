@@ -1,0 +1,43 @@
+{
+  "objects": [
+    {
+      "abuseBanPeriod": null,
+      "abuseBanRate": {
+        "count": 35,
+        "period": 86400000
+      },
+      "authBanPeriod": null,
+      "authBanRate": {
+        "count": 100,
+        "period": 86400000
+      },
+      "id": "singleton",
+      "loiterBanPeriod": null,
+      "loiterBanRate": {
+        "count": 150,
+        "period": 86400000
+      },
+      "scanBanPaths": {
+        "*../*": true,
+        "*.asp*": true,
+        "*.cgi*": true,
+        "*.php*": true,
+        "*/..*": true,
+        "*/cgi-bin*": true,
+        "*/php*": true,
+        "*/wp-*": true,
+        "*drupal*": true,
+        "*joomla*": true,
+        "*wordpress*": true,
+        "*xmlrpc*": true
+      },
+      "scanBanPeriod": null,
+      "scanBanRate": {
+        "count": 30,
+        "period": 86400000
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "Security"
+}

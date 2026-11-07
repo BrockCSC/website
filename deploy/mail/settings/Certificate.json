@@ -1,0 +1,23 @@
+{
+  "objects": [
+    {
+      "certificate": {
+        "@type": "Text",
+        "value": "<PEM>"
+      },
+      "id": "jaf0c0iiaaqa",
+      "issuer": "C=US, O=Let's Encrypt, CN=YR2",
+      "notValidAfter": "2027-01-10T02:57:10Z",
+      "notValidBefore": "2026-10-12T02:57:11Z",
+      "privateKey": {
+        "@type": "Text",
+        "secret": "<SECRET>"
+      },
+      "subjectAlternativeNames": {
+        "*.brockcsc.ca": true
+      }
+    }
+  ],
+  "singleton": false,
+  "type": "Certificate"
+}

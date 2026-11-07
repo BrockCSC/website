@@ -1,0 +1,50 @@
+{
+  "objects": [
+    {
+      "allowedNotifyUris": {
+        "mailto": true
+      },
+      "defaultExpiryDuplicate": 604800000,
+      "defaultExpiryVacation": 2592000000,
+      "defaultSubject": "Automated reply",
+      "defaultSubjectPrefix": "Auto: ",
+      "disableCapabilities": {},
+      "dkimSignDomain": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "is_local_domain(sender_domain)",
+            "then": "sender_domain"
+          }
+        }
+      },
+      "id": "singleton",
+      "maxCpuCycles": 5000,
+      "maxHeaderSize": 1024,
+      "maxIncludes": 3,
+      "maxLocalVars": 128,
+      "maxMatchVars": 30,
+      "maxNestedBlocks": 15,
+      "maxNestedForEvery": 3,
+      "maxNestedIncludes": 3,
+      "maxNestedTests": 15,
+      "maxOutMessages": 3,
+      "maxReceivedHeaders": 50,
+      "maxRedirects": 1,
+      "maxScriptNameLength": 512,
+      "maxScriptSize": 102400,
+      "maxScripts": 100,
+      "maxStringLength": 4096,
+      "maxVarNameLength": 32,
+      "maxVarSize": 4096,
+      "protectedHeaders": {
+        "Auto-Submitted": true,
+        "Original-From": true,
+        "Original-Subject": true,
+        "Received": true
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "SieveUserInterpreter"
+}

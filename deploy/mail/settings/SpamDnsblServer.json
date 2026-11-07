@@ -1,0 +1,743 @@
+{
+  "objects": [
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbjqa",
+      "name": "STWT_RBL_SPAMHAUS_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 2",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_SBL', 'RECEIVED_SPAMHAUS_SBL')"
+          },
+          "2": {
+            "if": "octets[3] == 3",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_CSS', 'RECEIVED_SPAMHAUS_CSS')"
+          },
+          "3": {
+            "if": "octets[3] >= 4 && octets[3] <= 7",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_XBL', 'RECEIVED_SPAMHAUS_XBL')"
+          },
+          "4": {
+            "if": "octets[3] == 9",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_DROP', 'RECEIVED_SPAMHAUS_DROP')"
+          },
+          "5": {
+            "if": "(octets[3] == 10 || octets[3] == 11)",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_PBL', 'RECEIVED_SPAMHAUS_PBL')"
+          },
+          "6": {
+            "if": "octets[3] == 254",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_BLOCKED_OPENRESOLVER', 'RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER')"
+          },
+          "7": {
+            "if": "octets[3] == 255",
+            "then": "if_then(location == 'tcp', 'RBL_SPAMHAUS_BLOCKED', 'RECEIVED_SPAMHAUS_BLOCKED')"
+          }
+        }
+      },
+      "zone": {
+        "else": "ip_reverse + '.zen.spamhaus.org'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbkaa",
+      "name": "STWT_RBL_MAILSPIKE_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 10",
+            "then": "'RBL_MAILSPIKE_WORST'"
+          },
+          "2": {
+            "if": "octets[3] == 11",
+            "then": "'RBL_MAILSPIKE_VERYBAD'"
+          },
+          "3": {
+            "if": "octets[3] == 12",
+            "then": "'RBL_MAILSPIKE_BAD'"
+          },
+          "4": {
+            "if": "octets[3] >= 13 && octets[3] <= 16",
+            "then": "'RWL_MAILSPIKE_NEUTRAL'"
+          },
+          "5": {
+            "if": "octets[3] == 17",
+            "then": "'RWL_MAILSPIKE_POSSIBLE'"
+          },
+          "6": {
+            "if": "octets[3] == 18",
+            "then": "'RWL_MAILSPIKE_GOOD'"
+          },
+          "7": {
+            "if": "octets[3] == 19",
+            "then": "'RWL_MAILSPIKE_VERYGOOD'"
+          },
+          "8": {
+            "if": "octets[3] == 20",
+            "then": "'RWL_MAILSPIKE_EXCELLENT'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp'",
+            "then": "ip_reverse + '.rep.mailspike.net'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": false,
+      "id": "jaat3zvsbkqa",
+      "name": "STWT_RBL_SENDERSCORE_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 1",
+            "then": "'RBL_SENDERSCORE_BOT'"
+          },
+          "10": {
+            "if": "octets[3] == 11",
+            "then": "'RBL_SENDERSCORE_SUS_ATT_NA_BOT'"
+          },
+          "11": {
+            "if": "octets[3] == 14",
+            "then": "'RBL_SENDERSCORE_SUS_ATT_PRST_NA'"
+          },
+          "12": {
+            "if": "octets[3] == 15",
+            "then": "'RBL_SENDERSCORE_SUS_ATT_PRST_NA_BOT'"
+          },
+          "13": {
+            "if": "octets[3] == 16",
+            "then": "'RBL_SENDERSCORE_SCORE'"
+          },
+          "14": {
+            "if": "octets[3] == 18",
+            "then": "'RBL_SENDERSCORE_SCORE_NA'"
+          },
+          "15": {
+            "if": "octets[3] == 20",
+            "then": "'RBL_SENDERSCORE_SCORE_PRST'"
+          },
+          "16": {
+            "if": "octets[3] == 22",
+            "then": "'RBL_SENDERSCORE_SCORE_PRST_NA'"
+          },
+          "17": {
+            "if": "octets[3] == 26",
+            "then": "'RBL_SENDERSCORE_SCORE_SUS_ATT_NA'"
+          },
+          "18": {
+            "if": "octets[3] == 255",
+            "then": "'RBL_SENDERSCORE_BLOCKED'"
+          },
+          "2": {
+            "if": "octets[3] == 2",
+            "then": "'RBL_SENDERSCORE_NA'"
+          },
+          "3": {
+            "if": "octets[3] == 3",
+            "then": "'RBL_SENDERSCORE_NA_BOT'"
+          },
+          "4": {
+            "if": "octets[3] == 4",
+            "then": "'RBL_SENDERSCORE_PRST'"
+          },
+          "5": {
+            "if": "octets[3] == 5",
+            "then": "'RBL_SENDERSCORE_PRST_BOT'"
+          },
+          "6": {
+            "if": "octets[3] == 6",
+            "then": "'RBL_SENDERSCORE_PRST_NA'"
+          },
+          "7": {
+            "if": "octets[3] == 7",
+            "then": "'RBL_SENDERSCORE_PRST_NA_BOT'"
+          },
+          "8": {
+            "if": "octets[3] == 8",
+            "then": "'RBL_SENDERSCORE_SUS_ATT'"
+          },
+          "9": {
+            "if": "octets[3] == 10",
+            "then": "'RBL_SENDERSCORE_SUS_ATT_NA'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp'",
+            "then": "ip_reverse + '.bl.score.senderscore.com'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsblaa",
+      "name": "STWT_RBL_SENDERSCORE_REPUT_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] < 10",
+            "then": "'RBL_SENDERSCORE_REPUT_0'"
+          },
+          "10": {
+            "if": "octets[3] >= 90 && octets[3] <= 100",
+            "then": "'RBL_SENDERSCORE_REPUT_9'"
+          },
+          "11": {
+            "if": "octets[3] == 255",
+            "then": "'RBL_SENDERSCORE_REPUT_BLOCKED'"
+          },
+          "2": {
+            "if": "octets[3] >= 10 && octets[3] <= 19",
+            "then": "'RBL_SENDERSCORE_REPUT_1'"
+          },
+          "3": {
+            "if": "octets[3] >= 20 && octets[3] <= 29",
+            "then": "'RBL_SENDERSCORE_REPUT_2'"
+          },
+          "4": {
+            "if": "octets[3] >= 30 && octets[3] <= 39",
+            "then": "'RBL_SENDERSCORE_REPUT_3'"
+          },
+          "5": {
+            "if": "octets[3] >= 40 && octets[3] <= 49",
+            "then": "'RBL_SENDERSCORE_REPUT_4'"
+          },
+          "6": {
+            "if": "octets[3] >= 50 && octets[3] <= 59",
+            "then": "'RBL_SENDERSCORE_REPUT_5'"
+          },
+          "7": {
+            "if": "octets[3] >= 60 && octets[3] <= 69",
+            "then": "'RBL_SENDERSCORE_REPUT_6'"
+          },
+          "8": {
+            "if": "octets[3] >= 70 && octets[3] <= 79",
+            "then": "'RBL_SENDERSCORE_REPUT_7'"
+          },
+          "9": {
+            "if": "octets[3] >= 80 && octets[3] <= 89",
+            "then": "'RBL_SENDERSCORE_REPUT_8'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp'",
+            "then": "ip_reverse + '.score.senderscore.com'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsblqa",
+      "name": "STWT_RBL_SEM_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(ip)",
+            "then": "'RBL_SEM'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp' && is_v4",
+            "then": "ip_reverse + '.bl.spameatingmonkey.net'"
+          },
+          "1": {
+            "if": "location == 'tcp' && is_v6",
+            "then": "ip_reverse + '.bl.ipv6.spameatingmonkey.net'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbmaa",
+      "name": "STWT_RBL_VIRUSFREE_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "ip == '127.0.0.2'",
+            "then": "'RBL_VIRUSFREE_BOTNET'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp'",
+            "then": "ip_reverse + '.bip.virusfree.cz'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbmqa",
+      "name": "STWT_RBL_SPAMCOP_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(ip)",
+            "then": "'RBL_SPAMCOP'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp'",
+            "then": "ip_reverse + '.bl.spamcop.net'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbnaa",
+      "name": "STWT_RBL_BARRACUDA_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(ip)",
+            "then": "'RBL_BARRACUDA'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'tcp'",
+            "then": "ip_reverse + '.b.barracudacentral.org'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbnqa",
+      "name": "STWT_RBL_BLOCKLISTDE_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(ip) && location == 'tcp'",
+            "then": "'RBL_BLOCKLISTDE'"
+          },
+          "1": {
+            "if": "!is_empty(ip)",
+            "then": "'RECEIVED_BLOCKLISTDE'"
+          }
+        }
+      },
+      "zone": {
+        "else": "ip_reverse + '.bl.blocklist.de'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Ip",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsboaa",
+      "name": "STWT_DNSWL_IP",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 0",
+            "then": "'RCVD_IN_DNSWL_NONE'"
+          },
+          "2": {
+            "if": "octets[3] == 1",
+            "then": "'RCVD_IN_DNSWL_LOW'"
+          },
+          "3": {
+            "if": "octets[3] == 2",
+            "then": "'RCVD_IN_DNSWL_MED'"
+          },
+          "4": {
+            "if": "octets[3] == 3",
+            "then": "'RCVD_IN_DNSWL_HI'"
+          },
+          "5": {
+            "if": "octets[3] == 255",
+            "then": "'DNSWL_BLOCKED'"
+          }
+        }
+      },
+      "zone": {
+        "else": "ip_reverse + '.list.dnswl.org'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Domain",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsboqa",
+      "name": "STWT_DBL_SPAMHAUS_DOMAIN",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 2",
+            "then": "'DBL_SPAM'"
+          },
+          "10": {
+            "if": "octets[3] == 254",
+            "then": "'DBL_BLOCKED_OPENRESOLVER'"
+          },
+          "11": {
+            "if": "octets[3] == 255",
+            "then": "'DBL_BLOCKED'"
+          },
+          "2": {
+            "if": "octets[3] == 4",
+            "then": "'DBL_PHISH'"
+          },
+          "3": {
+            "if": "octets[3] == 5",
+            "then": "'DBL_MALWARE'"
+          },
+          "4": {
+            "if": "octets[3] == 6",
+            "then": "'DBL_BOTNET'"
+          },
+          "5": {
+            "if": "octets[3] == 102",
+            "then": "'DBL_ABUSE'"
+          },
+          "6": {
+            "if": "octets[3] == 103",
+            "then": "'DBL_ABUSE_REDIR'"
+          },
+          "7": {
+            "if": "octets[3] == 104",
+            "then": "'DBL_ABUSE_PHISH'"
+          },
+          "8": {
+            "if": "octets[3] == 105",
+            "then": "'DBL_ABUSE_MALWARE'"
+          },
+          "9": {
+            "if": "octets[3] == 106",
+            "then": "'DBL_ABUSE_BOTNET'"
+          }
+        }
+      },
+      "zone": {
+        "else": "value + '.dbl.spamhaus.org'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Domain",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbpaa",
+      "name": "STWT_SURBL_DOMAIN",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[3] == 128",
+            "then": "'CRACKED_SURBL'"
+          },
+          "1": {
+            "if": "octets[3] == 64",
+            "then": "'ABUSE_SURBL'"
+          },
+          "2": {
+            "if": "octets[3] == 32",
+            "then": "'CT_SURBL'"
+          },
+          "3": {
+            "if": "octets[3] == 16",
+            "then": "'MW_SURBL_MULTI'"
+          },
+          "4": {
+            "if": "octets[3] == 8",
+            "then": "'PH_SURBL_MULTI'"
+          },
+          "5": {
+            "if": "octets[3] == 4",
+            "then": "'DM_SURBL'"
+          },
+          "6": {
+            "if": "octets[3] == 1",
+            "then": "'SURBL_BLOCKED'"
+          }
+        }
+      },
+      "zone": {
+        "else": "value + '.multi.surbl.org'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Domain",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbpqa",
+      "name": "STWT_URIBL_DOMAIN",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[3] == 1",
+            "then": "'URIBL_BLOCKED'"
+          },
+          "1": {
+            "if": "octets[3] == 2",
+            "then": "'URIBL_BLACK'"
+          },
+          "2": {
+            "if": "octets[3] == 4",
+            "then": "'URIBL_GREY'"
+          },
+          "3": {
+            "if": "octets[3] == 8",
+            "then": "'URIBL_RED'"
+          }
+        }
+      },
+      "zone": {
+        "else": "value + '.multi.uribl.com'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Domain",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbqaa",
+      "name": "STWT_SEM_URIBL",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "ip == '127.0.0.2'",
+            "then": "'SEM_URIBL'"
+          }
+        }
+      },
+      "zone": {
+        "else": "value + '.uribl.spameatingmonkey.net'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Domain",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbqqa",
+      "name": "STWT_SEM_URIBL_FRESH15",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "ip == '127.0.0.2'",
+            "then": "'SEM_URIBL_FRESH15'"
+          }
+        }
+      },
+      "zone": {
+        "else": "value + '.fresh15.spameatingmonkey.net'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Domain",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbraa",
+      "name": "STWT_DWL_DNSWL_DOMAIN",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 0",
+            "then": "'DWL_DNSWL_NONE'"
+          },
+          "2": {
+            "if": "octets[3] == 1",
+            "then": "'DWL_DNSWL_LOW'"
+          },
+          "3": {
+            "if": "octets[3] == 2",
+            "then": "'DWL_DNSWL_MED'"
+          },
+          "4": {
+            "if": "octets[3] == 3",
+            "then": "'DWL_DNSWL_HI'"
+          },
+          "5": {
+            "if": "octets[3] == 255",
+            "then": "'DWL_DNSWL_BLOCKED'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "location == 'dkim_pass'",
+            "then": "value + '.dwl.dnswl.org'"
+          }
+        }
+      }
+    },
+    {
+      "@type": "Email",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbrqa",
+      "name": "STWT_MSBL_EBL_EMAIL",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[2] == 0 && (octets[3] == 2 || octets[3] == 3)",
+            "then": "'MSBL_EBL'"
+          },
+          "2": {
+            "if": "octets[2] == 1 && (octets[3] == 2 || octets[3] == 3)",
+            "then": "'MSBL_EBL_GREY'"
+          }
+        }
+      },
+      "zone": {
+        "else": "hash(email, 'sha1') + '.ebl.msbl.org'",
+        "match": {}
+      }
+    },
+    {
+      "@type": "Url",
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvsbsaa",
+      "name": "STWT_SURBL_HASHBL_DOMAIN",
+      "tag": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "octets[0] != 127",
+            "then": "false"
+          },
+          "1": {
+            "if": "octets[3] == 8",
+            "then": "'SURBL_HASHBL_PHISH'"
+          },
+          "2": {
+            "if": "octets[3] == 16",
+            "then": "'SURBL_HASHBL_MALWARE'"
+          },
+          "3": {
+            "if": "octets[3] == 64",
+            "then": "'SURBL_HASHBL_ABUSE'"
+          },
+          "4": {
+            "if": "octets[3] == 128",
+            "then": "'SURBL_HASHBL_CRACKED'"
+          },
+          "5": {
+            "if": "octets[2] == 1",
+            "then": "'SURBL_HASHBL_EMAIL'"
+          }
+        }
+      },
+      "zone": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "key_exists('surbl-hashbl', host)",
+            "then": "hash(host + path, 'md5') + '.hashbl.surbl.org'"
+          }
+        }
+      }
+    }
+  ],
+  "singleton": false,
+  "type": "SpamDnsblServer"
+}

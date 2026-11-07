@@ -1,0 +1,16 @@
+{
+  "objects": [
+    {
+      "apiKey": {
+        "@type": "None"
+      },
+      "id": "singleton",
+      "licenseKey": {
+        "@type": "None"
+      },
+      "logoUrl": null
+    }
+  ],
+  "singleton": true,
+  "type": "Enterprise"
+}

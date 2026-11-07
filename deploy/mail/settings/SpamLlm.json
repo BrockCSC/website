@@ -1,0 +1,10 @@
+{
+  "objects": [
+    {
+      "@type": "Disable",
+      "id": "singleton"
+    }
+  ],
+  "singleton": true,
+  "type": "SpamLlm"
+}

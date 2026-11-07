@@ -1,0 +1,21 @@
+{
+  "objects": [
+    {
+      "hostname": {
+        "else": "system('hostname')",
+        "match": {}
+      },
+      "id": "singleton",
+      "script": {
+        "else": "false",
+        "match": {}
+      },
+      "smtpGreeting": {
+        "else": "system('hostname') + ' Stalwart ESMTP at your service'",
+        "match": {}
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaStageConnect"
+}

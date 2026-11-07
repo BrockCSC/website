@@ -1,0 +1,16 @@
+{
+  "objects": [
+    {
+      "aliases": {},
+      "description": "Every current co-president. Kept in sync with Keycloak.",
+      "domainId": "b",
+      "emailAddress": "co-presidents@brockcsc.ca",
+      "id": "b",
+      "memberTenantId": null,
+      "name": "co-presidents",
+      "recipients": "<MEMBERS_NOT_EXPORTED>"
+    }
+  ],
+  "singleton": false,
+  "type": "MailingList"
+}

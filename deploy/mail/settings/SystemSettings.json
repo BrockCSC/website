@@ -1,0 +1,56 @@
+{
+  "objects": [
+    {
+      "defaultCertificateId": null,
+      "defaultDomainId": "b",
+      "defaultHostname": "mail.brockcsc.ca",
+      "id": "singleton",
+      "mailExchangers": {
+        "0": {
+          "hostname": null,
+          "priority": 10
+        }
+      },
+      "maxConnections": 8192,
+      "providerInfo": {},
+      "proxyTrustedNetworks": {},
+      "services": {
+        "caldav": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "carddav": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "imap": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "jmap": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "managesieve": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "pop3": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "smtp": {
+          "cleartext": false,
+          "hostname": null
+        },
+        "webdav": {
+          "cleartext": false,
+          "hostname": null
+        }
+      },
+      "threadPoolSize": null
+    }
+  ],
+  "singleton": true,
+  "type": "SystemSettings"
+}

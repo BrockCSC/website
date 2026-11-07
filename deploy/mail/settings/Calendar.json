@@ -1,0 +1,18 @@
+{
+  "objects": [
+    {
+      "defaultDisplayName": "Stalwart Calendar",
+      "defaultHrefName": "default",
+      "id": "singleton",
+      "maxAttendees": 20,
+      "maxCalendars": 250,
+      "maxEventNotifications": null,
+      "maxEvents": null,
+      "maxICalendarSize": 524288,
+      "maxParticipantIdentities": 100,
+      "maxRecurrenceExpansions": 3000
+    }
+  ],
+  "singleton": true,
+  "type": "Calendar"
+}

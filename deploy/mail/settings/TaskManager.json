@@ -1,0 +1,18 @@
+{
+  "objects": [
+    {
+      "id": "singleton",
+      "maxAttempts": 3,
+      "strategy": {
+        "@type": "ExponentialBackoff",
+        "factor": 2.0,
+        "initialDelay": 60000,
+        "jitter": true,
+        "maxDelay": 1800000
+      },
+      "totalDeadline": 21600000
+    }
+  ],
+  "singleton": true,
+  "type": "TaskManager"
+}

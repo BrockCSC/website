@@ -1,0 +1,17 @@
+{
+  "objects": [
+    {
+      "id": "singleton",
+      "metrics": {},
+      "metricsPolicy": "exclude",
+      "openTelemetry": {
+        "@type": "Disabled"
+      },
+      "prometheus": {
+        "@type": "Disabled"
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "Metrics"
+}

@@ -1,0 +1,31 @@
+{
+  "objects": [
+    {
+      "defaultAdminRoleIds": {
+        "b": true,
+        "e": true
+      },
+      "defaultGroupRoleIds": {
+        "c": true
+      },
+      "defaultTenantRoleIds": {
+        "b": true,
+        "d": true
+      },
+      "defaultUserRoleIds": {
+        "b": true
+      },
+      "directoryId": "jabarvhqaaqa",
+      "id": "singleton",
+      "maxApiKeys": 5,
+      "maxAppPasswords": 5,
+      "passwordDefaultExpiry": null,
+      "passwordHashAlgorithm": "argon2id",
+      "passwordMaxLength": 128,
+      "passwordMinLength": 8,
+      "passwordMinStrength": "three"
+    }
+  ],
+  "singleton": true,
+  "type": "Authentication"
+}

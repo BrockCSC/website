@@ -1,0 +1,24 @@
+{
+  "objects": [
+    {
+      "defaultFromAddress": "postmaster@localhost",
+      "defaultName": "Anonymous",
+      "defaultSubject": "Contact form submission",
+      "deliverTo": {},
+      "enable": false,
+      "fieldEmail": null,
+      "fieldHoneyPot": null,
+      "fieldName": null,
+      "fieldSubject": null,
+      "id": "singleton",
+      "maxSize": 102400,
+      "rateLimit": {
+        "count": 5,
+        "period": 3600000
+      },
+      "validateDomain": true
+    }
+  ],
+  "singleton": true,
+  "type": "HttpForm"
+}

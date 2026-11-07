@@ -1,0 +1,84 @@
+{
+  "objects": [
+    {
+      "addAuthResultsHeader": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "addDateHeader": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "addDeliveredToHeader": true,
+      "addMessageIdHeader": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "addReceivedHeader": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "addReceivedSpfHeader": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "addReturnPathHeader": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "true"
+          }
+        }
+      },
+      "enableSpamFilter": {
+        "else": "is_empty(authenticated_as)",
+        "match": {}
+      },
+      "id": "singleton",
+      "maxMessageSize": {
+        "else": "104857600",
+        "match": {}
+      },
+      "maxMessages": {
+        "else": "10",
+        "match": {}
+      },
+      "maxReceivedHeaders": {
+        "else": "50",
+        "match": {}
+      },
+      "script": {
+        "else": "false",
+        "match": {}
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaStageData"
+}

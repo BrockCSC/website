@@ -1,0 +1,10 @@
+{
+  "objects": [
+    {
+      "@type": "Disabled",
+      "id": "singleton"
+    }
+  ],
+  "singleton": true,
+  "type": "Coordinator"
+}

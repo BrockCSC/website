@@ -1,0 +1,38 @@
+{
+  "objects": [
+    {
+      "id": "singleton",
+      "maxFailures": {
+        "else": "3",
+        "match": {}
+      },
+      "mustMatchSender": {
+        "else": "true",
+        "match": {}
+      },
+      "require": {
+        "else": "local_port != 25",
+        "match": {}
+      },
+      "saslMechanisms": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "local_port != 25 && is_tls",
+            "then": "[plain, login, oauthbearer, xoauth2]"
+          },
+          "1": {
+            "if": "local_port != 25",
+            "then": "[oauthbearer, xoauth2]"
+          }
+        }
+      },
+      "waitOnFail": {
+        "else": "5s",
+        "match": {}
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaStageAuth"
+}

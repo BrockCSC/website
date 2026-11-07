@@ -1,0 +1,58 @@
+{
+  "objects": [
+    {
+      "defaultLanguage": "en-US",
+      "id": "singleton",
+      "indexBatchSize": 100,
+      "indexCalendar": true,
+      "indexCalendarFields": {
+        "attendee": true,
+        "description": true,
+        "location": true,
+        "owner": true,
+        "start": true,
+        "title": true,
+        "uid": true
+      },
+      "indexContactFields": {
+        "address": true,
+        "email": true,
+        "kind": true,
+        "member": true,
+        "name": true,
+        "nickname": true,
+        "note": true,
+        "onlineService": true,
+        "organization": true,
+        "phone": true,
+        "uid": true
+      },
+      "indexContacts": true,
+      "indexEmail": true,
+      "indexEmailFields": {
+        "attachment": true,
+        "bcc": true,
+        "body": true,
+        "cc": true,
+        "from": true,
+        "hasAttachment": true,
+        "receivedAt": true,
+        "sentAt": true,
+        "size": true,
+        "subject": true,
+        "to": true
+      },
+      "indexTelemetry": true,
+      "indexTracingFields": {
+        "eventType": true,
+        "keywords": true,
+        "queueId": true
+      },
+      "supportedLanguages": {
+        "en-US": true
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "Search"
+}
