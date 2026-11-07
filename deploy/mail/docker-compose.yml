@@ -1,14 +1,20 @@
 # Its own Komodo stack, not per-branch: mailboxes outlive any app deploy.
 # The version is pinned on purpose. Stalwart 1.x cannot open a data store
-# written by 0.x, so a floating tag takes mail down on the next deploy.
-# Moving to 1.x needs a planned data migration first.
+# written by 0.x, and 0.x cannot open a 1.x store, so a floating tag takes
+# mail down on the next deploy.
+#
+# The v1 volumes below are created and filled by the migration script
+# (runbooks/scripts/stalwart-tor-migrate.sh in AlaqmarG/platform). They must
+# exist and be populated before this file is deployed. The original
+# brockcsc-stalwart-data and brockcsc-stalwart-etc volumes are no longer
+# mounted; they stay on the host as the rollback copy.
 networks:
   platform-net:
     external: true
 
 services:
   stalwart:
-    image: stalwartlabs/stalwart:${STALWART_TAG:-v0.16.22}
+    image: stalwartlabs/stalwart:${STALWART_TAG:-v1.0.3}
     container_name: brockcsc-stalwart
     restart: unless-stopped
     networks: [platform-net]
@@ -18,9 +24,9 @@ services:
       - "587:587"
       - "993:993"
     volumes:
-      - stalwart-data:/var/lib/stalwart
+      - stalwart-v1-data:/var/lib/stalwart-v1
       - stalwart-logs:/var/log/stalwart
-      - stalwart-etc:/etc/stalwart
+      - stalwart-v1-etc:/etc/stalwart
     environment:
       - STALWART_RECOVERY_ADMIN=${STALWART_ADMIN_USER}:${STALWART_ADMIN_SECRET}
       - OCI_SMTP_PASSWORD=${OCI_SMTP_PASSWORD}
@@ -42,9 +48,9 @@ services:
       - "traefik.http.middlewares.mail-to-admin.redirectregex.permanent=true"
 
 volumes:
-  stalwart-data:
-    name: brockcsc-stalwart-data
+  stalwart-v1-data:
+    name: brockcsc-stalwart-v1-data
   stalwart-logs:
     name: brockcsc-stalwart-logs
-  stalwart-etc:
-    name: brockcsc-stalwart-etc
+  stalwart-v1-etc:
+    name: brockcsc-stalwart-v1-etc
