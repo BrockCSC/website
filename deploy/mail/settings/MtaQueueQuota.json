@@ -1,0 +1,18 @@
+{
+  "objects": [
+    {
+      "description": "Global queue quota",
+      "enable": true,
+      "id": "jemjpjfqaaab",
+      "key": {},
+      "match": {
+        "else": "",
+        "match": {}
+      },
+      "messages": 100000,
+      "size": 10737418240
+    }
+  ],
+  "singleton": false,
+  "type": "MtaQueueQuota"
+}

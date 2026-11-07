@@ -1,0 +1,79 @@
+{
+  "objects": [
+    {
+      "chunking": {
+        "else": "true",
+        "match": {}
+      },
+      "deliverBy": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(authenticated_as)",
+            "then": "15d"
+          }
+        }
+      },
+      "dsn": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(authenticated_as)",
+            "then": "true"
+          }
+        }
+      },
+      "expn": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(authenticated_as)",
+            "then": "true"
+          }
+        }
+      },
+      "futureRelease": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(authenticated_as)",
+            "then": "7d"
+          }
+        }
+      },
+      "id": "singleton",
+      "mtPriority": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(authenticated_as)",
+            "then": "mixer"
+          }
+        }
+      },
+      "noSoliciting": {
+        "else": "''",
+        "match": {}
+      },
+      "pipelining": {
+        "else": "true",
+        "match": {}
+      },
+      "requireTls": {
+        "else": "true",
+        "match": {}
+      },
+      "vrfy": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!is_empty(authenticated_as)",
+            "then": "true"
+          }
+        }
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaExtensions"
+}

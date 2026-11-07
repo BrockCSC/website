@@ -1,0 +1,23 @@
+{
+  "objects": [
+    {
+      "@type": "Custom",
+      "attempts": 2,
+      "concurrency": 2,
+      "enableEdns": true,
+      "id": "singleton",
+      "preserveIntermediates": true,
+      "servers": {
+        "0": {
+          "address": "172.19.0.53",
+          "port": 53,
+          "protocol": "udp"
+        }
+      },
+      "tcpOnError": true,
+      "timeout": 5000
+    }
+  ],
+  "singleton": true,
+  "type": "DnsResolver"
+}

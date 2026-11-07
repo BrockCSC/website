@@ -1,0 +1,22 @@
+{
+  "objects": [
+    {
+      "@type": "Oidc",
+      "claimGroups": null,
+      "claimName": "name",
+      "claimUsername": "preferred_username",
+      "description": "Keycloak (brockcsc realm)",
+      "id": "jabarvhqaaqa",
+      "issuerUrl": "https://129.153.49.190/realms/brockcsc",
+      "memberTenantId": null,
+      "requireAudience": "stalwart",
+      "requireScopes": {
+        "email": true,
+        "openid": true
+      },
+      "usernameDomain": "brockcsc.ca"
+    }
+  ],
+  "singleton": false,
+  "type": "Directory"
+}

@@ -1,0 +1,13 @@
+{
+  "objects": [
+    {
+      "domainLimit": 50,
+      "emailLimit": 50,
+      "id": "singleton",
+      "ipLimit": 50,
+      "urlLimit": 50
+    }
+  ],
+  "singleton": true,
+  "type": "SpamDnsblSettings"
+}

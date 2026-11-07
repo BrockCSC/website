@@ -1,0 +1,2423 @@
+{
+  "objects": [
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dcaa",
+      "score": 1.0,
+      "tag": "FROM_NAME_HAS_TITLE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dcqa",
+      "score": 1.0,
+      "tag": "FROM_NEEDS_ENCODING"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1ddaa",
+      "score": 4.0,
+      "tag": "FROM_NEQ_DISPLAY_NAME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1ddqa",
+      "score": 0.0,
+      "tag": "FROM_NEQ_ENV_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1deaa",
+      "score": 0.0,
+      "tag": "FROM_NO_DN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1deqa",
+      "score": 1.0,
+      "tag": "FROM_SERVICE_ACCT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dfaa",
+      "score": 1000.0,
+      "tag": "GTUBE_TEST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dfqa",
+      "score": 4.5,
+      "tag": "HACKED_WP_PHISHING"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dgaa",
+      "score": 0.1,
+      "tag": "HAS_ANON_DOMAIN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dgqa",
+      "score": 0.0,
+      "tag": "HAS_ATTACHMENT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dhaa",
+      "score": 0.0,
+      "tag": "HAS_DATA_URI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dhqa",
+      "score": 2.0,
+      "tag": "HAS_GOOGLE_FIREBASE_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1diaa",
+      "score": 1.0,
+      "tag": "HAS_GOOGLE_REDIR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1diqa",
+      "score": 1.0,
+      "tag": "HAS_GUC_PROXY_URI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1djaa",
+      "score": 6.0,
+      "tag": "HAS_IPFS_GATEWAY_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1djqa",
+      "score": -0.01,
+      "tag": "HAS_LIST_UNSUB"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dkaa",
+      "score": 0.0,
+      "tag": "HAS_ONION_URI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dkqa",
+      "score": 0.0,
+      "tag": "HAS_PHPMAILER_SIG"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dlaa",
+      "score": 0.0,
+      "tag": "HAS_REPLYTO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dlqa",
+      "score": 0.0,
+      "tag": "HAS_SEO_WORD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv1dmaa",
+      "score": 0.0,
+      "tag": "HAS_WP_URI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c0aa",
+      "score": 0.0,
+      "tag": "FREEMAIL_TO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c0qa",
+      "score": 1.5,
+      "tag": "FROMHOST_NORES_A_OR_MX"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c1aa",
+      "score": 0.0,
+      "tag": "FROM_BOUNCE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c1qa",
+      "score": 1.0,
+      "tag": "FROM_DN_EQ_ADDR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c2aa",
+      "score": 0.0,
+      "tag": "FREEMAIL_REPLY_TO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c2qa",
+      "score": 3.0,
+      "tag": "FREEMAIL_REPLY_TO_NEQ_FROM_DOM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c3aa",
+      "score": 0.0,
+      "tag": "FROM_EQ_ENV_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c3qa",
+      "score": 1.5,
+      "tag": "FROM_EXCESS_BASE64"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c7aa",
+      "score": 0.0,
+      "tag": "FREEMAIL_CC"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c7qa",
+      "score": 0.0,
+      "tag": "FREEMAIL_DNT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c9aa",
+      "score": 0.0,
+      "tag": "FREEMAIL_ENV_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2c9qa",
+      "score": 0.0,
+      "tag": "FREEMAIL_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2czaa",
+      "score": 0.0,
+      "tag": "FORGED_SENDER_MAILLIST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2czqa",
+      "score": 4.0,
+      "tag": "FREEMAIL_AFF"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2daaa",
+      "score": 1.2,
+      "tag": "FROM_EXCESS_QP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2daqa",
+      "score": 0.0,
+      "tag": "FROM_HAS_DN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2dbaa",
+      "score": 2.0,
+      "tag": "FROM_INVALID"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv2dbqa",
+      "score": 1.0,
+      "tag": "FROM_NAME_EXCESS_SPACE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cpaa",
+      "score": 0.0,
+      "tag": "DMARC_POLICY_ALLOW_WITH_FAILURES"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cpqa",
+      "score": 1.5,
+      "tag": "DMARC_POLICY_QUARANTINE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cqaa",
+      "score": 6.0,
+      "tag": "DMARC_POLICY_REJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cqqa",
+      "score": 0.1,
+      "tag": "DMARC_POLICY_SOFTFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7craa",
+      "score": 0.0,
+      "tag": "DNSWL_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7crqa",
+      "score": 0.0,
+      "tag": "DWL_DNSWL_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7csaa",
+      "score": -3.5,
+      "tag": "DWL_DNSWL_HI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7csqa",
+      "score": -1.0,
+      "tag": "DWL_DNSWL_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7ctaa",
+      "score": -2.0,
+      "tag": "DWL_DNSWL_MED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7ctqa",
+      "score": 0.0,
+      "tag": "DWL_DNSWL_NONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cuaa",
+      "score": 1.0,
+      "tag": "EMPTY_SUBJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cuqa",
+      "score": -0.5,
+      "tag": "ENCRYPTED_PGP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cvaa",
+      "score": -0.5,
+      "tag": "ENCRYPTED_SMIME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cvqa",
+      "score": 2.0,
+      "tag": "ENV_FROM_INVALID"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cwaa",
+      "score": 1.0,
+      "tag": "EXT_CSS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cwqa",
+      "score": 1.0,
+      "tag": "FAKE_REPLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cxaa",
+      "score": 1.0,
+      "tag": "FORGED_RCVD_TRAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cxqa",
+      "score": 2.0,
+      "tag": "FORGED_RECIPIENTS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cyaa",
+      "score": 0.0,
+      "tag": "FORGED_RECIPIENTS_MAILLIST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zv7cyqa",
+      "score": 0.3,
+      "tag": "FORGED_SENDER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvsbsqa",
+      "score": 2.0,
+      "tag": "ABUSE_FROM_INJECTOR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvsbtaa",
+      "score": 5.0,
+      "tag": "ABUSE_SURBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvsbtqa",
+      "score": 0.0,
+      "tag": "ARC_ALLOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubuaa",
+      "score": 0.0,
+      "tag": "ARC_DNSFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubuqa",
+      "score": 0.5,
+      "tag": "ARC_INVALID"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubvaa",
+      "score": 0.0,
+      "tag": "ARC_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubvqa",
+      "score": 1.0,
+      "tag": "ARC_REJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubwaa",
+      "score": 0.0,
+      "tag": "ARC_SIGNED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubwqa",
+      "score": 1.0,
+      "tag": "AUTH_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubxaa",
+      "score": 1.0,
+      "tag": "AUTH_NA_OR_FAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubxqa",
+      "score": 1.0,
+      "tag": "AUTOGEN_PHP_SPAMMY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubyaa",
+      "score": 3.5,
+      "tag": "BAD_CTE_7BIT"
+    },
+    {
+      "@type": "Reject",
+      "id": "jaat3zvubyqa",
+      "tag": "BLOCKED_DOMAIN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubzaa",
+      "score": 2.0,
+      "tag": "BODY_URI_ONLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvubzqa",
+      "score": 10.0,
+      "tag": "BOGUS_ENCRYPTED_AND_TEXT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb0aa",
+      "score": 0.5,
+      "tag": "CTE_CASE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb0qa",
+      "score": 4.0,
+      "tag": "CTYPE_MISSING_DISPOSITION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb1aa",
+      "score": 1.0,
+      "tag": "CTYPE_MIXED_BOGUS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb1qa",
+      "score": 1.0,
+      "tag": "CT_EXTRA_SEMI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb2aa",
+      "score": 3.0,
+      "tag": "COMPROMISED_ACCT_BULK"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb2qa",
+      "score": 5.0,
+      "tag": "CRACKED_SURBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb3aa",
+      "score": 2.0,
+      "tag": "DATA_URI_OBFU"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb3qa",
+      "score": 4.0,
+      "tag": "DATE_IN_FUTURE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb7aa",
+      "score": -0.1,
+      "tag": "BOUNCE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb7qa",
+      "score": 1.0,
+      "tag": "BOUNCE_NO_AUTH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb9aa",
+      "score": 1.5,
+      "tag": "BROKEN_CONTENT_TYPE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwb9qa",
+      "score": 7.0,
+      "tag": "COMPLETELY_EMPTY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcaaa",
+      "score": 1.0,
+      "tag": "DATE_IN_PAST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcaqa",
+      "score": 5.0,
+      "tag": "DBL_ABUSE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcbaa",
+      "score": 6.5,
+      "tag": "DBL_ABUSE_BOTNET"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcbqa",
+      "score": 6.5,
+      "tag": "DBL_ABUSE_MALWARE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwccaa",
+      "score": 6.5,
+      "tag": "DBL_ABUSE_PHISH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwccqa",
+      "score": 5.0,
+      "tag": "DBL_ABUSE_REDIR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcdaa",
+      "score": 0.0,
+      "tag": "DBL_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcdqa",
+      "score": 0.0,
+      "tag": "DBL_BLOCKED_OPENRESOLVER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwceaa",
+      "score": 7.5,
+      "tag": "DBL_BOTNET"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwceqa",
+      "score": 7.5,
+      "tag": "DBL_MALWARE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvwcfaa",
+      "score": 7.5,
+      "tag": "DBL_PHISH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycfqa",
+      "score": 6.5,
+      "tag": "DBL_SPAM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycgaa",
+      "score": 3.0,
+      "tag": "DCC_BULK"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycgqa",
+      "score": 2.0,
+      "tag": "DIRECT_TO_MX"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvychaa",
+      "score": 0.0,
+      "tag": "DISPOSABLE_CC"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvychqa",
+      "score": 0.5,
+      "tag": "DISPOSABLE_DNT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvyciaa",
+      "score": 0.0,
+      "tag": "DISPOSABLE_ENV_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvyciqa",
+      "score": 0.0,
+      "tag": "DISPOSABLE_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycjaa",
+      "score": 0.0,
+      "tag": "DISPOSABLE_REPLYTO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycjqa",
+      "score": 0.0,
+      "tag": "DISPOSABLE_TO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvyckaa",
+      "score": -0.2,
+      "tag": "DKIM_ALLOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvyckqa",
+      "score": 0.0,
+      "tag": "DKIM_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvyclaa",
+      "score": 1.0,
+      "tag": "DKIM_PERMFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvyclqa",
+      "score": 1.0,
+      "tag": "DKIM_REJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycmaa",
+      "score": 0.0,
+      "tag": "DKIM_SIGNED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycmqa",
+      "score": 0.0,
+      "tag": "DKIM_TEMPFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycnaa",
+      "score": 0.5,
+      "tag": "DMARC_BAD_POLICY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycnqa",
+      "score": 0.0,
+      "tag": "DMARC_DNSFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycoaa",
+      "score": 1.0,
+      "tag": "DMARC_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zvycoqa",
+      "score": -0.5,
+      "tag": "DMARC_POLICY_ALLOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hfqa",
+      "score": 6.5,
+      "tag": "SURBL_HASHBL_MALWARE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hgaa",
+      "score": 6.5,
+      "tag": "SURBL_HASHBL_PHISH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hgqa",
+      "score": 0.0,
+      "tag": "SUSPICIOUS_AUTH_ORIGIN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hhaa",
+      "score": 2.0,
+      "tag": "SUSPICIOUS_MDN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hhqa",
+      "score": 1.5,
+      "tag": "SUSPICIOUS_RECIPS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hiaa",
+      "score": 5.0,
+      "tag": "SUSPICIOUS_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hiqa",
+      "score": 0.0,
+      "tag": "TAGGED_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hjaa",
+      "score": 0.0,
+      "tag": "TAGGED_RCPT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hjqa",
+      "score": 2.0,
+      "tag": "THREAD_HIJACKING_FROM_INJECTOR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hkaa",
+      "score": 0.0,
+      "tag": "TO_DN_ALL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hkqa",
+      "score": 0.0,
+      "tag": "TO_DN_EQ_ADDR_ALL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hlaa",
+      "score": 0.0,
+      "tag": "TO_DN_EQ_ADDR_SOME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw1hlqa",
+      "score": 0.0,
+      "tag": "TO_DN_NONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g0aa",
+      "score": 8.0,
+      "tag": "SPOOF_DISPLAY_NAME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g0qa",
+      "score": 6.0,
+      "tag": "SPOOF_REPLYTO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g1aa",
+      "score": 0.0,
+      "tag": "SUBJECT_ENDS_EXCLAIM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g1qa",
+      "score": 1.0,
+      "tag": "SUBJECT_ENDS_QUESTION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g2aa",
+      "score": 1.0,
+      "tag": "SPF_PERMFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g2qa",
+      "score": 1.0,
+      "tag": "SPF_SOFTFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g3aa",
+      "score": 0.5,
+      "tag": "SUBJECT_ENDS_SPACES"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g3qa",
+      "score": 1.0,
+      "tag": "SUBJECT_HAS_CURRENCY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2g9qa",
+      "score": 0.0,
+      "tag": "SPF_NEUTRAL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2haaa",
+      "score": 0.0,
+      "tag": "SUBJECT_HAS_EXCLAIM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2haqa",
+      "score": 0.0,
+      "tag": "SUBJECT_HAS_QUESTION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hbaa",
+      "score": 1.0,
+      "tag": "SUBJECT_NEEDS_ENCODING"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hbqa",
+      "score": 3.0,
+      "tag": "SUBJ_ALL_CAPS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hcaa",
+      "score": 0.0,
+      "tag": "SUBJ_BOUNCE_WORDS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hcqa",
+      "score": 1.5,
+      "tag": "SUBJ_EXCESS_BASE64"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hdaa",
+      "score": 1.2,
+      "tag": "SUBJ_EXCESS_QP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hdqa",
+      "score": 0.0,
+      "tag": "SURBL_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2heaa",
+      "score": 5.0,
+      "tag": "SURBL_HASHBL_ABUSE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2heqa",
+      "score": 5.0,
+      "tag": "SURBL_HASHBL_CRACKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw2hfaa",
+      "score": 5.0,
+      "tag": "SURBL_HASHBL_EMAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7g7aa",
+      "score": 0.0,
+      "tag": "SPF_DNSFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7g7qa",
+      "score": 2.0,
+      "tag": "SPF_FAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7g9aa",
+      "score": 0.0,
+      "tag": "SPF_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7gxaa",
+      "score": -2.0,
+      "tag": "SIGNED_SMIME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7gxqa",
+      "score": 0.0,
+      "tag": "SINGLE_SHORT_PART"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7gyaa",
+      "score": 3.5,
+      "tag": "SORTED_RECIPS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7gyqa",
+      "score": 5.0,
+      "tag": "SPAM_FLAG"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7gzaa",
+      "score": 15.0,
+      "tag": "SPAM_TRAP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zw7gzqa",
+      "score": -0.2,
+      "tag": "SPF_ALLOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadmqa",
+      "score": 0.0,
+      "tag": "HAS_X_AS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadnaa",
+      "score": 0.0,
+      "tag": "HAS_X_GMSV"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadnqa",
+      "score": 0.0,
+      "tag": "HAS_X_PRIO_FIVE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadoaa",
+      "score": 0.0,
+      "tag": "HAS_X_PRIO_ONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadoqa",
+      "score": 0.0,
+      "tag": "HAS_X_PRIO_THREE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadpaa",
+      "score": 0.0,
+      "tag": "HAS_X_PRIO_TWO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadpqa",
+      "score": 0.0,
+      "tag": "HAS_X_PRIO_ZERO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadqaa",
+      "score": 1.0,
+      "tag": "HEADER_EMPTY_DELIMITER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadqqa",
+      "score": 2.0,
+      "tag": "HEADER_FORGED_MDN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadraa",
+      "score": 2.0,
+      "tag": "HEADER_RCONFIRM_MISMATCH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadrqa",
+      "score": 3.0,
+      "tag": "HELO_BAREIP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadsaa",
+      "score": 1.0,
+      "tag": "HELO_IPREV_MISMATCH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadsqa",
+      "score": 1.0,
+      "tag": "HELO_IP_A"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwadtaa",
+      "score": 0.3,
+      "tag": "HELO_NORES_A_OR_MX"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcd2aa",
+      "score": 0.5,
+      "tag": "LLM_COMMERCIAL_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcd2qa",
+      "score": 2.0,
+      "tag": "LLM_COMMERCIAL_MEDIUM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcd7aa",
+      "score": 6.0,
+      "tag": "INVALID_FROM_8BIT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcd7qa",
+      "score": 1.7,
+      "tag": "INVALID_MSGID"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcd9aa",
+      "score": 5.0,
+      "tag": "KLMS_SPAM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcd9qa",
+      "score": 3.0,
+      "tag": "LLM_COMMERCIAL_HIGH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdtqa",
+      "score": 2.0,
+      "tag": "HELO_NOT_FQDN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcduaa",
+      "score": 2.0,
+      "tag": "HIDDEN_SOURCE_OBJ"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcduqa",
+      "score": 5.0,
+      "tag": "HOMOGRAPH_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdvaa",
+      "score": 5.0,
+      "tag": "HTML_META_REFRESH_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdvqa",
+      "score": 2.0,
+      "tag": "HTML_SHORT_LINK_IMG_1"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdwaa",
+      "score": 1.0,
+      "tag": "HTML_SHORT_LINK_IMG_2"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdwqa",
+      "score": 0.5,
+      "tag": "HTML_SHORT_LINK_IMG_3"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdxaa",
+      "score": 1.0,
+      "tag": "HTML_TEXT_IMG_RATIO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdxqa",
+      "score": 0.5,
+      "tag": "HTML_UNBALANCED_TAG"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdyaa",
+      "score": 0.5,
+      "tag": "HTTP_TO_HTTPS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdyqa",
+      "score": 1.0,
+      "tag": "HTTP_TO_IP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdzaa",
+      "score": 2.0,
+      "tag": "INFO_TO_INFO_LU"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwcdzqa",
+      "score": 1.5,
+      "tag": "INVALID_DATE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwed0aa",
+      "score": 3.0,
+      "tag": "LLM_HARMFUL_HIGH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwed0qa",
+      "score": 0.5,
+      "tag": "LLM_HARMFUL_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwed1aa",
+      "score": 2.0,
+      "tag": "LLM_HARMFUL_MEDIUM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwed1qa",
+      "score": -3.0,
+      "tag": "LLM_LEGITIMATE_HIGH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwed3aa",
+      "score": -0.5,
+      "tag": "LLM_LEGITIMATE_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwed3qa",
+      "score": -2.0,
+      "tag": "LLM_LEGITIMATE_MEDIUM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zweeaaa",
+      "score": 3.0,
+      "tag": "LLM_UNSOLICITED_HIGH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zweeaqa",
+      "score": 0.5,
+      "tag": "LLM_UNSOLICITED_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zweebaa",
+      "score": 2.0,
+      "tag": "LLM_UNSOLICITED_MEDIUM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zweebqa",
+      "score": 3.0,
+      "tag": "LONG_SUBJ"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgecaa",
+      "score": -0.2,
+      "tag": "MAILLIST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgecqa",
+      "score": 1.0,
+      "tag": "MANY_INVISIBLE_PARTS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgedaa",
+      "score": 2.0,
+      "tag": "MID_BARE_IP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgedqa",
+      "score": 1.0,
+      "tag": "MID_CONTAINS_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgeeaa",
+      "score": 1.0,
+      "tag": "MID_CONTAINS_TO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgeeqa",
+      "score": 1.0,
+      "tag": "MID_MISSING_BRACKETS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgefaa",
+      "score": 1.0,
+      "tag": "MID_RHS_IP_LITERAL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgefqa",
+      "score": 1.0,
+      "tag": "MID_RHS_MATCH_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgegaa",
+      "score": 0.0,
+      "tag": "MID_RHS_MATCH_FROMTLD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgegqa",
+      "score": 1.0,
+      "tag": "MID_RHS_MATCH_TO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgehaa",
+      "score": 0.5,
+      "tag": "MID_RHS_NOT_FQDN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgehqa",
+      "score": 0.5,
+      "tag": "MID_RHS_WWW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwgeiaa",
+      "score": 5.0,
+      "tag": "MIME_ARCHIVE_IN_ARCHIVE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwieiqa",
+      "score": 1.0,
+      "tag": "MIME_BAD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiejaa",
+      "score": 4.0,
+      "tag": "MIME_BAD_ATTACHMENT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiejqa",
+      "score": 2.0,
+      "tag": "MIME_BAD_EXTENSION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiekaa",
+      "score": 8.0,
+      "tag": "MIME_BAD_EXT_WITH_BAD_UNICODE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiekqa",
+      "score": 8.0,
+      "tag": "MIME_BAD_UNICODE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwielaa",
+      "score": 0.1,
+      "tag": "MIME_BASE64_TEXT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwielqa",
+      "score": 1.0,
+      "tag": "MIME_BASE64_TEXT_BOGUS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiemaa",
+      "score": 2.0,
+      "tag": "MIME_DOUBLE_BAD_EXTENSION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiemqa",
+      "score": -0.1,
+      "tag": "MIME_GOOD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwienaa",
+      "score": 2.0,
+      "tag": "MIME_HEADER_CTYPE_ONLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwienqa",
+      "score": 0.2,
+      "tag": "MIME_HTML_ONLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwieoaa",
+      "score": 1.0,
+      "tag": "MIME_MA_MISSING_HTML"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwieoqa",
+      "score": 2.0,
+      "tag": "MIME_MA_MISSING_TEXT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiepaa",
+      "score": 0.5,
+      "tag": "MISSING_CHARSET"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwiepqa",
+      "score": 1.0,
+      "tag": "MISSING_DATE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwieqaa",
+      "score": 7.0,
+      "tag": "MISSING_ESSENTIAL_HEADERS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwieqqa",
+      "score": 2.0,
+      "tag": "MISSING_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwieraa",
+      "score": 2.5,
+      "tag": "MISSING_MID"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwierqa",
+      "score": 2.0,
+      "tag": "MISSING_MIME_VERSION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkesaa",
+      "score": 2.0,
+      "tag": "MISSING_SUBJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkesqa",
+      "score": 2.0,
+      "tag": "MISSING_TO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwketaa",
+      "score": 2.0,
+      "tag": "MIXED_CHARSET"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwketqa",
+      "score": 7.0,
+      "tag": "MIXED_CHARSET_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkeuaa",
+      "score": 7.5,
+      "tag": "MSBL_EBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkeuqa",
+      "score": 0.5,
+      "tag": "MSBL_EBL_GREY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkevaa",
+      "score": 8.0,
+      "tag": "MULTIPLE_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkevqa",
+      "score": 7.0,
+      "tag": "MULTIPLE_UNIQUE_HEADERS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkewaa",
+      "score": 0.5,
+      "tag": "MV_CASE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkewqa",
+      "score": 7.5,
+      "tag": "MW_SURBL_MULTI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkexaa",
+      "score": 1.0,
+      "tag": "NO_SPACE_IN_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkexqa",
+      "score": 1.0,
+      "tag": "PARTS_DIFFER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkeyaa",
+      "score": 7.0,
+      "tag": "PHISHED_OPENPHISH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwkeyqa",
+      "score": 7.0,
+      "tag": "PHISHED_PHISHTANK"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme0aa",
+      "score": 8.0,
+      "tag": "PROB_SPAM_HIGH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme0qa",
+      "score": 2.0,
+      "tag": "PROB_SPAM_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme1aa",
+      "score": 6.0,
+      "tag": "PROB_SPAM_MEDIUM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme1qa",
+      "score": 0.0,
+      "tag": "PROB_SPAM_UNCERTAIN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme2aa",
+      "score": -2.0,
+      "tag": "PROB_HAM_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme2qa",
+      "score": -6.0,
+      "tag": "PROB_HAM_MEDIUM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme3aa",
+      "score": 3.5,
+      "tag": "PYZOR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme3qa",
+      "score": 4.0,
+      "tag": "RBL_BARRACUDA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme7aa",
+      "score": 7.5,
+      "tag": "PH_SURBL_MULTI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme7qa",
+      "score": 0.0,
+      "tag": "PRECEDENCE_BULK"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme9aa",
+      "score": 0.0,
+      "tag": "PREVIOUSLY_DELIVERED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwme9qa",
+      "score": -8.0,
+      "tag": "PROB_HAM_HIGH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmezaa",
+      "score": 4.0,
+      "tag": "PHISHING"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmezqa",
+      "score": 1.0,
+      "tag": "PHISH_EMOTION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmfaaa",
+      "score": 4.0,
+      "tag": "RBL_BLOCKLISTDE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmfaqa",
+      "score": 1.0,
+      "tag": "RBL_MAILSPIKE_BAD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmfbaa",
+      "score": 1.5,
+      "tag": "RBL_MAILSPIKE_VERYBAD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmfbqa",
+      "score": 2.0,
+      "tag": "RBL_MAILSPIKE_WORST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmfcaa",
+      "score": 1.0,
+      "tag": "RBL_SEM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwmfcqa",
+      "score": 1.0,
+      "tag": "RBL_SEM_IPV6"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofdaa",
+      "score": 0.0,
+      "tag": "RBL_SENDERSCORE_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofdqa",
+      "score": 2.0,
+      "tag": "RBL_SENDERSCORE_BOT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofeaa",
+      "score": 0.0,
+      "tag": "RBL_SENDERSCORE_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofeqa",
+      "score": 1.0,
+      "tag": "RBL_SENDERSCORE_NA_BOT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwoffaa",
+      "score": 2.0,
+      "tag": "RBL_SENDERSCORE_PRST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwoffqa",
+      "score": 3.0,
+      "tag": "RBL_SENDERSCORE_PRST_BOT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofgaa",
+      "score": 2.0,
+      "tag": "RBL_SENDERSCORE_PRST_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofgqa",
+      "score": 3.0,
+      "tag": "RBL_SENDERSCORE_PRST_NA_BOT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofhaa",
+      "score": 4.0,
+      "tag": "RBL_SENDERSCORE_REPUT_0"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofhqa",
+      "score": 3.5,
+      "tag": "RBL_SENDERSCORE_REPUT_1"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofiaa",
+      "score": 3.0,
+      "tag": "RBL_SENDERSCORE_REPUT_2"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwofiqa",
+      "score": 2.5,
+      "tag": "RBL_SENDERSCORE_REPUT_3"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfjaa",
+      "score": 2.0,
+      "tag": "RBL_SENDERSCORE_REPUT_4"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfjqa",
+      "score": 1.5,
+      "tag": "RBL_SENDERSCORE_REPUT_5"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfkaa",
+      "score": 1.0,
+      "tag": "RBL_SENDERSCORE_REPUT_6"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfkqa",
+      "score": 0.5,
+      "tag": "RBL_SENDERSCORE_REPUT_7"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqflaa",
+      "score": 0.0,
+      "tag": "RBL_SENDERSCORE_REPUT_8"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqflqa",
+      "score": -1.0,
+      "tag": "RBL_SENDERSCORE_REPUT_9"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfmaa",
+      "score": 0.0,
+      "tag": "RBL_SENDERSCORE_REPUT_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfmqa",
+      "score": 0.0,
+      "tag": "RBL_SENDERSCORE_REPUT_UNKNOWN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfnaa",
+      "score": 2.0,
+      "tag": "RBL_SENDERSCORE_SCORE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfnqa",
+      "score": 2.0,
+      "tag": "RBL_SENDERSCORE_SCORE_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfoaa",
+      "score": 4.0,
+      "tag": "RBL_SENDERSCORE_SCORE_PRST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfoqa",
+      "score": 4.0,
+      "tag": "RBL_SENDERSCORE_SCORE_PRST_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfpaa",
+      "score": 3.0,
+      "tag": "RBL_SENDERSCORE_SCORE_SUS_ATT_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfpqa",
+      "score": 1.0,
+      "tag": "RBL_SENDERSCORE_SUS_ATT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfqaa",
+      "score": 1.0,
+      "tag": "RBL_SENDERSCORE_SUS_ATT_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfqqa",
+      "score": 1.5,
+      "tag": "RBL_SENDERSCORE_SUS_ATT_NA_BOT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfraa",
+      "score": 3.0,
+      "tag": "RBL_SENDERSCORE_SUS_ATT_PRST_NA"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfrqa",
+      "score": 3.5,
+      "tag": "RBL_SENDERSCORE_SUS_ATT_PRST_NA_BOT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfsaa",
+      "score": 4.0,
+      "tag": "RBL_SPAMCOP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqfsqa",
+      "score": 0.0,
+      "tag": "RBL_SPAMHAUS_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwqftaa",
+      "score": 0.0,
+      "tag": "RBL_SPAMHAUS_BLOCKED_OPENRESOLVER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsf7aa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_TWO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsf7qa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_ZERO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsf9aa",
+      "score": 2.0,
+      "tag": "RCPT_DOMAIN_IN_MESSAGE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsftqa",
+      "score": 2.0,
+      "tag": "RBL_SPAMHAUS_CSS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfuaa",
+      "score": 7.0,
+      "tag": "RBL_SPAMHAUS_DROP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfuqa",
+      "score": 2.0,
+      "tag": "RBL_SPAMHAUS_PBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfvaa",
+      "score": 4.0,
+      "tag": "RBL_SPAMHAUS_SBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfvqa",
+      "score": 4.0,
+      "tag": "RBL_SPAMHAUS_XBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfwaa",
+      "score": 2.0,
+      "tag": "RBL_VIRUSFREE_BOTNET"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfwqa",
+      "score": 1.5,
+      "tag": "RCPT_BOUNCEMOREONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfxaa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_FIVE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfxqa",
+      "score": 1.0,
+      "tag": "RCPT_COUNT_GT_50"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfyaa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_ONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfyqa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_SEVEN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfzaa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_THREE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwsfzqa",
+      "score": 0.0,
+      "tag": "RCPT_COUNT_TWELVE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf0aa",
+      "score": 0.0,
+      "tag": "RCVD_COUNT_FIVE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf0qa",
+      "score": 0.0,
+      "tag": "RCVD_COUNT_ONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf1aa",
+      "score": 0.0,
+      "tag": "RCVD_COUNT_SEVEN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf1qa",
+      "score": 0.0,
+      "tag": "RCVD_COUNT_THREE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf2aa",
+      "score": 3.0,
+      "tag": "RCPT_IN_SUBJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf2qa",
+      "score": 2.0,
+      "tag": "RCPT_LOCAL_IN_SUBJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf3aa",
+      "score": 0.0,
+      "tag": "RCVD_COUNT_TWELVE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf3qa",
+      "score": 0.0,
+      "tag": "RCVD_COUNT_TWO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwuf9qa",
+      "score": 2.0,
+      "tag": "RCPT_DOMAIN_IN_SUBJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugaaa",
+      "score": 0.1,
+      "tag": "RCVD_COUNT_ZERO"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugaqa",
+      "score": -1.0,
+      "tag": "RCVD_DKIM_ARC_DNSWL_HI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugbaa",
+      "score": -0.5,
+      "tag": "RCVD_DKIM_ARC_DNSWL_MED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugbqa",
+      "score": 2.0,
+      "tag": "RCVD_DOUBLE_IP_SPAM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugcaa",
+      "score": 3.0,
+      "tag": "RCVD_HELO_USER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugcqa",
+      "score": 4.0,
+      "tag": "RCVD_ILLEGAL_CHARS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugdaa",
+      "score": -0.5,
+      "tag": "RCVD_IN_DNSWL_HI"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugdqa",
+      "score": -0.1,
+      "tag": "RCVD_IN_DNSWL_LOW"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugeaa",
+      "score": -0.2,
+      "tag": "RCVD_IN_DNSWL_MED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugeqa",
+      "score": 0.0,
+      "tag": "RCVD_IN_DNSWL_NONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwugfaa",
+      "score": 0.1,
+      "tag": "RCVD_NO_TLS_LAST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgfqa",
+      "score": 0.0,
+      "tag": "RCVD_TLS_ALL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwggaa",
+      "score": 0.0,
+      "tag": "RCVD_TLS_LAST"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwggqa",
+      "score": 2.0,
+      "tag": "RCVD_UNAUTH_PBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwghaa",
+      "score": 0.0,
+      "tag": "RCVD_VIA_SMTP_AUTH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwghqa",
+      "score": 0.0,
+      "tag": "RDNS_DNSFAIL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgiaa",
+      "score": 2.0,
+      "tag": "RDNS_NONE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgiqa",
+      "score": 3.0,
+      "tag": "RECEIVED_BLOCKLISTDE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgjaa",
+      "score": 0.0,
+      "tag": "RECEIVED_SPAMHAUS_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgjqa",
+      "score": 0.0,
+      "tag": "RECEIVED_SPAMHAUS_BLOCKED_OPENRESOLVER"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgkaa",
+      "score": 1.0,
+      "tag": "RECEIVED_SPAMHAUS_CSS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgkqa",
+      "score": 0.0,
+      "tag": "RECEIVED_SPAMHAUS_PBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwglaa",
+      "score": 3.0,
+      "tag": "RECEIVED_SPAMHAUS_SBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwglqa",
+      "score": 1.0,
+      "tag": "RECEIVED_SPAMHAUS_XBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgmaa",
+      "score": 0.0,
+      "tag": "REDIRECTOR_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgmqa",
+      "score": 1.0,
+      "tag": "REDIRECTOR_URL_ONLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgnaa",
+      "score": 0.0,
+      "tag": "REPLYTO_ADDR_EQ_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwwgnqa",
+      "score": 0.0,
+      "tag": "REPLYTO_DN_EQ_FROM_DN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygoaa",
+      "score": 0.0,
+      "tag": "REPLYTO_DOM_EQ_FROM_DOM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygoqa",
+      "score": 0.0,
+      "tag": "REPLYTO_DOM_NEQ_FROM_DOM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygpaa",
+      "score": 2.0,
+      "tag": "REPLYTO_EMAIL_HAS_TITLE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygpqa",
+      "score": 0.0,
+      "tag": "REPLYTO_EQ_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygqaa",
+      "score": 5.0,
+      "tag": "REPLYTO_EQ_TO_ADDR"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygqqa",
+      "score": 1.5,
+      "tag": "REPLYTO_EXCESS_BASE64"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygraa",
+      "score": 1.2,
+      "tag": "REPLYTO_EXCESS_QP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygrqa",
+      "score": 1.0,
+      "tag": "REPLYTO_UNPARSABLE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygsaa",
+      "score": -0.4,
+      "tag": "RWL_MAILSPIKE_EXCELLENT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygsqa",
+      "score": -0.1,
+      "tag": "RWL_MAILSPIKE_GOOD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygtaa",
+      "score": 0.0,
+      "tag": "RWL_MAILSPIKE_NEUTRAL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygtqa",
+      "score": 0.0,
+      "tag": "RWL_MAILSPIKE_POSSIBLE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwyguaa",
+      "score": -0.2,
+      "tag": "RWL_MAILSPIKE_VERYGOOD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwyguqa",
+      "score": 3.5,
+      "tag": "SEM_URIBL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygvaa",
+      "score": 3.0,
+      "tag": "SEM_URIBL_FRESH15"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygvqa",
+      "score": 5.0,
+      "tag": "SEO_SPAM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygwaa",
+      "score": 7.0,
+      "tag": "SHORT_PART_BAD_HEADERS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zwygwqa",
+      "score": -2.0,
+      "tag": "SIGNED_PGP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahmaa",
+      "score": 2.0,
+      "tag": "TO_DN_RECIPIENTS"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahmqa",
+      "score": 0.0,
+      "tag": "TO_DN_SOME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahnaa",
+      "score": 0.0,
+      "tag": "TO_DOM_EQ_FROM_DOM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahnqa",
+      "score": 0.0,
+      "tag": "TO_EQ_FROM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahoaa",
+      "score": 1.5,
+      "tag": "TO_EXCESS_BASE64"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahoqa",
+      "score": 1.2,
+      "tag": "TO_EXCESS_QP"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahpaa",
+      "score": 0.0,
+      "tag": "TO_MATCH_ENVRCPT_ALL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahpqa",
+      "score": 0.0,
+      "tag": "TO_MATCH_ENVRCPT_SOME"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahqaa",
+      "score": 1.0,
+      "tag": "TO_NEEDS_ENCODING"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahqqa",
+      "score": 2.0,
+      "tag": "TO_WRAPPED_IN_SPACES"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahraa",
+      "score": -7.0,
+      "tag": "TRUSTED_DOMAIN"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahrqa",
+      "score": -7.0,
+      "tag": "TRUSTED_REPLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahsaa",
+      "score": 3.0,
+      "tag": "UNDISC_RCPT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahsqa",
+      "score": 3.0,
+      "tag": "UNDISC_RCPTS_BULK"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahtaa",
+      "score": 5.0,
+      "tag": "UNITEDINTERNET_SPAM"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxahtqa",
+      "score": 0.5,
+      "tag": "UNPARSABLE_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxch7aa",
+      "score": 0.5,
+      "tag": "XM_CASE"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxch7qa",
+      "score": 0.01,
+      "tag": "XM_UA_NO_VERSION"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxch9aa",
+      "score": 4.0,
+      "tag": "X_PHP_EVAL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxch9qa",
+      "score": 7.0,
+      "tag": "ZERO_WIDTH_SPACE_URL"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchuaa",
+      "score": 7.5,
+      "tag": "URIBL_BLACK"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchuqa",
+      "score": 0.0,
+      "tag": "URIBL_BLOCKED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchvaa",
+      "score": 2.5,
+      "tag": "URIBL_GREY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchvqa",
+      "score": 0.5,
+      "tag": "URIBL_RED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchwaa",
+      "score": 0.5,
+      "tag": "URI_COUNT_ODD"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchwqa",
+      "score": 1.0,
+      "tag": "URI_HIDDEN_PATH"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchxaa",
+      "score": 4.0,
+      "tag": "URL_IN_SUBJECT"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchxqa",
+      "score": 2.2,
+      "tag": "URL_ONLY"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchyaa",
+      "score": 1.0,
+      "tag": "URL_REDIRECTOR_NESTED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchyqa",
+      "score": 3.5,
+      "tag": "VIOLATED_DIRECT_SPF"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchzaa",
+      "score": 0.0,
+      "tag": "WP_COMPROMISED"
+    },
+    {
+      "@type": "Score",
+      "id": "jaat3zxchzqa",
+      "score": 0.5,
+      "tag": "WWW_DOT_DOMAIN"
+    }
+  ],
+  "singleton": false,
+  "type": "SpamTag"
+}

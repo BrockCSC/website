@@ -1,0 +1,1184 @@
+{
+  "objects": [
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$MISSING_ESSENTIAL_HEADERS && $SINGLE_SHORT_PART",
+            "then": "'SHORT_PART_BAD_HEADERS'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvgaiqa",
+      "name": "STWT_SHORT_BAD_HEADERS",
+      "priority": 1000
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$FORGED_RECIPIENTS && $MAILLIST",
+            "then": "'FORGED_RECIPIENTS_MAILLIST'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zviajaa",
+      "name": "STWT_FORGED_RCPT_LIST",
+      "priority": 1001
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$FORGED_SENDER && $MAILLIST",
+            "then": "'FORGED_SENDER_MAILLIST'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zviajqa",
+      "name": "STWT_FORGED_SENDER_LIST",
+      "priority": 1002
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$DMARC_POLICY_ALLOW && ($SPF_SOFTFAIL || $SPF_FAIL || $DKIM_REJECT)",
+            "then": "'DMARC_POLICY_ALLOW_WITH_FAILURES'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zviakaa",
+      "name": "STWT_DMARC_ALLOW_WITH_FAIL",
+      "priority": 1003
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$DKIM_NA && $SPF_NA && $DMARC_NA && $ARC_NA",
+            "then": "'AUTH_NA'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zviakqa",
+      "name": "STWT_AUTH_NA",
+      "priority": 1004
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!($DKIM_NA && $SPF_NA && $DMARC_NA && $ARC_NA) && ($DKIM_NA || $DKIM_TEMPFAIL || $DKIM_PERMFAIL) && ($SPF_NA || $SPF_DNSFAIL) && $DMARC_NA && ($ARC_NA || $ARC_DNSFAIL)",
+            "then": "'AUTH_NA_OR_FAIL'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvialaa",
+      "name": "STWT_AUTH_NA_FAIL",
+      "priority": 1005
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($AUTH_NA || $AUTH_NA_OR_FAIL) && ($BOUNCE || $SUBJ_BOUNCE_WORDS)",
+            "then": "'BOUNCE_NO_AUTH'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvialqa",
+      "name": "STWT_BOUNCE_NO_AUTH",
+      "priority": 1006
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($X_HDR_X_PHP_ORIGINATING_SCRIPT || $HAS_PHPMAILER_SIG) && $HAS_WP_URI && ($PHISHING || $CRACKED_SURBL || $PH_SURBL_MULTI || $DBL_PHISH || $DBL_ABUSE_PHISH || $URIBL_BLACK || $PHISHED_OPENPHISH || $PHISHED_PHISHTANK)",
+            "then": "'HACKED_WP_PHISHING'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zviamaa",
+      "name": "STWT_HACKED_WP_PHISHING",
+      "priority": 1007
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($X_HDR_X_ORIGINATING_IP || $RCVD_VIA_SMTP_AUTH) && $DCC_BULK",
+            "then": "'COMPROMISED_ACCT_BULK'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zviamqa",
+      "name": "STWT_COMPROMISED_ACCT_BULK",
+      "priority": 1008
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$DCC_BULK && ($MISSING_TO || $UNDISC_RCPT)",
+            "then": "'UNDISC_RCPTS_BULK'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvianaa",
+      "name": "STWT_UNDISC_RCPTS_BULK",
+      "priority": 1009
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$RECEIVED_SPAMHAUS_PBL && !$RCVD_VIA_SMTP_AUTH",
+            "then": "'RCVD_UNAUTH_PBL'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvianqa",
+      "name": "STWT_RCVD_UNAUTH_PBL",
+      "priority": 1010
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($DKIM_ALLOW || $ARC_ALLOW) && $RCVD_IN_DNSWL_MED",
+            "then": "'RCVD_DKIM_ARC_DNSWL_MED'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkaoaa",
+      "name": "STWT_RCVD_DKIM_ARC_DNSWL_MED",
+      "priority": 1011
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($DKIM_ALLOW || $ARC_ALLOW) && $RCVD_IN_DNSWL_HI",
+            "then": "'RCVD_DKIM_ARC_DNSWL_HI'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkaoqa",
+      "name": "STWT_RCVD_DKIM_ARC_DNSWL_HI",
+      "priority": 1012
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($X_HDR_X_PHP_ORIGINATING_SCRIPT || $HAS_PHPMAILER_SIG || $X_HDR_X_PHP_SCRIPT) && ($SUBJECT_ENDS_QUESTION || $SUBJECT_ENDS_EXCLAIM || $MANY_INVISIBLE_PARTS)",
+            "then": "'AUTOGEN_PHP_SPAMMY'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkapaa",
+      "name": "STWT_AUTOGEN_PHP_SPAMMY",
+      "priority": 1013
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($PHISHING || $DBL_PHISH || $PHISHED_OPENPHISH || $PHISHED_PHISHTANK) && ($SUBJECT_ENDS_QUESTION || $SUBJECT_ENDS_EXCLAIM)",
+            "then": "'PHISH_EMOTION'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkapqa",
+      "name": "STWT_PHISH_EMOTION",
+      "priority": 1014
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$HAS_GUC_PROXY_URI || $URIBL_RED || $DBL_ABUSE_REDIR || $HAS_ONION_URI",
+            "then": "'HAS_ANON_DOMAIN'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkaqaa",
+      "name": "STWT_HAS_ANON_DOMAIN",
+      "priority": 1015
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($SPF_FAIL || $SPF_SOFTFAIL) && ($RCVD_COUNT_ZERO || $RCVD_NO_TLS_LAST)",
+            "then": "'VIOLATED_DIRECT_SPF'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkaqqa",
+      "name": "STWT_VIOLATED_DIRECT_SPF",
+      "priority": 1016
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($FREEMAIL_FROM || $FREEMAIL_ENV_FROM || $FREEMAIL_REPLY_TO) && ($TO_DN_RECIPIENTS || $UNDISC_RCPT) && ($FROM_NAME_HAS_TITLE || $FREEMAIL_REPLY_TO_NEQ_FROM_DOM)",
+            "then": "'FREEMAIL_AFF'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkaraa",
+      "name": "STWT_FREEMAIL_AFF",
+      "priority": 1017
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$URL_ONLY && $REDIRECTOR_URL",
+            "then": "'REDIRECTOR_URL_ONLY'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkarqa",
+      "name": "STWT_REDIRECTOR_URL_ONLY",
+      "priority": 1018
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$FAKE_REPLY && $RCVD_VIA_SMTP_AUTH && (!$RECEIVED_SPAMHAUS_PBL || $RECEIVED_SPAMHAUS_XBL || $RECEIVED_SPAMHAUS_SBL)",
+            "then": "'THREAD_HIJACKING_FROM_INJECTOR'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkasaa",
+      "name": "STWT_THREAD_HIJACKING",
+      "priority": 1019
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$X_HDR_DKIM_SIGNATURE",
+            "then": "'DKIM_SIGNED'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkasqa",
+      "name": "STWT_DKIM_SIGNED",
+      "priority": 1020
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$X_HDR_ARC_SEAL",
+            "then": "'ARC_SIGNED'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkataa",
+      "name": "STWT_ARC_SIGNED",
+      "priority": 1021
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$FREEMAIL_REPLY_TO && from.domain != reply_to.domain",
+            "then": "'FREEMAIL_REPLY_TO_NEQ_FROM_DOM'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkatqa",
+      "name": "STWT_FREEMAIL_RTO_NEQ_DOM",
+      "priority": 1022
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($FREEMAIL_DNT || $DISPOSABLE_DNT) && !($FREEMAIL_FROM || $FREEMAIL_ENV_FROM)",
+            "then": "'SUSPICIOUS_MDN'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkauaa",
+      "name": "STWT_SUSPICIOUS_MDN",
+      "priority": 1023
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "($X_HDR_X_ORIGINATING_IP || $RCVD_VIA_SMTP_AUTH) && ($RECEIVED_SPAMHAUS_PBL || $RECEIVED_SPAMHAUS_XBL || $RECEIVED_SPAMHAUS_SBL || $RECEIVED_BLOCKLISTDE)",
+            "then": "'SUSPICIOUS_AUTH_ORIGIN'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkauqa",
+      "name": "STWT_SUSPICIOUS_AUTH_ORIGIN",
+      "priority": 1024
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$SUSPICIOUS_AUTH_ORIGIN && ($RCVD_HELO_USER || $FAKE_REPLY || $HAS_IPFS_GATEWAY_URL || $HTML_SHORT_LINK_IMG_1)",
+            "then": "'ABUSE_FROM_INJECTOR'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvkavaa",
+      "name": "STWT_SABUSE_FROM_INJECTOR",
+      "priority": 1025
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['to', 'cc', 'bcc'], name_lower) && contains(raw_lower, 'undisclosed')",
+            "then": "'UNDISC_RCPT'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvma2aa",
+      "name": "STWT_R_UNDISC_RCPT",
+      "priority": 60
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "name_lower == 'x-authenticated-sender' && contains(value, ': ')",
+            "then": "'HAS_X_AS'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvma2qa",
+      "name": "STWT_HAS_X_AS",
+      "priority": 61
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "is_empty(env_from) && ($IS_DSN || $HAS_MESSAGE_PARTS || ($X_HDR_X_MDDSN_MESSAGE && contains_ignore_case(from.name, 'mdaemon')))",
+            "then": "'BOUNCE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvma7aa",
+      "name": "STWT_BOUNCE",
+      "priority": 14
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$RCPT_DOMAIN_IN_SUBJECT && ($RCPT_DOMAIN_IN_BODY || $RCPT_IN_BODY)",
+            "then": "'RCPT_DOMAIN_IN_MESSAGE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvma7qa",
+      "name": "STWT_RCPT_DOMAIN_IN_MESSAGE",
+      "priority": 15
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$DMARC_POLICY_ALLOW && key_exists('trusted-domains', from.domain)",
+            "then": "'TRUSTED_DOMAIN'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvma9aa",
+      "name": "STWT_TRUSTED_DOMAIN",
+      "priority": 16
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "key_exists('blocked-domains', from.domain)",
+            "then": "'BLOCKED_DOMAIN'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvma9qa",
+      "name": "STWT_BLOCKED_DOMAIN",
+      "priority": 17
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$MIME_BAD_EXTENSION && $MIME_BAD_UNICODE",
+            "then": "'MIME_BAD_EXT_WITH_BAD_UNICODE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmavqa",
+      "name": "STWT_MIME_BAD_EXT_WITH_BAD_UNICODE",
+      "priority": 1026
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(subject.words, 'SEO') || contains(body.words, 'SEO')",
+            "then": "'HAS_SEO_WORD'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmawaa",
+      "name": "STWT_HAS_SEO_WORD",
+      "priority": 1027
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$HAS_SEO_WORD && ($RCPT_DOMAIN_IN_BODY || $RCPT_IN_BODY || $FREEMAIL_FROM)",
+            "then": "'SEO_SPAM'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmawqa",
+      "name": "STWT_SEO_SPAM",
+      "priority": 1028
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "$RCVD_COUNT_ZERO && !$RCVD_VIA_SMTP_AUTH && ($X_HDR_USER_AGENT || $X_HDR_X_MAILER)",
+            "then": "'DIRECT_TO_MX'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmaxaa",
+      "name": "STWT_DIRECT_TO_MX",
+      "priority": 1029
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!$HAS_LINK_TO_LARGE_IMG",
+            "then": "false"
+          },
+          "1": {
+            "if": "$HTML_SHORT_1",
+            "then": "'HTML_SHORT_LINK_IMG_1'"
+          },
+          "2": {
+            "if": "$HTML_SHORT_2",
+            "then": "'HTML_SHORT_LINK_IMG_2'"
+          },
+          "3": {
+            "if": "$HTML_SHORT_3",
+            "then": "'HTML_SHORT_LINK_IMG_3'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmaxqa",
+      "name": "STWT_SHORT_LINK_IMG",
+      "priority": 1030
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "is_intersect(['www-data', 'anonymous', 'ftp', 'apache', 'nobody', 'guest', 'nginx', 'web', 'www'], [from.local, env_from.local, reply_to.local])",
+            "then": "'FROM_SERVICE_ACCT'"
+          },
+          "1": {
+            "if": "contains(from.local, '+')",
+            "then": "'TAGGED_FROM'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmayaa",
+      "name": "STWT_SVC_OR_TAGGED",
+      "priority": 10
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "starts_with(from.domain, 'www.') || starts_with(reply_to.domain, 'www.')",
+            "then": "'WWW_DOT_DOMAIN'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmayqa",
+      "name": "STWT_WWW_DOMAIN",
+      "priority": 11
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "is_intersect(['mr.', 'mrs.', 'ms.', 'dr.', 'prof.', 'rev.', 'hon.'], split(to_lowercase(from.name), ' '))",
+            "then": "'FROM_NAME_HAS_TITLE'"
+          },
+          "1": {
+            "if": "is_intersect(['mr.', 'mrs.', 'ms.', 'dr.', 'prof.', 'rev.', 'hon.'], split(to_lowercase(reply_to.name), ' '))",
+            "then": "'REPLYTO_EMAIL_HAS_TITLE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmazaa",
+      "name": "STWT_HAS_TITLE",
+      "priority": 12
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(from.name, '  ')",
+            "then": "'FROM_NAME_EXCESS_SPACE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvmazqa",
+      "name": "STWT_FROM_NAME_SPACE",
+      "priority": 13
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "name_lower == 'x-get-message-sender-via' && contains(value_lower, 'authenticated_id:')",
+            "then": "'HAS_X_GMSV'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvoa0aa",
+      "name": "STWT_HAS_X_GMSV",
+      "priority": 62
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['x-source', 'x-source-args', 'x-source-dir'], name_lower) && contains(value, '../')",
+            "then": "'HIDDEN_SOURCE_OBJ'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvoa0qa",
+      "name": "STWT_HIDDEN_SOURCE_OBJ",
+      "priority": 63
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(value_lower, 'eval()') && contains(['x-php-originating-script', 'x-php-script'], name_lower)",
+            "then": "'X_PHP_EVAL'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvoa1aa",
+      "name": "STWT_X_PHP_EVAL",
+      "priority": 64
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(value, '../') && contains(['x-php-originating-script', 'x-php-script'], name_lower)",
+            "then": "'HIDDEN_SOURCE_OBJ'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvoa1qa",
+      "name": "STWT_HIDDEN_SOURCE_PHP",
+      "priority": 65
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['x-ui-filterresults', 'x-ui-out-filterresults', 'x-source-dir'], name_lower) && contains(value_lower, 'junk')",
+            "then": "'UNITEDINTERNET_SPAM'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvoa3aa",
+      "name": "STWT_UNITEDINTERNET_SPAM",
+      "priority": 66
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['x-spam', 'x-spam-flag', 'x-spam-status'], name_lower) && (contains(value_lower, 'yes') || contains(value_lower, 'true') || contains(value_lower, 'spam'))",
+            "then": "'SPAM_FLAG'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvoa3qa",
+      "name": "STWT_SPAM_FLAG",
+      "priority": 67
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "name_lower == 'x-klms-antispam-status' && contains(value_lower, 'spam')",
+            "then": "'KLMS_SPAM'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvobaaa",
+      "name": "STWT_KLMS_SPAM",
+      "priority": 68
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "name_lower == 'x-mailer' && name != 'X-Mailer'",
+            "then": "'XM_CASE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvobaqa",
+      "name": "STWT_XM_CASE",
+      "priority": 69
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "(name_lower == 'user_agent' || name_lower == 'x-mailer') && !is_empty(value) && !has_digits(value)",
+            "then": "'XM_UA_NO_VERSION'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvobbaa",
+      "name": "STWT_XM_UA_NO_VERSION",
+      "priority": 70
+    },
+    {
+      "@type": "Header",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "name_lower == 'x-mailer' && contains(value_lower, 'phpmailer')",
+            "then": "'HAS_PHPMAILER_SIG'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvobbqa",
+      "name": "STWT_HAS_PHPMAILER_SIG",
+      "priority": 71
+    },
+    {
+      "@type": "Email",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['to', 'cc', 'bcc'], location) && contains_ignore_case(name, 'recipient')",
+            "then": "'TO_DN_RECIPIENTS'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvobcaa",
+      "name": "STWT_TO_DN_RECIPIENTS",
+      "priority": 60
+    },
+    {
+      "@type": "Email",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['to', 'cc', 'bcc'], location) && local == 'info' && from.local == 'info' && $X_HDR_LIST_UNSUBSCRIBE",
+            "then": "'INFO_TO_INFO_LU'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvobcqa",
+      "name": "STWT_INFO_INFO_LU",
+      "priority": 61
+    },
+    {
+      "@type": "Email",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(['to', 'cc', 'bcc'], location) && contains(local, '+')",
+            "then": "'TAGGED_RCPT'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbdaa",
+      "name": "STWT_TAGGED_RCPT",
+      "priority": 62
+    },
+    {
+      "@type": "Email",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!contains(['env_from', 'from', 'reply_to', 'to', 'cc', 'bcc', 'dnt'], location) || is_empty(sld)",
+            "then": "false"
+          },
+          "1": {
+            "if": "key_exists('stwt_free_domains', domain)",
+            "then": "'FREEMAIL_' + to_uppercase(location)"
+          },
+          "2": {
+            "if": "key_exists('stwt_disposable_domains', domain)",
+            "then": "'DISPOSABLE_' + to_uppercase(location)"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbdqa",
+      "name": "STWT_FREE_OR_DISP",
+      "priority": 63
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "(contains(subject, 'delivery') &&              (contains(subject, 'failed') ||               contains(subject, 'report') ||               contains(subject, 'status') ||               contains(subject, 'warning'))) ||          (contains(subject, 'failure') &&              (contains(subject, 'delivery') ||               contains(subject, 'notice') ||               contains(subject, 'mail') )) ||          (contains(subject, 'delivered') &&             (contains(subject, 'couldn\\'t be') ||               contains(subject, 'could not be') ||               contains(subject, 'hasn\\'t been') ||               contains(subject, 'has not been'))) ||          contains(subject, 'returned mail') ||          contains(subject, 'undeliverable') ||           contains(subject, 'undelivered')",
+            "then": "'SUBJ_BOUNCE_WORDS'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbeaa",
+      "name": "STWT_SUBJ_BOUNCE_WORDS",
+      "priority": 20
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "!$BOUNCE && is_empty(env_from) && $SUBJ_BOUNCE_WORDS && (contains(from.local, 'postmaster') || contains(from.local, 'mailer-daemon'))",
+            "then": "'BOUNCE'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbeqa",
+      "name": "STWT_BOUNCE_SUBJECT",
+      "priority": 21
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "ends_with(trim(subject), '!')",
+            "then": "'SUBJECT_ENDS_EXCLAIM'"
+          },
+          "1": {
+            "if": "ends_with(trim(subject), '?')",
+            "then": "'SUBJECT_ENDS_QUESTION'"
+          },
+          "2": {
+            "if": "contains(subject, '!')",
+            "then": "'SUBJECT_HAS_EXCLAIM'"
+          },
+          "3": {
+            "if": "contains(subject, '?')",
+            "then": "'SUBJECT_HAS_QUESTION'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbfaa",
+      "name": "STWT_SUBJECT_HAS_SYMBOLS",
+      "priority": 22
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "len(subject) > 200",
+            "then": "'LONG_SUBJ'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbfqa",
+      "name": "STWT_LONG_SUBJ",
+      "priority": 23
+    },
+    {
+      "@type": "Any",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains_ignore_case(['re', 'aw', 'antw', 'sv'], split_once(subject, ':')[0]) && !$X_HDR_IN_REPLY_TO && !$X_HDR_REFERENCES",
+            "then": "'FAKE_REPLY'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbgaa",
+      "name": "STWT_FAKE_REPLY",
+      "priority": 24
+    },
+    {
+      "@type": "Url",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "key_exists('stwt_openphish', url)",
+            "then": "'PHISHED_OPENPHISH'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbgqa",
+      "name": "STWT_PHISHED_OPEN",
+      "priority": 50
+    },
+    {
+      "@type": "Url",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "key_exists('stwt_phishtank', url)",
+            "then": "'PHISHED_PHISHTANK'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbhaa",
+      "name": "STWT_PHISHED_TANK",
+      "priority": 51
+    },
+    {
+      "@type": "Url",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "ends_with(host, 'googleusercontent.com') && starts_with(path_query, '/proxy/')",
+            "then": "'HAS_GUC_PROXY_URI'"
+          },
+          "1": {
+            "if": "ends_with(host, 'firebasestorage.googleapis.com')",
+            "then": "'HAS_GOOGLE_FIREBASE_URL'"
+          },
+          "2": {
+            "if": "starts_with(sld, 'google.') && contains(path_query, 'url?')",
+            "then": "'HAS_GOOGLE_REDIR'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbhqa",
+      "name": "STWT_HAS_GOOGLE_URL",
+      "priority": 52
+    },
+    {
+      "@type": "Url",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "(contains(host, 'ipfs.') || contains(path_query, '/ipfs')) && contains(path_query, '/qm')",
+            "then": "'HAS_IPFS_GATEWAY_URL'"
+          },
+          "1": {
+            "if": "ends_with(host, '.onion')",
+            "then": "'HAS_ONION_URI'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbiaa",
+      "name": "STWT_IPFS_OR_ONION",
+      "priority": 53
+    },
+    {
+      "@type": "Url",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "starts_with(path, '/wp-content') || starts_with(path, '/wp-includes')",
+            "then": "'WP_COMPROMISED'"
+          },
+          "1": {
+            "if": "starts_with(path, '/wp-')",
+            "then": "'HAS_WP_URI'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbiqa",
+      "name": "STWT_WP_COMPROMISED",
+      "priority": 54
+    },
+    {
+      "@type": "Url",
+      "condition": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "contains(path_query, '/../') && !contains(path_query, '/well-known') && !contains(path_query, '/well_known')",
+            "then": "'URI_HIDDEN_PATH'"
+          }
+        }
+      },
+      "description": null,
+      "enable": true,
+      "id": "jaat3zvqbjaa",
+      "name": "STWT_URI_HIDDEN_PATH",
+      "priority": 55
+    }
+  ],
+  "singleton": false,
+  "type": "SpamRule"
+}

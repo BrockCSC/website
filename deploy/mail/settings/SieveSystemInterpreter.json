@@ -1,0 +1,34 @@
+{
+  "objects": [
+    {
+      "defaultFromAddress": {
+        "else": "'MAILER-DAEMON@' + system('domain')",
+        "match": {}
+      },
+      "defaultFromName": {
+        "else": "'Automated Message'",
+        "match": {}
+      },
+      "defaultReturnPath": {
+        "else": "",
+        "match": {}
+      },
+      "dkimSignDomain": {
+        "else": "system('domain')",
+        "match": {}
+      },
+      "duplicateExpiry": 604800000,
+      "id": "singleton",
+      "maxCpuCycles": 1048576,
+      "maxNestedIncludes": 5,
+      "maxOutMessages": 5,
+      "maxReceivedHeaders": 50,
+      "maxRedirects": 3,
+      "maxVarSize": 52428800,
+      "messageIdHostname": null,
+      "noCapabilityCheck": true
+    }
+  ],
+  "singleton": true,
+  "type": "SieveSystemInterpreter"
+}

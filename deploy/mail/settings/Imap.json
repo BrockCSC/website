@@ -1,0 +1,24 @@
+{
+  "objects": [
+    {
+      "allowPlainTextAuth": false,
+      "id": "singleton",
+      "maxAuthFailures": 3,
+      "maxConcurrent": 16,
+      "maxMessagesPerCommand": 1000000,
+      "maxMessagesPerSave": 1000000,
+      "maxRequestRate": {
+        "count": 2000,
+        "period": 60000
+      },
+      "maxRequestSize": 52428800,
+      "maxUidBatches": 10000,
+      "minUidBatchSize": 500,
+      "timeoutAnonymous": 60000,
+      "timeoutAuthenticated": 1800000,
+      "timeoutIdle": 1800000
+    }
+  ],
+  "singleton": true,
+  "type": "Imap"
+}

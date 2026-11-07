@@ -1,0 +1,63 @@
+{
+  "objects": [
+    {
+      "arcVerify": {
+        "else": "disable",
+        "match": {}
+      },
+      "dkimSignDomain": {
+        "else": "false",
+        "match": {
+          "0": {
+            "if": "is_local_domain(sender_domain) && !is_empty(authenticated_as)",
+            "then": "sender_domain"
+          }
+        }
+      },
+      "dkimStrict": true,
+      "dkimVerify": {
+        "else": "relaxed",
+        "match": {}
+      },
+      "dmarcVerify": {
+        "else": "disable",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "relaxed"
+          }
+        }
+      },
+      "id": "singleton",
+      "reverseIpVerify": {
+        "else": "disable",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "relaxed"
+          }
+        }
+      },
+      "spfEhloVerify": {
+        "else": "disable",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "relaxed"
+          }
+        }
+      },
+      "spfFromVerify": {
+        "else": "disable",
+        "match": {
+          "0": {
+            "if": "local_port == 25",
+            "then": "relaxed"
+          }
+        }
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "SenderAuth"
+}

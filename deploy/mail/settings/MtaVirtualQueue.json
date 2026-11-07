@@ -1,0 +1,30 @@
+{
+  "objects": [
+    {
+      "description": "Local delivery queue",
+      "id": "a",
+      "name": "local",
+      "threadsPerNode": 25
+    },
+    {
+      "description": "Remote delivery queue",
+      "id": "b",
+      "name": "remote",
+      "threadsPerNode": 50
+    },
+    {
+      "description": "Delivery Status Notification delivery queue",
+      "id": "c",
+      "name": "dsn",
+      "threadsPerNode": 5
+    },
+    {
+      "description": "DMARC and TLS report delivery queue",
+      "id": "d",
+      "name": "report",
+      "threadsPerNode": 5
+    }
+  ],
+  "singleton": false,
+  "type": "MtaVirtualQueue"
+}

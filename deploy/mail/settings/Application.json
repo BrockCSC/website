@@ -1,0 +1,19 @@
+{
+  "objects": [
+    {
+      "autoUpdateFrequency": 2592000000,
+      "description": "Stalwart Web Interface",
+      "enabled": true,
+      "id": "jaat3yygaaab",
+      "oauthClientId": null,
+      "resourceUrl": "https://github.com/stalwartlabs/webui/releases/latest/download/webui.zip",
+      "unpackDirectory": null,
+      "urlPrefix": {
+        "/account": true,
+        "/admin": true
+      }
+    }
+  ],
+  "singleton": false,
+  "type": "Application"
+}

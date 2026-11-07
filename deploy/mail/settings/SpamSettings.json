@@ -1,0 +1,17 @@
+{
+  "objects": [
+    {
+      "enable": true,
+      "greylistFor": null,
+      "id": "singleton",
+      "scoreDiscard": 0.0,
+      "scoreReject": 15.0,
+      "scoreSpam": 5.0,
+      "spamFilterRulesUrl": "https://github.com/stalwartlabs/spam-filter/releases/latest/download/spam-filter-rules.json.gz",
+      "trustContacts": true,
+      "trustReplies": true
+    }
+  ],
+  "singleton": true,
+  "type": "SpamSettings"
+}

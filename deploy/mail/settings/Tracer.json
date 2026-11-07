@@ -1,0 +1,20 @@
+{
+  "objects": [
+    {
+      "@type": "Log",
+      "ansi": true,
+      "enable": true,
+      "events": {},
+      "eventsPolicy": "exclude",
+      "id": "jaat1nakaaaa",
+      "level": "info",
+      "lossy": false,
+      "multiline": false,
+      "path": "/var/log/stalwart/",
+      "prefix": "stalwart",
+      "rotate": "daily"
+    }
+  ],
+  "singleton": false,
+  "type": "Tracer"
+}

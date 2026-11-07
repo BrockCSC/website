@@ -1,0 +1,39 @@
+{
+  "objects": [
+    {
+      "description": "Sender IP throttle",
+      "enable": true,
+      "id": "jaat3yygabab",
+      "key": {
+        "remoteIp": true
+      },
+      "match": {
+        "else": "true",
+        "match": {}
+      },
+      "rate": {
+        "count": 5,
+        "period": 1000
+      }
+    },
+    {
+      "description": "Sender address to recipient throttle",
+      "enable": true,
+      "id": "jaat3yygabqb",
+      "key": {
+        "rcpt": true,
+        "senderDomain": true
+      },
+      "match": {
+        "else": "true",
+        "match": {}
+      },
+      "rate": {
+        "count": 25,
+        "period": 3600000
+      }
+    }
+  ],
+  "singleton": false,
+  "type": "MtaInboundThrottle"
+}

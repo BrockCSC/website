@@ -1,0 +1,60 @@
+{
+  "objects": [
+    {
+      "@type": "Dkim1RsaSha256",
+      "auid": null,
+      "canonicalization": "relaxed/relaxed",
+      "domainId": "b",
+      "expire": null,
+      "headers": {
+        "Date": true,
+        "From": true,
+        "Message-ID": true,
+        "Subject": true,
+        "To": true
+      },
+      "id": "jaat3z1zksaa",
+      "memberTenantId": null,
+      "nextTransitionAt": null,
+      "privateKey": {
+        "@type": "Text",
+        "secret": "<SECRET>"
+      },
+      "publicKey": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAzuwvo70odpnGNKyidzL1R4az5CBUZN3XQO8ohfnozzjlLa6u3MEjIA9s/FKR+KV8IsKjSX6sHiHUJIuewPpYNJWNg0ufyD2hu8Og9QNzH2efNdSz07jIsW/CRtxKEj5+rtezExbug62bNlw1yP6m56dYyFiXo+OyPVNFfOPa64k8j5JHLB2oxFDmLLcu5hzB54m7xCNUZFL3wrXPdko/pBIt1nt+kmZJT5tvCDbWQKsYzV3ydoYxidttcdp8iO4VHCkSIIktA7+UvKEN97EU985aE5DXDJhdbObURktdWoG/r49KwezEK+tX/dQ8o8tx4BbvGanxx6D3y0q7yXplawIDAQAB",
+      "report": true,
+      "selector": "v1-rsa-20260816",
+      "stage": "active",
+      "thirdParty": null,
+      "thirdPartyHash": null
+    },
+    {
+      "@type": "Dkim1Ed25519Sha256",
+      "auid": null,
+      "canonicalization": "relaxed/relaxed",
+      "domainId": "b",
+      "expire": null,
+      "headers": {
+        "Date": true,
+        "From": true,
+        "Message-ID": true,
+        "Subject": true,
+        "To": true
+      },
+      "id": "jaat3zf1aiaa",
+      "memberTenantId": null,
+      "nextTransitionAt": null,
+      "privateKey": {
+        "@type": "Text",
+        "secret": "<SECRET>"
+      },
+      "publicKey": "R5Eq7CvzjM4s/FRH53WRM3STAuS/F55fLH53DSdEsYc=",
+      "report": true,
+      "selector": "v1-ed25519-20260816",
+      "stage": "active",
+      "thirdParty": null,
+      "thirdPartyHash": null
+    }
+  ],
+  "singleton": false,
+  "type": "DkimSignature"
+}

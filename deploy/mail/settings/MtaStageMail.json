@@ -1,0 +1,21 @@
+{
+  "objects": [
+    {
+      "id": "singleton",
+      "isSenderAllowed": {
+        "else": "!is_empty(authenticated_as) || !key_exists('spam-block', sender_domain)",
+        "match": {}
+      },
+      "rewrite": {
+        "else": "false",
+        "match": {}
+      },
+      "script": {
+        "else": "false",
+        "match": {}
+      }
+    }
+  ],
+  "singleton": true,
+  "type": "MtaStageMail"
+}

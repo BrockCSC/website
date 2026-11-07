@@ -1,0 +1,10 @@
+{
+  "objects": [
+    {
+      "@type": "Default",
+      "id": "singleton"
+    }
+  ],
+  "singleton": true,
+  "type": "MetricsStore"
+}

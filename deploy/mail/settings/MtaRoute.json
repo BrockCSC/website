@@ -1,0 +1,37 @@
+{
+  "objects": [
+    {
+      "@type": "Mx",
+      "description": "MX delivery route",
+      "id": "jaat3yykadab",
+      "ipLookupStrategy": "v4ThenV6",
+      "maxMultihomed": 2,
+      "maxMxHosts": 2,
+      "name": "mx"
+    },
+    {
+      "@type": "Local",
+      "description": "Local delivery route",
+      "id": "jaat3yykadqb",
+      "name": "local"
+    },
+    {
+      "@type": "Relay",
+      "address": "smtp.email.ca-toronto-1.oci.oraclecloud.com",
+      "allowInvalidCerts": false,
+      "authSecret": {
+        "@type": "EnvironmentVariable",
+        "variableName": "OCI_SMTP_PASSWORD"
+      },
+      "authUsername": "<AUTH_USERNAME>",
+      "description": "OCI Email Delivery relay (outbound port 25 blocked by Oracle)",
+      "id": "jabf3qyiaaqe",
+      "implicitTls": false,
+      "name": "oci-relay",
+      "port": 587,
+      "protocol": "smtp"
+    }
+  ],
+  "singleton": false,
+  "type": "MtaRoute"
+}

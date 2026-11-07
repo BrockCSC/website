@@ -1,0 +1,68 @@
+{
+  "objects": [
+    {
+      "description": "Local delivery schedule",
+      "expiry": {
+        "@type": "Ttl",
+        "expire": 259200000
+      },
+      "id": "a",
+      "name": "local",
+      "notify": {
+        "@type": "Default"
+      },
+      "queueId": "a",
+      "retry": {
+        "@type": "Default"
+      }
+    },
+    {
+      "description": "Remote delivery schedule",
+      "expiry": {
+        "@type": "Ttl",
+        "expire": 259200000
+      },
+      "id": "b",
+      "name": "remote",
+      "notify": {
+        "@type": "Default"
+      },
+      "queueId": "b",
+      "retry": {
+        "@type": "Default"
+      }
+    },
+    {
+      "description": "Delivery Status Notification delivery schedule",
+      "expiry": {
+        "@type": "Attempts",
+        "maxAttempts": 10
+      },
+      "id": "c",
+      "name": "dsn",
+      "notify": {
+        "@type": "Default"
+      },
+      "queueId": "c",
+      "retry": {
+        "@type": "Custom",
+        "intervals": {
+          "0": {
+            "duration": 900000
+          },
+          "1": {
+            "duration": 1800000
+          },
+          "2": {
+            "duration": 3600000
+          },
+          "3": {
+            "duration": 7200000
+          }
+        }
+      }
+    }
+  ],
+  "singleton": false,
+  "type": "MtaDeliverySchedule"
+}

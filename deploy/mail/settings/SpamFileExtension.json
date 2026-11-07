@@ -1,0 +1,1077 @@
+{
+  "objects": [
+    {
+      "contentTypes": {},
+      "extension": "ps2xml",
+      "id": "jaat3z00j3qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "psc1",
+      "id": "jaat3z00kaaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "psc2",
+      "id": "jaat3z00kaqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "psd1",
+      "id": "jaat3z00kbaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "psdm1",
+      "id": "jaat3z03kbqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "pst",
+      "id": "jaat3z03kcaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "reg",
+      "id": "jaat3z03kcqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "scf",
+      "id": "jaat3z03kdaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "shs",
+      "id": "jaat3z03kdqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "theme",
+      "id": "jaat3z03keaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "url",
+      "id": "jaat3z03keqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vbp",
+      "id": "jaat3z03kfaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ps2",
+      "id": "jaat3z09j3aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "bat",
+      "id": "jaat3z0riqaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "chm",
+      "id": "jaat3z0riqqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "com",
+      "id": "jaat3z0riraa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "exe",
+      "id": "jaat3z0rirqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "hta",
+      "id": "jaat3z0risaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "iso",
+      "id": "jaat3z0risqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "jar",
+      "id": "jaat3z0ritaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "lnk",
+      "id": "jaat3z0ritqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "scr",
+      "id": "jaat3z0riuaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {
+        "text/html": true
+      },
+      "extension": "htm",
+      "id": "jaat3z0riuqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {
+        "text/html": true
+      },
+      "extension": "html",
+      "id": "jaat3z0rivaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {
+        "text/html": true
+      },
+      "extension": "shtm",
+      "id": "jaat3z0rivqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {
+        "text/html": true
+      },
+      "extension": "shtml",
+      "id": "jaat3z0riwaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ace",
+      "id": "jaat3z0riwqa",
+      "isArchive": true,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "arj",
+      "id": "jaat3z0rixaa",
+      "isArchive": true,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "asx",
+      "id": "jaat3z0rixqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "cab",
+      "id": "jaat3z0riyaa",
+      "isArchive": true,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "sfx",
+      "id": "jaat3z0riyqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "js",
+      "id": "jaat3z0ti0aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "jse",
+      "id": "jaat3z0ti0qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "lib",
+      "id": "jaat3z0ti1aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mde",
+      "id": "jaat3z0ti1qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ins",
+      "id": "jaat3z0ti2aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "isp",
+      "id": "jaat3z0ti2qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msc",
+      "id": "jaat3z0ti3aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msi",
+      "id": "jaat3z0ti3qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ade",
+      "id": "jaat3z0ti7aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "adp",
+      "id": "jaat3z0ti7qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "cmd",
+      "id": "jaat3z0ti9aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "cpl",
+      "id": "jaat3z0ti9qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vst",
+      "id": "jaat3z0tizaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vss",
+      "id": "jaat3z0tizqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msp",
+      "id": "jaat3z0tjaaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mst",
+      "id": "jaat3z0tjaqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "nsh",
+      "id": "jaat3z0tjbaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "pif",
+      "id": "jaat3z0tjbqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "sct",
+      "id": "jaat3z0tjcaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "shb",
+      "id": "jaat3z0tjcqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "sys",
+      "id": "jaat3z0tjdaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vb",
+      "id": "jaat3z0vjdqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vbe",
+      "id": "jaat3z0vjeaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vbs",
+      "id": "jaat3z0vjeqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "vxd",
+      "id": "jaat3z0vjfaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "wsc",
+      "id": "jaat3z0vjfqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "wsh",
+      "id": "jaat3z0vjgaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "app",
+      "id": "jaat3z0vjgqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "asp",
+      "id": "jaat3z0vjhaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "bas",
+      "id": "jaat3z0vjhqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "cnt",
+      "id": "jaat3z0vjiaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "csh",
+      "id": "jaat3z0vjiqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "diagcab",
+      "id": "jaat3z0vjjaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "fxp",
+      "id": "jaat3z0vjjqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "gadget",
+      "id": "jaat3z0vjkaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "grp",
+      "id": "jaat3z0vjkqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "hlp",
+      "id": "jaat3z0vjlaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "hpj",
+      "id": "jaat3z0vjlqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "inf",
+      "id": "jaat3z0vjmaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "its",
+      "id": "jaat3z0vjmqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "jnlp",
+      "id": "jaat3z0vjnaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ksh",
+      "id": "jaat3z0vjnqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mad",
+      "id": "jaat3z0xjoaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "maf",
+      "id": "jaat3z0xjoqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mag",
+      "id": "jaat3z0xjpaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mam",
+      "id": "jaat3z0xjpqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "maq",
+      "id": "jaat3z0xjqaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mar",
+      "id": "jaat3z0xjqqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mas",
+      "id": "jaat3z0xjraa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mat",
+      "id": "jaat3z0xjrqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mau",
+      "id": "jaat3z0xjsaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mav",
+      "id": "jaat3z0xjsqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "maw",
+      "id": "jaat3z0xjtaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mcf",
+      "id": "jaat3z0xjtqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mda",
+      "id": "jaat3z0xjuaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mdb",
+      "id": "jaat3z0xjuqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mdt",
+      "id": "jaat3z0xjvaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mdw",
+      "id": "jaat3z0xjvqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mdz",
+      "id": "jaat3z0xjwaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msh",
+      "id": "jaat3z0xjwqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msh1",
+      "id": "jaat3z0xjxaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msh2",
+      "id": "jaat3z0xjxqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "mshxml",
+      "id": "jaat3z0xjyaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msh1xml",
+      "id": "jaat3z0xjyqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "prg",
+      "id": "jaat3z0zj0aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "printerexport",
+      "id": "jaat3z0zj0qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ps1",
+      "id": "jaat3z0zj1aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ps1xml",
+      "id": "jaat3z0zj1qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "plg",
+      "id": "jaat3z0zj2aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "prf",
+      "id": "jaat3z0zj2qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ops",
+      "id": "jaat3z0zj7aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "osd",
+      "id": "jaat3z0zj7qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "pcd",
+      "id": "jaat3z0zj9aa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "pl",
+      "id": "jaat3z0zj9qa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msh2xml",
+      "id": "jaat3z0zjzaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "msu",
+      "id": "jaat3z0zjzqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vsmacros",
+      "id": "jaat3z1bkfqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "vsw",
+      "id": "jaat3z1bkgaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "webpnp",
+      "id": "jaat3z1bkgqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "website",
+      "id": "jaat3z1bkhaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "ws",
+      "id": "jaat3z1bkhqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "xbap",
+      "id": "jaat3z1bkiaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "xll",
+      "id": "jaat3z1bkiqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "xnk",
+      "id": "jaat3z1bkjaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "docx",
+      "id": "jaat3z1bkjqa",
+      "isArchive": false,
+      "isBad": false,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "docm",
+      "id": "jaat3z1bkkaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "pptm",
+      "id": "jaat3z1bkkqa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "xlsm",
+      "id": "jaat3z1bklaa",
+      "isArchive": false,
+      "isBad": true,
+      "isNz": false
+    },
+    {
+      "contentTypes": {
+        "application/pdf": true,
+        "application/x-pdf": true
+      },
+      "extension": "pdf",
+      "id": "jaat3z1bklqa",
+      "isArchive": false,
+      "isBad": false,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "pptx",
+      "id": "jaat3z1bkmaa",
+      "isArchive": false,
+      "isBad": false,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "wsf",
+      "id": "jaat3z1bkmqa",
+      "isArchive": false,
+      "isBad": false,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "xlsx",
+      "id": "jaat3z1bknaa",
+      "isArchive": false,
+      "isBad": false,
+      "isNz": true
+    },
+    {
+      "contentTypes": {},
+      "extension": "7x",
+      "id": "jaat3z1bknqa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "alz",
+      "id": "jaat3z1dkoaa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "bz2",
+      "id": "jaat3z1dkoqa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "egg",
+      "id": "jaat3z1dkpaa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "lz",
+      "id": "jaat3z1dkpqa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "rar",
+      "id": "jaat3z1dkqaa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "xz",
+      "id": "jaat3z1dkqqa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {},
+      "extension": "zip",
+      "id": "jaat3z1dkraa",
+      "isArchive": true,
+      "isBad": false,
+      "isNz": false
+    },
+    {
+      "contentTypes": {
+        "message/disposition-notification": true,
+        "text/plain": true,
+        "text/rfc822-headers": true
+      },
+      "extension": "txt",
+      "id": "jaat3z1dkrqa",
+      "isArchive": false,
+      "isBad": false,
+      "isNz": false
+    }
+  ],
+  "singleton": false,
+  "type": "SpamFileExtension"
+}

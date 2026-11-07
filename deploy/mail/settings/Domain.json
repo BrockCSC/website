@@ -1,0 +1,40 @@
+{
+  "objects": [
+    {
+      "aliases": {},
+      "allowRelaying": false,
+      "allowScimProvisioning": false,
+      "catchAllAddress": null,
+      "certificateManagement": {
+        "@type": "Manual"
+      },
+      "description": null,
+      "directoryId": null,
+      "dkimManagement": {
+        "@type": "Automatic",
+        "algorithms": {
+          "Dkim1Ed25519Sha256": true,
+          "Dkim1RsaSha256": true
+        },
+        "deleteAfter": 2592000000,
+        "retireAfter": 604800000,
+        "rotateAfter": 7776000000,
+        "selectorTemplate": "v{version}-{algorithm}-{date-%Y%m%d}"
+      },
+      "dnsManagement": {
+        "@type": "Manual"
+      },
+      "id": "b",
+      "isEnabled": true,
+      "logo": null,
+      "memberTenantId": null,
+      "name": "brockcsc.ca",
+      "reportAddressUri": "mailto:postmaster",
+      "subAddressing": {
+        "@type": "Enabled"
+      }
+    }
+  ],
+  "singleton": false,
+  "type": "Domain"
+}

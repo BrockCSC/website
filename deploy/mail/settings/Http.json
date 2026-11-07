@@ -1,0 +1,26 @@
+{
+  "objects": [
+    {
+      "allowedEndpoints": {
+        "else": "200",
+        "match": {}
+      },
+      "enableHsts": false,
+      "id": "singleton",
+      "rateLimitAnonymous": {
+        "count": 100,
+        "period": 60000
+      },
+      "rateLimitAuthenticated": {
+        "count": 1000,
+        "period": 60000
+      },
+      "redirectRoot": "/account",
+      "responseHeaders": {},
+      "usePermissiveCors": false,
+      "useXForwarded": false
+    }
+  ],
+  "singleton": true,
+  "type": "Http"
+}

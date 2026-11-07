@@ -1,0 +1,25 @@
+{
+  "objects": [
+    {
+      "@type": "Resource",
+      "asnUrls": {
+        "https://cdn.jsdelivr.net/npm/@ip-location-db/asn/asn-ipv4.csv": true,
+        "https://cdn.jsdelivr.net/npm/@ip-location-db/asn/asn-ipv6.csv": true
+      },
+      "expires": 86400000,
+      "geoUrls": {
+        "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-geo-whois-asn-country/geolite2-geo-whois-asn-country-ipv4.csv": true,
+        "https://cdn.jsdelivr.net/npm/@ip-location-db/geolite2-geo-whois-asn-country/geolite2-geo-whois-asn-country-ipv6.csv": true
+      },
+      "httpAuth": {
+        "@type": "Unauthenticated"
+      },
+      "httpHeaders": {},
+      "id": "singleton",
+      "maxSize": 104857600,
+      "timeout": 300000
+    }
+  ],
+  "singleton": true,
+  "type": "Asn"
+}

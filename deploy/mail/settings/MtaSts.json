@@ -1,0 +1,12 @@
+{
+  "objects": [
+    {
+      "id": "singleton",
+      "maxAge": 604800000,
+      "mode": "testing",
+      "mxHosts": {}
+    }
+  ],
+  "singleton": true,
+  "type": "MtaSts"
+}

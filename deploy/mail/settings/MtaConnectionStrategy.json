@@ -1,0 +1,19 @@
+{
+  "objects": [
+    {
+      "connectTimeout": 300000,
+      "dataTimeout": 600000,
+      "description": "Default connection strategy",
+      "ehloHostname": null,
+      "ehloTimeout": 300000,
+      "greetingTimeout": 300000,
+      "id": "jaat3yykaeab",
+      "mailFromTimeout": 300000,
+      "name": "default",
+      "rcptToTimeout": 300000,
+      "sourceIps": {}
+    }
+  ],
+  "singleton": false,
+  "type": "MtaConnectionStrategy"
+}
