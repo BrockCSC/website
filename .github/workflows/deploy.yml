@@ -126,6 +126,16 @@ jobs:
           VPS_HOST: ${{ vars.VPS_HOST }}
           IMAGE: ${{ env.IMAGE }}:${{ github.sha }}
 
+      - name: TEMPORARY secret shape check
+        env:
+          K: ${{ secrets.KOMODO_DEPLOY_API_KEY }}
+          S: ${{ secrets.KOMODO_DEPLOY_API_SECRET }}
+        run: |
+          for n in K S; do
+            v="${!n}"
+            echo "$n length=${#v} first2=$(printf %s "$v" | head -c2 | od -An -tx1 | tr -d " ") last1=$(printf %s "$v" | tail -c1 | od -An -tx1 | tr -d " ")"
+          done
+
       - name: Ensure and deploy the stack
         env:
           KOMODO_HOST: ${{ vars.KOMODO_HOST }}
