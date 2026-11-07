@@ -243,12 +243,12 @@ production for them.
 
 <img src="public/readme/arch-deploy.svg" alt="Deploy pipeline: a push or tag builds the image on GitHub Actions and pushes it to GHCR; deploy-context reads the ref; the job waits on its GitHub Environment before Komodo pulls the image and deploys the Stack. A tag lands on production, main on uat, any other branch on its own preview" width="850" />
 
-| Workflow                                              | Trigger                                             | What it does                                                                                           |
-| ----------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `.github/workflows/ci.yml` — **CI**                   | every pull request, push to `main`, tags `v*`       | lint + typecheck + `format:check`, `npm audit`, dependency review — the merge gate                     |
-| `.github/workflows/deploy.yml` — **Build & Deploy**   | push to any branch, tags `v*`                       | builds and pushes the image, scans it with Trivy, syncs secrets into Komodo Variables, deploys a Stack |
-| `.github/workflows/deploy-mail.yml` — **Deploy Mail** | push to `main` touching `deploy/mail/**`, or manual | deploys the single long-lived `brockcsc-mail` Stack                                                    |
-| `.github/workflows/cleanup.yml` — **Cleanup**         | branch deleted                                      | deletes that branch's Komodo Stack and drops its `preview_*` schema                                    |
+| Workflow                                                    | Trigger                                             | What it does                                                                                           |
+| ----------------------------------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `.github/workflows/ci.yml` — **Continuous Integration**     | every pull request, push to `main`, tags `v*`       | lint + typecheck + `format:check`, `npm audit`, dependency review — the merge gate                     |
+| `.github/workflows/deploy.yml` — **Build & Deploy**         | push to any branch, tags `v*`                       | builds and pushes the image, scans it with Trivy, syncs secrets into Komodo Variables, deploys a Stack |
+| `.github/workflows/deploy-mail.yml` — **Deploy Mail Stack** | push to `main` touching `deploy/mail/**`, or manual | deploys the single long-lived `brockcsc-mail` Stack                                                    |
+| `.github/workflows/cleanup.yml` — **Preview Cleanup**       | branch deleted                                      | deletes that branch's Komodo Stack and drops its `preview_*` schema                                    |
 
 The image scan does not gate the deploy: a CVE published against the base image overnight should
 shout, not stand between you and a hotfix. Findings land in the repository's Security tab.

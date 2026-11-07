@@ -1,4 +1,4 @@
-name: Komodo Sync
+name: Komodo Secret Sync
 
 # The only workflow that holds the Komodo ADMIN key. Komodo lets only admins write Variables or create Actions,
 # so that work lives here, behind the `komodo-admin` environment (it needs the maintainer's approval and only runs
@@ -22,6 +22,7 @@ concurrency:
 
 jobs:
   sync:
+    name: Komodo Variable Sync
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -32,7 +33,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Sync GitHub secrets to Komodo Variables
+      - name: Sync GitHub Secrets to Komodo Variables
         env:
           KOMODO_HOST: ${{ vars.KOMODO_HOST }}
           KOMODO_API_KEY: ${{ secrets.KOMODO_ADMIN_API_KEY }}

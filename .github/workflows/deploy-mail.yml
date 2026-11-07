@@ -1,4 +1,4 @@
-name: Deploy Mail
+name: Deploy Mail Stack
 
 # Separate from Build & Deploy on purpose: mail is a single long-lived stack, so
 # it must never fan out per-branch, and website commits must not bounce IMAP.
@@ -19,6 +19,7 @@ concurrency:
 
 jobs:
   deploy:
+    name: Komodo Mail Deploy
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -30,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Ensure and deploy the mail stack
+      - name: Ensure and Deploy Mail Stack
         env:
           KOMODO_HOST: ${{ vars.KOMODO_HOST }}
           KOMODO_API_KEY: ${{ secrets.KOMODO_DEPLOY_API_KEY }}
@@ -62,5 +63,5 @@ jobs:
 
       # A deploy that leaves the container crash-looping must fail here, not pass quietly (the 2026-11-06
       # outage). The greeting has to answer six times in a row, ten seconds apart.
-      - name: Check mail stays healthy after the deploy
+      - name: Check Mail Health After Deploy
         run: bash .github/scripts/mail-health-gate.sh
