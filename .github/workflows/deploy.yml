@@ -87,19 +87,21 @@ jobs:
       - id: ctx
         env:
           VPS_HOST: ${{ vars.VPS_HOST }}
+          GITHUB_REF_FULL: ${{ github.ref }}
+          GITHUB_REF_SHORT: ${{ github.ref_name }}
         run: |
           if [[ -z "$VPS_HOST" ]]; then
             echo "::error::Repository variable VPS_HOST is not set."
             exit 1
           fi
-          if [[ "${{ github.ref }}" == refs/tags/* ]]; then
+          if [[ "$GITHUB_REF_FULL" == refs/tags/* ]]; then
             echo "env_name=production" >> "$GITHUB_OUTPUT"
             echo "url=https://brockcsc.ca" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+          elif [[ "$GITHUB_REF_FULL" == "refs/heads/main" ]]; then
             echo "env_name=uat" >> "$GITHUB_OUTPUT"
             echo "url=https://uat.$VPS_HOST" >> "$GITHUB_OUTPUT"
           else
-            SLUG=$(echo "${{ github.ref_name }}" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-40)
+            SLUG=$(echo "$GITHUB_REF_SHORT" | tr '[:upper:]' '[:lower:]' | sed -E 's/[^a-z0-9]+/-/g; s/^-+|-+$//g' | cut -c1-40)
             echo "env_name=dev" >> "$GITHUB_OUTPUT"
             echo "url=https://$SLUG.$VPS_HOST" >> "$GITHUB_OUTPUT"
           fi
@@ -181,7 +183,7 @@ jobs:
 
           komodo_ensure_and_deploy_stack "$STACK_NAME" "$config" 60
 
-      - uses: BrockCSC/komodo-deploy/ensure-action@v1
+      - uses: BrockCSC/komodo-deploy/ensure-action@2b3fd39774683e9183e5ea2bd810739cf288a157 # v1
         with:
           komodo-host: ${{ vars.KOMODO_HOST }}
           komodo-api-key: ${{ secrets.KOMODO_API_KEY }}
