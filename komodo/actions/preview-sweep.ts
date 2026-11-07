@@ -1,7 +1,9 @@
 // Connects to Postgres directly over platform-net rather than SSH, since
 // Komodo Core has no docker.sock access to exec into the postgres container.
 
-import { Client } from "npm:pg@8";
+// Komodo wraps this script, so a static `import` fails to parse ("cannot be used outside module code"): the
+// daily run failed for days before this. A dynamic import works inside the wrapper.
+const { Client } = await import("npm:pg@8");
 
 const STALE_MS = 3 * 24 * 60 * 60 * 1000;
 const REPO = "BrockCSC/website";
