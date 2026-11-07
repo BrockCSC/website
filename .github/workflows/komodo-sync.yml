@@ -1,0 +1,76 @@
+name: Komodo Sync
+
+# The only workflow that holds the Komodo ADMIN key. Komodo lets only admins write Variables or create Actions,
+# so that work lives here, behind the `komodo-admin` environment (it needs the maintainer's approval and only runs
+# from main). The deploy workflows use a scoped, non-admin key and cannot do any of this.
+#
+# Run it by hand after changing a secret or variable, or it runs on its own when the preview-sweep script changes.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "komodo/actions/**"
+      - ".github/workflows/komodo-sync.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: komodo-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    environment:
+      name: komodo-admin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Sync GitHub secrets to Komodo Variables
+        env:
+          KOMODO_HOST: ${{ vars.KOMODO_HOST }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_ADMIN_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_ADMIN_API_SECRET }}
+          VAL_BROCKCSC_DB_PASSWORD: ${{ secrets.BROCKCSC_DB_PASSWORD }}
+          VAL_BROCKCSC_KEYCLOAK_ISSUER: ${{ vars.BROCKCSC_KEYCLOAK_ISSUER }}
+          VAL_BROCKCSC_KEYCLOAK_CLIENT_ID: ${{ vars.BROCKCSC_KEYCLOAK_CLIENT_ID }}
+          VAL_BROCKCSC_KEYCLOAK_CLIENT_SECRET: ${{ secrets.BROCKCSC_KEYCLOAK_CLIENT_SECRET }}
+          VAL_BROCKCSC_KEYCLOAK_ADMIN_CLIENT_ID: ${{ vars.BROCKCSC_KEYCLOAK_ADMIN_CLIENT_ID }}
+          VAL_BROCKCSC_KEYCLOAK_ADMIN_CLIENT_SECRET: ${{ secrets.BROCKCSC_KEYCLOAK_ADMIN_CLIENT_SECRET }}
+          VAL_BROCKCSC_SESSION_JWT_SECRET: ${{ secrets.BROCKCSC_SESSION_JWT_SECRET }}
+          VAL_BROCKCSC_INVITE_CODE_SECRET: ${{ secrets.BROCKCSC_INVITE_CODE_SECRET }}
+          VAL_BROCKCSC_STALWART_ADMIN_USER: ${{ vars.BROCKCSC_STALWART_ADMIN_USER }}
+          VAL_BROCKCSC_STALWART_ADMIN_SECRET: ${{ secrets.BROCKCSC_STALWART_ADMIN_SECRET }}
+          VAL_BROCKCSC_OCI_COMPARTMENT_OCID: ${{ secrets.BROCKCSC_OCI_COMPARTMENT_OCID }}
+          VAL_BROCKCSC_OCI_SMTP_PASSWORD: ${{ secrets.BROCKCSC_OCI_SMTP_PASSWORD }}
+        run: |
+          source .github/scripts/komodo.sh
+
+          sync_var BROCKCSC_DB_PASSWORD "$VAL_BROCKCSC_DB_PASSWORD" true
+          sync_var BROCKCSC_KEYCLOAK_ISSUER "$VAL_BROCKCSC_KEYCLOAK_ISSUER" false
+          sync_var BROCKCSC_KEYCLOAK_CLIENT_ID "$VAL_BROCKCSC_KEYCLOAK_CLIENT_ID" false
+          sync_var BROCKCSC_KEYCLOAK_CLIENT_SECRET "$VAL_BROCKCSC_KEYCLOAK_CLIENT_SECRET" true
+          sync_var BROCKCSC_KEYCLOAK_ADMIN_CLIENT_ID "$VAL_BROCKCSC_KEYCLOAK_ADMIN_CLIENT_ID" false
+          sync_var BROCKCSC_KEYCLOAK_ADMIN_CLIENT_SECRET "$VAL_BROCKCSC_KEYCLOAK_ADMIN_CLIENT_SECRET" true
+          sync_var BROCKCSC_SESSION_JWT_SECRET "$VAL_BROCKCSC_SESSION_JWT_SECRET" true
+          sync_var BROCKCSC_INVITE_CODE_SECRET "$VAL_BROCKCSC_INVITE_CODE_SECRET" true
+          sync_var BROCKCSC_STALWART_ADMIN_USER "$VAL_BROCKCSC_STALWART_ADMIN_USER" false
+          sync_var BROCKCSC_STALWART_ADMIN_SECRET "$VAL_BROCKCSC_STALWART_ADMIN_SECRET" true
+          sync_var BROCKCSC_OCI_COMPARTMENT_OCID "$VAL_BROCKCSC_OCI_COMPARTMENT_OCID" true
+          sync_var BROCKCSC_OCI_SMTP_PASSWORD "$VAL_BROCKCSC_OCI_SMTP_PASSWORD" true
+
+      - uses: BrockCSC/komodo-deploy/ensure-action@2b3fd39774683e9183e5ea2bd810739cf288a157 # v1
+        with:
+          komodo-host: ${{ vars.KOMODO_HOST }}
+          komodo-api-key: ${{ secrets.KOMODO_ADMIN_API_KEY }}
+          komodo-api-secret: ${{ secrets.KOMODO_ADMIN_API_SECRET }}
+          action-name: brockcsc-preview-sweep
+          script-path: komodo/actions/preview-sweep.ts
+          schedule: "at 09:00 am"
+          schedule-enabled: true
