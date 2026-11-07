@@ -70,7 +70,7 @@ type Account = {
   permissions?: { disabledPermissions?: Record<string, boolean> };
   aliases?: Record<
     string,
-    { name: string; domainId: string; enabled: boolean }
+    { name: string; domainId: string; enable?: boolean; enabled?: boolean }
   >;
 };
 
@@ -119,10 +119,30 @@ const refused = (res: {
   }
 };
 
-const aliasEntries = (names: string[], domainId: string) =>
+/**
+ * Stalwart 1.x calls the alias switch `enable`; 0.16 calls it `enabled` and
+ * rejects the other spelling. Try 1.x first and fall back, so the app works on
+ * either side of the 0.16 to 1.x data migration.
+ */
+const aliasEntries = (
+  names: string[],
+  domainId: string,
+  key: "enable" | "enabled" = "enable",
+) =>
   Object.fromEntries(
-    names.map((name, i) => [i, { name, domainId, enabled: true }]),
+    names.map((name, i) => [i, { name, domainId, [key]: true }]),
   );
+
+const withAliasKey = async <T>(
+  run: (key: "enable" | "enabled") => Promise<T>,
+): Promise<T> => {
+  try {
+    return await run("enable");
+  } catch (error) {
+    if (!String(error).includes("aliases")) throw error;
+    return run("enabled");
+  }
+};
 
 /** Stalwart writes a Set as an object keyed by its members. */
 const setOf = (values: string[]) =>
@@ -271,39 +291,42 @@ export const createMailbox = async (mailbox: {
   domain: string;
 }): Promise<string> => {
   const domain = await domainId(mailbox.domain);
-  const aliases = mailbox.alias
-    ? { 0: { name: mailbox.alias, domainId: domain, enabled: true } }
-    : {};
 
-  const [res] = await jmap<{
-    created?: Record<string, { id: string }>;
-    notCreated?: unknown;
-  }>([
-    [
-      "x:Account/set",
-      {
-        create: {
-          new: {
-            "@type": "User",
-            name: mailbox.localPart,
-            domainId: domain,
-            description: mailbox.displayName,
-            roles: { "@type": "User" },
-            aliases,
+  return withAliasKey(async (key) => {
+    const aliases = mailbox.alias
+      ? aliasEntries([mailbox.alias], domain, key)
+      : {};
+
+    const [res] = await jmap<{
+      created?: Record<string, { id: string }>;
+      notCreated?: unknown;
+    }>([
+      [
+        "x:Account/set",
+        {
+          create: {
+            new: {
+              "@type": "User",
+              name: mailbox.localPart,
+              domainId: domain,
+              description: mailbox.displayName,
+              roles: { "@type": "User" },
+              aliases,
+            },
           },
         },
-      },
-      "c0",
-    ],
-  ]);
+        "c0",
+      ],
+    ]);
 
-  const created = res.created?.new;
-  if (!created) {
-    throw new Error(
-      `Stalwart did not create ${mailbox.localPart}: ${JSON.stringify(res.notCreated)}`,
-    );
-  }
-  return created.id;
+    const created = res.created?.new;
+    if (!created) {
+      throw new Error(
+        `Stalwart did not create ${mailbox.localPart}: ${JSON.stringify(res.notCreated)}`,
+      );
+    }
+    return created.id;
+  });
 };
 
 export const accountAliases = async (localPart: string): Promise<string[]> =>
@@ -318,19 +341,21 @@ export const setAccountAliases = async (
 ): Promise<void> => {
   const account = await accountNamed(localPart);
   if (!account) return;
-  await jmap([
-    [
-      "x:Account/set",
-      {
-        update: {
-          [account.id]: {
-            aliases: aliasEntries(aliasNames, await domainId(domain)),
+  const id = await domainId(domain);
+  await withAliasKey(async (key) => {
+    const [res] = await jmap<{ notUpdated?: Record<string, unknown> }>([
+      [
+        "x:Account/set",
+        {
+          update: {
+            [account.id]: { aliases: aliasEntries(aliasNames, id, key) },
           },
         },
-      },
-      "c0",
-    ],
-  ]);
+        "c0",
+      ],
+    ]);
+    refused(res);
+  });
 };
 
 export const setGroupMembers = async (
