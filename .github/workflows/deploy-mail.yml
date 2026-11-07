@@ -30,26 +30,11 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Sync mail secrets to Komodo Variables
-        env:
-          KOMODO_HOST: ${{ vars.KOMODO_HOST }}
-          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
-          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
-          VAL_BROCKCSC_STALWART_ADMIN_USER: ${{ vars.BROCKCSC_STALWART_ADMIN_USER }}
-          VAL_BROCKCSC_STALWART_ADMIN_SECRET: ${{ secrets.BROCKCSC_STALWART_ADMIN_SECRET }}
-          VAL_BROCKCSC_OCI_SMTP_PASSWORD: ${{ secrets.BROCKCSC_OCI_SMTP_PASSWORD }}
-        run: |
-          source .github/scripts/komodo.sh
-
-          sync_var BROCKCSC_STALWART_ADMIN_USER "$VAL_BROCKCSC_STALWART_ADMIN_USER" false
-          sync_var BROCKCSC_STALWART_ADMIN_SECRET "$VAL_BROCKCSC_STALWART_ADMIN_SECRET" true
-          sync_var BROCKCSC_OCI_SMTP_PASSWORD "$VAL_BROCKCSC_OCI_SMTP_PASSWORD" true
-
       - name: Ensure and deploy the mail stack
         env:
           KOMODO_HOST: ${{ vars.KOMODO_HOST }}
-          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
-          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_DEPLOY_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_DEPLOY_API_SECRET }}
           STACK_NAME: brockcsc-mail
           KOMODO_SERVER: ${{ vars.KOMODO_SERVER }}
         run: |

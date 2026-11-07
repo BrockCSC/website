@@ -32,8 +32,8 @@ jobs:
       - name: Delete Komodo stack
         env:
           KOMODO_HOST: ${{ vars.KOMODO_HOST }}
-          KOMODO_API_KEY: ${{ secrets.KOMODO_API_KEY }}
-          KOMODO_API_SECRET: ${{ secrets.KOMODO_API_SECRET }}
+          KOMODO_API_KEY: ${{ secrets.KOMODO_DEPLOY_API_KEY }}
+          KOMODO_API_SECRET: ${{ secrets.KOMODO_DEPLOY_API_SECRET }}
           STACK_NAME: ${{ steps.ctx.outputs.stack_name }}
         run: |
           source .github/scripts/komodo.sh
