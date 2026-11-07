@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared helpers for talking to the Komodo API from CI. Source this - it
 # relies on KOMODO_HOST/KOMODO_API_KEY/KOMODO_API_SECRET already being
 # exported by the calling step, and needs jq + curl on PATH.

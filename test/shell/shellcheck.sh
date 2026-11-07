@@ -13,7 +13,7 @@ fi
 
 files=()
 while IFS= read -r f; do files+=("$f"); done \
-  < <(find deploy komodo test/shell -name '*.sh' -type f | sort)
+  < <(find deploy komodo .github/scripts test/shell -name '*.sh' -type f | sort)
 
 echo "shellcheck $(shellcheck --version | awk '/^version:/{print $2}') over ${#files[@]} files"
 shellcheck -x --source-path=SCRIPTDIR --severity=warning "${files[@]}"
