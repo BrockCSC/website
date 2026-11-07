@@ -21,12 +21,12 @@ rest are lists. Keys are sorted so diffs stay small.
 
 Nothing secret is stored. These values are replaced on export:
 
-| Placeholder | Meaning |
-| --- | --- |
-| `<SECRET>` | A private key or password. Stalwart already masks these as `****`. |
-| `<PEM>` | A certificate body. The cert is renewed by `refresh-cert.sh`. |
-| `<AUTH_USERNAME>` | The SMTP relay login. |
-| `<MEMBERS_NOT_EXPORTED>` | Mailing list recipients. |
+| Placeholder              | Meaning                                                            |
+| ------------------------ | ------------------------------------------------------------------ |
+| `<SECRET>`               | A private key or password. Stalwart already masks these as `****`. |
+| `<PEM>`                  | A certificate body. The cert is renewed by `refresh-cert.sh`.      |
+| `<AUTH_USERNAME>`        | The SMTP relay login.                                              |
+| `<MEMBERS_NOT_EXPORTED>` | Mailing list recipients.                                           |
 
 Public DKIM keys are kept. They are published in DNS anyway.
 
@@ -62,6 +62,7 @@ Applying is manual and not done by any script here. Do it only after review.
           SpamSettings.json > /tmp/set.json
 
    Send `/tmp/set.json` to `$STALWART_URL/jmap`. Check `updated` in the reply.
+
 4. Export again and confirm the diff is empty.
 
 Objects that do not exist yet go in `create` instead of `update`.
