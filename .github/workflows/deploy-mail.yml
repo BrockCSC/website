@@ -74,3 +74,8 @@ jobs:
           }')
 
           komodo_ensure_and_deploy_stack "$STACK_NAME" "$config" 36
+
+      # A deploy that leaves the container crash-looping must fail here, not pass quietly (the 2026-11-06
+      # outage). The greeting has to answer six times in a row, ten seconds apart.
+      - name: Check mail stays healthy after the deploy
+        run: bash .github/scripts/mail-health-gate.sh
