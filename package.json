@@ -33,7 +33,7 @@
     "oci-common": "^2.144.0",
     "oci-email": "^2.144.0",
     "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^4.10.38",
+    "pdfjs-dist": "^6.5.438",
     "pg": "^8.23.1",
     "react": "19.3.1",
     "react-dom": "19.3.1",
